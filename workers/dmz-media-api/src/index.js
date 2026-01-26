@@ -227,37 +227,38 @@ export default {
 
     const url = new URL(request.url);
     const { pathname } = url;
+    let response = null;
 
     if (pathname === "/api/media" && request.method === "GET") {
-      return handleGetMedia(env);
-    }
-
-    if (pathname === "/api/admin/login" && request.method === "POST") {
-      return handleLogin(request, env);
-    }
-
-    if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {
-      return handleStreamDirectUpload(request, env);
-    }
-
-    if (pathname === "/api/admin/media" && request.method === "POST") {
-      return handleCreateMedia(request, env);
-    }
-
-    if (pathname === "/api/admin/media-bulk" && request.method === "PUT") {
-      return handleBulkUpsert(request, env);
-    }
-
-    if (pathname.startsWith("/api/admin/media/")) {
+      response = await handleGetMedia(env);
+    } else if (pathname === "/api/admin/login" && request.method === "POST") {
+      response = await handleLogin(request, env);
+    } else if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {
+      response = await handleStreamDirectUpload(request, env);
+    } else if (pathname === "/api/admin/media" && request.method === "POST") {
+      response = await handleCreateMedia(request, env);
+    } else if (pathname === "/api/admin/media-bulk" && request.method === "PUT") {
+      response = await handleBulkUpsert(request, env);
+    } else if (pathname.startsWith("/api/admin/media/")) {
       const id = pathname.split("/").pop();
       if (request.method === "PUT") {
-        return handleUpdateMedia(request, env, id);
-      }
-      if (request.method === "DELETE") {
-        return handleDeleteMedia(request, env, id);
+        response = await handleUpdateMedia(request, env, id);
+      } else if (request.method === "DELETE") {
+        response = await handleDeleteMedia(request, env, id);
       }
     }
 
-    return jsonResponse({ ok: false, error: "Not found." }, 404);
+    if (!response) {
+      response = jsonResponse({ ok: false, error: "Not found." }, 404);
+    }
+
+    const headers = new Headers(response.headers);
+    const cors = withCors(request, env);
+    Object.entries(cors).forEach(([key, value]) => headers.set(key, value));
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   },
 };
