@@ -459,6 +459,17 @@
     streamUploadBtn.className = "media-edit-save";
     streamUploadBtn.textContent = "Upload to Stream";
 
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "media-edit-progress";
+    progressWrap.hidden = true;
+    const progressBar = document.createElement("div");
+    progressBar.className = "media-edit-progress-bar";
+    const progressLabel = document.createElement("div");
+    progressLabel.className = "media-edit-progress-label";
+    progressLabel.textContent = "0%";
+    progressWrap.appendChild(progressBar);
+    progressWrap.appendChild(progressLabel);
+
     const mediaFileLabel = document.createElement("label");
     mediaFileLabel.textContent = "Pick media file (local)";
     const mediaFileInput = document.createElement("input");
@@ -508,6 +519,7 @@
     form.appendChild(streamIdLabel);
     form.appendChild(streamIdInput);
     form.appendChild(streamUploadBtn);
+    form.appendChild(progressWrap);
     form.appendChild(mediaFileLabel);
     form.appendChild(mediaFileInput);
     form.appendChild(thumbUrlLabel);
@@ -579,6 +591,9 @@
       }
       streamUploadBtn.disabled = true;
       streamUploadBtn.textContent = "Uploading...";
+      progressWrap.hidden = false;
+      progressBar.style.width = "0%";
+      progressLabel.textContent = "0%";
       try {
         const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
         const data = await resp.json();
@@ -587,8 +602,25 @@
         if (!uploadUrl) throw new Error("Missing upload URL");
         const formData = new FormData();
         formData.append("file", file);
-        const uploadResp = await fetch(uploadUrl, { method: "POST", body: formData });
-        if (!uploadResp.ok) throw new Error("Upload failed");
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", uploadUrl, true);
+          xhr.upload.addEventListener("progress", (event) => {
+            if (!event.lengthComputable) return;
+            const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+            progressBar.style.width = `${percent}%`;
+            progressLabel.textContent = `${percent}%`;
+          });
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error("Upload failed"));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Upload failed"));
+          xhr.send(formData);
+        });
         streamIdInput.value = uid || "";
         mediaUrlInput.value = "";
         streamUploadBtn.textContent = "Uploaded";
@@ -598,6 +630,7 @@
         streamUploadBtn.disabled = false;
         setTimeout(() => {
           streamUploadBtn.textContent = "Upload to Stream";
+          progressWrap.hidden = true;
         }, 1200);
       }
     });

@@ -969,6 +969,32 @@ body.media-edit-mode .media-body p.media-desc-empty{
   gap: 8px;
 }
 
+.media-edit-progress{
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(5,11,20,0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+.media-edit-progress-bar{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(85,185,255,0.8), rgba(226,27,35,0.85));
+  transition: width 120ms ease;
+}
+
+.media-edit-progress-label{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: rgba(234,242,255,0.85);
+}
+
 .media-edit-cancel,
 .media-edit-save{
   border-radius: 999px;
