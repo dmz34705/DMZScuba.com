@@ -12,6 +12,7 @@ function getAllowedOrigin(request, env) {
   const origin = request.headers.get("Origin") || "*";
   const allowList = String(env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
   if (!allowList.length) return "*";
+  if (allowList.includes("*")) return "*";
   return allowList.includes(origin) ? origin : allowList[0];
 }
 
@@ -19,8 +20,10 @@ function withCors(request, env, headers = {}) {
   return {
     ...headers,
     "Access-Control-Allow-Origin": getAllowedOrigin(request, env),
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
 }
 
