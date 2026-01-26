@@ -14,4 +14,4 @@ ADMIN_PASS = "DMZ34705!"
 CF_ACCOUNT_ID = "REPLACE_WITH_ACCOUNT_ID"
 CF_STREAM_TOKEN = "REPLACE_WITH_STREAM_API_TOKEN"
 # Optional: comma-separated list of allowed origins.
-ALLOWED_ORIGINS = "https://dmzscuba.com"
+ALLOWED_ORIGINS = "*"
