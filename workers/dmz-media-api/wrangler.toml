@@ -1,0 +1,17 @@
+name = "dmz-media-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dmz_media"
+database_id = "REPLACE_WITH_D1_ID"
+
+[vars]
+# Set these in Cloudflare dashboard or via `wrangler secret put`
+ADMIN_USER = "DMZ"
+ADMIN_PASS = "DMZ34705!"
+CF_ACCOUNT_ID = "REPLACE_WITH_ACCOUNT_ID"
+CF_STREAM_TOKEN = "REPLACE_WITH_STREAM_API_TOKEN"
+# Optional: comma-separated list of allowed origins.
+ALLOWED_ORIGINS = "https://dmzscuba.com"

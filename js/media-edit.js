@@ -7,9 +7,134 @@
   };
   const thumbDefaultPath = "/assets/media/thumbnails/";
   const desktopDragQuery = window.matchMedia("(min-width: 981px)");
+  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiRoot = apiBase || "";
+  const tokenStorageKey = "dmzMediaToken";
   const dragState = {
     card: null,
   };
+
+  function getToken() {
+    return window.sessionStorage.getItem(tokenStorageKey) || "";
+  }
+
+  function setToken(token) {
+    if (!token) {
+      window.sessionStorage.removeItem(tokenStorageKey);
+      return;
+    }
+    window.sessionStorage.setItem(tokenStorageKey, token);
+  }
+
+  async function apiFetch(path, options = {}) {
+    const headers = options.headers ? { ...options.headers } : {};
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return fetch(`${apiRoot}${path}`, { ...options, headers });
+  }
+
+  function ensureId(item) {
+    if (!item) return item;
+    if (item.id) return item;
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      item.id = window.crypto.randomUUID();
+    } else {
+      item.id = `media-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    }
+    return item;
+  }
+
+  function buildLoginModal(onSuccess) {
+    if (document.querySelector(".media-auth-modal")) return;
+    const overlay = document.createElement("div");
+    overlay.className = "media-edit-modal media-auth-modal";
+    const card = document.createElement("div");
+    card.className = "media-edit-modal-card";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "DMZ Media Admin";
+    const hint = document.createElement("p");
+    hint.className = "media-edit-modal-hint";
+    hint.textContent = "Sign in to manage the media library.";
+
+    const form = document.createElement("form");
+    form.className = "media-edit-form";
+
+    const userLabel = document.createElement("label");
+    userLabel.textContent = "Username";
+    const userInput = document.createElement("input");
+    userInput.type = "text";
+    userInput.autocomplete = "username";
+
+    const passLabel = document.createElement("label");
+    passLabel.textContent = "Password";
+    const passInput = document.createElement("input");
+    passInput.type = "password";
+    passInput.autocomplete = "current-password";
+
+    const error = document.createElement("p");
+    error.className = "media-edit-modal-hint";
+    error.style.color = "rgba(226, 27, 35, 0.85)";
+
+    const actions = document.createElement("div");
+    actions.className = "media-edit-modal-actions";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "media-edit-cancel";
+    cancelBtn.textContent = "Cancel";
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "media-edit-save";
+    saveBtn.textContent = "Sign In";
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+
+    form.appendChild(userLabel);
+    form.appendChild(userInput);
+    form.appendChild(passLabel);
+    form.appendChild(passInput);
+    form.appendChild(error);
+    form.appendChild(actions);
+
+    card.appendChild(heading);
+    card.appendChild(hint);
+    card.appendChild(form);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    function close() {
+      overlay.remove();
+    }
+
+    cancelBtn.addEventListener("click", close);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close();
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+      const resp = await apiFetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
+      });
+      if (!resp.ok) {
+        error.textContent = "Login failed. Check credentials.";
+        return;
+      }
+      const data = await resp.json();
+      if (!data.token) {
+        error.textContent = "Login failed. Try again.";
+        return;
+      }
+      setToken(data.token);
+      close();
+      if (typeof onSuccess === "function") onSuccess();
+    });
+  }
 
   function resolveUrl(url) {
     if (!url) return "";
@@ -275,7 +400,7 @@
     const hint = document.createElement("p");
     hint.className = "media-edit-modal-hint";
     hint.textContent =
-      "Place files in assets/media/ (photos in assets/media/photos/, thumbs in assets/media/thumbnails/). Leave thumbnails blank for auto previews.";
+      "You can paste a Stream ID, a URL, or upload to Stream from here. Local assets still work.";
 
     const form = document.createElement("form");
     form.className = "media-edit-form";
@@ -317,6 +442,17 @@
     const mediaUrlInput = document.createElement("input");
     mediaUrlInput.type = "text";
     mediaUrlInput.placeholder = "assets/media/your-file.mp4 or https://...";
+
+    const streamIdLabel = document.createElement("label");
+    streamIdLabel.textContent = "Cloudflare Stream ID (optional)";
+    const streamIdInput = document.createElement("input");
+    streamIdInput.type = "text";
+    streamIdInput.placeholder = "Stream video ID";
+
+    const streamUploadBtn = document.createElement("button");
+    streamUploadBtn.type = "button";
+    streamUploadBtn.className = "media-edit-save";
+    streamUploadBtn.textContent = "Upload to Stream";
 
     const mediaFileLabel = document.createElement("label");
     mediaFileLabel.textContent = "Pick media file (local)";
@@ -364,6 +500,9 @@
     form.appendChild(locationInput);
     form.appendChild(mediaUrlLabel);
     form.appendChild(mediaUrlInput);
+    form.appendChild(streamIdLabel);
+    form.appendChild(streamIdInput);
+    form.appendChild(streamUploadBtn);
     form.appendChild(mediaFileLabel);
     form.appendChild(mediaFileInput);
     form.appendChild(thumbUrlLabel);
@@ -395,6 +534,7 @@
       locationInput.value = item.location || "";
       mediaUrlInput.value = item.url || "";
       thumbUrlInput.value = item.thumbUrl || "";
+      streamIdInput.value = item.streamId || "";
     }
 
     function syncMediaUrlFromFile(file) {
@@ -426,6 +566,37 @@
       thumbUrlInput.value = `${thumbDefaultPath}${file.name}`;
     });
 
+    streamUploadBtn.addEventListener("click", async () => {
+      const file = mediaFileInput.files && mediaFileInput.files[0];
+      if (!file) {
+        streamUploadBtn.textContent = "Pick a video file first";
+        return;
+      }
+      streamUploadBtn.disabled = true;
+      streamUploadBtn.textContent = "Uploading...";
+      try {
+        const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
+        const data = await resp.json();
+        const uploadUrl = data?.result?.uploadURL;
+        const uid = data?.result?.uid;
+        if (!uploadUrl) throw new Error("Missing upload URL");
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadResp = await fetch(uploadUrl, { method: "POST", body: formData });
+        if (!uploadResp.ok) throw new Error("Upload failed");
+        streamIdInput.value = uid || "";
+        mediaUrlInput.value = "";
+        streamUploadBtn.textContent = "Uploaded";
+      } catch (error) {
+        streamUploadBtn.textContent = "Upload failed";
+      } finally {
+        streamUploadBtn.disabled = false;
+        setTimeout(() => {
+          streamUploadBtn.textContent = "Upload to Stream";
+        }, 1200);
+      }
+    });
+
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       if (!window.DMZMedia) return;
@@ -438,14 +609,16 @@
         tags.unshift(type);
       }
       const nextItem = {
+        id: item && item.id ? item.id : undefined,
         type,
         title: titleInput.value.trim() || "New Media",
         description: descInput.value.trim(),
         tags,
         badge: type === "photo" ? "PHOTO" : "VIDEO",
         thumbText: type === "photo" ? "Photo" : "YouTube Thumbnail",
-        url: mediaUrlInput.value.trim() || "#",
+        url: mediaUrlInput.value.trim() || "",
         thumbUrl: thumbUrlInput.value.trim(),
+        streamId: streamIdInput.value.trim(),
         meta: [],
         location: locationInput.value.trim(),
       };
@@ -453,7 +626,7 @@
         window.DMZMedia.updateMediaItem(index, nextItem);
         window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
       } else {
-        window.DMZMedia.addMediaItem(nextItem);
+        window.DMZMedia.addMediaItem(ensureId(nextItem));
       }
       closeModal();
     });
@@ -518,6 +691,7 @@
     const mediaGrid = document.getElementById("mediaGrid");
     const toggle = document.querySelector(".media-edit-toggle");
     const exportButton = document.querySelector(".media-edit-export");
+    const publishButton = document.querySelector(".media-edit-publish");
     const resetButton = document.querySelector(".media-edit-reset");
     if (!toggle) return;
     if (mediaGrid) {
@@ -541,6 +715,10 @@
     }
     desktopDragQuery.addEventListener("change", updateDragAvailability);
     toggle.addEventListener("click", () => {
+      if (!getToken()) {
+        buildLoginModal(() => toggle.click());
+        return;
+      }
       const scrollY = window.scrollY;
       const isActive = document.body.classList.toggle("media-edit-mode");
       toggle.setAttribute("aria-pressed", isActive ? "true" : "false");
@@ -588,6 +766,30 @@
         link.click();
         link.remove();
         URL.revokeObjectURL(url);
+      });
+    }
+
+    if (publishButton) {
+      publishButton.addEventListener("click", async () => {
+        if (!window.DMZMedia) return;
+        if (!getToken()) {
+          buildLoginModal(() => publishButton.click());
+          return;
+        }
+        if (window.DMZMedia.syncFromDom) {
+          window.DMZMedia.syncFromDom();
+        }
+        const items = window.DMZMedia.getMediaItems().map((item) => ensureId({ ...item }));
+        const resp = await apiFetch("/api/admin/media-bulk", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items }),
+        });
+        if (!resp.ok) {
+          window.alert("Publish failed. Check your login or API.");
+          return;
+        }
+        window.alert("Media published to DMZ.");
       });
     }
 

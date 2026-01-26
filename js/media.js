@@ -1,5 +1,7 @@
 (() => {
   const dataUrl = "../../assets/data/media.json";
+  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
   const mediaGrid = document.getElementById("mediaGrid");
   const photoGrid = document.getElementById("photoGrid");
   const mediaSection = mediaGrid ? mediaGrid.closest(".section.media-wide") : null;
@@ -1101,10 +1103,12 @@
 
   async function init() {
     try {
-      const [mediaRes, destRes] = await Promise.all([
+      const [apiRes, fileRes, destRes] = await Promise.all([
+        fetch(apiUrl, { cache: "no-store" }),
         fetch(dataUrl),
         fetch("/assets/data/destinations.json"),
       ]);
+      const mediaRes = apiRes.ok ? apiRes : fileRes;
       if (!mediaRes.ok) {
         throw new Error(`Failed to load media data (${mediaRes.status})`);
       }
@@ -1128,6 +1132,16 @@
     }
   }
 
+  function ensureItemId(item) {
+    if (!item) return item;
+    if (item.id) return item;
+    const id =
+      (crypto && typeof crypto.randomUUID === "function" && crypto.randomUUID()) ||
+      `media-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    item.id = id;
+    return item;
+  }
+
   window.DMZMedia = {
     getMediaItems() {
       return state.mediaItems;
@@ -1144,7 +1158,8 @@
       applyActiveFilter();
     },
     addMediaItem(item) {
-      state.mediaItems.push(item);
+      const next = ensureItemId({ ...(item || {}) });
+      state.mediaItems.push(next);
       saveDraft();
       renderMedia(state.mediaItems);
       renderLocationFilters(state.destinations);
