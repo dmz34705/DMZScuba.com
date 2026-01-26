@@ -1,0 +1,376 @@
+/* ============================================================
+   8) CONTACT PAGE
+   ============================================================ */
+
+.contact-grid{
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.contact-card,
+.form-card{
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.45);
+  padding: 18px;
+}
+
+.contact-card h2,
+.form-card h2{ margin: 0 0 8px; }
+
+.mini-divider{
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+  margin: 16px 0;
+}
+
+.contact-list{
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.contact-item{
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.18);
+}
+
+.contact-item .value{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.contact-item .value-text{
+  word-break: break-word;
+}
+
+.contact-item .value.value-inline{
+  flex-wrap: nowrap;
+}
+
+.contact-item .value.value-inline .value-text{
+  white-space: nowrap;
+}
+
+.contact-item .label{
+  color: rgba(234,242,255,0.78);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+
+.contact-item .value a{
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(85,185,255,0.45);
+}
+
+.steps{
+  margin: 10px 0 0 18px;
+  color: var(--muted);
+}
+
+.inline-cta-link{
+  color: rgba(85,185,255,0.95);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(85,185,255,0.7);
+}
+
+.inline-cta-link:hover{
+  color: rgba(120,205,255,1);
+  text-decoration-color: rgba(120,205,255,0.9);
+}
+
+.inline-cta-link:focus-visible{
+  outline: 2px solid rgba(85,185,255,0.65);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+#dive-now{
+  scroll-margin-top: 110px;
+}
+
+/* Forms */
+.form-header{ margin-bottom: 10px; }
+.dmz-form{ margin-top: 12px; }
+
+.form-row{
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row.two{
+  grid-template-columns: 1fr 1fr;
+}
+
+.field label{
+  display: inline-block;
+  font-weight: 750;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  margin: 0 0 6px;
+  color: rgba(234,242,255,0.90);
+}
+
+.field input,
+.field select,
+.field textarea{
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.22);
+  color: var(--text);
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.form-card .dropdown-field{
+  position: relative;
+}
+
+.form-card .dropdown-toggle{
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.22);
+  color: rgba(234,242,255,0.92);
+  padding: 12px 12px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.form-card .dropdown-toggle:focus{
+  outline: none;
+}
+
+.form-card .dropdown-toggle:focus-visible,
+.form-card .dropdown-field.is-open .dropdown-toggle{
+  border-color: rgba(85,185,255,0.55);
+  background: rgba(0,0,0,0.28);
+  box-shadow: 0 0 0 4px rgba(85,185,255,0.12);
+}
+
+.form-card .dropdown-value{
+  display: inline-block;
+}
+
+.form-card .dropdown-panel{
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(7, 12, 20, 0.96);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+  display: none;
+  z-index: 20;
+}
+
+.form-card .dropdown-field.is-open .dropdown-panel{
+  display: grid;
+  gap: 6px;
+}
+
+.form-card .dropdown-option{
+  border: 0;
+  background: rgba(255,255,255,0.04);
+  color: rgba(234,242,255,0.86);
+  padding: 8px 10px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.form-card .dropdown-option:hover{
+  background: rgba(85,185,255,0.14);
+}
+
+.form-card .dropdown-input{
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  height: 1px;
+  width: 1px;
+  left: 0;
+  bottom: 0;
+}
+
+.field textarea{ resize: vertical; min-height: 120px; }
+
+.field.needs-input input,
+.field.needs-input select,
+.field.needs-input textarea,
+.field input.needs-input,
+.field select.needs-input,
+.field textarea.needs-input{
+  border-color: rgba(226, 27, 35, 0.85) !important;
+  box-shadow: 0 0 0 3px rgba(226, 27, 35, 0.18) !important;
+}
+
+.field.needs-input .dropdown-toggle{
+  border-color: rgba(226, 27, 35, 0.85) !important;
+  box-shadow: 0 0 0 3px rgba(226, 27, 35, 0.18) !important;
+}
+
+.field.is-prefilled input,
+.field.is-prefilled select,
+.field.is-prefilled textarea,
+.field input.is-prefilled,
+.field select.is-prefilled,
+.field textarea.is-prefilled{
+  border-color: rgba(85, 185, 255, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.16) !important;
+}
+
+.field.is-prefilled .dropdown-toggle{
+  border-color: rgba(85, 185, 255, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.16) !important;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color: rgba(85,185,255,0.55);
+  background: rgba(0,0,0,0.28);
+  box-shadow: 0 0 0 4px rgba(85,185,255,0.12);
+}
+
+.check{
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.check input{
+  margin-top: 2px;
+  accent-color: rgba(85,185,255,0.95);
+}
+
+.form-actions{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.form-note{ margin-top: 12px; }
+
+/* Copy icon button + toast (single source of truth) */
+.icon-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+.icon-btn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(85,185,255,0.35);
+}
+
+.icon-btn:active{
+  transform: translateY(0px);
+  opacity: 0.9;
+}
+
+.icon-btn .icon{
+  width: 18px;
+  height: 18px;
+  fill: rgba(234,242,255,0.86);
+}
+
+.icon-btn.is-copied{
+  border-color: rgba(85,185,255,0.55);
+  background: rgba(85,185,255,0.10);
+  box-shadow: 0 0 0 3px rgba(85,185,255,0.14);
+}
+
+#dmz-toast{
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(8, 16, 28, 0.88);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  color: rgba(234,242,255,0.92);
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+#dmz-toast.show{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Bubble card (used on Contact page) */
+.bubble-card{
+  margin-top: 14px;
+  padding: 18px 18px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+}
+
+.bubble-card h3{
+  margin: 0 0 10px;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
+.bubble-card .steps{
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.bubble-card .steps li{ margin: 6px 0; }
+
+.bubble-card .muted.small{
+  margin: 10px 0 0;
+}

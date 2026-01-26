@@ -1,0 +1,85 @@
+/* ============================================================
+   12) RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 980px){
+  .feature-grid{ grid-template-columns: 1fr; }
+  .feature-card.is-centered{ grid-column: auto; }
+  .main-nav{ gap: 8px; }
+  .logo img{ width: 48px; height: 48px; }
+  .hero-content{ padding: 54px 18px; }
+
+  .contact-grid{ grid-template-columns: 1fr; }
+  .form-row.two{ grid-template-columns: 1fr; }
+
+  .page-hero-inner{ grid-template-columns: 1fr; }
+  .media-grid{ grid-template-columns: 1fr; }
+  .callout-grid{ grid-template-columns: 1fr; }
+  .photo-grid{ grid-template-columns: repeat(2, 1fr); }
+
+  .destination-grid{ grid-template-columns: 1fr; }
+
+  .two-col-grid{ grid-template-columns: 1fr; }
+  .two-col-grid::before{ display: none; }
+  .two-col-side.right{ border-left: none; padding-left: 0; }
+
+  .specialty-grid{ grid-template-columns: 1fr; }
+
+  .content-section{ scroll-margin-top: 70px; }
+}
+
+@media (max-width: 780px){
+  .logo{
+    padding: 5px 8px;
+  }
+
+  .logo img{
+    width: 46px;
+    height: 46px;
+  }
+
+  .page-hero.page-hero-training{
+    background-size: cover;
+    background-position: center 32%;
+  }
+
+  .page-hero.page-hero-training-home{
+    background-size: cover;
+    background-position: center 20%;
+  }
+
+  .page-hero.page-hero-open-water{
+    background-size: cover;
+    background-position: 30% 24%;
+  }
+
+  .page-hero.page-hero-advanced{
+    background-size: cover;
+    background-position: center 32%;
+  }
+
+  .featured-strip-single img{ height: 220px; }
+  .featured-strip-overlay{ padding: 20px; }
+}
+
+@media (max-width: 560px){
+  .nav-container{ padding: 12px 14px; }
+  .main-nav a{
+    padding: 9px 10px;
+  }
+
+  .page-hero.page-hero-open-water{
+    background-size: cover;
+    background-position: 28% 22%;
+  }
+
+  .page-hero.page-hero-training-home{
+    background-size: cover;
+    background-position: center 18%;
+  }
+
+  .hero{ min-height: 74vh; }
+  .hero-sub{ max-width: 92%; }
+
+  .photo-grid{ grid-template-columns: 1fr; }
+}

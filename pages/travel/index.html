@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DMZ Scuba | Travel</title>
+  <meta name="description" content="Explore DMZ Scuba travel destinations and plan a dive trip on your terms." />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/travel.css?v=1.0" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="nav-container">
+      <a class="logo" href="../../index.html" aria-label="DMZ Scuba Home">
+        <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+      </a>
+      <div class="site-name">DMZ Scuba LLC</div>
+
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a href="../../index.html">Home</a>
+        <a href="../training/index.html">Training</a>
+        <a class="is-active" href="./index.html">Travel</a>
+        <a href="../media/index.html">Media</a>
+        <a href="../contact/index.html">Contact</a>
+        <a class="nav-cta" href="../contact/index.html#dive-now">Dive Now</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-copy">
+          <h1>TRAVEL</h1>
+          <p class="page-hero-sub">
+            Spin the globe, pick a destination, and we’ll build a trip around how you want to dive.
+          </p>
+
+          <div class="page-hero-actions">
+            <a class="btn primary" href="#globe">Explore Destinations</a>
+            <a class="btn secondary" href="../contact/index.html#dive-now">Plan a Trip</a>
+          </div>
+        </div>
+
+        <div class="page-hero-card travel-hero-logo">
+          <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo">
+        </div>
+      </div>
+    </section>
+
+    <!-- Globe -->
+    <section class="section" id="globe">
+      <div class="section-head">
+        <h2>Interactive Globe</h2>
+        <p class="section-sub">Drag to rotate. Pinch to zoom. Tap a pin to visit a destination!</p>
+      </div>
+
+      <div class="globe-shell">
+        <div class="globe-wrap" id="globeWrap">
+          <canvas id="globeCanvas" width="920" height="520" aria-label="Interactive destination globe"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Destination spotlight (the “zoom in” target) -->
+    <section class="section" id="destination">
+      <div class="destination-shell">
+        <div class="destination-head">
+          <div class="destination-title-row">
+            <h2 id="destTitle">Choose a destination</h2>
+            <a class="btn primary" href="../contact/index.html#dive-now">Dive Now</a>
+          </div>
+          <p id="destSub" class="section-sub">Click a globe pin to load details here.</p>
+        </div>
+
+        <div class="destination-grid">
+          <div class="destination-card">
+            <h3 id="isoTitle">Destination Overview</h3>
+            <p class="muted" id="isoDesc">
+              Select a destination to load the resort view.
+            </p>
+            <a class="iso-link" id="isoLink" href="./destination.html">
+              <div class="iso-placeholder" id="isoBox">
+                <img class="iso-image" id="isoImage" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="" loading="lazy" />
+                <div class="iso-label" id="isoLabel">Select a destination to preview.</div>
+              </div>
+            </a>
+          </div>
+
+          <p class="micro-note micro-note--mobile">
+            Click the resort image to view more details about this location.
+          </p>
+
+          <div class="destination-card">
+            <h3>Trip Snapshot</h3>
+            <ul class="dest-bullets" id="destBullets">
+              <li>Visibility, conditions, and seasons</li>
+              <li>Dive style (drift / wreck / reef)</li>
+              <li>Non-diving activities (if desired)</li>
+              <li>Recommended skill level</li>
+            </ul>
+
+            <div class="mini-divider"></div>
+
+            <h3>Quick Actions</h3>
+            <div class="destination-actions">
+              <a class="btn primary" id="seeDetails" href="#" aria-disabled="true" tabindex="-1">See Details</a>
+              <a class="btn secondary" id="relatedMediaLink" href="../media/index.html">See Related Media</a>
+            </div>
+          </div>
+        </div>
+
+        <p class="micro-note">
+          Click the resort image to view more details about this location.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="destination-list">
+      <div class="section-head">
+        <h2>Destination List</h2>
+        <p class="section-sub">Prefer to browse? Pick a destination to view details.</p>
+      </div>
+      <div class="destination-list" id="destinationList"></div>
+    </section>
+
+   <footer class="site-footer">
+  <small>© <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+</footer>
+
+  </main>
+
+  <script src="../../js/main.js" defer></script>
+
+  <!-- Globe POC (pure JS, no libraries) -->
+  <script src="../../js/globe.js?v=2" defer></script>
+
+
+</body>
+</html>
+
+

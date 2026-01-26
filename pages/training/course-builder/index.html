@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DMZ Scuba | Course Builder</title>
+  <meta name="description" content="Build your training plan with DMZ Scuba on your schedule." />
+  <link rel="stylesheet" href="../../../css/base.css" />
+  <link rel="stylesheet" href="../../../css/components.css" />
+  <link rel="stylesheet" href="../../../css/main.css" />
+  <link rel="stylesheet" href="../../../css/pages/contact.css" />
+  <link rel="stylesheet" href="../../../css/pages/course-builder.css" />
+  <link rel="stylesheet" href="../../../css/responsive.css" />
+</head>
+
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="nav-container">
+        <a class="logo" href="../../../index.html" aria-label="DMZ Scuba Home">
+          <img src="../../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+        </a>
+        <div class="site-name">DMZ Scuba LLC</div>
+
+        <nav class="main-nav" aria-label="Primary">
+          <a href="../../../index.html">Home</a>
+          <a class="is-active" href="../index.html">Training</a>
+          <a href="../../travel/index.html">Travel</a>
+          <a href="../../media/index.html">Media</a>
+          <a href="../../contact/index.html">Contact</a>
+          <a class="nav-cta" href="../../contact/index.html#dive-now">Dive Now</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="page-hero page-hero-training">
+      <div class="page-hero-inner">
+        <div class="page-hero-copy">
+          <h1>Course Builder</h1>
+          <p class="page-hero-sub">
+            Build your custom training plan around your schedule, goals, and pace. We will map the right path and lock in the dates.
+          </p>
+
+          <div class="page-hero-actions">
+            <a class="btn primary" href="#builder">Start Building</a>
+            <a class="btn secondary" href="../index.html">Back to Training</a>
+          </div>
+        </div>
+        <div class="page-hero-card training-hero-logo">
+          <img src="../../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo">
+        </div>
+      </div>
+    </section>
+
+    <main class="page-main">
+      <section class="course-builder-wrap" id="builder">
+        <div class="form-card course-builder-card">
+          <div class="form-header">
+            <h2>Build Your Class</h2>
+            <p class="muted">Your class...Your plan. Tell us how you want to train and we will reply with a custom plan tailored specifically for you or your group.</p>
+          </div>
+
+          <form class="dmz-form" id="courseBuilderForm" action="mailto:info@dmzscuba.com" method="post" enctype="text/plain">
+            <div class="form-row two">
+              <div class="field">
+                <label for="cb-name">Full name</label>
+                <input id="cb-name" name="name" type="text" placeholder="Your name" autocomplete="name" required />
+              </div>
+
+              <div class="field">
+                <label for="cb-email">Email</label>
+                <input id="cb-email" name="email" type="email" placeholder="you@email.com" autocomplete="email" required />
+              </div>
+            </div>
+
+            <div class="form-row two">
+              <div class="field">
+                <label for="cb-phone">Phone</label>
+                <input id="cb-phone" name="phone" type="tel" placeholder="(555) 123-4567" autocomplete="tel" required />
+              </div>
+
+              <div class="field">
+                <label for="cb-course">Select course</label>
+                <div class="dropdown-field" data-dropdown>
+                  <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="cb-course-panel">
+                    <span class="dropdown-value">Select course...</span>
+                  </button>
+                  <div class="dropdown-panel" id="cb-course-panel" role="listbox">
+                    <button class="dropdown-option" type="button" data-value="sdi-open-water">SDI Open Water</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-youth-open-water">SDI Youth Open Water</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-advanced-adventure">SDI Advanced Adventure</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-rescue-diver">SDI Rescue Diver</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-drysuit">SDI Drysuit</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-full-face-mask">SDI Full Face Mask</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-computer-nitrox">SDI Computer Nitrox</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-wreck-diver">SDI Wreck Diver</button>
+                    <button class="dropdown-option" type="button" data-value="sdi-refresher">SDI Refresher</button>
+                  </div>
+                  <input id="cb-course" class="dropdown-input" name="course" type="text" required readonly />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row two">
+              <div class="field">
+                <label for="cb-experience">Experience level</label>
+                <div class="dropdown-field" data-dropdown>
+                  <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="cb-experience-panel">
+                    <span class="dropdown-value">Select one...</span>
+                  </button>
+                  <div class="dropdown-panel" id="cb-experience-panel" role="listbox">
+                    <button class="dropdown-option" type="button" data-value="not-certified">Not certified yet</button>
+                    <button class="dropdown-option" type="button" data-value="open-water">Open Water</button>
+                    <button class="dropdown-option" type="button" data-value="advanced">Advanced</button>
+                    <button class="dropdown-option" type="button" data-value="rescue">Rescue</button>
+                    <button class="dropdown-option" type="button" data-value="pro">Pro / Divemaster+</button>
+                  </div>
+                  <input id="cb-experience" class="dropdown-input" name="experience" type="text" required readonly />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="cb-group">Group size</label>
+                <div class="dropdown-field" data-dropdown>
+                  <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="cb-group-panel">
+                    <span class="dropdown-value">Select group size...</span>
+                  </button>
+                  <div class="dropdown-panel" id="cb-group-panel" role="listbox">
+                    <button class="dropdown-option" type="button" data-value="solo">Solo</button>
+                    <button class="dropdown-option" type="button" data-value="2">2 divers</button>
+                    <button class="dropdown-option" type="button" data-value="3-4">3-4 divers</button>
+                    <button class="dropdown-option" type="button" data-value="5-8">5-8 divers</button>
+                    <button class="dropdown-option" type="button" data-value="9+">9+ divers</button>
+                  </div>
+                  <input id="cb-group" class="dropdown-input" name="group" type="text" required readonly />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row two">
+              <div class="field">
+                <label for="cb-schedule">Ideal date window</label>
+                <input id="cb-schedule" name="schedule" type="text" placeholder="Example: March 10-18 or weekends in April" required />
+              </div>
+
+              <div class="field">
+                <label for="cb-availability">Preferred days/times</label>
+                <input id="cb-availability" name="availability" type="text" placeholder="Weeknights, weekends, mornings..." required />
+              </div>
+            </div>
+
+            <div class="form-row two">
+              <div class="field">
+                <label for="cb-location">Preferred training area</label>
+                <input id="cb-location" name="location" type="text" placeholder="Haigh, Gilboa, Mermet, or travel" required />
+              </div>
+
+              <div class="field">
+                <label for="cb-payment">Payment options</label>
+                <div class="dropdown-field" data-dropdown>
+                  <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="cb-payment-panel">
+                    <span class="dropdown-value">Select payment option...</span>
+                  </button>
+                  <div class="dropdown-panel" id="cb-payment-panel" role="listbox">
+                    <button class="dropdown-option" type="button" data-value="up-front">All up front</button>
+                    <button class="dropdown-option" type="button" data-value="flexible-plan">Flexible plan</button>
+                    <button class="dropdown-option" type="button" data-value="per-session">Per session</button>
+                  </div>
+                  <input id="cb-payment" class="dropdown-input" name="payment" type="text" required readonly />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="cb-goals">Goals or special requests</label>
+                <textarea id="cb-goals" name="goals" rows="6" placeholder="Tell us what you want from this course..." required></textarea>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="check">
+                <input type="checkbox" name="consent" required />
+                <span>I confirm this is a request for training info and I am okay with DMZ Scuba contacting me.</span>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Send Builder Request</button>
+              <a class="btn secondary" href="../index.html">Back to Training</a>
+            </div>
+
+            <p class="muted small form-note">
+              This opens your email app with the request details (no backend yet).
+            </p>
+          </form>
+        </div>
+
+        <div class="bubble-card bubble-card--steps">
+          <h3>What happens next?</h3>
+          <ol class="steps">
+            <li>You submit your custom plan.</li>
+            <li>We recommend a timeline and training format.</li>
+            <li>We lock in dates, pricing, and logistics.</li>
+          </ol>
+          <p class="muted small">Always dive. For general info or travel requests click here.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <small>Ac <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+    </footer>
+  </div>
+
+  <script src="../../../js/main.js"></script>
+  <script src="../../../js/course-builder.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,1461 @@
+[
+  {
+    "id": "cozumel",
+    "name": "Cozumel",
+    "subtitle": "Some of the very best diving anywhere in the Caribean, this easily accessible Destination has something for everyone.",
+    "lat": 20.42,
+    "lon": -86.92,
+    "tags": [
+      "Reef",
+      "Drift",
+      "Resort",
+      "Beginner Friendly"
+    ],
+    "heroImage": "/assets/images/destinations/cozumel-hero.png",
+    "isoImage": "/assets/images/isometric/iberostar-iso.jpg",
+    "isoTitle": "Iberostar Waves Cozumel with Dressel Divers",
+    "isoDesc": "All-inclusive beachfront resort with on-site dive center and easy access to daily boat dives.",
+    "summary": "Classic Caribbean drift diving with easy logistics and consistent conditions. Expect warm water, short boat rides, and multiple daily dive windows with relaxed surface intervals.",
+    "resort": {
+      "name": "Iberostar Waves Cozumel",
+      "description": "All-inclusive beachfront resort with Dressel Divers onsite for daily boats, gear support, nitrox availability, and effortless schedules for multi-dive days."
+    },
+    "diveSites": [
+      "Palancar Gardens",
+      "Santa Rosa Wall",
+      "Columbia Shallows",
+      "Paradise Reef",
+      "Palancar Caves",
+      "Tormentos Reef",
+      "Chankanaab Reef"
+    ],
+    "conditions": {
+      "visibility": "60-120 ft",
+      "temperature": "78-84 F",
+      "currents": "Light to moderate drift"
+    },
+    "seasonality": "Year-round; best clarity in winter and spring. Summer brings warmer water and calmer seas, with occasional brief storms late summer.",
+    "logistics": "Fly into CUN and ferry to Cozumel or take direct CZM flights. Plan 1-2 hours for transfers plus ferry timing; passport required.",
+    "experience": "Open Water is fine for reefs; Advanced recommended for deeper walls and stronger currents.",
+    "nonDiving": [
+      "San Miguel dining",
+      "Beach day",
+      "Jeep island loop",
+      "Snorkeling",
+      "Beach clubs",
+      "Downtown shopping",
+      "ATV or scooter tour"
+    ],
+    "narrative": "Cozumel delivers effortless drift dives over bright reefs and walls with easy boat access and reliable schedules. Short rides mean more time in the water and flexible surface intervals. Stay at Iberostar Waves Cozumel and walk straight to the boats for a smooth, dive-heavy trip without complicated logistics.",
+    "bullets": [
+      "Best for: reef drifts, photographers, relaxed travel.",
+      "Conditions: warm, clear water with light to moderate drift.",
+      "Skill: Open Water works; Advanced helps for deeper walls.",
+      "Dive style: morning two-tank, optional afternoon add-on.",
+      "Resort flow: walk-up dive ops, easy gear logistics.",
+      "Extras: day trips, food, culture, shore adventures, non-diver friendly."
+    ],
+    "whyItWorks": {
+      "vibe": "Fast drifts, bright reefs, consistent conditions.",
+      "whoLovesIt": "Divers who want simple logistics and lots of bottom time.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "3–5mm wetsuit (or 5mm if you run cold)",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water is fine for reefs; Advanced recommended for deeper walls and stronger currents.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Currents can change—stay streamlined and follow the drift briefing."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights + transfers",
+        "All-inclusive vs à la carte diving",
+        "Nitrox + rentals"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Effortless drifts over bright reefs with wall options and short boat rides.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "greatlakesLM",
+    "name": "Lake Michigan",
+    "subtitle": "One of the greatest of the Great Lakes, full of history. Lake Michigan is full of natural (not artificial) shipwrecks. Some dating back to the 1800s!",
+    "lat": 44.0,
+    "lon": -87.9,
+    "tags": [
+      "Wreck",
+      "Cold Water",
+	  "Advanced Recommended",
+      "Tech Friendly"
+    ],
+    "heroImage": "/assets/images/destinations/lakemichigan-hero.png",
+    "isoImage": "/assets/images/isometric/Lakemichigan-iso.jpg",
+    "isoTitle": "Lake Michigan with Shipwreck Explorers",
+    "isoDesc": "Hands down the best six-pack dive charter on Lake Michigan.",
+    "summary": "Historic wrecks, cold clear water, and big-lake adventure. Expect deeper profiles, layered thermoclines, and pristine wreck structure preserved by the cold.",
+    "resort": {
+      "name": "Shipwreck Explorers",
+      "description": "Trusted local charter focused on small groups, safe wreck access, and flexible schedules with a strong emphasis on briefings and site selection."
+    },
+    "diveSites": [
+      "Milwaukee-area wrecks",
+      "Two Rivers corridor",
+      "Door County sites",
+      "Lake Michigan walls",
+      "Linnwood wrecks",
+      "Wisconsin shipwrecks",
+      "Sheboygan sites"
+    ],
+    "conditions": {
+      "visibility": "15-60 ft",
+      "temperature": "38-70 F",
+      "currents": "Light to moderate; surge possible"
+    },
+    "seasonality": "Late spring through early fall; peak July to September. Early season offers cooler water and fewer crowds.",
+    "logistics": "Drive or fly into Milwaukee or Chicago; 1-3 hour drive to ports. Bring warm layers and plan for boat conditions.",
+    "experience": "Advanced plus drysuit recommended; deep and overhead training for select wrecks.",
+    "nonDiving": [
+      "Maritime museums",
+      "Lakefront dining",
+      "Lighthouses",
+      "Brewery visits",
+      "Lakeshore parks"
+    ],
+    "narrative": "Lake Michigan is a working museum underwater, with wooden schooners and steel wrecks preserved by cold water. A small-boat charter and solid planning unlock crisp visibility and history-rich dives. Expect precise briefings, colder temps, and big-lake conditions that reward experienced divers.",
+    "bullets": [
+      "Best for: wreck lovers, history, structure shots.",
+      "Conditions: cold water; drysuit recommended.",
+      "Skill: Advanced + specialty paths available.",
+      "Dive style: deeper profiles, slower ascents, line work.",
+      "Logistics: charter schedules and weather windows matter.",
+      "Extras: charter options, training progression."
+    ],
+    "whyItWorks": {
+      "vibe": "One of the greatest of the Great Lakes, full of history.",
+      "whoLovesIt": "Divers who want crisp structure, history, and a more expedition feel.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Drysuit strongly recommended",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Advanced plus drysuit recommended; deep and overhead training for select wrecks.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Charter days + weather windows",
+        "Thermal gear",
+        "Travel to port + lodging"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Freshwater wreck structure preserved by cold water; big-lake expedition feel.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "floridakey",
+    "name": "Key Largo",
+    "subtitle": "Easy warm water diving with shallow reefs and wrecks.",
+    "lat": 26,
+    "lon": -81,
+    "tags": [
+      "Reef",
+      "Warm Water",
+      "Beginner Friendly"
+    ],
+    "heroImage": "/assets/images/destinations/florida-hero.png",
+    "isoImage": "/assets/images/isometric/flkeys-iso.jpeg",
+    "isoTitle": "Key Largo with Sea Dwellers Dive Center",
+    "isoDesc": "One of the United States' flagship dive destinations, this domestic location makes travel a breeze.",
+    "summary": "Warm, shallow reefs and accessible wrecks with simple travel. Great visibility, short boat rides, and easy logistics make this a stress-free dive week.",
+    "resort": {
+      "name": "Sea Dwellers Dive Center",
+      "description": "Well-run charter operation with quick access to reefs, wrecks, and the iconic Christ of the Abyss, plus reliable daily schedules."
+    },
+    "diveSites": [
+      "Molasses Reef",
+      "Christ of the Abyss",
+      "USCGC Duane",
+      "USCGC Spiegel Grove",
+      "Benwood Wreck",
+      "French Reef",
+      "Elbow Reef"
+    ],
+    "conditions": {
+      "visibility": "40-80 ft",
+      "temperature": "74-84 F",
+      "currents": "Light to moderate"
+    },
+    "seasonality": "Year-round; summer is warmest and calmest, winter can be breezy with occasional chop.",
+    "logistics": "Fly into MIA or FLL; 1.5-2 hour drive to Key Largo. Easy domestic travel with no passport needed.",
+    "experience": "Open Water for reefs; Advanced for deeper wrecks and currents.",
+    "nonDiving": [
+      "Key lime pie stops",
+      "Mangrove kayaking",
+      "Sunset cruises",
+      "State parks",
+      "Dolphin research center"
+    ],
+    "narrative": "Key Largo is the easiest way to pack in multiple warm-water dives without leaving the country. Short transits and predictable conditions make it ideal for new divers and busy schedules. Reefs in the morning and classic wrecks in the afternoon create an efficient, high-value dive plan.",
+    "bullets": [
+      "Best for: easy dives, warm water, shallow reefs.",
+      "Conditions: warm water; shallow reefs and deeper wrecks.",
+      "Skill: Open Water; Advanced for wrecks.",
+      "Dive style: quick rides, two-tank mornings, optional afternoon.",
+      "Logistics: simple domestic travel and fast transfers.",
+      "Extras: charter options, training progression."
+    ],
+    "whyItWorks": {
+      "vibe": "Easy warm water diving with shallow reefs and wrecks.",
+      "whoLovesIt": "Divers who want simple logistics and lots of bottom time.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "3–5mm wetsuit (or 5mm if you run cold)",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water for reefs; Advanced for deeper wrecks and currents.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "General risk management: hydrate, rest, and keep the plan simple."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights",
+        "Local transport",
+        "Number of dive days"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Shallow reefs plus classic wrecks—easy to stack dives with simple domestic travel.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "haigh",
+    "name": "Haigh Quarry",
+    "subtitle": "Chicagoland's flagship training quarry. Some call it the Caribbean of the Midwest!",
+    "lat": 42,
+    "lon": -88.5,
+    "tags": [
+      "Quarry",
+      "Cold Water",
+	  "Beginner Friendly",
+      "Training"
+    ],
+    "heroImage": "/assets/images/destinations/haigh-hero.png",
+    "isoImage": "/assets/images/isometric/haigh-iso.JPEG",
+    "isoTitle": "Haigh Quarry",
+    "isoDesc": "Local training ground with easy access and a relaxed weekend vibe.",
+    "summary": "Local quarry training with controlled conditions. A dependable spot for skills practice, specialty training, and easy weekend dives.",
+    "resort": {
+      "name": "Haigh Quarry",
+      "description": "Easy access, platforms, and plenty of space for skills work, refreshers, and fun dives with a low-stress surface setup."
+    },
+    "diveSites": [
+      "Training platforms",
+      "Submerged objects",
+      "Shallow training cove",
+      "Sunken boats",
+      "Rope lines for navigation"
+    ],
+    "conditions": {
+      "visibility": "10-30 ft",
+      "temperature": "45-78 F",
+      "currents": "None"
+    },
+    "seasonality": "Late spring through fall, with warmest temps mid-summer and cooler thermoclines in shoulder seasons.",
+    "logistics": "Drive from the Chicago area; on-site parking and basic amenities make day trips simple.",
+    "experience": "Open Water and continuing education. Drysuit is helpful in cooler months.",
+    "nonDiving": [
+      "Picnic areas",
+      "Relax by the quarry",
+      "Local diners",
+      "Shore-side hangout space"
+    ],
+    "narrative": "Haigh is a dependable training spot with controlled conditions and easy access, perfect for building skills and confidence. Platforms and fixed lines make it a strong site for classes and refreshers. It is a low-stress way to keep your diving sharp without long travel.",
+    "bullets": [
+      "Best for: training, quarry weekends, easy dives.",
+      "Conditions: seasonally warm with cold water; drysuit recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: platform work, navigation practice, gear checkouts.",
+      "Logistics: drive-in site with simple day-trip planning.",
+      "Extras: guided dives, training progression."
+    ],
+    "whyItWorks": {
+      "vibe": "Chicagoland's flagship training quarry.",
+      "whoLovesIt": "Divers who want controlled conditions for training and dialing in skills.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Saturday AM",
+        "plan": "Buoyancy tune, platform drills, navigation loop, short fun lap."
+      },
+      {
+        "day": "Saturday PM",
+        "plan": "Specialty skills (drysuit/peak buoyancy/intro tech), then a relaxed tour."
+      },
+      {
+        "day": "Sunday",
+        "plan": "Repeat key skills with less task loading; gear tweaks; finish with a fun dive."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Wetsuit in summer; drysuit in shoulder season",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water and continuing education. Drysuit is helpful in cooler months.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Entry fees",
+        "Tank fills",
+        "Weekend lodging/camping"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Controlled quarry conditions with platforms, lines, and predictable navigation references.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "playa",
+    "name": "Playa del Carmen",
+    "subtitle": "Known for its Cenotes and Bull Sharks, Playa del Carmen makes a perfect day trip from Cozumel.",
+    "lat": 21.5,
+    "lon": -88,
+    "tags": [
+      "Cenote",
+      "Warm Water",
+      "Tech Friendly"
+    ],
+    "heroImage": "/assets/images/destinations/playa-hero.png",
+    "isoImage": "/assets/images/isometric/playa-iso.jpeg",
+    "isoTitle": "Playa del Carmen with Dressel Divers",
+    "isoDesc": "Gateway to cenotes, bull shark season, and easy access to the Riviera Maya.",
+    "summary": "Cenotes and bull shark season with easy access from Cancun or Cozumel. Mix reef dives, cavern tours, and day trips for a varied itinerary.",
+    "resort": {
+      "name": "Dressel Divers Playa",
+      "description": "Reliable operations for cenote trips, reef dives, and bull shark season excursions with clear briefings and transport support."
+    },
+    "diveSites": [
+      "Dos Ojos",
+      "The Pit",
+      "Bull Shark Point",
+      "Tortugas Reef",
+      "Chac Mool",
+      "Kukulkan Cenote",
+      "Mama Vina Wreck"
+    ],
+    "conditions": {
+      "visibility": "80-200 ft in cenotes",
+      "temperature": "75-82 F",
+      "currents": "Mild on reefs; none in cenotes"
+    },
+    "seasonality": "Cenotes year-round; bull sharks November to February. Summer brings warmer water and calmer seas.",
+    "logistics": "Fly into CUN; 45-60 minute drive to Playa del Carmen. Easy transfers and lots of lodging options.",
+    "experience": "Advanced recommended; cavern training for cenotes and strong buoyancy control.",
+    "nonDiving": [
+      "5th Avenue dining",
+      "Beach clubs",
+      "Day trips to Tulum",
+      "Cultural ruins",
+      "Shopping and nightlife"
+    ],
+    "narrative": "Playa del Carmen blends reef diving with the magic of cenotes, creating a trip that feels like two destinations in one. Add bull shark season and you have a high-impact itinerary with short travel times. It is ideal for divers who want variety without complicated logistics.",
+    "bullets": [
+      "Best for: cenotes, bull shark dives, tech-friendly training.",
+      "Conditions: warm water; 3-5mm recommended (extra thermal protection for cenotes).",
+      "Skill: Advanced + specialty paths available.",
+      "Dive style: morning reefs, cenote day trips, seasonal sharks.",
+      "Logistics: easy transfers, lots of lodging and dining.",
+      "Extras: guided day trips arranged from Cozumel."
+    ],
+    "whyItWorks": {
+      "vibe": "Cenotes! Just a day trip away from the island of Cozumel.",
+      "whoLovesIt": "Divers who want variety—reefs plus unique cavern-style environments.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Drysuit strongly recommended",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Advanced recommended; cavern training for cenotes and strong buoyancy control.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights",
+        "Local transport",
+        "Number of dive days"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Cenote cavern tours paired with coastal reefs; buoyancy and trim matter most.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "roatan",
+    "name": "Roatan",
+    "subtitle": "Unmatched topography anywhere in the Caribbean. With some incredibly unique marine life as well!",
+    "lat": 18.2,
+    "lon": -86,
+    "tags": [
+      "Reef",
+      "Warm Water",
+      "Beginner Friendly",
+      "Resort"
+    ],
+    "heroImage": "/assets/images/destinations/roatan-hero.jpeg",
+    "isoImage": "/assets/images/isometric/roatan-iso.jpg",
+    "isoTitle": "Tranquil Seas Roatan",
+    "isoDesc": "Boutique eco-lodge with easy access to Roatan's best reefs and walls.",
+    "summary": "Warm reef diving and easy resort access with short boat rides and calm conditions. Great for relaxed multi-day dive schedules.",
+    "resort": {
+      "name": "Tranquil Seas Roatan",
+      "description": "Small eco-lodge with personalized service, perfect for relaxed days, flexible dive schedules, and easy boat access."
+    },
+    "diveSites": [
+      "Mary's Place",
+      "West End Wall",
+      "El Aguila Wreck",
+      "Sandy Bay",
+      "Spooky Channel",
+      "Blue Channel",
+      "Mandy's Eel Garden"
+    ],
+    "conditions": {
+      "visibility": "60-100 ft",
+      "temperature": "78-84 F",
+      "currents": "Light"
+    },
+    "seasonality": "Year-round; spring and summer are calm. Late summer can be hot with occasional rain.",
+    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Direct flights are available seasonally.",
+    "experience": "Open Water; Advanced for walls and deeper profiles.",
+    "nonDiving": [
+      "West End shops",
+      "Beach days",
+      "Island tours",
+      "Snorkeling from shore",
+      "Local markets"
+    ],
+    "narrative": "Roatan is effortless Caribbean diving with vibrant reefs and memorable walls just minutes from shore. Pair it with a quiet eco-lodge and you get a relaxed pace without sacrificing quality underwater time. It is an excellent option for groups with mixed experience levels.",
+    "bullets": [
+      "Best for: reef dives, dramatic topography, healthy reefs.",
+      "Conditions: warm water; 3-5mm recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: short rides, two to three dives per day.",
+      "Logistics: easy transfers and flexible schedules.",
+      "Extras: guided dives, training progression, land-based activities."
+    ],
+    "whyItWorks": {
+      "vibe": "Unmatched topography anywhere in the Caribbean.",
+      "whoLovesIt": "Divers who want simple logistics and lots of bottom time.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "3–5mm wetsuit (or 5mm if you run cold)",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water; Advanced for walls and deeper profiles.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "General risk management: hydrate, rest, and keep the plan simple."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights",
+        "Local transport",
+        "Number of dive days"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Caribbean reefs and walls with a relaxed resort cadence and short transits.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "california",
+    "name": "Southern California",
+    "subtitle": "From Catalina Island to La Jolla Cove, the cooler Pacific Ocean diving features massive kelp forests and playful sea lions.",
+    "lat": 34,
+    "lon": -119.5,
+    "tags": [
+      "Kelp",
+      "Cool Water",
+      "Advanced Recommended",
+      "Drysuit"
+    ],
+    "heroImage": "/assets/images/destinations/california-hero.png",
+    "isoImage": "/assets/images/isometric/california-iso.jpeg",
+    "isoTitle": "Catalina Island at Casino Point",
+    "isoDesc": "Iconic shore diving in the kelp forest with easy access from Avalon.",
+    "summary": "Kelp forests, sea lions, and cool Pacific water with dramatic light and surge. Shore access makes it budget friendly with flexible dive timing.",
+    "resort": {
+      "name": "Catalina Island at Casino Point",
+      "description": "Shore diving hub with easy entries, gear support, and classic kelp forest scenery with multiple depth profiles."
+    },
+    "diveSites": [
+      "Casino Point",
+      "Blue Cavern",
+      "Farnsworth Bank",
+      "Ship Rock",
+      "Italian Gardens",
+      "Casino Point dive park"
+    ],
+    "conditions": {
+      "visibility": "20-80 ft",
+      "temperature": "55-70 F",
+      "currents": "Moderate; surge possible"
+    },
+    "seasonality": "Best visibility in fall; summer has warmer water. Winter can be cooler with variable conditions.",
+    "logistics": "Fly into LAX; ferry to Catalina and short transit to Avalon. Plan ferry times and gear transport.",
+    "experience": "Open Water; Advanced for deeper sites; drysuit helpful for comfort.",
+    "nonDiving": [
+      "Avalon stroll",
+      "Hiking",
+      "Glass-bottom boat",
+      "Island tours",
+      "Harbor dining"
+    ],
+    "narrative": "Southern California offers a dramatic shift in scenery, with kelp forests that feel like underwater cathedrals. Catalina makes it easy to dive hard by day and enjoy island life at night. Shore diving keeps costs down and allows flexible scheduling around weather.",
+    "bullets": [
+      "Best for: kelp forests, sea lion encounters, shore diving.",
+      "Conditions: cool water; drysuit recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: shore entries, surge awareness, macro life.",
+      "Logistics: ferry planning and gear transport matter.",
+      "Extras: guided dives, training progression, land-based activities."
+    ],
+    "whyItWorks": {
+      "vibe": "Cooler Pacific Ocean diving featuring massive kelp and playful sea lions.",
+      "whoLovesIt": "Divers who want dramatic light, surge, and big scenic environments.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrival + light checkout dive; set weighting; gear dial-in."
+      },
+      {
+        "day": "Day 2",
+        "plan": "Two-tank morning; optional afternoon add-on; easy evening reset."
+      },
+      {
+        "day": "Day 3",
+        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Final dives earlier; start no-fly clock; non-diving afternoon activities."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Drysuit strongly recommended",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water; Advanced for deeper sites; drysuit helpful for comfort.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights",
+        "Local transport",
+        "Number of dive days"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Kelp forests with dramatic shafts of light and occasional surge—very cinematic.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "mermet",
+    "name": "Mermet Springs",
+    "subtitle": "Southern Illinois training quarry with proximity to Southern Illinois University. Come check out the underwater music.",
+    "lat": 39,
+    "lon": -90,
+    "tags": [
+      "Quarry",
+      "Cold Water",
+      "Training",
+	  "Beginner Friendly",
+	  "Camping"
+    ],
+    "heroImage": "/assets/images/destinations/mermet-hero.png",
+    "isoImage": "/assets/images/isometric/mermet-iso.JPEG",
+    "isoTitle": "Mermet Springs",
+    "isoDesc": "Low-key quarry diving with camping and a fun local vibe.",
+    "summary": "Quiet quarry with room for training and fun dives. A strong option for weekend camping and skill-building without long travel.",
+    "resort": {
+      "name": "Mermet Springs",
+      "description": "Spacious quarry with platforms, submerged features, and on-site camping for easy weekends and flexible dive days."
+    },
+    "diveSites": [
+      "Training platforms",
+      "Sunken school bus",
+      "Music stage",
+      "Navigation lines",
+      "Shallow practice areas"
+    ],
+    "conditions": {
+      "visibility": "10-30 ft",
+      "temperature": "45-80 F",
+      "currents": "None"
+    },
+    "seasonality": "Late spring through fall, with best temps in mid-summer and cooler thermoclines early and late season.",
+    "logistics": "Drive from southern Illinois; camping and parking on site make multi-day trips simple.",
+    "experience": "Open Water and continuing education. Drysuit is helpful in cooler months.",
+    "nonDiving": [
+      "Camping",
+      "Cookouts",
+      "Relaxing by the water",
+      "Picnic areas",
+      "Local food stops"
+    ],
+    "narrative": "Mermet is a laid-back quarry weekend with easy logistics, training platforms, and plenty of bottom time. It is ideal for practice dives, new gear checks, or a quick local getaway. The on-site camping option makes it easy to turn a few dives into a full weekend.",
+    "bullets": [
+      "Best for: training, camping, underwater music.",
+      "Conditions: seasonally warm with cold water; drysuit recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: skills practice, gear shakedowns, easy navigation.",
+      "Logistics: camping-friendly with simple drive-in access.",
+      "Extras: camping, training progression."
+    ],
+    "whyItWorks": {
+      "vibe": "Southern Illinois training quarry near Southern Illinois University.",
+      "whoLovesIt": "Divers who want controlled conditions for training and dialing in skills.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Saturday AM",
+        "plan": "Buoyancy tune, platform drills, navigation loop, short fun lap."
+      },
+      {
+        "day": "Saturday PM",
+        "plan": "Specialty skills (drysuit/peak buoyancy/intro tech), then a relaxed tour."
+      },
+      {
+        "day": "Sunday",
+        "plan": "Repeat key skills with less task loading; gear tweaks; finish with a fun dive."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Wetsuit in summer; drysuit in shoulder season",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water and continuing education. Drysuit is helpful in cooler months.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Entry fees",
+        "Tank fills",
+        "Weekend lodging/camping"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Controlled quarry conditions with platforms, lines, and predictable navigation references.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "thailand",
+    "name": "Thailand - Similan Islands",
+    "subtitle": "Unmatched beauty unlike almost anything on Earth! All accessible on a modest budget.",
+    "lat": 8.6,
+    "lon": 97.6,
+    "tags": [
+      "Exotic",
+      "Warm Water",
+      "Advanced Recommended",
+      "Liveaboard",
+      "Budget Friendly"
+    ],
+    "isoImage": "",
+    "isoTitle": "Similan Islands Liveaboard",
+    "isoDesc": "Multi-day liveaboard access to iconic sites and remote reefs.",
+    "summary": "Liveaboard-style adventure with big granite boulders and vibrant reefs. Multiple dives per day with remote access and big-animal potential.",
+    "resort": {
+      "name": "Similan Islands Liveaboard",
+      "description": "A comfortable liveaboard option with multiple dives per day, remote access, and longer itineraries than day boats can reach."
+    },
+    "diveSites": [
+      "Elephant Head Rock",
+      "Christmas Point",
+      "Richelieu Rock",
+      "Anita's Reef",
+      "East of Eden",
+      "Koh Bon",
+      "Koh Tachai"
+    ],
+    "conditions": {
+      "visibility": "60-120 ft",
+      "temperature": "79-86 F",
+      "currents": "Moderate to strong"
+    },
+    "seasonality": "Best November to April; parks often close May to October. High season offers the calmest seas and best visibility.",
+    "logistics": "Fly into HKT; 1-2 hour transfer to Khao Lak pier. Liveaboard schedules are fixed, so plan arrivals carefully.",
+    "experience": "Advanced recommended; comfortable with currents and multi-day diving.",
+    "nonDiving": [
+      "Beach time",
+      "Thai food markets",
+      "Island hopping",
+      "Night markets",
+      "Local temples"
+    ],
+    "narrative": "Thailand is a bucket-list trip with massive boulder formations, colorful reefs, and the liveaboard rhythm of dive, eat, and repeat. It delivers big value and big adventure for divers ready to go farther. Expect long dive days, varied topography, and occasional strong currents.",
+    "bullets": [
+      "Best for: reef dives, exotic travel, high value per dollar.",
+      "Conditions: warm water; 3-5mm recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: four dives per day with remote sites.",
+      "Logistics: fixed liveaboard schedules and transfers.",
+      "Extras: liveaboard options, land-based activities."
+    ],
+    "whyItWorks": {
+      "vibe": "Unmatched beauty unlike almost anything on Earth! All accessible on a modest budget.",
+      "whoLovesIt": "Divers who want simple logistics and lots of bottom time.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Day 1",
+        "plan": "Arrive, board, gear setup, check dive, establish briefing cadence."
+      },
+      {
+        "day": "Day 2",
+        "plan": "3–4 dives across signature sites; current-aware entries; long surface intervals."
+      },
+      {
+        "day": "Day 3",
+        "plan": "3–4 dives; mix topography + optional big-animal site if conditions allow."
+      },
+      {
+        "day": "Day 4",
+        "plan": "Final dives earlier; off-gas window starts; pack gear; return transit."
+      },
+      {
+        "day": "Day 5",
+        "plan": "Disembark; land day / buffer day; no-fly window planning."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "3–5mm wetsuit (or 5mm if you run cold)",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Advanced recommended; comfortable with currents and multi-day diving.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "General risk management: hydrate, rest, and keep the plan simple."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Flights",
+        "Local transport",
+        "Number of dive days"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Liveaboard rhythm with remote reefs/boulders and current-driven action.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  },
+  {
+    "id": "gilboa",
+    "name": "Gilboa Quarry",
+    "subtitle": "One of DMZ's all time favorite local dive sites. Come Camp n' Dive!",
+    "lat": 42.5,
+    "lon": -85,
+    "tags": [
+      "Quarry",
+      "Cold Water",
+      "Beginner & Tech Friendly",
+	  "Camping"
+    ],
+    "heroImage": "/assets/images/destinations/gilboa-hero.png",
+    "isoImage": "/assets/images/isometric/gilboa-iso.JPEG",
+    "isoTitle": "Gilboa Quarry",
+    "isoDesc": "Clear water quarry with easy entries and weekend-friendly logistics.",
+    "summary": "Clear quarry water and easy weekend training with consistent platforms and predictable conditions.",
+    "resort": {
+      "name": "Gilboa Quarry",
+      "description": "Well-known Midwestern quarry with clear water, platforms, and plenty of depth for skills, drills, and specialty dives."
+    },
+    "diveSites": [
+      "Training platforms",
+      "Sunken airplane",
+      "Quarry walls",
+      "Sunken boats",
+      "Navigation circuits"
+    ],
+    "conditions": {
+      "visibility": "20-50 ft",
+      "temperature": "40-75 F",
+      "currents": "None"
+    },
+    "seasonality": "Late spring through fall, with best visibility mid-season and cooler temps early and late.",
+    "logistics": "Drive from Ohio region; camping nearby and easy access make it simple for weekends.",
+    "experience": "Open Water and continuing education. Drysuit is useful in cooler months.",
+    "nonDiving": [
+      "Camping",
+      "Hiking",
+      "Local dining",
+      "Picnic areas",
+      "Gear prep areas"
+    ],
+    "narrative": "Gilboa is the go-to weekend quarry for clear water and consistent training conditions. Platforms and depth variety make it ideal for classes and skill refreshers. It is an easy trip that still feels like a real dive weekend.",
+    "bullets": [
+      "Best for: training weekends, easy diving, clear water.",
+      "Conditions: seasonally warm with cold water; drysuit recommended.",
+      "Skill: Open Water+ recommended; Advanced helps.",
+      "Dive style: platform work, buoyancy practice, easy navigation.",
+      "Logistics: easy drive with weekend camping options.",
+      "Extras: camping, training progression, land-based activities."
+    ],
+    "whyItWorks": {
+      "vibe": "Cold water, great viz, quarry, tech-friendly.",
+      "whoLovesIt": "Divers who want controlled conditions for training and dialing in skills.",
+      "signatureMoments": [
+        "A headline dive that feels larger than life.",
+        "A second, different environment that keeps the week fresh.",
+        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+      ]
+    },
+    "sampleItinerary": [
+      {
+        "day": "Saturday AM",
+        "plan": "Buoyancy tune, platform drills, navigation loop, short fun lap."
+      },
+      {
+        "day": "Saturday PM",
+        "plan": "Specialty skills (drysuit/peak buoyancy/intro tech), then a relaxed tour."
+      },
+      {
+        "day": "Sunday",
+        "plan": "Repeat key skills with less task loading; gear tweaks; finish with a fun dive."
+      }
+    ],
+    "packing": {
+      "exposureProtection": "Wetsuit in summer; drysuit in shoulder season",
+      "mustHaves": [
+        "Mask you trust + spare strap",
+        "Surface signaling: SMB + spool",
+        "Cutting device (site-appropriate)",
+        "Backup light (or primary + backup for low light/overhead)",
+        "Sun protection for topside logistics"
+      ],
+      "niceToHaves": [
+        "Save-a-dive kit (o-rings, mouthpiece, fin straps)",
+        "Wind layer / thermos for boats or cold days",
+        "Wide-angle + macro (or one versatile setup)",
+        "Dry bag / waterproof pouch for travel days"
+      ]
+    },
+    "mediaNotes": {
+      "heroAngleIdeas": [
+        "Low-angle foreground subject with clean negative space for headings.",
+        "Leading lines (reef edge, kelp stalks, wreck ribs) pulling the eye to the subject.",
+        "Sun rays / beam light when available; keep highlights controlled."
+      ],
+      "colorGradeGoal": "Cinematic contrast with protected highlights and selective color pop on the subject.",
+      "captureTips": [
+        "Expose for highlights; lift shadows in post.",
+        "Minimize particulate with fin discipline and careful positioning.",
+        "If using lights, feather the beam to avoid hot spots."
+      ]
+    },
+    "skillAndSafety": {
+      "recommendedCerts": "Open Water and continuing education. Drysuit is useful in cooler months.",
+      "focusSkills": [
+        "Neutral buoyancy + trim for clean water and site protection.",
+        "Situational awareness (buddy position, depth/time, navigation references).",
+        "Controlled ascents + conservative repetitive-day planning."
+      ],
+      "riskNotes": "Cold stress and thermoclines—plan exposure and a warm-up strategy."
+    },
+    "budgetNotes": {
+      "costDrivers": [
+        "Entry fees",
+        "Tank fills",
+        "Weekend lodging/camping"
+      ],
+      "valueMoves": [
+        "Bundle multi-day diving where possible.",
+        "Bring your own core kit (mask/fins/computer) to avoid rental variability.",
+        "Plan a buffer day so the trip stays relaxed."
+      ]
+    },
+    "expandedDetails": {
+      "siteFlavor": "Controlled quarry conditions with platforms, lines, and predictable navigation references.",
+      "whatYoullRemember": [
+        "A signature dive where the scenery feels enormous.",
+        "A smooth 'dive-eat-rest-repeat' day that makes the trip effortless.",
+        "One unexpected moment: a critter encounter, perfect viz, or a clean light beam."
+      ],
+      "tripNotesForDMZ": [
+        "Hero images grade best with a clear subject silhouette and clean negative space.",
+        "Capture a set: wide hero, mid-range action, and tight texture for page variety.",
+        "Avoid heavy dehaze; keep haze cinematic and protect highlights for the DMZ look."
+      ]
+    }
+  }
+]

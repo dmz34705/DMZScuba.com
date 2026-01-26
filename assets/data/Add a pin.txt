@@ -1,0 +1,18 @@
+to add a pin modify this string and insert to destinations.json. do not add to bottom. 
+//
+{
+    "id": "one word unique id",
+    "name": "Formal Title",
+    "subtitle": "Cold water, history, structure, serious vibe.",
+    "lat": 43.0,
+    "lon": -87.9,
+    "tags": ["Wreck", "Cold", "Tech-friendly"],
+    "bullets": [
+      "Best for: wreck lovers, history, structure shots",
+      "Conditions: cold water; drysuit recommended",
+      "Skill: Advanced + specialty paths available",
+      "Extras: charter options, training progression"
+    ]
+  },
+
+//

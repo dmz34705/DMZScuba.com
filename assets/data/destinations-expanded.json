@@ -1,0 +1,648 @@
+[
+  {
+    "id": "cozumel",
+    "summary": "Cozumel is classic Caribbean drift diving with short boat rides, warm water, and consistently clear conditions. The island runs on a reliable two-tank morning rhythm with optional afternoon and night dives for anyone who wants to stack time underwater.",
+    "narrative": "Cozumel delivers effortless walls and reef drifts with easy logistics, which makes it ideal for both first-time tropical travelers and repeat trips. Expect gentle current management, steady boat schedules, and an experience that feels dialed-in from gear setup to surface intervals. It is a place where you can dive hard without burning time on complicated transfers.",
+    "resort": {
+      "description": "Iberostar Waves Cozumel pairs a beachfront all-inclusive setup with an on-site dive center, making it easy to rinse, store, and re-kit between dives. The on-property operation keeps the pace smooth, with minimal transportation time and straightforward daily schedules."
+    },
+    "dayToDay": "Most days run a two-tank morning with optional afternoon or night dives. Boats leave early, return for lunch, and give plenty of surface time to reset. Drift profiles are planned around current, so groups stay together and surface with an SMB when needed.",
+    "resortDetails": "On-site dive ops simplify the routine: gear lockers, rinse areas, and short walks to the dock. The resort layout keeps meals and downtime close, so you can dive hard without burning energy on logistics.",
+    "diveSites": [
+      "Palancar Gardens",
+      "Santa Rosa Wall",
+      "Columbia Shallows",
+      "Paradise Reef",
+      "Palancar Caves",
+      "Tormentos Reef",
+      "Chankanaab Reef",
+      "San Clemente Wall"
+    ],
+    "seasonality": "Year-round destination with best visibility in winter and spring. Summer brings warmer water and calmer seas, while late summer can introduce brief storms without shutting down the entire season.",
+    "logistics": "Fly into CUN and ferry to Cozumel, or take direct flights into CZM when available. Plan for airport transfers and ferry timing, and carry small bills for port fees and tips.",
+    "logisticsDetails": "Plan a buffer day if you route through Cancun, since ferry timing can shift with weather. Marine park fees are typically collected daily. Bring a lightweight jacket for breezy boat rides and reef-safe sunscreen.",
+    "logisticsTips": [
+      "Direct CZM flights save time when available.",
+      "Carry cash for marine park fees and tips.",
+      "Pack an SMB and whistle for drift surfacing.",
+      "Book a night dive early if it is on your list."
+    ],
+    "experience": "Open Water works well for shallow reefs, but Advanced is recommended for deeper walls and more confident drift control. Basic SMB skills and good buoyancy make the experience smoother.",
+    "nonDiving": [
+      "San Miguel dining",
+      "Beach clubs",
+      "Jeep island loop",
+      "Snorkeling",
+      "Downtown shopping",
+      "Sunset waterfront walks"
+    ],
+    "bullets": [
+      "Best for: reef drifts, photographers, relaxed travel.",
+      "Conditions: warm, clear water with light to moderate drift.",
+      "Dive rhythm: morning two-tank plus optional afternoon or night.",
+      "Skill: Open Water works; Advanced helps for walls and currents.",
+      "Resort flow: easy gear handling and short rides to sites.",
+      "Extras: non-diver friendly, easy island exploration."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Palancar Gardens",
+        "details": "Massive coral structures and swim-throughs with gentle drift and strong ambient light."
+      },
+      {
+        "name": "Santa Rosa Wall",
+        "details": "Classic wall dive with deeper contours and big sponges, great for wide-angle shots."
+      },
+      {
+        "name": "Columbia Shallows",
+        "details": "Shallow, colorful reef with long bottom times and easy conditions."
+      },
+      {
+        "name": "Paradise Reef",
+        "details": "A calm site often used for checkout, dusk, or night dives with easy navigation."
+      },
+      {
+        "name": "Palancar Caves",
+        "details": "Dramatic overhangs and tunnels, best for divers comfortable with depth and buoyancy."
+      }
+    ]
+  },
+  {
+    "id": "greatlakesLM",
+    "summary": "Lake Michigan is a wreck-diver playground with crisp structure preserved by cold water. Expect deeper profiles, layered thermoclines, and dives that feel like a living history tour.",
+    "narrative": "The Great Lakes deliver some of the best freshwater wreck diving in the country, with intact wood and steel resting in cold, dark water. A typical day starts early with detailed briefings, a short run to the site, and methodical dives that reward precise planning. It is a big-water trip that feels technical without being overly complex when planned well.",
+    "resort": {
+      "description": "Shipwreck Explorers runs small-group charters with site selection based on conditions and diver experience. The focus is on safe briefings, conservative profiles, and well-organized boat operations."
+    },
+    "dayToDay": "Expect early departures, a single long ride or two shorter runs, and two structured dives. Surface intervals are spent warming up and reviewing dive plans, with careful attention to ascent rates and deco limits.",
+    "resortDetails": "Small-charter operations keep groups tight and flexible. Bring layers, dry storage, and plan for limited onboard space compared to tropical boats.",
+    "diveSites": [
+      "Milwaukee-area wrecks",
+      "Two Rivers corridor",
+      "Door County sites",
+      "Lake Michigan walls",
+      "Sheboygan sites",
+      "Wisconsin shipwrecks",
+      "Linnwood wrecks"
+    ],
+    "seasonality": "Late spring through early fall; peak conditions are July to September. Early season dives are colder but can offer excellent visibility and fewer crowds.",
+    "logistics": "Drive or fly into Milwaukee or Chicago and plan 1-3 hours to port towns. Weather windows matter, so build in buffer time if possible.",
+    "logisticsDetails": "Charters are heavily weather-dependent, and cold fronts can shift plans quickly. Pack extra gloves, hats, and towels for surface intervals, and expect colder thermoclines below.",
+    "logisticsTips": [
+      "Build a buffer day in case of wind or waves.",
+      "Pack redundant cutting tools and a primary light.",
+      "Bring thick gloves and a warm jacket for intervals.",
+      "Confirm charter depth limits before booking."
+    ],
+    "experience": "Advanced plus drysuit recommended, with strong buoyancy control for cold-water exposure. Wreck or deep training is helpful for more advanced sites.",
+    "nonDiving": [
+      "Maritime museums",
+      "Lakefront dining",
+      "Lighthouses",
+      "Brewery visits",
+      "Lakeshore parks"
+    ],
+    "bullets": [
+      "Best for: wreck lovers, history, structure shots.",
+      "Conditions: cold water, layered thermoclines, variable visibility.",
+      "Dive rhythm: early departures, detailed briefings, conservative profiles.",
+      "Skill: Advanced and drysuit recommended; specialty training helps.",
+      "Logistics: charters are weather-dependent, plan buffers.",
+      "Extras: strong non-diver shoreline activities."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Two Rivers Corridor",
+        "details": "Multiple wrecks with preserved wood and steel, often dived as a focused wreck weekend."
+      },
+      {
+        "name": "Sheboygan Wrecks",
+        "details": "Accessible charter sites with good structure and manageable currents."
+      },
+      {
+        "name": "Door County Sites",
+        "details": "Cold, clear water with dramatic walls and wreck options."
+      },
+      {
+        "name": "Milwaukee Area",
+        "details": "Historic shipwrecks near port with strong charter support."
+      },
+      {
+        "name": "Linnwood Wrecks",
+        "details": "Deep, intact wrecks that reward advanced planning and execution."
+      }
+    ]
+  },
+  {
+    "id": "floridakey",
+    "summary": "Key Largo is the easiest way to pack warm-water dives into a short trip, with shallow reefs and accessible wrecks. Short boat rides and predictable conditions make it a high-value, low-stress destination.",
+    "narrative": "Key Largo runs on simple logistics: drive or fly in, board a boat, and dive. Mornings often focus on reefs with optional wrecks or deeper sites later in the day. It is a reliable option for new divers, family trips, or anyone who wants a straightforward warm-water schedule without leaving the country.",
+    "resort": {
+      "description": "Sea Dwellers Dive Center provides consistent daily departures and easy access to both reefs and wrecks. The operation keeps the pace efficient, with short rides and clear briefings."
+    },
+    "dayToDay": "Most operators run two-tank morning dives with optional afternoon or night trips. Reefs are often first, with wrecks later in the day depending on conditions.",
+    "resortDetails": "Local dive shops are set up for quick check-in, gear storage, and easy boarding. The town offers plenty of lodging options, from budget motels to resorts.",
+    "diveSites": [
+      "Molasses Reef",
+      "Christ of the Abyss",
+      "USCGC Duane",
+      "USCGC Spiegel Grove",
+      "Benwood Wreck",
+      "French Reef",
+      "Elbow Reef"
+    ],
+    "seasonality": "Year-round; summer offers the warmest water and calmer seas. Winter can be breezier with occasional surface chop.",
+    "logistics": "Fly into MIA or FLL and drive 1.5-2 hours to Key Largo. Domestic travel keeps things simple with no passport required.",
+    "logisticsDetails": "Plan for traffic on the Overseas Highway, especially on weekends. Most boats depart from central marinas with easy parking and check-in.",
+    "logisticsTips": [
+      "Reserve wreck dives early during peak season.",
+      "Bring reef-safe sunscreen and a light windbreaker.",
+      "Plan extra time for traffic on travel days.",
+      "Pack a mask defog and a spare strap."
+    ],
+    "experience": "Open Water for reefs, Advanced recommended for deeper wrecks and stronger currents.",
+    "nonDiving": [
+      "Key lime pie stops",
+      "Mangrove kayaking",
+      "Sunset cruises",
+      "State parks",
+      "Dolphin research center"
+    ],
+    "bullets": [
+      "Best for: easy warm-water diving with short boat rides.",
+      "Conditions: warm water and generally mild current.",
+      "Dive rhythm: two-tank mornings, optional afternoon add-on.",
+      "Skill: Open Water ok; Advanced for wreck depth.",
+      "Logistics: simple domestic travel and fast transfers.",
+      "Extras: classic Keys food and nature activities."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Molasses Reef",
+        "details": "Iconic shallow reef with easy navigation, great for newer divers."
+      },
+      {
+        "name": "Christ of the Abyss",
+        "details": "Famous statue in shallow water, ideal for longer bottom times."
+      },
+      {
+        "name": "USCGC Duane",
+        "details": "Large wreck with mooring lines and deeper profiles for advanced divers."
+      },
+      {
+        "name": "USCGC Spiegel Grove",
+        "details": "Massive wreck with multiple swim-throughs and strong structure."
+      },
+      {
+        "name": "Benwood Wreck",
+        "details": "Shallow wreck with lots of life, good for longer dives."
+      }
+    ]
+  },
+  {
+    "id": "haigh",
+    "summary": "Haigh Quarry is a local training staple with simple access and consistent conditions. It is ideal for weekend skills practice, checkouts, or relaxed fun dives.",
+    "narrative": "Haigh is built for training: stable entry points, known depths, and predictable conditions. Day-to-day diving is simple, with short surface walks and lots of room to run drills or practice buoyancy. It is a low-effort way to stay current without a big travel plan.",
+    "resort": {
+      "description": "Haigh Quarry offers straightforward day access with platform-based training areas and easy surface logistics. The vibe is relaxed and focused on getting time in the water."
+    },
+    "dayToDay": "Arrive, set up at the shoreline, and run multiple short dives with easy turnaround. Conditions are stable and currents are minimal, so it is ideal for drills and skills practice.",
+    "resortDetails": "Entry points and platforms make it easy to plan training. Facilities are simple but functional, so plan for basic amenities and bring what you need.",
+    "diveSites": [
+      "Training platforms",
+      "Submerged objects",
+      "Shallow training cove",
+      "Sunken boats",
+      "Rope lines for navigation"
+    ],
+    "seasonality": "Late spring through fall, with warmest temps mid-summer and cooler water early and late season.",
+    "logistics": "Drive from the Chicago area with on-site parking and basic amenities. Great for day trips or short weekend plans.",
+    "logisticsDetails": "Weekend crowds can be heavier, so early arrival helps. Bring water, snacks, and shade if you plan a full-day session.",
+    "logisticsTips": [
+      "Arrive early on weekends for parking.",
+      "Pack a thermos and warm layers for intervals.",
+      "Bring a surface marker buoy for practice.",
+      "Plan for basic facilities only."
+    ],
+    "experience": "Open Water and continuing education, with drysuit helpful in cooler months.",
+    "nonDiving": [
+      "Picnic areas",
+      "Relax by the quarry",
+      "Local diners",
+      "Shore-side hangout space"
+    ],
+    "bullets": [
+      "Best for: training, refreshers, and easy weekend dives.",
+      "Conditions: seasonal temps, stable currents, predictable sites.",
+      "Dive rhythm: short walks, fast turnarounds, flexible timing.",
+      "Skill: Open Water+; Advanced is optional.",
+      "Logistics: quick drive-in access, simple day planning.",
+      "Extras: good for classes and gear checkouts."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Training Platforms",
+        "details": "Flat, stable platforms for skills work at known depths."
+      },
+      {
+        "name": "Shallow Training Cove",
+        "details": "Ideal for checkouts, buoyancy drills, and intro dives."
+      },
+      {
+        "name": "Sunken Boats",
+        "details": "Small structures for navigation practice and light exploration."
+      },
+      {
+        "name": "Navigation Lines",
+        "details": "Fixed lines make it easy to run compass and search patterns."
+      }
+    ]
+  },
+  {
+    "id": "playa",
+    "summary": "Playa del Carmen blends reef dives with cenote day trips for a varied itinerary. It is a compact travel plan with strong logistics and big highlights.",
+    "narrative": "Playa is a two-for-one destination: warm-water reefs offshore and dramatic caverns inland. A typical week mixes boat dives with full-day cenote excursions and seasonal bull shark trips. It is a high-impact trip without long transfers, and it suits divers who want variety more than pure repetition.",
+    "resort": {
+      "description": "Dressel Divers Playa supports reef and cenote operations with coordinated transport and clear briefings. The shop makes it easy to build a flexible week around conditions and group preferences."
+    },
+    "dayToDay": "Reef days are boat-based with two-tank trips, while cenote days start earlier with transport inland and two dives per cenote. Expect longer surface intervals on cenote days and slightly cooler water.",
+    "resortDetails": "Dive shops coordinate transport and timing for cenotes, which removes most of the planning burden. Lodging and dining are plentiful within walking distance.",
+    "diveSites": [
+      "Dos Ojos",
+      "The Pit",
+      "Bull Shark Point",
+      "Tortugas Reef",
+      "Chac Mool",
+      "Kukulkan Cenote",
+      "Mama Vina Wreck"
+    ],
+    "seasonality": "Cenotes run year-round, while bull sharks are strongest November through February. Summer brings warmer water and calm seas.",
+    "logistics": "Fly into CUN and plan 45-60 minutes to Playa del Carmen. Cenote days require earlier starts and longer transport times inland.",
+    "logisticsDetails": "Cenote entrance fees and transport are often paid in cash. Bring extra layers for air-conditioned transport and cooler freshwater dives.",
+    "logisticsTips": [
+      "Pack a long-sleeve rash guard for cenotes.",
+      "Bring cash for cenote fees and tips.",
+      "Plan early starts for cenote days.",
+      "Carry a dry bag for transport."
+    ],
+    "experience": "Advanced recommended, with strong buoyancy control for overhead environments. Cavern training is ideal for deeper cenote routes.",
+    "nonDiving": [
+      "5th Avenue dining",
+      "Beach clubs",
+      "Day trips to Tulum",
+      "Cultural ruins",
+      "Shopping and nightlife"
+    ],
+    "bullets": [
+      "Best for: cenotes, bull shark season, trip variety.",
+      "Conditions: warm water; cenotes are cooler and crystal clear.",
+      "Dive rhythm: boat dives plus cenote day trips.",
+      "Skill: Advanced recommended; cavern training for cenotes.",
+      "Logistics: easy transfers, lots of lodging and dining.",
+      "Extras: strong land-based options for non-divers."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Dos Ojos",
+        "details": "Clear cavern system with wide passages and dramatic light."
+      },
+      {
+        "name": "The Pit",
+        "details": "Deep cenote with halocline effects and advanced buoyancy demands."
+      },
+      {
+        "name": "Chac Mool",
+        "details": "Multi-room cavern dive with strong light beams and easy access."
+      },
+      {
+        "name": "Bull Shark Point",
+        "details": "Seasonal dive for experienced divers during winter months."
+      },
+      {
+        "name": "Mama Vina Wreck",
+        "details": "Local wreck option for a change of pace from reefs."
+      }
+    ]
+  },
+  {
+    "id": "roatan",
+    "summary": "Roatan offers warm reef and wall dives with short rides and calm conditions. It is an easy Caribbean option with a relaxed daily pace.",
+    "narrative": "Roatan is built around straightforward boat diving, with two or three dives per day and plenty of time to unwind. The reefs are close to shore, and the walls deliver dramatic depth without extreme logistics. It is a solid choice for mixed-experience groups and divers who want an easy rhythm.",
+    "resort": {
+      "description": "Tranquil Seas Roatan provides a quiet, boutique setup with personalized service and easy access to boat schedules. The focus is on comfort, flexibility, and simple daily flow."
+    },
+    "dayToDay": "Two or three boat dives are typical, with relaxed surface intervals back at the resort or on the boat. Night dives are easy to add when conditions are calm.",
+    "resortDetails": "The boutique setup keeps groups small and schedules flexible. It is easy to adjust dive plans based on experience level or weather.",
+    "diveSites": [
+      "Mary's Place",
+      "West End Wall",
+      "El Aguila Wreck",
+      "Sandy Bay",
+      "Spooky Channel",
+      "Blue Channel",
+      "Mandy's Eel Garden"
+    ],
+    "seasonality": "Year-round; spring and summer are calm with warm water. Late summer can bring brief storms but diving remains strong.",
+    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Seasonal directs make travel easier at peak times.",
+    "logisticsDetails": "US dollars are widely accepted. Transfers are straightforward and short, but plan for airport congestion on heavy travel days.",
+    "logisticsTips": [
+      "Pack light layers for breezy boat rides.",
+      "Carry small bills for tips and taxis.",
+      "Confirm baggage limits on island flights.",
+      "Ask about night dive schedules early."
+    ],
+    "experience": "Open Water ok, Advanced recommended for walls and deeper profiles.",
+    "nonDiving": [
+      "West End shops",
+      "Beach days",
+      "Island tours",
+      "Snorkeling from shore",
+      "Local markets"
+    ],
+    "bullets": [
+      "Best for: easy Caribbean diving and healthy reefs.",
+      "Conditions: warm water with light currents.",
+      "Dive rhythm: two to three dives per day with short rides.",
+      "Skill: Open Water ok; Advanced for deeper walls.",
+      "Logistics: easy transfers and relaxed daily pace.",
+      "Extras: great for mixed groups and non-divers."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Mary's Place",
+        "details": "Iconic crack and wall dive with dramatic vertical relief."
+      },
+      {
+        "name": "West End Wall",
+        "details": "Classic wall with easy access and vibrant reef life."
+      },
+      {
+        "name": "El Aguila Wreck",
+        "details": "Shallow wreck with easy exploration and good photo angles."
+      },
+      {
+        "name": "Spooky Channel",
+        "details": "Swim-throughs and channels with light beams and structure."
+      },
+      {
+        "name": "Mandy's Eel Garden",
+        "details": "Sandy area filled with garden eels, perfect for slow dives."
+      }
+    ]
+  },
+  {
+    "id": "california",
+    "summary": "Southern California delivers kelp forests, sea lions, and dramatic light in cooler Pacific water. Shore diving keeps costs down and allows flexible timing.",
+    "narrative": "Catalina and the SoCal coastline feel like a different planet compared to tropical reefs. Giant kelp, surge channels, and playful wildlife create a dynamic dive that rewards solid buoyancy. A typical day is built around shore entries or short boat rides, with plenty of time to explore topside between dives.",
+    "resort": {
+      "description": "Casino Point is a classic shore-dive hub with easy access, clear entry points, and a wide range of depth profiles. It supports everything from beginner checkouts to deeper excursions."
+    },
+    "dayToDay": "Most days include two shore dives with a long surface interval to warm up and reset. Boat dives are optional for deeper sites, but shore diving alone can fill a weekend.",
+    "resortDetails": "Casino Point has benches, stairs, and easy entry lines that simplify shore diving. Gear rental and fills are readily available in Avalon.",
+    "diveSites": [
+      "Casino Point",
+      "Blue Cavern",
+      "Farnsworth Bank",
+      "Ship Rock",
+      "Italian Gardens",
+      "Casino Point dive park"
+    ],
+    "seasonality": "Best visibility in fall, with warmer water in summer. Winter can be cooler with more variable surface conditions.",
+    "logistics": "Fly into LAX and take the ferry to Catalina, then plan gear transport to Avalon. Timing ferries is the main constraint.",
+    "logisticsDetails": "Ferries sell out during peak weekends, so book early. Gear carts and rental options can reduce the load if you do not want to carry everything.",
+    "logisticsTips": [
+      "Bring a hood and gloves for comfort.",
+      "Plan ferry times around dive windows.",
+      "Use gear carts or rent locally if needed.",
+      "Check surge forecasts before shore entry."
+    ],
+    "experience": "Open Water ok; Advanced recommended for deeper sites. Drysuit or thicker wetsuit helps for comfort.",
+    "nonDiving": [
+      "Avalon stroll",
+      "Hiking",
+      "Glass-bottom boat",
+      "Island tours",
+      "Harbor dining"
+    ],
+    "bullets": [
+      "Best for: kelp forests, sea lion encounters, shore diving.",
+      "Conditions: cool water, surge possible, variable vis.",
+      "Dive rhythm: shore entries and flexible scheduling.",
+      "Skill: Open Water ok; Advanced for deeper sites.",
+      "Logistics: ferry planning and gear transport matter.",
+      "Extras: strong topside activities on the island."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Casino Point Park",
+        "details": "Protected shore site with easy entries and abundant marine life."
+      },
+      {
+        "name": "Italian Gardens",
+        "details": "Shallow kelp and rock formations, great for photos."
+      },
+      {
+        "name": "Blue Cavern",
+        "details": "Boat-accessed site with big rock features and deeper profiles."
+      },
+      {
+        "name": "Farnsworth Bank",
+        "details": "Advanced site known for deep water and strong currents."
+      },
+      {
+        "name": "Ship Rock",
+        "details": "Varied terrain with a mix of kelp, rock, and swim-throughs."
+      }
+    ]
+  },
+  {
+    "id": "mermet",
+    "summary": "Mermet Springs is a laid-back quarry with camping and steady conditions. It is a practical, low-cost way to build skills and bottom time.",
+    "narrative": "Mermet is ideal for skills days, gear shakedowns, and relaxed weekend dives. The quarry layout is simple, with platforms and landmarks that make navigation practice easy. The camping option turns a couple of dives into a full weekend without heavy planning.",
+    "resort": {
+      "description": "Mermet Springs offers on-site camping, easy entries, and simple surface logistics. The site favors flexible schedules and casual dive days."
+    },
+    "dayToDay": "Plan multiple dives with short turnarounds and plenty of time for surface breaks. The site is easy to navigate and forgiving for practice dives.",
+    "resortDetails": "Camping keeps the pace relaxed and allows early starts. Facilities are basic, so pack what you need for the day.",
+    "diveSites": [
+      "Training platforms",
+      "Sunken school bus",
+      "Music stage",
+      "Navigation lines",
+      "Shallow practice areas"
+    ],
+    "seasonality": "Late spring through fall, with best temps in mid-summer and cooler thermoclines early and late season.",
+    "logistics": "Drive from southern Illinois with parking and camping on site. It is a straightforward weekend trip with minimal overhead.",
+    "logisticsDetails": "Plan for on-site cooking or nearby food options. Bring shade and extra hydration for summer weekends.",
+    "logisticsTips": [
+      "Pack a canopy or shade for the surface interval.",
+      "Bring warm layers for early and late season.",
+      "Carry extra batteries for lights and cameras.",
+      "Arrive early if you want a campsite."
+    ],
+    "experience": "Open Water and continuing education; drysuit is useful in cooler months.",
+    "nonDiving": [
+      "Camping",
+      "Cookouts",
+      "Relaxing by the water",
+      "Picnic areas",
+      "Local food stops"
+    ],
+    "bullets": [
+      "Best for: training, camping, and easy navigation practice.",
+      "Conditions: seasonal temps, stable visibility, no currents.",
+      "Dive rhythm: flexible timing with easy turnaround.",
+      "Skill: Open Water ok; Advanced optional.",
+      "Logistics: simple drive-in access with camping.",
+      "Extras: perfect for gear checkouts and refreshers."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Sunken School Bus",
+        "details": "A fun landmark with simple navigation and good visibility."
+      },
+      {
+        "name": "Music Stage",
+        "details": "Unique site for easy exploration and training dives."
+      },
+      {
+        "name": "Training Platforms",
+        "details": "Reliable platform depths for skills and drills."
+      },
+      {
+        "name": "Navigation Lines",
+        "details": "Fixed lines that make compass practice easy."
+      }
+    ]
+  },
+  {
+    "id": "thailand",
+    "summary": "The Similan Islands deliver liveaboard-style diving with remote sites and big topography. Expect multiple dives per day and a focused dive schedule.",
+    "narrative": "Thailand liveaboards run a dive, eat, sleep, repeat rhythm with four dives a day and access to sites day boats cannot reach. The Similans are known for granite boulders, vibrant reefs, and occasional pelagics. It is a high-value trip for divers who want volume, variety, and a true expedition feel.",
+    "resort": {
+      "description": "A dedicated liveaboard setup keeps you close to the best sites and maximizes bottom time. The experience is structured, with fixed schedules and planned meals between dives."
+    },
+    "dayToDay": "Most days include four dives with detailed briefings and structured surface intervals. Nights are quiet and centered around rest and gear prep.",
+    "resortDetails": "Liveaboard cabins are compact but functional, with dedicated gear stations and rinse areas. The crew manages schedules tightly to maximize diving time.",
+    "diveSites": [
+      "Elephant Head Rock",
+      "Christmas Point",
+      "Richelieu Rock",
+      "Anita's Reef",
+      "East of Eden",
+      "Koh Bon",
+      "Koh Tachai"
+    ],
+    "seasonality": "Best November to April; parks often close May to October. Peak season offers the calmest seas and best visibility.",
+    "logistics": "Fly into HKT and transfer to Khao Lak pier. Liveaboards have fixed departure times, so build in arrival buffers.",
+    "logisticsDetails": "National park fees and fuel surcharges are common. Pack light but include multiple swimwear options and reef protection.",
+    "logisticsTips": [
+      "Arrive a day early to avoid missed departures.",
+      "Pack a reef hook and SMB for current sites.",
+      "Bring motion sickness meds if you are sensitive.",
+      "Keep dry bags handy for electronics."
+    ],
+    "experience": "Advanced recommended; comfort with currents and repetitive diving is important.",
+    "nonDiving": [
+      "Beach time",
+      "Thai food markets",
+      "Island hopping",
+      "Night markets",
+      "Local temples"
+    ],
+    "bullets": [
+      "Best for: liveaboard volume and exotic reefs.",
+      "Conditions: warm water with moderate to strong currents.",
+      "Dive rhythm: four dives per day on a fixed schedule.",
+      "Skill: Advanced recommended; SMB and buoyancy control key.",
+      "Logistics: fixed departures and transfers.",
+      "Extras: great value per dive day."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Richelieu Rock",
+        "details": "Top-tier site known for soft corals and big-life encounters."
+      },
+      {
+        "name": "Elephant Head Rock",
+        "details": "Granite boulders with swim-throughs and varied depth profiles."
+      },
+      {
+        "name": "Koh Bon",
+        "details": "Ridge dive with potential for manta sightings."
+      },
+      {
+        "name": "Koh Tachai",
+        "details": "Strong currents and big schools, best for confident divers."
+      },
+      {
+        "name": "East of Eden",
+        "details": "Colorful reef with layered terrain and good visibility."
+      }
+    ]
+  },
+  {
+    "id": "gilboa",
+    "summary": "Gilboa Quarry is known for clear water, easy access, and solid training conditions. It is a reliable weekend option for Midwest divers.",
+    "narrative": "Gilboa combines visibility and consistent structure, making it a favorite for classes and skill refreshers. The layout supports a clean day-to-day flow: gear up, short walk, dive, and repeat. It is the kind of site where you can build confidence and still enjoy the dive.",
+    "resort": {
+      "description": "Gilboa Quarry provides straightforward access, clear water for a quarry, and depths that support everything from basic training to advanced practice. Surface logistics are easy and weekend-friendly."
+    },
+    "dayToDay": "The standard pace is multiple dives with short turnarounds and consistent entry points. Conditions stay stable, which makes it a strong choice for classes and practice.",
+    "resortDetails": "Easy access and clear water make it comfortable for newer divers. The layout supports skill circuits and structured training paths.",
+    "diveSites": [
+      "Training platforms",
+      "Sunken airplane",
+      "Quarry walls",
+      "Sunken boats",
+      "Navigation circuits"
+    ],
+    "seasonality": "Late spring through fall, with best visibility mid-season. Cooler water is common early and late in the season.",
+    "logistics": "Drive from the Ohio region with nearby camping options and easy entry. Day trips or quick weekends are common.",
+    "logisticsDetails": "On busy weekends, arrive early to secure parking and staging space. Bring layers for cooler surface intervals in shoulder seasons.",
+    "logisticsTips": [
+      "Arrive early for parking and staging.",
+      "Bring gloves and a hood for cooler days.",
+      "Pack spare mask and fin straps.",
+      "Plan breaks for warming up between dives."
+    ],
+    "experience": "Open Water and continuing education; drysuit helps in cooler months.",
+    "nonDiving": [
+      "Camping",
+      "Hiking",
+      "Local dining",
+      "Picnic areas",
+      "Gear prep areas"
+    ],
+    "bullets": [
+      "Best for: training weekends, clear quarry water.",
+      "Conditions: seasonal temps, stable visibility, no currents.",
+      "Dive rhythm: efficient turnarounds and flexible timing.",
+      "Skill: Open Water ok; Advanced for deeper practice.",
+      "Logistics: easy drive and weekend-friendly planning.",
+      "Extras: good for classes and skill refreshers."
+    ],
+    "diveSiteHighlights": [
+      {
+        "name": "Sunken Airplane",
+        "details": "A signature site with easy access and strong photo appeal."
+      },
+      {
+        "name": "Training Platforms",
+        "details": "Stable depths for skills work and buoyancy drills."
+      },
+      {
+        "name": "Quarry Walls",
+        "details": "Sloping walls that provide depth transitions and navigation."
+      },
+      {
+        "name": "Navigation Circuits",
+        "details": "Fixed routes that make compass practice easy."
+      },
+      {
+        "name": "Sunken Boats",
+        "details": "Small structures used for search patterns and exploration."
+      }
+    ]
+  }
+]

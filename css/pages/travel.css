@@ -1,0 +1,459 @@
+﻿/* Match training hero spacing + alignment */
+body {
+  background:
+    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.14) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.88) 0%, rgba(7, 19, 37, 0.92) 100%),
+    url("../../assets/images/hero/hero-globe.png");
+  background-size: 110% auto;
+  background-position: center -80px;
+  background-repeat: repeat-y;
+}
+
+.page-hero {
+  padding: 44px 18px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-image: url("../../assets/images/hero/hero-travel2.png");
+  background-size: cover;
+  background-position: 40% 50%;
+  position: relative;
+}
+
+.page-hero > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Nudge Travel hero content down to match Training */
+.page-hero .page-hero-inner {
+  padding-top: 18px;
+}
+
+/* Travel hero card: match mobile "stacked tile" look on desktop */
+.page-hero-card {
+  background: rgba(8, 14, 24, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.page-hero-card.travel-hero-logo{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 100%;
+  max-width: 360px;
+  justify-self: end;
+  align-self: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.page-hero-card.travel-hero-logo img{
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.page-hero-card .stat {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 11, 20, 0.55);
+  padding: 12px 14px;
+}
+
+.page-hero-card .stat-label {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(234, 242, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.page-hero-card .stat-value {
+  font-weight: 700;
+  font-size: 15px;
+  color: rgba(234, 242, 255, 0.95);
+}
+
+/* =========================
+   TRAVEL â€” INTERACTIVE GLOBE (POC)
+   ========================= */
+
+/* Adjusted globe wrap layout for perfect centering */
+body .page .globe-wrap {
+  height: 560px !important; /* Larger globe area to fill the card */
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin: 0 auto !important; /* Center globe inside the card */
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: calc(var(--radius) - 6px);
+  overflow: hidden;
+}
+
+body .page .globe-shell {
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+  padding: 16px;
+  overflow: hidden;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+
+
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .page-hero{
+    background-image: none;
+  }
+
+  .page-hero::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("../../assets/images/hero/hero-travel2.png");
+    background-size: cover;
+    background-position: 40% 50%;
+    transform: scaleX(-1);
+    z-index: 0;
+  }
+
+  body .page .globe-shell {
+    padding: 10px;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  body .page .globe-wrap {
+    aspect-ratio: 1 / 1 !important; /* Square aspect ratio */
+    height: auto !important; /* Let aspect ratio control height */
+    width: 100% !important;
+    padding: 0 !important; /* Maximize globe size on mobile */
+    border-radius: calc(var(--radius) - 6px);
+    overflow: hidden;
+  }
+
+  body .page .globe-wrap canvas {
+    width: 100% !important; /* Ensure canvas fits */
+    height: auto !important; /* Prevent vertical stretch */
+    aspect-ratio: 1 / 1;
+    border-radius: calc(var(--radius) - 6px);
+  }
+
+  /* Hide extra instruction tiles */
+  .globe-instructions, .globe-help, .globe-overlay-text {
+    display: none !important;
+  }
+}
+
+
+/* Adjust canvas to fit globe size */
+.globe-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius) - 6px);
+}
+
+/* Hide hints and instruction tiles on mobile */
+.globe-hint {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(5,11,20,0.62);
+  color: rgba(234,242,255,0.75);
+  font-weight: 650;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+}
+
+/* Refined destination grid layout */
+body .page .destination-grid {
+  margin-top: 40px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; /* Two columns on desktop */
+  gap: 20px !important; /* Standardize the gap between the cards */
+  justify-items: stretch !important;
+}
+
+/* Ensure proper stacking and responsiveness for mobile */
+@media (max-width: 768px) {
+  body .page .destination-grid {
+    grid-template-columns: minmax(0, 1fr) !important; /* Stack items on mobile */
+    gap: 16px !important; /* Adjust gap for mobile layout */
+    width: 100% !important;
+  }
+}
+
+
+.destination-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.destination-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Destination Grid Layout */
+body .page .destination-grid {
+  margin-top: 40px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; /* Two columns on desktop */
+  gap: 24px !important; /* Increased gap for spacing between cards */
+  justify-items: stretch !important; /* Fill each column for consistent card width */
+}
+
+/* Mobile responsiveness for grid */
+@media (max-width: 768px) {
+  body .page .destination-grid {
+    grid-template-columns: minmax(0, 1fr) !important; /* Stack items on mobile */
+    gap: 16px !important; /* Adjust gap on mobile */
+    width: 100% !important;
+  }
+}
+
+/* Ensure mobile responsiveness */
+@media (max-width: 768px) {
+  body .page .destination-grid {
+    grid-template-columns: minmax(0, 1fr) !important; /* Stack items on mobile */
+    gap: 16px !important; /* Adjust gap for mobile */
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body .page .destination-card {
+    overflow: hidden;
+  }
+
+  body .page .destination-card .iso-link {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body .page .destination-card .iso-placeholder {
+    width: 100%;
+    max-width: 100%;
+    min-height: 180px;
+  }
+}
+
+/* Ensure mobile responsiveness for the grid */
+@media (max-width: 768px) {
+  body .page .destination-grid {
+    grid-template-columns: minmax(0, 1fr) !important; /* Stack items on mobile */
+    gap: 16px !important; /* Adjust gap for mobile */
+    width: 100% !important;
+  }
+}
+
+/* Destination card style adjustments */
+body .page .destination-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background: rgba(0, 0, 0, 0.18) !important;
+  padding: 18px !important; /* Slightly reduce padding for better fit */
+  transition: transform 0.3s ease !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Hover effect */
+body .page .destination-card:hover {
+  transform: translateY(-4px) !important;
+}
+
+body .page .destination-actions .btn[aria-disabled="true"] {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.micro-note--mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .micro-note {
+    display: none;
+  }
+
+  .micro-note--mobile {
+    display: block;
+    margin: 0;
+  }
+}
+
+
+/* Hover effect */
+body .page .destination-card:hover {
+  transform: translateY(-4px) !important;
+}
+
+body .page .destination-card:hover {
+  transform: translateY(-4px) !important; /* Hover effect for cards */
+}
+
+
+.destination-card:hover {
+  transform: translateY(-4px);
+}
+
+.iso-placeholder {
+  margin-top: 12px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: radial-gradient(900px 520px at 30% 0%, rgba(60,170,255,0.12) 0%, rgba(5,11,20,0) 60%), linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.18) 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.iso-placeholder .iso-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.iso-placeholder.is-loaded .iso-image {
+  opacity: 1;
+}
+
+.iso-placeholder .iso-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 12px;
+  transition: opacity 220ms ease;
+}
+
+.iso-placeholder.is-loaded .iso-label {
+  opacity: 0;
+}
+
+.iso-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Destination list */
+.destination-list {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.destination-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(234, 242, 255, 0.95);
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.destination-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(85, 185, 255, 0.45);
+  background: rgba(10, 18, 30, 0.5);
+}
+
+.destination-item-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.destination-item-sub {
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 13px;
+}
+
+.destination-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.destination-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 6px 10px;
+  min-height: 24px;
+  line-height: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: rgba(234, 242, 255, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+}
+
+/* Increased spacing for hero section */
+body .page .page-hero {
+  margin-bottom: 60px !important; /* Tighten gap to globe section */
+}
+
+
+.site-footer {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #0d0e14;
+}
+
+/* Mobile destination grid adjustments */
+@media (max-width: 768px) {
+  .destination-grid {
+    grid-template-columns: 1fr !important; /* Stack items on mobile */
+    gap: 16px !important; /* Adjust gap */
+    width: 100% !important; /* Ensure full-width layout on mobile */
+  }
+}
+
+
+

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DMZ Scuba | Media</title>
+  <meta name="description" content="Underwater videos, photos, and trip highlights from DMZ Scuba." />
+
+  <!-- Site-wide CSS -->
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/media.css?v=1.0" />
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+
+<body id="top">
+  <!-- Header / Nav (match your other pages) -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a class="logo" href="../../index.html" aria-label="DMZ Scuba Home">
+        <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+      </a>
+      <div class="site-name">DMZ Scuba LLC</div>
+
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a href="../../index.html">Home</a>
+        <a href="../training/index.html">Training</a>
+        <a href="../travel/index.html">Travel</a>
+        <a class="is-active" href="./index.html">Media</a>
+        <a href="../contact/index.html">Contact</a>
+        <a class="nav-cta" href="../contact/index.html#dive-now">Dive Now</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Page Hero -->
+  <main class="page">
+    <section class="page-hero">
+      <div class="page-hero-inner">
+        <div class="page-hero-copy">
+          <h1>Media Library</h1>
+          <p class="page-hero-sub">
+            A living archive of DMZ dives, training sessions, and trip highlights. Use the filters to quickly find videos,
+            photos, locations, and tags.
+          </p>
+
+          <div class="page-hero-actions">
+            <a class="btn primary" href="#latest">Browse Library</a>
+            <a class="btn secondary" href="../travel/index.html#globe">Explore Globe</a>
+          </div>
+        </div>
+
+        <div class="page-hero-card media-hero-card media-hero-logo">
+          <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo">
+        </div>
+      </div>
+
+    </section>
+
+    <section class="section media-intro">
+      <div class="media-intro-grid">
+        <div class="media-intro-card">
+          <h2>What you will find here</h2>
+          <p>Dive footage, training clips, and photo sets from trips and local sessions, organized by type, tag, and location.</p>
+          <ul>
+            <li>Great Lakes wrecks and quarry training days.</li>
+            <li>Reef dives and travel highlights.</li>
+            <li>Short clips, full dives, and photo galleries.</li>
+          </ul>
+        </div>
+        <div class="media-intro-card">
+          <h2>How to use this page</h2>
+          <ol>
+            <li>Start with a type (Video or Photo).</li>
+            <li>Narrow by tag or location.</li>
+            <li>Click a card to view the media.</li>
+          </ol>
+          <p class="media-intro-note">Tip: Use the search bar to find dive sites or trips fast.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter bar -->
+    <section class="section media-wide" id="latest">
+      <div class="section-head">
+        <div class="section-title">
+          <h2>Browse Media</h2>
+          <p class="section-sub">Filter by type, tags, or location to find exactly what you want.</p>
+        </div>
+        <div class="filterbar-meta">
+          <span class="results-count" id="mediaResultsCount">0</span>
+          <label class="filter-range">
+            <span class="filter-range-label">Card Size</span>
+            <input id="mediaCardSize" type="range" min="220" max="380" value="280" step="20" />
+            <span class="filter-range-value" id="mediaCardSizeValue">280px</span>
+          </label>
+          <button class="filter-clear-all" id="mediaClearFilters" type="button">Clear Filters</button>
+        </div>
+      </div>
+
+      <div class="filterbar" role="group" aria-label="Filter media">
+        <label class="filter-search" aria-label="Search media">
+          <span class="filter-search-label">Search</span>
+          <input id="mediaSearch" type="search" placeholder="Search media..." autocomplete="off" />
+        </label>
+        <button class="chip is-active" type="button" data-filter="all">All</button>
+        <button class="chip" type="button" data-filter="video">Video</button>
+        <button class="chip" type="button" data-filter="photo">Photo</button>
+        <button class="chip" type="button" data-filter="wreck">Wreck</button>
+        <button class="chip" type="button" data-filter="reef">Reef</button>
+        <button class="chip" type="button" data-filter="training">Training</button>
+        <div class="filter-dropdown" data-role="tag-filter">
+          <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="tagFilterPanel">
+            Tags <span class="filter-count">0</span>
+          </button>
+          <div class="filter-panel" id="tagFilterPanel" role="group" aria-label="Filter tags">
+            <div class="filter-panel-head">
+              <span>Filter tags</span>
+              <button class="filter-clear" type="button">Clear</button>
+            </div>
+            <div class="filter-list"></div>
+          </div>
+        </div>
+        <div class="filter-dropdown" data-role="location-filter">
+          <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="locationFilterPanel">
+            Location: <span class="filter-selection">All</span>
+          </button>
+          <div class="filter-panel" id="locationFilterPanel" role="group" aria-label="Filter locations">
+            <div class="filter-panel-head">
+              <span>Filter locations</span>
+              <button class="filter-clear" type="button">Clear</button>
+            </div>
+            <div class="filter-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content grid -->
+      <div class="media-grid" id="mediaGrid">
+        <!-- Populated by js/media.js -->
+      </div>
+      <div class="media-empty" id="mediaEmpty" aria-live="polite">
+        No media matches those filters yet. Try clearing filters or searching a different term.
+      </div>
+    </section>
+
+    <!-- YouTube / Instagram callouts -->
+    <section class="section">
+      <div class="callout-grid">
+        <div class="callout-card">
+          <h2>YouTube</h2>
+          <p>Uncut dives, cinematic wreck footage, travel recaps, and skill sessions.</p>
+          <a class="btn primary" href="https://www.youtube.com/@divemasterzach34705" target="_blank" rel="noopener">View Channel</a>
+          <p class="micro-note">Replace this link with your real channel URL.</p>
+        </div>
+
+        <div class="callout-card">
+          <h2>Instagram</h2>
+          <p>Short-form clips, trip highlights, and behind-the-scenes gear + training.</p>
+          <a class="btn secondary" href="https://www.instagram.com/dmzscuba?igsh=MW95dWJleGpzbDY3aQ%3D%3D&utm_source=qr" target="_blank" rel="noopener">Open Instagram</a>
+          <p class="micro-note">Replace this link with your real Instagram URL.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Photo Gallery section -->
+    <section class="section" id="gallery">
+      <div class="section-head">
+        <h2>Photo Gallery</h2>
+        <p class="section-sub">A simple grid now. We can upgrade to a lightbox slideshow later.</p>
+      </div>
+
+      <div class="photo-grid" id="photoGrid">
+        <!-- Populated by js/media.js -->
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      &copy; 2026 DMZ Scuba. All rights reserved.
+    </footer>
+    <div class="media-edit-actions" role="group" aria-label="Media edit actions">
+      <button class="media-edit-toggle" type="button" aria-pressed="false">DMZ Media Upload</button>
+      <a class="back-to-top" href="#top" aria-label="Back to top">Back to top</a>
+      <button class="media-edit-export" type="button">Export JSON</button>
+      <button class="media-edit-reset" type="button">Reset Draft</button>
+    </div>
+  </main>
+
+  <!-- Site-wide JS -->
+  <script src="../../js/main.js" defer></script>
+  <script src="../../js/media.js" defer></script>
+  <script src="../../js/media-edit.js" defer></script>
+  <script>
+    (() => {
+      const backToTop = document.querySelector(".back-to-top");
+      if (!backToTop) return;
+      const updateTarget = () => {
+        const isMobile = window.matchMedia("(max-width: 780px)").matches;
+        backToTop.setAttribute("href", isMobile ? "#latest" : "#top");
+      };
+      updateTarget();
+      window.addEventListener("resize", updateTarget);
+    })();
+  </script>
+</body>
+</html>
+
+
