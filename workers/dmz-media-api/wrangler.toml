@@ -8,10 +8,5 @@ database_name = "dmz_media"
 database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
 
 [vars]
-# Set these in Cloudflare dashboard or via `wrangler secret put`
-ADMIN_USER = "DMZ"
-ADMIN_PASS = "DMZ34705!"
-CF_ACCOUNT_ID = "REPLACE_WITH_ACCOUNT_ID"
-CF_STREAM_TOKEN = "REPLACE_WITH_STREAM_API_TOKEN"
 # Optional: comma-separated list of allowed origins.
-ALLOWED_ORIGINS = "*"
+ALLOWED_ORIGINS = "https://dmzscuba-com.pages.dev,https://dmzscuba.com"
