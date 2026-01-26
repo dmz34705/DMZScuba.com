@@ -5,7 +5,7 @@ compatibility_date = "2026-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "dmz_media"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
 
 [vars]
 # Set these in Cloudflare dashboard or via `wrangler secret put`
