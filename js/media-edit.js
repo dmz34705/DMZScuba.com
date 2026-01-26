@@ -116,23 +116,28 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       error.textContent = "";
-      const resp = await apiFetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
-      });
-      if (!resp.ok) {
-        error.textContent = "Login failed. Check credentials.";
-        return;
+      try {
+        const resp = await apiFetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
+        });
+        if (!resp.ok) {
+          error.textContent = "Login failed. Check credentials.";
+          return;
+        }
+        const data = await resp.json();
+        if (!data.token) {
+          error.textContent = "Login failed. Try again.";
+          return;
+        }
+        setToken(data.token);
+        close();
+        if (typeof onSuccess === "function") onSuccess();
+      } catch (err) {
+        console.error("Media login failed.", err);
+        error.textContent = "Login failed. Check the console for details.";
       }
-      const data = await resp.json();
-      if (!data.token) {
-        error.textContent = "Login failed. Try again.";
-        return;
-      }
-      setToken(data.token);
-      close();
-      if (typeof onSuccess === "function") onSuccess();
     });
   }
 
