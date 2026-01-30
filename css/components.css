@@ -188,7 +188,7 @@
 .feature-card-refresh{
   background:
     linear-gradient(180deg, rgba(5,11,20,0.45) 0%, rgba(5,11,20,0.85) 100%),
-    url("../assets/images/hero/hero-refresh.png");
+    url("../assets/images/hero/hero-skillsrefresh.png");
   background-size: cover;
   background-position: center 40%;
 }
