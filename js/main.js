@@ -134,6 +134,11 @@ console.log("main.js loaded");
           submitButton.disabled = false;
         }, 1400);
       }
+      if (options.redirectUrl) {
+        window.setTimeout(() => {
+          window.location.href = options.redirectUrl;
+        }, 700);
+      }
     } catch (error) {
       showToast("Send failed. Please email info@dmzscuba.com.");
       if (submitButton) {
@@ -180,6 +185,7 @@ console.log("main.js loaded");
   }
 
   const init = () => {
+    const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
     const hasPrefill = params.has("interest") || params.has("location") || params.has("course");
     if (params.size) {
@@ -359,7 +365,7 @@ console.log("main.js loaded");
     if (form) {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-        submitDmzForm(form, { requireEmail: true, requireMessage: true });
+        submitDmzForm(form, { requireEmail: true, requireMessage: true, redirectUrl: thanksUrl });
       });
     }
 
@@ -367,7 +373,7 @@ console.log("main.js loaded");
     if (diveNowFormSubmit) {
       diveNowFormSubmit.addEventListener("submit", (e) => {
         e.preventDefault();
-        submitDmzForm(diveNowFormSubmit, { requireEmail: true });
+        submitDmzForm(diveNowFormSubmit, { requireEmail: true, redirectUrl: thanksUrl });
       });
     }
   };
