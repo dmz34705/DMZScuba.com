@@ -1,164 +1,82 @@
 ﻿# DMZScuba.com
 
-DMZ Scuba is a static site with a lightweight Cloudflare Worker backend. The site is organized into HTML pages, shared CSS/JS, and a single Worker that powers media admin and contact form email delivery.
+DMZ Scuba is a static HTML/CSS/JS site with a Cloudflare Worker backend for the media library API and contact form email delivery (Resend). The site is hosted as static assets, and the Worker handles /api routes.
 
-## High-level structure
+## Top-level
+- `index.html` Home page.
+- `push.bat` Git add/commit/push helper.
+- `Python Server.bat` Run `python -m http.server 8080` in this folder for local preview.
+- `Pcloudfare.bat` Run cloudflared tunnel to the local server.
+- `README.md` This doc.
 
-- `index.html`
-  Home page.
+## Pages
+- `pages/about/index.html` About page.
+- `pages/contact/index.html` Contact page with Quick Contact + Dive Now forms; submits to `/api/contact`.
+- `pages/thanks/index.html` Thank-you confirmation.
+- `pages/media/index.html` Media library UI, filters, admin actions.
+- `pages/travel/index.html` Travel landing with interactive globe and destination list.
+- `pages/travel/destination.html` Destination detail page driven by `destinations.json` and `destinations-expanded.json`.
+- `pages/training/index.html` Training landing page.
+- `pages/training/course-builder/index.html` Course Builder form (also uses `/api/contact`).
+- `pages/training/open-water/index.html` Open Water course page.
+- `pages/training/advanced-specialty/index.html` Advanced Adventure course page.
+- `pages/training/skill-refresh/index.html` Skill refresh page.
+- `pages/training/specialty/index.html` Specialty landing page.
+- `pages/training/specialty/drysuit/index.html` Drysuit specialty page.
+- `pages/training/specialty/nitrox/index.html` Nitrox specialty page.
+- `pages/training/specialty/wreck/index.html` Wreck specialty page.
+- `pages/training/specialty/full-face-mask/index.html` Full Face Mask specialty page.
+- `pages/training/Open Water Scuba Certification.txt` Copy draft for Open Water content.
+- `pages/training/advanced specialties.txt` Copy draft for advanced/specialty content.
 
-- `pages/`
-  All interior pages (training, travel, media, contact, about, thank-you, etc.).
+## Styles
+- `css/base.css` Global tokens, resets, base layout.
+- `css/components.css` Shared UI components, training content sections, CTA, hero variants.
+- `css/main.css` Large theme file with home, contact, media, travel, and globe styles.
+- `css/responsive.css` Breakpoints and mobile adjustments.
+- `css/pages/*.css` Page-specific overrides.
+- `css/dmz_scuba_main_full.css` Monolithic older/duplicate stylesheet; not referenced by any HTML file.
 
-- `css/`
-  Shared styles plus page-specific styles.
+## Scripts
+- `js/main.js` Global helpers (footer year, dropdowns, copy-to-clipboard, toast, form submit to `/api/contact`, URL prefill).
+- `js/media.js` Media library rendering, filters, masonry layout, YouTube/Stream embeds, loads `/api/media` with local draft support. Falls back to `/assets/data/media.json` if API fails (file not present).
+- `js/media-edit.js` Admin media editing, login, drag reorder, Stream direct upload, publish to `/api/admin/media-bulk`.
+- `js/globe.js` Canvas globe renderer for Travel page with pin selection, zoom, and destination list.
+- `js/globe - Copy.js` Unused earlier globe version (not referenced).
+- `js/destination.js` Destination detail page renderer merging base/expanded destination JSON.
+- `js/course-builder.js` Submits Course Builder form via `window.DMZForms.submit`.
 
-- `js/`
-  Shared logic and page-specific logic.
+## Data
+- `assets/data/destinations.json` Primary destination dataset used by travel globe and destination pages.
+- `assets/data/destinations-expanded.json` Additional long-form destination details for destination page.
+- `assets/data/Add a pin.txt` Template for adding a destination entry.
 
-- `assets/`
-  Images, data JSON files, icons, logos, and media assets.
+## Assets
+- `assets/icons/favicon.ico` Favicon. (Note: HTML references `/assets/icons/favicon.png`, which is not present.)
+- `assets/images/...` Logos, hero backgrounds, globe textures, destination hero images, isometric resort images.
+- `assets/media/thumbnails/Screenshot 2026-01-20 030957.png` Media thumbnail example. (No `assets/media` or `assets/media/photos` directories exist in the repo even though `js/media-edit.js` suggests those paths.)
 
-- `workers/dmz-media-api/`
-  Cloudflare Worker that powers the media library API, media admin actions, and contact form email endpoint.
+## Worker backend
+Location: `workers/dmz-media-api/`
 
-## Pages (what they do)
+- `src/index.js` Cloudflare Worker API:
+  - `GET /api/media` -> media items from D1.
+  - `POST /api/contact` -> sends email via Resend.
+  - `POST /api/admin/login` -> session token stored in D1.
+  - `POST /api/admin/stream-direct-upload` -> Cloudflare Stream direct upload URL.
+  - `POST /api/admin/media` -> create media item (admin).
+  - `PUT /api/admin/media/:id` -> update media item (admin).
+  - `DELETE /api/admin/media/:id` -> delete media item (admin).
+  - `PUT /api/admin/media-bulk` -> upsert list (admin).
+- `schema.sql` D1 tables for `media_items` and `admin_sessions`.
+- `wrangler.toml` Worker config, D1 binding, and Resend/allowed origin vars.
+- `README.md` Worker overview (slightly outdated vs current endpoints).
 
-- `index.html`
-  Home hero, feature sections, and core navigation.
+## Local preview
+- Run `Python Server.bat` and open `http://localhost:8080`.
+- `Pcloudfare.bat` can tunnel the local server for external testing.
 
-- `pages/about/index.html`
-  About page with mission, founder bio, and the modern DMZ approach.
-
-- `pages/contact/index.html`
-  Contact page with two forms:
-  - Quick Contact (short inquiry)
-  - Dive Now (detailed request)
-  Both submit to the Worker contact endpoint and show a toast + redirect to `/pages/thanks/index.html`.
-
-- `pages/thanks/index.html`
-  Post-submit confirmation page used after successful form sends.
-
-- `pages/training/`
-  Training landing page and subpages:
-  - `open-water/`, `advanced-specialty/`, `skill-refresh/`
-  - `specialty/` and individual specialties like `nitrox/`, `drysuit/`, `wreck/`, `full-face-mask/`
-  All include SDI messaging and a scheduling note to emphasize custom scheduling.
-
-- `pages/travel/`
-  Travel landing and destination detail layout.
-
-- `pages/media/index.html`
-  Media library with filterable video/photo cards, inline video playback, and admin tools.
-
-## CSS (how styling is organized)
-
-- `css/base.css`
-  Base tokens, typography, global background, and core layout rules.
-
-- `css/components.css`
-  Shared components (header/nav, hero, cards, grids, buttons). Includes SDI section styling and reusable layout helpers.
-
-- `css/responsive.css`
-  Mobile/desktop overrides. This file controls mobile nav/hero/logo sizing and grid breakpoints.
-
-- `css/pages/*`
-  Page-specific styling (e.g., `contact.css`, `media.css`, `home.css`, `thanks.css`, `about.css`).
-
-## JavaScript (what each script does)
-
-- `js/main.js`
-  Global UI helpers and forms:
-  - Sets current year in footer.
-  - Dropdown handling for custom selects.
-  - Copy-to-clipboard helpers and toast notifications.
-  - Contact form submission to the Worker (`/api/contact`), with validation, honeypot check, and success redirect.
-
-- `js/media.js`
-  Media library front-end:
-  - Loads media data (from Worker or fallback JSON).
-  - Renders cards, filters, and tags.
-  - Inlines YouTube/Cloudflare Stream videos inside cards.
-  - Calculates masonry layout and responsive card sizes.
-
-- `js/media-edit.js`
-  Media admin tools:
-  - Admin login modal (auth via Worker).
-  - Add/edit/delete media items.
-  - Drag-to-reorder media cards.
-  - Publish changes back to the Worker.
-
-- `js/course-builder.js`
-  Hooks the course-builder form to the same Worker form submission logic.
-
-## Worker backend (`workers/dmz-media-api/`)
-
-The Worker provides:
-
-- `GET /api/media`
-  Returns media items for the Media page.
-
-- `POST /api/admin/login`
-  Admin login; creates session token stored in D1.
-
-- `POST /api/admin/stream-direct-upload`
-  Generates Cloudflare Stream direct upload URLs.
-
-- `PUT /api/admin/media-bulk`
-  Updates media items in D1.
-
-- `POST /api/contact`
-  Sends email via Resend using the form payload.
-
-### Worker configuration
-
-`workers/dmz-media-api/wrangler.toml` stores environment variables:
-
-- `ALLOWED_ORIGINS`
-  Allowed CORS origins.
-- `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`, `RESEND_TO`
-  Email settings for Resend.
-
-Secrets (set via Wrangler):
-
-- `RESEND_API_KEY`
-  Resend API key (required for email delivery).
-
-## Data and assets
-
-- `assets/data/media.json`
-  Local media fallback if the API is unavailable.
-
-- `assets/data/destinations.json`
-  Travel data used by filters and pages.
-
-- `assets/images/`
-  Hero images, logos, and page art.
-
-- `assets/icons/favicon.png` and `assets/icons/favicon.ico`
-  Site favicon.
-
-## How form submission works
-
-1) Form submit triggers `js/main.js` or `js/course-builder.js`.
-2) Data is normalized and sent to `POST /api/contact`.
-3) Worker calls Resend to deliver email to `info@dmzscuba.com`.
-4) On success, the user is redirected to `/pages/thanks/index.html`.
-
-## How the media admin works
-
-1) Open Media page, click DMZ Login.
-2) Login token is stored in session storage.
-3) Admin controls appear (add/edit/delete/publish).
-4) Publish sends updates to Worker and stores in D1.
-
-## Local development
-
-- Open `index.html` directly or run a local static server.
-- For API testing, the Worker is deployed to `https://dmz-media-api.zacharylisowski55.workers.dev`.
-
-## Deployment notes
-
-- The site itself is static (HTML/CSS/JS).
-- The Worker handles media API + contact form email.
-- Resend must be configured and the API key set before contact forms work.
+## Notes / gaps
+- `assets/icons/favicon.png` is referenced but missing.
+- `/assets/data/media.json` is referenced as a fallback but missing.
+- `css/dmz_scuba_main_full.css` and `js/globe - Copy.js` are not referenced by any HTML.
