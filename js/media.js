@@ -179,6 +179,30 @@
     modal.setAttribute("aria-hidden", "false");
   }
 
+  function addPlayOverlay(target) {
+    if (!target || target.querySelector(".media-thumb-play")) return;
+    const overlay = document.createElement("span");
+    overlay.className = "media-thumb-play";
+    overlay.setAttribute("aria-hidden", "true");
+    target.appendChild(overlay);
+  }
+
+  function mountInlineEmbed(target, options) {
+    if (!target || !options || !options.src) return;
+    if (target.dataset.videoLoaded === "true") return;
+    target.dataset.videoLoaded = "true";
+    target.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.className = "media-thumb-embed";
+    iframe.src = options.src;
+    iframe.title = options.title || "Video";
+    iframe.allow = options.allow || "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.loading = "lazy";
+    target.appendChild(iframe);
+    queueMasonryUpdate();
+  }
+
   function setAspectRatio(el, width, height) {
     if (!el || !width || !height) return;
     const ratio = width / height;
@@ -510,8 +534,13 @@
         });
         link.appendChild(img);
         link.classList.add("has-thumb", "is-youtube");
+        addPlayOverlay(link);
         link.addEventListener("click", () => {
-          openYoutubeModal(youtubeId, item.title || "YouTube video");
+          mountInlineEmbed(link, {
+            src: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`,
+            title: item.title || "YouTube video",
+            allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+          });
         });
       } else if (isStream) {
         const thumbUrl = item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
@@ -537,8 +566,12 @@
           setAspectRatio(link, 16, 9);
         }
         link.classList.add("is-video");
+        addPlayOverlay(link);
         link.addEventListener("click", () => {
-          openStreamModal(streamId, item.title || "Cloudflare Stream video");
+          mountInlineEmbed(link, {
+            src: `https://iframe.videodelivery.net/${streamId}?autoplay=true`,
+            title: item.title || "Cloudflare Stream video",
+          });
         });
       } else if (isVideo) {
         const thumbUrl = item.thumbUrl ? resolveUrl(item.thumbUrl) : "";
@@ -567,6 +600,7 @@
         }
 
         link.classList.add("is-video");
+        addPlayOverlay(link);
         link.addEventListener("click", () => {
           if (link.dataset.videoLoaded === "true") return;
           link.dataset.videoLoaded = "true";
