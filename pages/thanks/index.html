@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
   <title>DMZ Scuba | Thank You</title>
   <meta name="description" content="Thanks for reaching out to DMZ Scuba." />
   <link rel="stylesheet" href="/css/base.css" />
@@ -12,13 +14,13 @@
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 
-<body>
+<body class="thanks-page">
   <header class="site-header">
     <div class="nav-container">
       <a class="logo" href="/index.html" aria-label="DMZ Scuba Home">
         <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
       </a>
-      <div class="site-name">DMZ Scuba LLC</div>
+      <div class="site-name">DMZ Scuba</div>
 
       <nav class="main-nav" aria-label="Primary">
         <a href="/index.html">Home</a>
@@ -26,6 +28,7 @@
         <a href="/pages/travel/index.html">Travel</a>
         <a href="/pages/media/index.html">Media</a>
         <a href="/pages/contact/index.html">Contact</a>
+        <a href="/pages/about/index.html">About</a>
         <a class="nav-cta" href="/pages/contact/index.html#dive-now">Dive Now</a>
       </nav>
     </div>
@@ -33,17 +36,36 @@
 
   <main class="page-main">
     <section class="thanks-hero">
-      <div class="thanks-card">
-        <h1>Thanks for reaching out.</h1>
-        <p class="muted">We received your message and will follow up by email soon.</p>
-        <div class="thanks-actions">
-          <a class="btn primary" href="/index.html">Go to Home</a>
-          <a class="btn secondary" href="/pages/contact/index.html">Back to Contact</a>
+      <div class="thanks-overlay"></div>
+      <img
+        src="/assets/images/hero/hero-placeholder.png"
+        alt="Underwater wreck diving with DMZ Scuba"
+        class="thanks-bg"
+      />
+      <div class="thanks-inner">
+        <div class="thanks-copy">
+          <p class="thanks-kicker">Message Received</p>
+          <h1>Thanks for reaching out.</h1>
+          <p class="thanks-sub muted">
+            We have your request and will follow up by email soon. While you wait, explore training paths or browse the media library.
+          </p>
+          <div class="thanks-actions">
+            <a class="btn primary" href="/index.html">Go to Home</a>
+            <a class="btn secondary" href="/pages/contact/index.html">Back to Contact</a>
+          </div>
+          <div class="thanks-links">
+            <a href="/pages/training/index.html">Training</a>
+            <a href="/pages/travel/index.html">Travel</a>
+            <a href="/pages/media/index.html">Media</a>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
+  <div class="thanks-response">
+    <span>Response time: 24–48 hours • info@dmzscuba.com</span>
+  </div>
   <footer class="site-footer">
     <small>© <span id="year"></span> DMZ Scuba. All rights reserved.</small>
   </footer>
@@ -51,3 +73,8 @@
   <script src="/js/main.js"></script>
 </body>
 </html>
+
+
+
+
+

@@ -6,7 +6,7 @@
   .feature-grid{ grid-template-columns: 1fr; }
   .feature-card.is-centered{ grid-column: auto; }
   .main-nav{ gap: 8px; }
-  .logo img{ width: 48px; height: 48px; }
+  .logo img{ width: 72px; height: 72px; }
   .hero-content{ padding: 54px 18px; }
 
   .contact-grid{ grid-template-columns: 1fr; }
@@ -34,8 +34,8 @@
   }
 
   .logo img{
-    width: 46px;
-    height: 46px;
+    width: 80px;
+    height: 80px;
   }
 
   .page-hero.page-hero-training{
