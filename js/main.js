@@ -363,11 +363,11 @@ console.log("main.js loaded");
       });
     }
 
-    const diveNowForm = document.querySelector("#dive-now .dmz-form");
-    if (diveNowForm) {
-      diveNowForm.addEventListener("submit", (e) => {
+    const diveNowFormSubmit = document.querySelector("#dive-now .dmz-form");
+    if (diveNowFormSubmit) {
+      diveNowFormSubmit.addEventListener("submit", (e) => {
         e.preventDefault();
-        submitDmzForm(diveNowForm, { requireEmail: true });
+        submitDmzForm(diveNowFormSubmit, { requireEmail: true });
       });
     }
   };
