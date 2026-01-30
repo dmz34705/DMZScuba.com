@@ -8,7 +8,7 @@ console.log("main.js loaded");
 
 // =========================
 // DMZ Scuba — main.js
-// Unified helpers: toast, copy, quick mailto (no backend)
+// Unified helpers: toast, copy, form submit
 // =========================
 
 (() => {
@@ -32,6 +32,122 @@ console.log("main.js loaded");
     window.clearTimeout(showToast._t);
     showToast._t = window.setTimeout(() => toast.classList.remove("show"), 1400);
   }
+
+  function getContactApiUrl() {
+    const base = (document.body && document.body.dataset.contactApi) || "";
+    return base ? `${base}/api/contact` : "/api/contact";
+  }
+
+  function collectFields(form) {
+    const data = {};
+    const formData = new FormData(form);
+    formData.forEach((value, key) => {
+      const clean = String(value || "").trim();
+      if (!clean) return;
+      if (data[key]) {
+        if (Array.isArray(data[key])) {
+          data[key].push(clean);
+        } else {
+          data[key] = [data[key], clean];
+        }
+      } else {
+        data[key] = clean;
+      }
+    });
+    return data;
+  }
+
+  function pickFieldValue(fields, matcher) {
+    return Object.entries(fields).reduce((found, [key, value]) => {
+      if (found) return found;
+      if (matcher(key)) {
+        return Array.isArray(value) ? value[0] : value;
+      }
+      return "";
+    }, "");
+  }
+
+  async function submitDmzForm(form, options = {}) {
+    if (!form || form.dataset.submitting === "true") return;
+    if (!form.hasAttribute("novalidate") && !form.reportValidity()) {
+      showToast("Please complete the required fields.");
+      return;
+    }
+
+    const fields = collectFields(form);
+    const honey = fields.company || "";
+    if (honey) return;
+    delete fields.company;
+
+    const email = pickFieldValue(fields, (key) => key.toLowerCase().includes("email"));
+    const name = pickFieldValue(fields, (key) => key.toLowerCase().includes("name"));
+    const message =
+      fields.message ||
+      fields["contact-message"] ||
+      fields.goals ||
+      fields["contact-subject"] ||
+      "";
+
+    if (options.requireEmail && !email) {
+      showToast("Add your email so we can reply.");
+      return;
+    }
+
+    if (options.requireMessage && !message) {
+      showToast("Add a quick message so we can help.");
+      return;
+    }
+
+    const payload = {
+      form: form.dataset.formName || form.id || "DMZ Form",
+      subject: form.dataset.subject || "",
+      fields,
+      name,
+      email,
+      message,
+      pageUrl: window.location.href,
+      honey,
+    };
+
+    const submitButton = form.querySelector("button[type='submit']");
+    const originalLabel = submitButton ? submitButton.textContent : "";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+    }
+    form.dataset.submitting = "true";
+
+    try {
+      const response = await fetch(getContactApiUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        throw new Error("Send failed");
+      }
+      showToast("Message sent. We will reply soon.");
+      if (submitButton) {
+        submitButton.textContent = "Sent!";
+        window.setTimeout(() => {
+          submitButton.textContent = originalLabel;
+          submitButton.disabled = false;
+        }, 1400);
+      }
+    } catch (error) {
+      showToast("Send failed. Please email info@dmzscuba.com.");
+      if (submitButton) {
+        submitButton.textContent = originalLabel;
+        submitButton.disabled = false;
+      }
+    } finally {
+      form.dataset.submitting = "false";
+    }
+  }
+
+  window.DMZForms = {
+    submit: submitDmzForm,
+  };
 
   // Copy helper (supports file:// via fallback)
   async function copyText(text) {
@@ -238,54 +354,20 @@ console.log("main.js loaded");
       }, 900);
     });
 
-    // 2) Quick contact form -> mailto (no backend)
+    // 2) Quick contact + Dive Now forms -> API
     const form = document.getElementById("quickContactForm");
     if (form) {
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+        submitDmzForm(form, { requireEmail: true, requireMessage: true });
+      });
+    }
 
-        const name = document.getElementById("qm-name")?.value?.trim() || "";
-        const email = document.getElementById("qm-email")?.value?.trim() || "";
-        const subjectInput = document.getElementById("qm-subject")?.value?.trim() || "";
-        const message = document.getElementById("qm-message")?.value?.trim() || "";
-
-        const subject = encodeURIComponent(subjectInput || "DMZ Scuba — Contact Request");
-        const body = encodeURIComponent(
-          `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}\n`
-        );
-
-        const to = "info@dmzscuba.com";
-
-// mailto attempt (best when user has a mail app configured)
-const mailto = `mailto:${to}?subject=${subject}&body=${body}`;
-
-// Gmail compose fallback (works reliably in Chrome)
-const gmailCompose =
-  `https://mail.google.com/mail/?view=cm&fs=1` +
-  `&to=${encodeURIComponent(to)}` +
-  `&su=${subject}` +
-  `&body=${body}`;
-
-showToast("Opening email…");
-
-// Heuristic: if a mail handler opens, the browser often blurs/loses focus.
-// If we never blur and stay visible, assume nothing launched -> open Gmail.
-let blurred = false;
-window.addEventListener("blur", () => { blurred = true; }, { once: true });
-
-// Try mailto first
-try {
-  window.location.assign(mailto);
-} catch (_) {}
-
-// If nothing seems to happen, open Gmail compose
-window.setTimeout(() => {
-  if (!blurred && document.visibilityState === "visible") {
-    window.open(gmailCompose, "_blank", "noopener,noreferrer");
-    showToast("No mail app detected — opened Gmail compose.");
-  }
-}, 900);
-
+    const diveNowForm = document.querySelector("#dive-now .dmz-form");
+    if (diveNowForm) {
+      diveNowForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        submitDmzForm(diveNowForm, { requireEmail: true });
       });
     }
   };

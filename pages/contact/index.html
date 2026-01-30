@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 
-<body>
+<body data-contact-api="https://dmz-media-api.zacharylisowski55.workers.dev">
   <header class="site-header">
     <div class="nav-container">
       <a class="logo" href="../../index.html" aria-label="DMZ Scuba Home">
@@ -58,7 +58,7 @@
         <p class="muted">Use the <a class="inline-cta-link" href="#dive-now">Dive Now form</a> and we’ll reply with a plan and next steps. Otherwise, for general inquiries use the form below.</p>
 
        <!-- Quick message (no backend required) -->
-<form class="quick-message" id="quickContactForm" action="#" method="post" novalidate>
+<form class="quick-message" id="quickContactForm" action="#" method="post" novalidate data-form-name="Quick Contact" data-subject="DMZ Quick Contact">
   <div class="form-row">
     <div class="field">
       <label for="qm-name">Your name</label>
@@ -87,15 +87,19 @@
       <textarea id="qm-message" name="contact-message" rows="5" placeholder="Tell us what you’re looking to do…"></textarea>
     </div>
   </div>
+  <div class="field dmz-honeypot" aria-hidden="true">
+    <label for="qm-company">Company</label>
+    <input id="qm-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+  </div>
 
   <div class="form-actions">
     <button class="btn primary" type="submit">
-  Open Email to Send
+  Send Message
 </button>
   </div>
 
   <p class="muted small">
-    This opens your email app with the message pre-filled (no web backend yet).
+    We reply by email, usually within 24–48 hours.
   </p>
 </form>
 
@@ -153,7 +157,7 @@
           <p class="muted">Build a plan on your terms—training, travel, or a custom dive day.</p>
         </div>
 
-        <form class="dmz-form" action="#" method="post">
+        <form class="dmz-form" action="#" method="post" data-form-name="Dive Now" data-subject="DMZ Dive Now Request">
           <div class="form-row two">
             <div class="field">
               <label for="name">Full name</label>
@@ -244,6 +248,10 @@
               <span>I confirm this is a request for information and I’m okay with DMZ Scuba contacting me back.</span>
             </label>
           </div>
+          <div class="field dmz-honeypot" aria-hidden="true">
+            <label for="dn-company">Company</label>
+            <input id="dn-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+          </div>
 
           <div class="form-actions">
             <button class="btn primary" type="submit">Send Request</button>
@@ -251,7 +259,7 @@
           </div>
 
           <p class="muted small form-note">
-            Note: this form is a visual proof of concept right now. When you’re ready, we’ll wire it to email or a backend.
+            We will reply by email with recommended next steps.
           </p>
                 </form>
 

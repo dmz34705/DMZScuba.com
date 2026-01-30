@@ -39,6 +39,40 @@ async function requireAuth(request, env) {
   return !!row;
 }
 
+function formatFieldLabel(key) {
+  return String(key || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function formatFields(fields) {
+  const lines = [];
+  if (Array.isArray(fields)) {
+    fields.forEach((entry) => {
+      if (!entry) return;
+      const label = entry.label || entry.key || "Field";
+      const value = entry.value || "";
+      if (!value) return;
+      lines.push(`${label}: ${value}`);
+    });
+    return lines;
+  }
+  if (fields && typeof fields === "object") {
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value == null || value === "") return;
+      const label = formatFieldLabel(key);
+      if (Array.isArray(value)) {
+        const joined = value.map((item) => String(item || "").trim()).filter(Boolean).join(", ");
+        if (joined) lines.push(`${label}: ${joined}`);
+        return;
+      }
+      const text = String(value).trim();
+      if (text) lines.push(`${label}: ${text}`);
+    });
+  }
+  return lines;
+}
+
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -55,6 +89,71 @@ async function handleLogin(request, env) {
     .bind(token, now.toISOString(), expires.toISOString())
     .run();
   return jsonResponse({ ok: true, token });
+}
+
+async function handleContact(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const honey = String(body.honey || body.website || "").trim();
+  if (honey) {
+    return jsonResponse({ ok: true });
+  }
+
+  const fields = body.fields || {};
+  const lines = formatFields(fields);
+  const name = String(body.name || fields.name || fields["contact-name"] || "").trim();
+  const email = String(body.email || fields.email || fields["contact-email"] || "").trim();
+  const formName = String(body.form || "DMZ Inquiry").trim();
+  const subject = String(body.subject || "").trim() || `${formName} Inquiry`;
+  const pageUrl = String(body.pageUrl || "").trim();
+  const submittedAt = new Date().toISOString();
+
+  const message = [
+    `Form: ${formName}`,
+    `Submitted: ${submittedAt}`,
+    pageUrl ? `Page: ${pageUrl}` : "",
+    name ? `Name: ${name}` : "",
+    email ? `Email: ${email}` : "",
+    "",
+    ...lines,
+    body.message ? `\nMessage:\n${body.message}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const apiKey = String(env.RESEND_API_KEY || "").trim();
+  if (!apiKey) {
+    return jsonResponse({ ok: false, error: "Email send failed." }, 502);
+  }
+
+  const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
+  const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
+  const toEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
+
+  const payload = {
+    from: `${fromName} <${fromEmail}>`,
+    to: [toEmail],
+    subject,
+    text: message,
+  };
+
+  if (email) {
+    payload.reply_to = email;
+  }
+
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!resp.ok) {
+    return jsonResponse({ ok: false, error: "Email send failed." }, 502);
+  }
+
+  return jsonResponse({ ok: true });
 }
 
 function normalizeItem(row) {
@@ -237,6 +336,8 @@ export default {
 
     if (pathname === "/api/media" && request.method === "GET") {
       response = await handleGetMedia(env);
+    } else if (pathname === "/api/contact" && request.method === "POST") {
+      response = await handleContact(request, env);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
     } else if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {

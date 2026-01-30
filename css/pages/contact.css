@@ -285,6 +285,14 @@
 
 .form-note{ margin-top: 12px; }
 
+.dmz-honeypot{
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 /* Copy icon button + toast (single source of truth) */
 .icon-btn{
   display: inline-flex;

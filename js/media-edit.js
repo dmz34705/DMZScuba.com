@@ -728,6 +728,7 @@
   function setupEditToggle() {
     const mediaGrid = document.getElementById("mediaGrid");
     const toggle = document.querySelector(".media-edit-toggle");
+    const loginButton = document.querySelector(".media-login-button");
     const exportButton = document.querySelector(".media-edit-export");
     const publishButton = document.querySelector(".media-edit-publish");
     const resetButton = document.querySelector(".media-edit-reset");
@@ -752,9 +753,26 @@
       observer.observe(mediaGrid, { childList: true });
     }
     desktopDragQuery.addEventListener("change", updateDragAvailability);
+    const updateAuthState = () => {
+      document.body.classList.toggle("media-authenticated", Boolean(getToken()));
+    };
+
+    updateAuthState();
+
+    if (loginButton) {
+      loginButton.addEventListener("click", () => {
+        buildLoginModal(() => {
+          updateAuthState();
+        });
+      });
+    }
+
     toggle.addEventListener("click", () => {
       if (!getToken()) {
-        buildLoginModal(() => toggle.click());
+        buildLoginModal(() => {
+          updateAuthState();
+          toggle.click();
+        });
         return;
       }
       const scrollY = window.scrollY;
