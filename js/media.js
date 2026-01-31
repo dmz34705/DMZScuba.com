@@ -592,6 +592,10 @@
     const indexLookup = buildIndexLookup(state.mediaItems);
     const displayItems = applySort(state.mediaItems);
     renderMedia(displayItems, indexLookup);
+    if (mediaGrid) {
+      const isSorted = currentSort && currentSort !== "manual";
+      mediaGrid.classList.toggle("is-sorted", isSorted);
+    }
   }
 
   function renderMedia(items, indexLookup) {

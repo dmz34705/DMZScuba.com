@@ -814,6 +814,10 @@ body.media-authenticated .media-edit-logout{
   grid-auto-flow: dense;
 }
 
+.media-grid.is-sorted{
+  grid-auto-flow: row;
+}
+
 .media-empty{
   margin-top: 14px;
   border-radius: 16px;
