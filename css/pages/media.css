@@ -73,6 +73,11 @@
 .media-admin-panel{
   margin: 28px auto 10px;
   width: min(260px, calc(100% - 36px));
+  display: none;
+}
+
+body.media-authenticated .media-admin-panel{
+  display: block;
 }
 
 .media-admin-card{
@@ -129,26 +134,30 @@ body.media-has-unsaved .media-admin-warning{
 }
 
 .media-login-button{
+  position: absolute;
+  right: 18px;
+  bottom: 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(12, 22, 36, 0.9);
-  color: rgba(234,242,255,0.95);
-  font-size: 11px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(7, 12, 20, 0.55);
+  color: rgba(234,242,255,0.55);
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+  opacity: 0.35;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
 .media-login-button:hover{
-  transform: translateY(-1px);
-  border-color: rgba(85,185,255,0.5);
-  background: rgba(10, 18, 30, 0.9);
+  opacity: 0.7;
+  border-color: rgba(255,255,255,0.35);
+  background: rgba(10, 18, 30, 0.7);
 }
 
 body.media-authenticated .media-login-button{
-  opacity: 0.6;
+  display: none;
 }
 
 .back-to-top{
@@ -286,6 +295,37 @@ body.media-edit-mode.media-authenticated .media-edit-reset{
 body.media-authenticated .media-edit-publish{
   opacity: 0.75;
   pointer-events: auto;
+}
+
+.media-publish-banner{
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  min-width: min(520px, calc(100% - 32px));
+  border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(35,12,14,0.92);
+  color: rgba(255,220,220,0.95);
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  box-shadow: 0 16px 32px rgba(0,0,0,0.45);
+  z-index: 20;
+  transition: transform 200ms ease, opacity 200ms ease;
+  opacity: 0;
+}
+
+.media-publish-banner.is-visible{
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.media-publish-banner.is-success{
+  background: rgba(12, 36, 18, 0.92);
+  border-color: rgba(120, 220, 140, 0.4);
+  color: rgba(200,255,215,0.95);
 }
 
 .media-edit-refresh,

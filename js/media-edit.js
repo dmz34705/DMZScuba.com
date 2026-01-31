@@ -12,6 +12,7 @@
   const tokenStorageKey = "dmzMediaToken";
   const draftStorageKey = "dmzMediaDraft";
   let isDirty = false;
+  let bannerTimer = null;
   const dragState = {
     card: null,
   };
@@ -31,10 +32,42 @@
   function setDirty(next) {
     isDirty = Boolean(next);
     document.body.classList.toggle("media-has-unsaved", isDirty);
+    if (isDirty) {
+      showPublishBanner("Media not published. Please publish to save.", "warning");
+    } else {
+      hidePublishBanner();
+    }
   }
 
   function markDirty() {
     setDirty(true);
+  }
+
+  function showPublishBanner(message, state = "warning", autoHideMs = null) {
+    const banner = document.getElementById("mediaPublishBanner");
+    if (!banner) return;
+    if (bannerTimer) {
+      clearTimeout(bannerTimer);
+      bannerTimer = null;
+    }
+    banner.textContent = message;
+    banner.classList.add("is-visible");
+    if (state === "success") {
+      banner.classList.add("is-success");
+    } else {
+      banner.classList.remove("is-success");
+    }
+    if (autoHideMs) {
+      bannerTimer = window.setTimeout(() => {
+        banner.classList.remove("is-visible");
+      }, autoHideMs);
+    }
+  }
+
+  function hidePublishBanner() {
+    const banner = document.getElementById("mediaPublishBanner");
+    if (!banner) return;
+    banner.classList.remove("is-visible");
   }
 
   async function apiFetch(path, options = {}) {
@@ -488,6 +521,7 @@
     streamUploadBtn.textContent = "Upload to Stream";
     streamUploadBtn.disabled = true;
     let uploadComplete = false;
+    let uploadCreatedItem = false;
 
     const progressWrap = document.createElement("div");
     progressWrap.className = "media-edit-progress";
@@ -814,7 +848,8 @@
         uploadComplete = true;
         streamUploadBtn.disabled = true;
         streamUploadBtn.textContent = "Upload successful";
-        uploadStatus.textContent = "Upload complete. Stream ID added.";
+        uploadStatus.textContent = "Upload complete. Stream ID added to draft.";
+        ensureUploadedItemDraft(file);
       } catch (error) {
         console.error("Stream upload failed", error);
         streamUploadBtn.textContent = "Upload failed";
@@ -831,6 +866,28 @@
         }
       }
     });
+
+    function ensureUploadedItemDraft(file) {
+      if (uploadCreatedItem || item || !window.DMZMedia) return;
+      const rawName = file && file.name ? file.name : "Uploaded Video";
+      const title = rawName.replace(/\.[^/.]+$/, "");
+      const nextItem = {
+        type: "video",
+        title: title || "Uploaded Video",
+        description: "",
+        tags: ["video"],
+        badge: "VIDEO",
+        thumbText: "VIDEO",
+        url: "",
+        thumbUrl: thumbUrlInput.value.trim(),
+        streamId: streamIdInput.value.trim(),
+        meta: [],
+        location: "",
+      };
+      window.DMZMedia.addMediaItem(ensureId(nextItem));
+      uploadCreatedItem = true;
+      markDirty();
+    }
 
     updateUploadState(null);
 
@@ -1089,6 +1146,7 @@
           // Ignore storage errors.
         }
         setDirty(false);
+        showPublishBanner("Media published.", "success", 2000);
       });
     }
 
@@ -1098,6 +1156,7 @@
         const confirmReset = window.confirm("Discard local edits and reload from media.json?");
         if (confirmReset) {
           setDirty(false);
+          hidePublishBanner();
           window.DMZMedia.clearDraft();
         }
       });
@@ -1114,6 +1173,7 @@
           if (!ok) return;
         }
         setDirty(false);
+        hidePublishBanner();
         try {
           window.localStorage.removeItem(draftStorageKey);
         } catch (error) {
@@ -1128,6 +1188,7 @@
         setToken("");
         updateAuthState();
         exitEditMode();
+        hidePublishBanner();
       });
     }
   }
