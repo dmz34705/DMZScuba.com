@@ -476,6 +476,7 @@
     streamUploadBtn.className = "media-edit-save";
     streamUploadBtn.textContent = "Upload to Stream";
     streamUploadBtn.disabled = true;
+    let uploadComplete = false;
 
     const progressWrap = document.createElement("div");
     progressWrap.className = "media-edit-progress";
@@ -633,12 +634,20 @@
         streamUploadBtn.disabled = true;
         streamUploadBtn.textContent = "Upload to Stream";
         uploadStatus.textContent = "Pick a file to upload to Stream.";
+        uploadComplete = false;
         return;
       }
       if (file.type && file.type.startsWith("image/")) {
         streamUploadBtn.disabled = true;
         streamUploadBtn.textContent = "Upload to Stream";
         uploadStatus.textContent = "Images use direct URLs or local assets (no Stream upload).";
+        uploadComplete = false;
+        return;
+      }
+      if (uploadComplete) {
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Upload successful";
+        uploadStatus.textContent = "Upload complete. Stream ID added.";
         return;
       }
       streamUploadBtn.disabled = false;
@@ -648,6 +657,7 @@
 
     mediaFileInput.addEventListener("change", () => {
       const file = mediaFileInput.files && mediaFileInput.files[0];
+      uploadComplete = false;
       syncMediaUrlFromFile(file);
       updateUploadState(file);
       if (file && file.type && file.type.startsWith("image/")) {
@@ -729,17 +739,23 @@
         if (streamIdInput.value && !thumbUrlInput.value) {
           thumbUrlInput.value = buildStreamThumbUrl(streamIdInput.value);
         }
-        streamUploadBtn.textContent = "Uploaded";
+        uploadComplete = true;
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Upload successful";
         uploadStatus.textContent = "Upload complete. Stream ID added.";
       } catch (error) {
         streamUploadBtn.textContent = "Upload failed";
         uploadStatus.textContent = "Upload failed. Check your connection and try again.";
       } finally {
-        streamUploadBtn.disabled = false;
-        setTimeout(() => {
-          streamUploadBtn.textContent = "Upload to Stream";
+        if (!uploadComplete) {
+          streamUploadBtn.disabled = false;
+          setTimeout(() => {
+            streamUploadBtn.textContent = "Upload to Stream";
+            progressWrap.hidden = true;
+          }, 1200);
+        } else {
           progressWrap.hidden = true;
-        }, 1200);
+        }
       }
     });
 
@@ -843,6 +859,8 @@
     const exportButton = document.querySelector(".media-edit-export");
     const publishButton = document.querySelector(".media-edit-publish");
     const resetButton = document.querySelector(".media-edit-reset");
+    const refreshButton = document.querySelector(".media-edit-refresh");
+    const logoutButton = document.querySelector(".media-edit-logout");
     const statusLabel = document.getElementById("mediaAdminStatus");
     if (!toggle) return;
     if (mediaGrid) {
@@ -898,6 +916,20 @@
         });
       });
     }
+
+    const exitEditMode = () => {
+      if (!document.body.classList.contains("media-edit-mode")) return;
+      document.body.classList.remove("media-edit-mode");
+      toggle.setAttribute("aria-pressed", "false");
+      removeEditControls(mediaGrid);
+      updateDragAvailability();
+      if (window.DMZMedia && window.DMZMedia.updateMasonry) {
+        window.DMZMedia.updateMasonry();
+      }
+      if (window.DMZMedia && window.DMZMedia.resetHeights) {
+        window.DMZMedia.resetHeights();
+      }
+    };
 
     toggle.addEventListener("click", () => {
       if (!getToken()) {
@@ -995,6 +1027,34 @@
           setDirty(false);
           window.DMZMedia.clearDraft();
         }
+      });
+    }
+
+    if (refreshButton) {
+      refreshButton.addEventListener("click", async () => {
+        if (!window.DMZMedia || typeof window.DMZMedia.reloadFromServer !== "function") {
+          window.location.reload();
+          return;
+        }
+        if (isDirty) {
+          const ok = window.confirm("Unsaved changes will be lost. Continue with master refresh?");
+          if (!ok) return;
+        }
+        setDirty(false);
+        try {
+          window.localStorage.removeItem(draftStorageKey);
+        } catch (error) {
+          // Ignore storage errors.
+        }
+        await window.DMZMedia.reloadFromServer();
+      });
+    }
+
+    if (logoutButton) {
+      logoutButton.addEventListener("click", () => {
+        setToken("");
+        updateAuthState();
+        exitEditMode();
       });
     }
   }

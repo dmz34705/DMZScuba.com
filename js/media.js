@@ -1127,6 +1127,21 @@
     }
   }
 
+  async function fetchMediaData() {
+    const [apiRes, fileRes, destRes] = await Promise.all([
+      fetch(apiUrl, { cache: "no-store" }),
+      fetch(dataUrl, { cache: "no-store" }),
+      fetch("/assets/data/destinations.json", { cache: "no-store" }),
+    ]);
+    const mediaRes = apiRes.ok ? apiRes : fileRes;
+    if (!mediaRes.ok) {
+      throw new Error(`Failed to load media data (${mediaRes.status})`);
+    }
+    const data = await mediaRes.json();
+    const destinations = destRes.ok ? await destRes.json() : [];
+    return { data, destinations };
+  }
+
   function saveDraft() {
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(state));
@@ -1137,17 +1152,7 @@
 
   async function init() {
     try {
-      const [apiRes, fileRes, destRes] = await Promise.all([
-        fetch(apiUrl, { cache: "no-store" }),
-        fetch(dataUrl),
-        fetch("/assets/data/destinations.json"),
-      ]);
-      const mediaRes = apiRes.ok ? apiRes : fileRes;
-      if (!mediaRes.ok) {
-        throw new Error(`Failed to load media data (${mediaRes.status})`);
-      }
-      const data = await mediaRes.json();
-      const destinations = destRes.ok ? await destRes.json() : [];
+      const { data, destinations } = await fetchMediaData();
       const draft = loadDraft();
       state.mediaItems = (draft && draft.mediaItems) || data.mediaItems || [];
       state.photoItems = (draft && draft.photoItems) || data.photoItems || [];
@@ -1274,6 +1279,18 @@
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
       queueMasonryUpdate();
+    },
+    async reloadFromServer() {
+      const { data, destinations } = await fetchMediaData();
+      state.mediaItems = data.mediaItems || [];
+      state.photoItems = data.photoItems || [];
+      state.destinations = Array.isArray(destinations) ? destinations : [];
+      renderMedia(state.mediaItems);
+      renderLocationFilters(state.destinations);
+      renderTagFilters(state.mediaItems);
+      applyActiveFilter();
+      updateMasonry();
+      scheduleVideoAspectRetry();
     },
   };
 
