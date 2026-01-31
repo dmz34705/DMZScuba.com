@@ -62,17 +62,6 @@
   color: rgba(234, 242, 255, 0.95);
 }
 
-.media-edit-actions{
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
 .media-footer{
   position: relative;
   display: flex;
@@ -81,31 +70,87 @@
   gap: 12px;
 }
 
-.media-login-button{
-  position: absolute;
+.media-admin-panel{
+  position: fixed;
   right: 18px;
-  bottom: 10px;
+  bottom: 18px;
+  z-index: 6;
+  width: min(320px, calc(100vw - 36px));
+}
+
+.media-admin-card{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(7, 12, 20, 0.9);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.55);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.media-admin-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.media-admin-title{
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(234,242,255,0.7);
+}
+
+.media-admin-status{
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(234,242,255,0.95);
+}
+
+.media-admin-actions{
+  display: grid;
+  gap: 8px;
+}
+
+.media-admin-warning{
+  border-radius: 12px;
+  border: 1px solid rgba(255,140,140,0.4);
+  background: rgba(35,12,14,0.6);
+  color: rgba(255,200,200,0.95);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  padding: 8px 10px;
+  display: none;
+}
+
+body.media-has-unsaved .media-admin-warning{
+  display: block;
+}
+
+.media-login-button{
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(7, 12, 20, 0.55);
-  color: rgba(234,242,255,0.55);
-  font-size: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(12, 22, 36, 0.9);
+  color: rgba(234,242,255,0.95);
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  padding: 6px 10px;
+  padding: 8px 14px;
   cursor: pointer;
-  opacity: 0.35;
-  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
 }
 
 .media-login-button:hover{
-  opacity: 0.7;
-  border-color: rgba(255,255,255,0.35);
-  background: rgba(10, 18, 30, 0.7);
+  transform: translateY(-1px);
+  border-color: rgba(85,185,255,0.5);
+  background: rgba(10, 18, 30, 0.9);
 }
 
 body.media-authenticated .media-login-button{
-  display: none;
+  opacity: 0.6;
 }
 
 .back-to-top{
@@ -127,6 +172,16 @@ body.media-authenticated .media-login-button{
   background: rgba(10, 18, 30, 0.85);
 }
 
+
+.media-admin-actions .media-edit-toggle,
+.media-admin-actions .media-edit-export,
+.media-admin-actions .media-edit-reset,
+.media-admin-actions .media-edit-publish,
+.media-admin-actions .back-to-top{
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
 
 .media-edit-toggle {
   border-radius: 999px;
@@ -150,7 +205,7 @@ body.media-authenticated .media-login-button{
 }
 
 body.media-authenticated .media-edit-toggle{
-  opacity: 0.6;
+  opacity: 0.7;
   pointer-events: auto;
 }
 
@@ -229,8 +284,16 @@ body.media-edit-mode.media-authenticated .media-edit-reset{
 }
 
 body.media-authenticated .media-edit-publish{
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: auto;
+}
+
+@media (max-width: 780px){
+  .media-admin-panel{
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
 }
 
 .media-edit-publish:hover{
@@ -1044,6 +1107,49 @@ body.media-edit-mode .media-body p.media-desc-empty{
   color: rgba(234,242,255,0.9);
   padding: 8px 10px;
   font-size: 13px;
+}
+
+.media-upload-block{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(5,11,20,0.5);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.media-upload-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.media-upload-title{
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(234,242,255,0.75);
+}
+
+.media-upload-note{
+  font-size: 12px;
+  color: rgba(234,242,255,0.6);
+}
+
+.media-upload-actions{
+  display: grid;
+  gap: 8px;
+}
+
+.media-upload-actions .media-edit-save{
+  width: 100%;
+}
+
+.media-upload-divider{
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 6px 0;
 }
 
 .media-edit-form input:focus,

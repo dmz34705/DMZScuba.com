@@ -169,15 +169,28 @@
 
     <footer class="site-footer media-footer">
       <span>&copy; 2026 DMZ Scuba. All rights reserved.</span>
-      <button class="media-login-button" type="button">DMZ Login</button>
     </footer>
-    <div class="media-edit-actions" role="group" aria-label="Media edit actions">
-      <button class="media-edit-toggle" type="button" aria-pressed="false">DMZ Media Upload</button>
-      <a class="back-to-top" href="#top" aria-label="Back to top">Back to top</a>
-      <button class="media-edit-publish" type="button">Publish Changes</button>
-      <button class="media-edit-export" type="button">Export JSON</button>
-      <button class="media-edit-reset" type="button">Reset Draft</button>
-    </div>
+    <aside class="media-admin-panel" aria-label="Media admin controls">
+      <div class="media-admin-card" role="group" aria-label="Media edit actions">
+        <div class="media-admin-head">
+          <div>
+            <span class="media-admin-title">Media Admin</span>
+            <span class="media-admin-status" id="mediaAdminStatus">Signed out</span>
+          </div>
+          <button class="media-login-button" type="button">DMZ Login</button>
+        </div>
+        <div class="media-admin-actions">
+          <button class="media-edit-toggle" type="button" aria-pressed="false">Edit + Upload</button>
+          <button class="media-edit-publish" type="button">Publish Changes</button>
+          <button class="media-edit-export" type="button">Export JSON</button>
+          <button class="media-edit-reset" type="button">Reset Draft</button>
+          <a class="back-to-top" href="#top" aria-label="Back to top">Back to top</a>
+        </div>
+        <div class="media-admin-warning" id="mediaAdminWarning" aria-live="polite">
+          Unsaved changes. Do not refresh.
+        </div>
+      </div>
+    </aside>
   </main>
 
   <!-- Site-wide JS -->

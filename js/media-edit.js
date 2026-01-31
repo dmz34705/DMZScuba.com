@@ -10,6 +10,8 @@
   const apiBase = (document.body && document.body.dataset.mediaApi) || "";
   const apiRoot = apiBase || "";
   const tokenStorageKey = "dmzMediaToken";
+  const draftStorageKey = "dmzMediaDraft";
+  let isDirty = false;
   const dragState = {
     card: null,
   };
@@ -24,6 +26,15 @@
       return;
     }
     window.sessionStorage.setItem(tokenStorageKey, token);
+  }
+
+  function setDirty(next) {
+    isDirty = Boolean(next);
+    document.body.classList.toggle("media-has-unsaved", isDirty);
+  }
+
+  function markDirty() {
+    setDirty(true);
   }
 
   async function apiFetch(path, options = {}) {
@@ -161,6 +172,11 @@
     }
   }
 
+  function buildStreamThumbUrl(id) {
+    if (!id) return "";
+    return `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s`;
+  }
+
   function renderMetaLine(metaEl, metaItems, location) {
     const items = Array.isArray(metaItems) ? [...metaItems] : [];
     if (location && !items.some((entry) => entry.toLowerCase() === location.toLowerCase())) {
@@ -202,6 +218,7 @@
       .filter(Boolean);
     if (next.length !== items.length) return;
     window.DMZMedia.setMediaItems(next);
+    markDirty();
   }
 
   function bindDragReorder(mediaGrid) {
@@ -268,8 +285,10 @@
         const index = Number(card.getAttribute("data-index"));
         if (window.DMZMedia) {
           window.DMZMedia.removeMediaItem(index);
+          markDirty();
         } else {
           card.remove();
+          markDirty();
         }
       });
       card.appendChild(btn);
@@ -319,6 +338,7 @@
         if (!title.getAttribute("data-edit-bound")) {
           title.addEventListener("input", () => {
             window.DMZMedia.updateMediaItem(index, { title: title.textContent.trim() });
+            markDirty();
           });
           title.setAttribute("data-edit-bound", "true");
         }
@@ -331,6 +351,7 @@
           description.addEventListener("input", () => {
             const value = description.textContent.trim();
             window.DMZMedia.updateMediaItem(index, { description: value });
+            markDirty();
             if (value) {
               description.classList.remove("media-desc-empty");
             } else {
@@ -361,6 +382,7 @@
       locationInput.addEventListener("input", () => {
         const location = locationInput.value.trim();
         window.DMZMedia.updateMediaItem(index, { location });
+        markDirty();
         if (meta) {
           renderMetaLine(meta, item.meta, location);
         }
@@ -379,6 +401,7 @@
           .map((tag) => tag.trim())
           .filter(Boolean);
         window.DMZMedia.updateMediaItem(index, { tags });
+        markDirty();
         card.setAttribute("data-tags", tags.join(" "));
         window.DMZMedia.applyActiveFilter();
       });
@@ -442,22 +465,17 @@
     const locationInput = document.createElement("input");
     locationInput.type = "text";
 
-    const mediaUrlLabel = document.createElement("label");
-    mediaUrlLabel.textContent = "Media URL";
-    const mediaUrlInput = document.createElement("input");
-    mediaUrlInput.type = "text";
-    mediaUrlInput.placeholder = "assets/media/your-file.mp4 or https://...";
-
     const streamIdLabel = document.createElement("label");
-    streamIdLabel.textContent = "Cloudflare Stream ID (optional)";
+    streamIdLabel.textContent = "Cloudflare Stream ID";
     const streamIdInput = document.createElement("input");
     streamIdInput.type = "text";
-    streamIdInput.placeholder = "Stream video ID";
+    streamIdInput.placeholder = "Auto-filled after upload";
 
     const streamUploadBtn = document.createElement("button");
     streamUploadBtn.type = "button";
     streamUploadBtn.className = "media-edit-save";
     streamUploadBtn.textContent = "Upload to Stream";
+    streamUploadBtn.disabled = true;
 
     const progressWrap = document.createElement("div");
     progressWrap.className = "media-edit-progress";
@@ -471,10 +489,25 @@
     progressWrap.appendChild(progressLabel);
 
     const mediaFileLabel = document.createElement("label");
-    mediaFileLabel.textContent = "Pick media file (local)";
+    mediaFileLabel.textContent = "Pick media file";
     const mediaFileInput = document.createElement("input");
     mediaFileInput.type = "file";
     mediaFileInput.accept = "video/*,image/*";
+
+    const uploadStatus = document.createElement("p");
+    uploadStatus.className = "media-upload-note";
+    uploadStatus.textContent = "Recommended for video. Uploads directly to Cloudflare Stream.";
+
+    const urlToggle = document.createElement("button");
+    urlToggle.type = "button";
+    urlToggle.className = "media-edit-cancel";
+    urlToggle.textContent = "Use direct URL instead";
+
+    const mediaUrlLabel = document.createElement("label");
+    mediaUrlLabel.textContent = "Media URL";
+    const mediaUrlInput = document.createElement("input");
+    mediaUrlInput.type = "text";
+    mediaUrlInput.placeholder = "/assets/media/your-file.mp4 or https://...";
 
     const thumbUrlLabel = document.createElement("label");
     thumbUrlLabel.textContent = "Thumbnail URL (optional)";
@@ -487,6 +520,40 @@
     const thumbFileInput = document.createElement("input");
     thumbFileInput.type = "file";
     thumbFileInput.accept = "image/*";
+
+    const uploadBlock = document.createElement("div");
+    uploadBlock.className = "media-upload-block";
+    const uploadHead = document.createElement("div");
+    uploadHead.className = "media-upload-head";
+    const uploadTitle = document.createElement("div");
+    uploadTitle.className = "media-upload-title";
+    uploadTitle.textContent = "Stream upload";
+    uploadHead.appendChild(uploadTitle);
+    uploadBlock.appendChild(uploadHead);
+    uploadBlock.appendChild(uploadStatus);
+    uploadBlock.appendChild(mediaFileLabel);
+    uploadBlock.appendChild(mediaFileInput);
+    uploadBlock.appendChild(streamUploadBtn);
+    uploadBlock.appendChild(progressWrap);
+    uploadBlock.appendChild(streamIdLabel);
+    uploadBlock.appendChild(streamIdInput);
+
+    const urlBlock = document.createElement("div");
+    urlBlock.className = "media-upload-block";
+    urlBlock.hidden = true;
+    const urlHead = document.createElement("div");
+    urlHead.className = "media-upload-head";
+    const urlTitle = document.createElement("div");
+    urlTitle.className = "media-upload-title";
+    urlTitle.textContent = "Direct URL (advanced)";
+    urlHead.appendChild(urlTitle);
+    urlBlock.appendChild(urlHead);
+    urlBlock.appendChild(mediaUrlLabel);
+    urlBlock.appendChild(mediaUrlInput);
+    urlBlock.appendChild(thumbUrlLabel);
+    urlBlock.appendChild(thumbUrlInput);
+    urlBlock.appendChild(thumbFileLabel);
+    urlBlock.appendChild(thumbFileInput);
 
     const actions = document.createElement("div");
     actions.className = "media-edit-modal-actions";
@@ -514,18 +581,9 @@
     form.appendChild(tagsInput);
     form.appendChild(locationLabel);
     form.appendChild(locationInput);
-    form.appendChild(mediaUrlLabel);
-    form.appendChild(mediaUrlInput);
-    form.appendChild(streamIdLabel);
-    form.appendChild(streamIdInput);
-    form.appendChild(streamUploadBtn);
-    form.appendChild(progressWrap);
-    form.appendChild(mediaFileLabel);
-    form.appendChild(mediaFileInput);
-    form.appendChild(thumbUrlLabel);
-    form.appendChild(thumbUrlInput);
-    form.appendChild(thumbFileLabel);
-    form.appendChild(thumbFileInput);
+    form.appendChild(uploadBlock);
+    form.appendChild(urlToggle);
+    form.appendChild(urlBlock);
 
     card.appendChild(heading);
     card.appendChild(hint);
@@ -554,6 +612,11 @@
       streamIdInput.value = item.streamId || "";
     }
 
+    if (mediaUrlInput.value || thumbUrlInput.value) {
+      urlBlock.hidden = false;
+      urlToggle.textContent = "Hide direct URL fields";
+    }
+
     function syncMediaUrlFromFile(file) {
       if (!file) return;
       if (file.type && file.type.startsWith("image/")) {
@@ -565,9 +628,32 @@
       mediaUrlInput.value = `${basePath}${file.name}`;
     }
 
+    function updateUploadState(file) {
+      if (!file) {
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Upload to Stream";
+        uploadStatus.textContent = "Pick a file to upload to Stream.";
+        return;
+      }
+      if (file.type && file.type.startsWith("image/")) {
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Upload to Stream";
+        uploadStatus.textContent = "Images use direct URLs or local assets (no Stream upload).";
+        return;
+      }
+      streamUploadBtn.disabled = false;
+      streamUploadBtn.textContent = "Upload to Stream";
+      uploadStatus.textContent = "Ready to upload video to Stream.";
+    }
+
     mediaFileInput.addEventListener("change", () => {
       const file = mediaFileInput.files && mediaFileInput.files[0];
       syncMediaUrlFromFile(file);
+      updateUploadState(file);
+      if (file && file.type && file.type.startsWith("image/")) {
+        urlBlock.hidden = false;
+        urlToggle.textContent = "Hide direct URL fields";
+      }
     });
 
     typeSelect.addEventListener("change", () => {
@@ -583,14 +669,31 @@
       thumbUrlInput.value = `${thumbDefaultPath}${file.name}`;
     });
 
+    urlToggle.addEventListener("click", () => {
+      urlBlock.hidden = !urlBlock.hidden;
+      urlToggle.textContent = urlBlock.hidden ? "Use direct URL instead" : "Hide direct URL fields";
+    });
+
+    streamIdInput.addEventListener("input", () => {
+      const value = streamIdInput.value.trim();
+      if (value && !thumbUrlInput.value) {
+        thumbUrlInput.value = buildStreamThumbUrl(value);
+      }
+    });
+
     streamUploadBtn.addEventListener("click", async () => {
       const file = mediaFileInput.files && mediaFileInput.files[0];
       if (!file) {
         streamUploadBtn.textContent = "Pick a video file first";
         return;
       }
+      if (file.type && file.type.startsWith("image/")) {
+        streamUploadBtn.textContent = "Video uploads only";
+        return;
+      }
       streamUploadBtn.disabled = true;
       streamUploadBtn.textContent = "Uploading...";
+      uploadStatus.textContent = "Uploading to Stream. Please stay on this page.";
       progressWrap.hidden = false;
       progressBar.style.width = "0%";
       progressLabel.textContent = "0%";
@@ -623,9 +726,14 @@
         });
         streamIdInput.value = uid || "";
         mediaUrlInput.value = "";
+        if (streamIdInput.value && !thumbUrlInput.value) {
+          thumbUrlInput.value = buildStreamThumbUrl(streamIdInput.value);
+        }
         streamUploadBtn.textContent = "Uploaded";
+        uploadStatus.textContent = "Upload complete. Stream ID added.";
       } catch (error) {
         streamUploadBtn.textContent = "Upload failed";
+        uploadStatus.textContent = "Upload failed. Check your connection and try again.";
       } finally {
         streamUploadBtn.disabled = false;
         setTimeout(() => {
@@ -634,6 +742,8 @@
         }, 1200);
       }
     });
+
+    updateUploadState(null);
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -666,6 +776,7 @@
       } else {
         window.DMZMedia.addMediaItem(ensureId(nextItem));
       }
+      markDirty();
       closeModal();
     });
   }
@@ -732,6 +843,7 @@
     const exportButton = document.querySelector(".media-edit-export");
     const publishButton = document.querySelector(".media-edit-publish");
     const resetButton = document.querySelector(".media-edit-reset");
+    const statusLabel = document.getElementById("mediaAdminStatus");
     if (!toggle) return;
     if (mediaGrid) {
       bindDragReorder(mediaGrid);
@@ -754,10 +866,30 @@
     }
     desktopDragQuery.addEventListener("change", updateDragAvailability);
     const updateAuthState = () => {
-      document.body.classList.toggle("media-authenticated", Boolean(getToken()));
+      const authed = Boolean(getToken());
+      document.body.classList.toggle("media-authenticated", authed);
+      if (statusLabel) {
+        statusLabel.textContent = authed ? "Signed in" : "Signed out";
+      }
+      if (loginButton) {
+        loginButton.textContent = authed ? "Re-auth" : "DMZ Login";
+      }
     };
 
     updateAuthState();
+    try {
+      if (window.localStorage.getItem(draftStorageKey)) {
+        setDirty(true);
+      }
+    } catch (error) {
+      // Ignore storage errors.
+    }
+
+    window.addEventListener("beforeunload", (event) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
 
     if (loginButton) {
       loginButton.addEventListener("click", () => {
@@ -846,6 +978,12 @@
           return;
         }
         window.alert("Media published to DMZ.");
+        try {
+          window.localStorage.removeItem(draftStorageKey);
+        } catch (error) {
+          // Ignore storage errors.
+        }
+        setDirty(false);
       });
     }
 
@@ -854,6 +992,7 @@
         if (!window.DMZMedia) return;
         const confirmReset = window.confirm("Discard local edits and reload from media.json?");
         if (confirmReset) {
+          setDirty(false);
           window.DMZMedia.clearDraft();
         }
       });
