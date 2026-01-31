@@ -184,7 +184,19 @@ async function handleGetMedia(env) {
   const { results } = await env.DB.prepare(
     "SELECT * FROM media_items ORDER BY created_at DESC"
   ).all();
-  const items = (results || []).map(normalizeItem);
+  const rows = results || [];
+  const now = Date.now();
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    if (row && (!row.created_at || row.created_at === "")) {
+      const createdAt = new Date(now - i * 1000).toISOString();
+      row.created_at = createdAt;
+      await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?")
+        .bind(createdAt, row.id)
+        .run();
+    }
+  }
+  const items = rows.map(normalizeItem);
   const mediaItems = items.filter((item) => item.type !== "photo");
   const photoItems = items.filter((item) => item.type === "photo");
   return jsonResponse({ mediaItems, photoItems });

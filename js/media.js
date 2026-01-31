@@ -589,7 +589,6 @@
   }
 
   function renderMediaWithSort() {
-    state.mediaItems = state.mediaItems.map((item) => ensureCreatedAt(ensureItemId(item)));
     const indexLookup = buildIndexLookup(state.mediaItems);
     const displayItems = applySort(state.mediaItems);
     renderMedia(displayItems, indexLookup);
@@ -1295,7 +1294,6 @@
       const { data, destinations } = await fetchMediaData();
       const draft = loadDraft();
       state.mediaItems = (draft && draft.mediaItems) || data.mediaItems || [];
-      state.mediaItems = state.mediaItems.map((item) => ensureCreatedAt(ensureItemId(item)));
       state.photoItems = (draft && draft.photoItems) || data.photoItems || [];
       state.destinations = Array.isArray(destinations) ? destinations : [];
       renderMediaWithSort();
@@ -1332,7 +1330,6 @@
 
   window.DMZMedia = {
     getMediaItems() {
-      state.mediaItems = state.mediaItems.map((item) => ensureCreatedAt(ensureItemId(item)));
       return state.mediaItems;
     },
     getPhotoItems() {
@@ -1340,7 +1337,6 @@
     },
     setMediaItems(items) {
       state.mediaItems = Array.isArray(items) ? items : [];
-      state.mediaItems = state.mediaItems.map((entry) => ensureCreatedAt(ensureItemId(entry)));
       saveDraft();
       renderMediaWithSort();
       renderLocationFilters(state.destinations);
@@ -1445,7 +1441,7 @@
     },
     async reloadFromServer() {
       const { data, destinations } = await fetchMediaData();
-      state.mediaItems = (data.mediaItems || []).map((item) => ensureCreatedAt(ensureItemId(item)));
+      state.mediaItems = data.mediaItems || [];
       state.photoItems = data.photoItems || [];
       state.destinations = Array.isArray(destinations) ? destinations : [];
       renderMediaWithSort();
