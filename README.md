@@ -39,7 +39,7 @@ DMZ Scuba is a static HTML/CSS/JS site with a Cloudflare Worker backend for the 
 
 ## Scripts
 - `js/main.js` Global helpers (footer year, dropdowns, copy-to-clipboard, toast, form submit to `/api/contact`, URL prefill).
-- `js/media.js` Media library rendering, filters, masonry layout, YouTube/Stream embeds, loads `/api/media` with local draft support. Falls back to `/assets/data/media.json` if API fails (file not present).
+- `js/media.js` Media library rendering, filters, masonry layout, YouTube/Stream embeds, loads `/api/media` with local draft support. Falls back to `/assets/data/media.json` if API fails.
 - `js/media-edit.js` Admin media editing, login, drag reorder, Stream direct upload, publish to `/api/admin/media-bulk`.
 - `js/globe.js` Canvas globe renderer for Travel page with pin selection, zoom, and destination list.
 - `js/globe - Copy.js` Unused earlier globe version (not referenced).
@@ -49,12 +49,14 @@ DMZ Scuba is a static HTML/CSS/JS site with a Cloudflare Worker backend for the 
 ## Data
 - `assets/data/destinations.json` Primary destination dataset used by travel globe and destination pages.
 - `assets/data/destinations-expanded.json` Additional long-form destination details for destination page.
+- `assets/data/media.json` Local media fallback for the media page.
 - `assets/data/Add a pin.txt` Template for adding a destination entry.
 
 ## Assets
-- `assets/icons/favicon.ico` Favicon. (Note: HTML references `/assets/icons/favicon.png`, which is not present.)
+- `assets/icons/favicon.ico` Favicon (legacy).
+- `assets/icons/favicon.png` Favicon (PNG).
 - `assets/images/...` Logos, hero backgrounds, globe textures, destination hero images, isometric resort images.
-- `assets/media/thumbnails/Screenshot 2026-01-20 030957.png` Media thumbnail example. (No `assets/media` or `assets/media/photos` directories exist in the repo even though `js/media-edit.js` suggests those paths.)
+- `assets/media/thumbnails/Screenshot 2026-01-20 030957.png` Media thumbnail example.
 
 ## Worker backend
 Location: `workers/dmz-media-api/`
@@ -77,6 +79,4 @@ Location: `workers/dmz-media-api/`
 - `Pcloudfare.bat` can tunnel the local server for external testing.
 
 ## Notes / gaps
-- `assets/icons/favicon.png` is referenced but missing.
-- `/assets/data/media.json` is referenced as a fallback but missing.
 - `css/dmz_scuba_main_full.css` and `js/globe - Copy.js` are not referenced by any HTML.
