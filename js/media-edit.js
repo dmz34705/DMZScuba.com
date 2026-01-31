@@ -1284,6 +1284,10 @@
             const count = data.updated || 0;
             window.alert(`Stream dates synced (${count} updated).`);
             await window.DMZMedia.reloadFromServer();
+            if (window.DMZMedia && window.DMZMedia.setMediaItems) {
+              window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+            }
+            markDirty();
           }
         } catch (error) {
           window.alert("Stream date sync failed.");
