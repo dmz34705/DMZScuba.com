@@ -1184,9 +1184,13 @@
           window.DMZMedia.syncFromDom();
         }
         const baseItems = window.DMZMedia.getMediaItems().map((item) => ensureId({ ...item }));
-        const now = Date.now();
+        const nowIso = new Date().toISOString();
         const items = baseItems.map((item, index) => {
-          return { ...item, createdAt: new Date(now - index * 1000).toISOString() };
+          return {
+            ...item,
+            createdAt: item.createdAt || nowIso,
+            sortOrder: index,
+          };
         });
         let deleteIds = [];
         let deleteStreamIds = [];

@@ -39,6 +39,14 @@ async function requireAuth(request, env) {
   return !!row;
 }
 
+async function ensureSortOrderColumn(env) {
+  try {
+    await env.DB.prepare("ALTER TABLE media_items ADD COLUMN sort_order INTEGER").run();
+  } catch (error) {
+    // Column already exists or migration not needed.
+  }
+}
+
 function formatFieldLabel(key) {
   return String(key || "")
     .replace(/[-_]+/g, " ")
@@ -177,27 +185,22 @@ function normalizeItem(row) {
     meta: row.meta ? JSON.parse(row.meta) : [],
     location: row.location || "",
     createdAt: row.created_at || "",
+    sortOrder: row.sort_order ?? null,
   };
 }
 
 async function handleGetMedia(env) {
+  await ensureSortOrderColumn(env);
   const { results } = await env.DB.prepare(
-    "SELECT rowid, * FROM media_items ORDER BY rowid ASC"
+    "SELECT * FROM media_items ORDER BY sort_order IS NULL, sort_order ASC, created_at DESC, rowid ASC"
   ).all();
   const rows = results || [];
   const now = Date.now();
-  const counts = new Map();
-  rows.forEach((row) => {
-    if (!row) return;
-    const key = row.created_at || "";
-    counts.set(key, (counts.get(key) || 0) + 1);
-  });
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
     if (!row) continue;
     const needsBackfill = !row.created_at || row.created_at === "";
-    const isDuplicate = row.created_at && (counts.get(row.created_at) || 0) > 1;
-    if (needsBackfill || isDuplicate) {
+    if (needsBackfill) {
       const offset = rows.length - 1 - i;
       const createdAt = new Date(now - offset * 1000).toISOString();
       row.created_at = createdAt;
@@ -223,6 +226,7 @@ async function handleGetMedia(env) {
 async function handleCreateMedia(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  await ensureSortOrderColumn(env);
 
   const body = await request.json().catch(() => ({}));
   const id = body.id || crypto.randomUUID();
@@ -232,8 +236,8 @@ async function handleCreateMedia(request, env) {
 
   await env.DB.prepare(
     `INSERT INTO media_items
-      (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -248,6 +252,7 @@ async function handleCreateMedia(request, env) {
       body.streamId || "",
       meta,
       body.location || "",
+      body.sortOrder ?? null,
       now
     )
     .run();
@@ -258,6 +263,7 @@ async function handleCreateMedia(request, env) {
 async function handleUpdateMedia(request, env, id) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  await ensureSortOrderColumn(env);
   const body = await request.json().catch(() => ({}));
   const tags = Array.isArray(body.tags) ? JSON.stringify(body.tags) : undefined;
   const meta = Array.isArray(body.meta) ? JSON.stringify(body.meta) : undefined;
@@ -274,7 +280,8 @@ async function handleUpdateMedia(request, env, id) {
       thumb_url = COALESCE(?, thumb_url),
       stream_id = COALESCE(?, stream_id),
       meta = COALESCE(?, meta),
-      location = COALESCE(?, location)
+      location = COALESCE(?, location),
+      sort_order = COALESCE(?, sort_order)
      WHERE id = ?`
   )
     .bind(
@@ -289,6 +296,7 @@ async function handleUpdateMedia(request, env, id) {
       body.streamId ?? null,
       meta ?? null,
       body.location ?? null,
+      body.sortOrder ?? null,
       id
     )
     .run();
@@ -306,6 +314,7 @@ async function handleDeleteMedia(request, env, id) {
 async function handleBulkUpsert(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  await ensureSortOrderColumn(env);
   const body = await request.json().catch(() => ({}));
   const items = Array.isArray(body.items) ? body.items : [];
   const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
@@ -331,18 +340,22 @@ async function handleBulkUpsert(request, env) {
     }
   }
   const existingRows = await env.DB.prepare(
-    "SELECT id, created_at FROM media_items WHERE id IS NOT NULL"
+    "SELECT id, created_at, sort_order FROM media_items WHERE id IS NOT NULL"
   ).all();
-  const existingMap = new Map();
+  const existingCreatedMap = new Map();
+  const existingOrderMap = new Map();
   (existingRows.results || []).forEach((row) => {
     if (row && row.id && row.created_at) {
-      existingMap.set(row.id, row.created_at);
+      existingCreatedMap.set(row.id, row.created_at);
+    }
+    if (row && row.id && row.sort_order != null) {
+      existingOrderMap.set(row.id, row.sort_order);
     }
   });
   const stmt = env.DB.prepare(
     `INSERT OR REPLACE INTO media_items
-      (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, sort_order, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   if (deleteIds.length) {
     const deleteStmt = env.DB.prepare("DELETE FROM media_items WHERE id = ?");
@@ -354,10 +367,11 @@ async function handleBulkUpsert(request, env) {
     const id = item.id || crypto.randomUUID();
     const tags = Array.isArray(item.tags) ? JSON.stringify(item.tags) : JSON.stringify([]);
     const meta = Array.isArray(item.meta) ? JSON.stringify(item.meta) : JSON.stringify([]);
-    let createdAt = item.createdAt || existingMap.get(id) || "";
+    let createdAt = item.createdAt || existingCreatedMap.get(id) || "";
     if (!createdAt && item.streamId) {
       createdAt = await fetchStreamCreated(item.streamId);
     }
+    const sortOrder = item.sortOrder ?? existingOrderMap.get(id) ?? null;
     await stmt
       .bind(
         id,
@@ -372,6 +386,7 @@ async function handleBulkUpsert(request, env) {
         item.streamId || "",
         meta,
         item.location || "",
+        sortOrder,
         createdAt || now
       )
       .run();

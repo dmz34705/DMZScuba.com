@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS media_items (
   stream_id TEXT,
   meta TEXT,
   location TEXT,
+  sort_order INTEGER,
   created_at TEXT NOT NULL
 );
 
