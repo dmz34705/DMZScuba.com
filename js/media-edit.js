@@ -528,10 +528,14 @@
     const locationInput = document.createElement("input");
     locationInput.type = "text";
 
+    const dateWrap = document.createElement("div");
+    dateWrap.className = "media-edit-date";
     const dateLabel = document.createElement("label");
     dateLabel.textContent = "Publish Date (optional)";
     const dateInput = document.createElement("input");
     dateInput.type = "date";
+    dateWrap.appendChild(dateLabel);
+    dateWrap.appendChild(dateInput);
 
     const streamIdLabel = document.createElement("label");
     streamIdLabel.textContent = "Cloudflare Stream ID";
@@ -652,8 +656,7 @@
     form.appendChild(tagsInput);
     form.appendChild(locationLabel);
     form.appendChild(locationInput);
-    form.appendChild(dateLabel);
-    form.appendChild(dateInput);
+    form.appendChild(dateWrap);
     form.appendChild(uploadBlock);
     form.appendChild(urlToggle);
     form.appendChild(urlBlock);
@@ -685,6 +688,13 @@
       thumbUrlInput.value = item.thumbUrl || "";
       streamIdInput.value = item.streamId || "";
     }
+
+    const updateDateVisibility = () => {
+      const hasStream = Boolean(streamIdInput.value.trim());
+      dateWrap.hidden = hasStream;
+    };
+    updateDateVisibility();
+    streamIdInput.addEventListener("input", updateDateVisibility);
 
     if (mediaUrlInput.value || thumbUrlInput.value) {
       urlBlock.hidden = false;
