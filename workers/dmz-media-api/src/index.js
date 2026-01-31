@@ -277,12 +277,22 @@ async function handleBulkUpsert(request, env) {
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
   const body = await request.json().catch(() => ({}));
   const items = Array.isArray(body.items) ? body.items : [];
+  const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
+  const deleteStreamIds = Array.isArray(body.deleteStreamIds)
+    ? body.deleteStreamIds.filter(Boolean)
+    : [];
   const now = new Date().toISOString();
   const stmt = env.DB.prepare(
     `INSERT OR REPLACE INTO media_items
       (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
+  if (deleteIds.length) {
+    const deleteStmt = env.DB.prepare("DELETE FROM media_items WHERE id = ?");
+    for (const id of deleteIds) {
+      await deleteStmt.bind(id).run();
+    }
+  }
   for (const item of items) {
     const id = item.id || crypto.randomUUID();
     const tags = Array.isArray(item.tags) ? JSON.stringify(item.tags) : JSON.stringify([]);
@@ -304,6 +314,25 @@ async function handleBulkUpsert(request, env) {
         item.createdAt || now
       )
       .run();
+  }
+  if (deleteStreamIds.length && env.CF_ACCOUNT_ID && env.CF_STREAM_TOKEN) {
+    for (const streamId of deleteStreamIds) {
+      try {
+        const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${streamId}`;
+        const resp = await fetch(url, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${env.CF_STREAM_TOKEN}`,
+          },
+        });
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          console.log("Stream delete failed", streamId, resp.status, errorText);
+        }
+      } catch (error) {
+        console.log("Stream delete failed", streamId, error);
+      }
+    }
   }
   return jsonResponse({ ok: true, count: items.length });
 }

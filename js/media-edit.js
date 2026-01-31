@@ -327,6 +327,8 @@
         event.preventDefault();
         event.stopPropagation();
         const index = Number(card.getAttribute("data-index"));
+        const confirmDelete = window.confirm("Delete this media item? This will remove it on publish.");
+        if (!confirmDelete) return;
         if (window.DMZMedia) {
           window.DMZMedia.removeMediaItem(index);
           markDirty();
@@ -1142,10 +1144,32 @@
           window.DMZMedia.syncFromDom();
         }
         const items = window.DMZMedia.getMediaItems().map((item) => ensureId({ ...item }));
+        let deleteIds = [];
+        let deleteStreamIds = [];
+        try {
+          const resp = await fetch(`${apiRoot || ""}/api/media`, { cache: "no-store" });
+          if (resp.ok) {
+            const serverData = await resp.json();
+            const serverItems = [
+              ...(serverData.mediaItems || []),
+              ...(serverData.photoItems || []),
+            ];
+            const currentIds = new Set(items.map((entry) => entry.id).filter(Boolean));
+            deleteIds = serverItems
+              .map((entry) => entry && entry.id)
+              .filter((id) => id && !currentIds.has(id));
+            deleteStreamIds = serverItems
+              .filter((entry) => entry && entry.id && deleteIds.includes(entry.id))
+              .map((entry) => entry.streamId)
+              .filter(Boolean);
+          }
+        } catch (error) {
+          console.warn("Failed to load server media list for delete sync.", error);
+        }
         const resp = await apiFetch("/api/admin/media-bulk", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items }),
+          body: JSON.stringify({ items, deleteIds, deleteStreamIds }),
         });
         if (!resp.ok) {
           window.alert("Publish failed. Check your login or API.");
