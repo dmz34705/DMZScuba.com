@@ -522,6 +522,7 @@
     streamUploadBtn.disabled = true;
     let uploadComplete = false;
     let uploadCreatedItem = false;
+    let uploadCreatedItemId = "";
 
     const progressWrap = document.createElement("div");
     progressWrap.className = "media-edit-progress";
@@ -884,7 +885,9 @@
         meta: [],
         location: "",
       };
-      window.DMZMedia.addMediaItem(ensureId(nextItem));
+      const created = ensureId(nextItem);
+      uploadCreatedItemId = created.id || "";
+      window.DMZMedia.addMediaItem(created);
       uploadCreatedItem = true;
       markDirty();
     }
@@ -919,6 +922,15 @@
       if (item && typeof index === "number") {
         window.DMZMedia.updateMediaItem(index, nextItem);
         window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+      } else if (uploadCreatedItemId) {
+        const items = window.DMZMedia.getMediaItems();
+        const createdIndex = items.findIndex((entry) => entry && entry.id === uploadCreatedItemId);
+        if (createdIndex !== -1) {
+          window.DMZMedia.updateMediaItem(createdIndex, { ...nextItem, id: uploadCreatedItemId });
+          window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+        } else {
+          window.DMZMedia.addMediaItem(ensureId(nextItem));
+        }
       } else {
         window.DMZMedia.addMediaItem(ensureId(nextItem));
       }
