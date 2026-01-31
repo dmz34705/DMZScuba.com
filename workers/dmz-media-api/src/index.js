@@ -176,6 +176,7 @@ function normalizeItem(row) {
     streamId: row.stream_id || "",
     meta: row.meta ? JSON.parse(row.meta) : [],
     location: row.location || "",
+    createdAt: row.created_at || "",
   };
 }
 

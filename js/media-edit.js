@@ -920,6 +920,7 @@
         streamId: streamIdInput.value.trim(),
         meta: [],
         location: locationInput.value.trim(),
+        createdAt: (item && item.createdAt) || new Date().toISOString(),
       };
       if (item && typeof index === "number") {
         window.DMZMedia.updateMediaItem(index, nextItem);
