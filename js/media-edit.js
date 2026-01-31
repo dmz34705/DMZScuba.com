@@ -221,6 +221,23 @@
     return `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s`;
   }
 
+  function formatDateForInput(value) {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  function normalizeDateInput(value) {
+    if (!value) return "";
+    const raw = String(value).trim();
+    if (!raw) return "";
+    const withTime = raw.includes("T") ? raw : `${raw}T00:00:00`;
+    const parsed = new Date(withTime);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toISOString();
+  }
+
   function renderMetaLine(metaEl, metaItems, location) {
     const items = Array.isArray(metaItems) ? [...metaItems] : [];
     if (location && !items.some((entry) => entry.toLowerCase() === location.toLowerCase())) {
@@ -511,6 +528,11 @@
     const locationInput = document.createElement("input");
     locationInput.type = "text";
 
+    const dateLabel = document.createElement("label");
+    dateLabel.textContent = "Publish Date (optional)";
+    const dateInput = document.createElement("input");
+    dateInput.type = "date";
+
     const streamIdLabel = document.createElement("label");
     streamIdLabel.textContent = "Cloudflare Stream ID";
     const streamIdInput = document.createElement("input");
@@ -630,6 +652,8 @@
     form.appendChild(tagsInput);
     form.appendChild(locationLabel);
     form.appendChild(locationInput);
+    form.appendChild(dateLabel);
+    form.appendChild(dateInput);
     form.appendChild(uploadBlock);
     form.appendChild(urlToggle);
     form.appendChild(urlBlock);
@@ -656,6 +680,7 @@
       descInput.value = item.description || "";
       tagsInput.value = (item.tags || []).join(", ");
       locationInput.value = item.location || "";
+      dateInput.value = formatDateForInput(item.createdAt || "");
       mediaUrlInput.value = item.url || "";
       thumbUrlInput.value = item.thumbUrl || "";
       streamIdInput.value = item.streamId || "";
@@ -920,7 +945,10 @@
         streamId: streamIdInput.value.trim(),
         meta: [],
         location: locationInput.value.trim(),
-        createdAt: (item && item.createdAt) || new Date().toISOString(),
+        createdAt:
+          normalizeDateInput(dateInput.value) ||
+          (item && item.createdAt) ||
+          new Date().toISOString(),
       };
       if (item && typeof index === "number") {
         window.DMZMedia.updateMediaItem(index, nextItem);
