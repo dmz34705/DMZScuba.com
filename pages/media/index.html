@@ -94,6 +94,17 @@
         </div>
         <div class="filterbar-meta">
           <span class="results-count" id="mediaResultsCount">0</span>
+          <label class="filter-sort">
+            <span class="filter-sort-label">Sort</span>
+            <select id="mediaSort">
+              <option value="manual">Manual</option>
+              <option value="recent">Most Recent</option>
+              <option value="oldest">Oldest</option>
+              <option value="views">Most Viewed</option>
+              <option value="duration">Longest Duration</option>
+              <option value="shuffle">Shuffle</option>
+            </select>
+          </label>
           <label class="filter-range">
             <span class="filter-range-label">Card Size</span>
             <input id="mediaCardSize" type="range" min="220" max="380" value="280" step="20" />

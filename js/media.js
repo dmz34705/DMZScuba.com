@@ -24,6 +24,7 @@
   const emptyState = document.getElementById("mediaEmpty");
   const cardSizeInput = document.getElementById("mediaCardSize");
   const cardSizeValue = document.getElementById("mediaCardSizeValue");
+  const sortSelect = document.getElementById("mediaSort");
   const storageKey = "dmzMediaDraft";
   const cardSizeStorageKey = "dmzMediaCardSize";
   const selectedTags = new Set();
@@ -34,6 +35,8 @@
   let searchQuery = "";
   let locationNameById = new Map();
   let locationKeys = new Set();
+  let currentSort = "manual";
+  let shuffleOrder = null;
   const state = {
     mediaItems: [],
     photoItems: [],
@@ -493,7 +496,101 @@
       .toLowerCase();
   }
 
-  function renderMedia(items) {
+  function parseDateValue(item) {
+    const raw = item && (item.createdAt || item.uploadedAt || item.date || item.uploadDate);
+    if (!raw) return null;
+    const timestamp = Date.parse(raw);
+    if (Number.isFinite(timestamp)) return timestamp;
+    return null;
+  }
+
+  function parseDurationValue(item) {
+    const raw = item && (item.duration || item.length || item.durationSeconds);
+    if (raw == null) return null;
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    const text = String(raw).trim();
+    if (!text) return null;
+    if (/^\d+$/.test(text)) return Number(text);
+    const parts = text.split(":").map((part) => Number(part));
+    if (parts.some((part) => Number.isNaN(part))) return null;
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return null;
+  }
+
+  function parseViewsValue(item) {
+    const raw = item && (item.views || item.viewCount);
+    if (raw == null) return null;
+    const value = typeof raw === "number" ? raw : Number(String(raw).replace(/[^0-9]/g, ""));
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function shuffleArray(items) {
+    const array = [...items];
+    for (let i = array.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function buildIndexLookup(items) {
+    const map = new Map();
+    (items || []).forEach((item, index) => {
+      if (!item || !item.id) return;
+      map.set(item.id, index);
+    });
+    return map;
+  }
+
+  function applySort(items) {
+    const list = Array.isArray(items) ? [...items] : [];
+    if (currentSort === "manual") return list;
+    if (currentSort === "shuffle") {
+      const keys = list.map((item, index) => item.id || `__idx-${index}`);
+      if (!shuffleOrder || shuffleOrder.length !== keys.length) {
+        shuffleOrder = shuffleArray(keys);
+      }
+      const orderMap = new Map(shuffleOrder.map((key, index) => [key, index]));
+      return list.sort((a, b) => {
+        const aKey = a.id || "";
+        const bKey = b.id || "";
+        return (orderMap.get(aKey) ?? 0) - (orderMap.get(bKey) ?? 0);
+      });
+    }
+    if (currentSort === "recent" || currentSort === "oldest") {
+      return list.sort((a, b) => {
+        const aVal = parseDateValue(a);
+        const bVal = parseDateValue(b);
+        const aScore = aVal == null ? -Infinity : aVal;
+        const bScore = bVal == null ? -Infinity : bVal;
+        return currentSort === "recent" ? bScore - aScore : aScore - bScore;
+      });
+    }
+    if (currentSort === "views") {
+      return list.sort((a, b) => {
+        const aVal = parseViewsValue(a) ?? -Infinity;
+        const bVal = parseViewsValue(b) ?? -Infinity;
+        return bVal - aVal;
+      });
+    }
+    if (currentSort === "duration") {
+      return list.sort((a, b) => {
+        const aVal = parseDurationValue(a) ?? -Infinity;
+        const bVal = parseDurationValue(b) ?? -Infinity;
+        return bVal - aVal;
+      });
+    }
+    return list;
+  }
+
+  function renderMediaWithSort() {
+    const indexLookup = buildIndexLookup(state.mediaItems);
+    const displayItems = applySort(state.mediaItems);
+    renderMedia(displayItems, indexLookup);
+  }
+
+  function renderMedia(items, indexLookup) {
     if (!mediaGrid) return;
     mediaGrid.innerHTML = "";
 
@@ -502,7 +599,11 @@
       card.className = "media-card";
       card.setAttribute("data-tags", (item.tags || []).join(" "));
       card.setAttribute("data-location", normalizeKey(item.location || ""));
-      card.setAttribute("data-index", String(index));
+      const mappedIndex =
+        indexLookup && item && item.id && indexLookup.has(item.id)
+          ? indexLookup.get(item.id)
+          : index;
+      card.setAttribute("data-index", String(mappedIndex));
       card.setAttribute("data-search", buildSearchText(item));
 
       const mediaUrl = resolveUrl(item.url || "#");
@@ -1089,6 +1190,15 @@
       });
     }
 
+    if (sortSelect) {
+      sortSelect.addEventListener("change", () => {
+        currentSort = sortSelect.value || "manual";
+        shuffleOrder = null;
+        renderMediaWithSort();
+        applyActiveFilter();
+      });
+    }
+
     if (clearFiltersButton) {
       clearFiltersButton.addEventListener("click", () => {
         clearAllFilters();
@@ -1155,9 +1265,10 @@
       const { data, destinations } = await fetchMediaData();
       const draft = loadDraft();
       state.mediaItems = (draft && draft.mediaItems) || data.mediaItems || [];
+      state.mediaItems = state.mediaItems.map((item) => ensureItemId(item));
       state.photoItems = (draft && draft.photoItems) || data.photoItems || [];
       state.destinations = Array.isArray(destinations) ? destinations : [];
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       renderPhotos(state.photoItems);
@@ -1191,7 +1302,7 @@
     setMediaItems(items) {
       state.mediaItems = Array.isArray(items) ? items : [];
       saveDraft();
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
@@ -1200,7 +1311,7 @@
       const next = ensureItemId({ ...(item || {}) });
       state.mediaItems.push(next);
       saveDraft();
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
@@ -1220,7 +1331,7 @@
     removeMediaItem(index) {
       state.mediaItems.splice(index, 1);
       saveDraft();
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
@@ -1274,18 +1385,27 @@
       queueMasonryUpdate();
     },
     refresh() {
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
       queueMasonryUpdate();
     },
+    setSort(sortKey) {
+      currentSort = String(sortKey || "manual");
+      shuffleOrder = null;
+      if (sortSelect && sortSelect.value !== currentSort) {
+        sortSelect.value = currentSort;
+      }
+      renderMediaWithSort();
+      applyActiveFilter();
+    },
     async reloadFromServer() {
       const { data, destinations } = await fetchMediaData();
-      state.mediaItems = data.mediaItems || [];
+      state.mediaItems = (data.mediaItems || []).map((item) => ensureItemId(item));
       state.photoItems = data.photoItems || [];
       state.destinations = Array.isArray(destinations) ? destinations : [];
-      renderMedia(state.mediaItems);
+      renderMediaWithSort();
       renderLocationFilters(state.destinations);
       renderTagFilters(state.mediaItems);
       applyActiveFilter();
