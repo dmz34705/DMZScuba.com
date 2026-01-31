@@ -1,13 +1,17 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// src/index.js
 function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json",
-      ...headers,
-    },
+      ...headers
+    }
   });
 }
-
+__name(jsonResponse, "jsonResponse");
 function getAllowedOrigin(request, env) {
   const origin = request.headers.get("Origin") || "*";
   const allowList = String(env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
@@ -15,7 +19,7 @@ function getAllowedOrigin(request, env) {
   if (allowList.includes("*")) return "*";
   return allowList.includes(origin) ? origin : allowList[0];
 }
-
+__name(getAllowedOrigin, "getAllowedOrigin");
 function withCors(request, env, headers = {}) {
   return {
     ...headers,
@@ -23,28 +27,24 @@ function withCors(request, env, headers = {}) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Tus-Resumable, Upload-Length, Upload-Metadata",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Max-Age": "86400",
-    Vary: "Origin",
+    Vary: "Origin"
   };
 }
-
+__name(withCors, "withCors");
 async function requireAuth(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!token) return false;
   const row = await env.DB.prepare(
     "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
-  )
-    .bind(token, new Date().toISOString())
-    .first();
+  ).bind(token, (/* @__PURE__ */ new Date()).toISOString()).first();
   return !!row;
 }
-
+__name(requireAuth, "requireAuth");
 function formatFieldLabel(key) {
-  return String(key || "")
-    .replace(/[-_]+/g, " ")
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+  return String(key || "").replace(/[-_]+/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
 }
-
+__name(formatFieldLabel, "formatFieldLabel");
 function formatFields(fields) {
   const lines = [];
   if (Array.isArray(fields)) {
@@ -72,7 +72,7 @@ function formatFields(fields) {
   }
   return lines;
 }
-
+__name(formatFields, "formatFields");
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -81,23 +81,20 @@ async function handleLogin(request, env) {
     return jsonResponse({ ok: false, error: "Invalid credentials." }, 401);
   }
   const token = crypto.randomUUID();
-  const now = new Date();
-  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const now = /* @__PURE__ */ new Date();
+  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1e3);
   await env.DB.prepare(
     "INSERT INTO admin_sessions (token, created_at, expires_at) VALUES (?, ?, ?)"
-  )
-    .bind(token, now.toISOString(), expires.toISOString())
-    .run();
+  ).bind(token, now.toISOString(), expires.toISOString()).run();
   return jsonResponse({ ok: true, token });
 }
-
+__name(handleLogin, "handleLogin");
 async function handleContact(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || "").trim();
   if (honey) {
     return jsonResponse({ ok: true });
   }
-
   const fields = body.fields || {};
   const lines = formatFields(fields);
   const name = String(body.name || fields.name || fields["contact-name"] || "").trim();
@@ -105,8 +102,7 @@ async function handleContact(request, env) {
   const formName = String(body.form || "DMZ Inquiry").trim();
   const subject = String(body.subject || "").trim() || `${formName} Inquiry`;
   const pageUrl = String(body.pageUrl || "").trim();
-  const submittedAt = new Date().toISOString();
-
+  const submittedAt = (/* @__PURE__ */ new Date()).toISOString();
   const message = [
     `Form: ${formName}`,
     `Submitted: ${submittedAt}`,
@@ -115,41 +111,35 @@ async function handleContact(request, env) {
     email ? `Email: ${email}` : "",
     "",
     ...lines,
-    body.message ? `\nMessage:\n${body.message}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
+    body.message ? `
+Message:
+${body.message}` : ""
+  ].filter(Boolean).join("\n");
   const apiKey = String(env.RESEND_API_KEY || "").trim();
   if (!apiKey) {
     return jsonResponse({ ok: false, error: "Email send failed." }, 502);
   }
-
   const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
   const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
   const toEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
-
   const payload = {
     from: `${fromName} <${fromEmail}>`,
     to: [toEmail],
     subject,
-    text: message,
+    text: message
   };
-
-  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+  const isValidEmail = /* @__PURE__ */ __name((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "")), "isValidEmail");
   if (email && isValidEmail(email)) {
     payload.reply_to = [email];
   }
-
   const resp = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload)
   });
-
   if (!resp.ok) {
     const errorText = await resp.text();
     console.log("Resend error", resp.status, errorText);
@@ -158,10 +148,9 @@ async function handleContact(request, env) {
       502
     );
   }
-
   return jsonResponse({ ok: true });
 }
-
+__name(handleContact, "handleContact");
 function normalizeItem(row) {
   return {
     id: row.id,
@@ -176,17 +165,17 @@ function normalizeItem(row) {
     streamId: row.stream_id || "",
     meta: row.meta ? JSON.parse(row.meta) : [],
     location: row.location || "",
-    createdAt: row.created_at || "",
+    createdAt: row.created_at || ""
   };
 }
-
+__name(normalizeItem, "normalizeItem");
 async function handleGetMedia(env) {
   const { results } = await env.DB.prepare(
     "SELECT rowid, * FROM media_items ORDER BY rowid ASC"
   ).all();
   const rows = results || [];
   const now = Date.now();
-  const counts = new Map();
+  const counts = /* @__PURE__ */ new Map();
   rows.forEach((row) => {
     if (!row) return;
     const key = row.created_at || "";
@@ -199,11 +188,9 @@ async function handleGetMedia(env) {
     const isDuplicate = row.created_at && (counts.get(row.created_at) || 0) > 1;
     if (needsBackfill || isDuplicate) {
       const offset = rows.length - 1 - i;
-      const createdAt = new Date(now - offset * 1000).toISOString();
+      const createdAt = new Date(now - offset * 1e3).toISOString();
       row.created_at = createdAt;
-      await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?")
-        .bind(createdAt, row.id)
-        .run();
+      await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?").bind(createdAt, row.id).run();
     }
   }
   const items = rows.map(normalizeItem);
@@ -215,53 +202,47 @@ async function handleGetMedia(env) {
     {
       "Cache-Control": "no-store, no-cache, must-revalidate",
       "CDN-Cache-Control": "no-store",
-      "Cloudflare-CDN-Cache-Control": "no-store",
+      "Cloudflare-CDN-Cache-Control": "no-store"
     }
   );
 }
-
+__name(handleGetMedia, "handleGetMedia");
 async function handleCreateMedia(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
-
   const body = await request.json().catch(() => ({}));
   const id = body.id || crypto.randomUUID();
-  const now = new Date().toISOString();
+  const now = (/* @__PURE__ */ new Date()).toISOString();
   const tags = Array.isArray(body.tags) ? JSON.stringify(body.tags) : JSON.stringify([]);
   const meta = Array.isArray(body.meta) ? JSON.stringify(body.meta) : JSON.stringify([]);
-
   await env.DB.prepare(
     `INSERT INTO media_items
       (id, type, title, description, tags, badge, thumb_text, url, thumb_url, stream_id, meta, location, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      id,
-      body.type || "video",
-      body.title || "",
-      body.description || "",
-      tags,
-      body.badge || "",
-      body.thumbText || "",
-      body.url || "",
-      body.thumbUrl || "",
-      body.streamId || "",
-      meta,
-      body.location || "",
-      now
-    )
-    .run();
-
+  ).bind(
+    id,
+    body.type || "video",
+    body.title || "",
+    body.description || "",
+    tags,
+    body.badge || "",
+    body.thumbText || "",
+    body.url || "",
+    body.thumbUrl || "",
+    body.streamId || "",
+    meta,
+    body.location || "",
+    now
+  ).run();
   return jsonResponse({ ok: true, id });
 }
-
+__name(handleCreateMedia, "handleCreateMedia");
 async function handleUpdateMedia(request, env, id) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
   const body = await request.json().catch(() => ({}));
-  const tags = Array.isArray(body.tags) ? JSON.stringify(body.tags) : undefined;
-  const meta = Array.isArray(body.meta) ? JSON.stringify(body.meta) : undefined;
-
+  const tags = Array.isArray(body.tags) ? JSON.stringify(body.tags) : void 0;
+  const meta = Array.isArray(body.meta) ? JSON.stringify(body.meta) : void 0;
   await env.DB.prepare(
     `UPDATE media_items SET
       type = COALESCE(?, type),
@@ -276,64 +257,59 @@ async function handleUpdateMedia(request, env, id) {
       meta = COALESCE(?, meta),
       location = COALESCE(?, location)
      WHERE id = ?`
-  )
-    .bind(
-      body.type ?? null,
-      body.title ?? null,
-      body.description ?? null,
-      tags ?? null,
-      body.badge ?? null,
-      body.thumbText ?? null,
-      body.url ?? null,
-      body.thumbUrl ?? null,
-      body.streamId ?? null,
-      meta ?? null,
-      body.location ?? null,
-      id
-    )
-    .run();
-
+  ).bind(
+    body.type ?? null,
+    body.title ?? null,
+    body.description ?? null,
+    tags ?? null,
+    body.badge ?? null,
+    body.thumbText ?? null,
+    body.url ?? null,
+    body.thumbUrl ?? null,
+    body.streamId ?? null,
+    meta ?? null,
+    body.location ?? null,
+    id
+  ).run();
   return jsonResponse({ ok: true });
 }
-
+__name(handleUpdateMedia, "handleUpdateMedia");
 async function handleDeleteMedia(request, env, id) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
   await env.DB.prepare("DELETE FROM media_items WHERE id = ?").bind(id).run();
   return jsonResponse({ ok: true });
 }
-
+__name(handleDeleteMedia, "handleDeleteMedia");
 async function handleBulkUpsert(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
   const body = await request.json().catch(() => ({}));
   const items = Array.isArray(body.items) ? body.items : [];
   const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
-  const deleteStreamIds = Array.isArray(body.deleteStreamIds)
-    ? body.deleteStreamIds.filter(Boolean)
-    : [];
-  const now = new Date().toISOString();
+  const deleteStreamIds = Array.isArray(body.deleteStreamIds) ? body.deleteStreamIds.filter(Boolean) : [];
+  const now = (/* @__PURE__ */ new Date()).toISOString();
   async function fetchStreamCreated(streamId) {
     if (!streamId || !env.CF_ACCOUNT_ID || !env.CF_STREAM_TOKEN) return "";
     try {
       const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${streamId}`;
       const resp = await fetch(url, {
         method: "GET",
-        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` },
+        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` }
       });
       const json = await resp.json();
-      const created =
-        (json && json.result && (json.result.created || json.result.created_at)) || "";
+      const created = json && json.result && (json.result.created || json.result.created_at) || "";
       return created || "";
     } catch (error) {
       console.log("Stream lookup failed", streamId, error);
       return "";
     }
   }
+  __name(fetchStreamCreated, "fetchStreamCreated");
   const existingRows = await env.DB.prepare(
     "SELECT id, created_at FROM media_items WHERE id IS NOT NULL"
   ).all();
-  const existingMap = new Map();
+  const existingMap = /* @__PURE__ */ new Map();
   (existingRows.results || []).forEach((row) => {
     if (row && row.id && row.created_at) {
       existingMap.set(row.id, row.created_at);
@@ -358,23 +334,21 @@ async function handleBulkUpsert(request, env) {
     if (!createdAt && item.streamId) {
       createdAt = await fetchStreamCreated(item.streamId);
     }
-    await stmt
-      .bind(
-        id,
-        item.type || "video",
-        item.title || "",
-        item.description || "",
-        tags,
-        item.badge || "",
-        item.thumbText || "",
-        item.url || "",
-        item.thumbUrl || "",
-        item.streamId || "",
-        meta,
-        item.location || "",
-        createdAt || now
-      )
-      .run();
+    await stmt.bind(
+      id,
+      item.type || "video",
+      item.title || "",
+      item.description || "",
+      tags,
+      item.badge || "",
+      item.thumbText || "",
+      item.url || "",
+      item.thumbUrl || "",
+      item.streamId || "",
+      meta,
+      item.location || "",
+      createdAt || now
+    ).run();
   }
   if (deleteStreamIds.length && env.CF_ACCOUNT_ID && env.CF_STREAM_TOKEN) {
     for (const streamId of deleteStreamIds) {
@@ -383,8 +357,8 @@ async function handleBulkUpsert(request, env) {
         const resp = await fetch(url, {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${env.CF_STREAM_TOKEN}`,
-          },
+            Authorization: `Bearer ${env.CF_STREAM_TOKEN}`
+          }
         });
         if (!resp.ok) {
           const errorText = await resp.text();
@@ -397,7 +371,7 @@ async function handleBulkUpsert(request, env) {
   }
   return jsonResponse({ ok: true, count: items.length });
 }
-
+__name(handleBulkUpsert, "handleBulkUpsert");
 async function handleStreamDateSync(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
@@ -416,15 +390,12 @@ async function handleStreamDateSync(request, env) {
       const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${row.stream_id}`;
       const resp = await fetch(url, {
         method: "GET",
-        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` },
+        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` }
       });
       const json = await resp.json();
-      const created =
-        (json && json.result && (json.result.created || json.result.created_at)) || "";
+      const created = json && json.result && (json.result.created || json.result.created_at) || "";
       if (created) {
-        await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?")
-          .bind(created, row.id)
-          .run();
+        await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?").bind(created, row.id).run();
         updated += 1;
       }
     } catch (error) {
@@ -433,7 +404,7 @@ async function handleStreamDateSync(request, env) {
   }
   return jsonResponse({ ok: true, updated });
 }
-
+__name(handleStreamDateSync, "handleStreamDateSync");
 async function handleStreamDirectUpload(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
@@ -442,12 +413,12 @@ async function handleStreamDirectUpload(request, env) {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.CF_STREAM_TOKEN}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       maxDurationSeconds: 3600,
-      requireSignedURLs: false,
-    }),
+      requireSignedURLs: false
+    })
   });
   const json = await resp.json();
   if (!resp.ok) {
@@ -455,7 +426,7 @@ async function handleStreamDirectUpload(request, env) {
   }
   return jsonResponse(json, 200);
 }
-
+__name(handleStreamDirectUpload, "handleStreamDirectUpload");
 async function handleStreamTusUpload(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
@@ -471,8 +442,8 @@ async function handleStreamTusUpload(request, env) {
       Authorization: `Bearer ${env.CF_STREAM_TOKEN}`,
       "Tus-Resumable": "1.0.0",
       "Upload-Length": uploadLength,
-      "Upload-Metadata": uploadMetadata,
-    },
+      "Upload-Metadata": uploadMetadata
+    }
   });
   const location = resp.headers.get("Location") || "";
   const uid = resp.headers.get("stream-media-id") || "";
@@ -485,17 +456,15 @@ async function handleStreamTusUpload(request, env) {
   }
   return jsonResponse({ ok: true, uploadURL: location, uid });
 }
-
-export default {
+__name(handleStreamTusUpload, "handleStreamTusUpload");
+var index_default = {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: withCors(request, env) });
     }
-
     const url = new URL(request.url);
     const { pathname } = url;
     let response = null;
-
     if (pathname === "/api/media" && request.method === "GET") {
       response = await handleGetMedia(env);
     } else if (pathname === "/api/contact" && request.method === "POST") {
@@ -520,18 +489,20 @@ export default {
         response = await handleDeleteMedia(request, env, id);
       }
     }
-
     if (!response) {
       response = jsonResponse({ ok: false, error: "Not found." }, 404);
     }
-
     const headers = new Headers(response.headers);
     const cors = withCors(request, env);
     Object.entries(cors).forEach(([key, value]) => headers.set(key, value));
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers,
+      headers
     });
-  },
+  }
 };
+export {
+  index_default as default
+};
+//# sourceMappingURL=index.js.map
