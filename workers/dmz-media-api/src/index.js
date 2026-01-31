@@ -20,7 +20,7 @@ function withCors(request, env, headers = {}) {
   return {
     ...headers,
     "Access-Control-Allow-Origin": getAllowedOrigin(request, env),
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, Tus-Resumable, Upload-Length, Upload-Metadata",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -330,6 +330,36 @@ async function handleStreamDirectUpload(request, env) {
   return jsonResponse(json, 200);
 }
 
+async function handleStreamTusUpload(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const uploadLength = request.headers.get("Upload-Length");
+  if (!uploadLength) {
+    return jsonResponse({ ok: false, error: "Missing Upload-Length header." }, 400);
+  }
+  const uploadMetadata = request.headers.get("Upload-Metadata") || "";
+  const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream?direct_user=true`;
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.CF_STREAM_TOKEN}`,
+      "Tus-Resumable": "1.0.0",
+      "Upload-Length": uploadLength,
+      "Upload-Metadata": uploadMetadata,
+    },
+  });
+  const location = resp.headers.get("Location") || "";
+  const uid = resp.headers.get("stream-media-id") || "";
+  if (!resp.ok || !location) {
+    const errorText = await resp.text();
+    return jsonResponse(
+      { ok: false, error: "Stream tus upload init failed.", details: errorText || null },
+      500
+    );
+  }
+  return jsonResponse({ ok: true, uploadURL: location, uid });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -348,6 +378,8 @@ export default {
       response = await handleLogin(request, env);
     } else if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {
       response = await handleStreamDirectUpload(request, env);
+    } else if (pathname === "/api/admin/stream-tus-upload" && request.method === "POST") {
+      response = await handleStreamTusUpload(request, env);
     } else if (pathname === "/api/admin/media" && request.method === "POST") {
       response = await handleCreateMedia(request, env);
     } else if (pathname === "/api/admin/media-bulk" && request.method === "PUT") {

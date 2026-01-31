@@ -46,6 +46,17 @@
     return fetch(`${apiRoot}${path}`, { ...options, headers });
   }
 
+  function buildTusMetadata(file) {
+    const pairs = [];
+    if (file && file.name) {
+      pairs.push(`filename ${btoa(unescape(encodeURIComponent(file.name)))}`);
+    }
+    if (file && file.type) {
+      pairs.push(`filetype ${btoa(file.type)}`);
+    }
+    return pairs.join(",");
+  }
+
   function ensureId(item) {
     if (!item) return item;
     if (item.id) return item;
@@ -708,42 +719,91 @@
       progressBar.style.width = "0%";
       progressLabel.textContent = "0%";
       try {
-        const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
-        const data = await resp.json();
-        const uploadUrl = data?.result?.uploadURL;
-        const uid = data?.result?.uid;
-        if (!uploadUrl) throw new Error("Missing upload URL");
-        const formData = new FormData();
-        formData.append("file", file);
-        await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", uploadUrl, true);
-          xhr.upload.addEventListener("progress", (event) => {
-            if (!event.lengthComputable) return;
-            const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
-            progressBar.style.width = `${percent}%`;
-            progressLabel.textContent = `${percent}%`;
-          });
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              reject(new Error("Upload failed"));
-            }
-          };
-          xhr.onerror = () => reject(new Error("Upload failed"));
-          xhr.send(formData);
-        });
-        streamIdInput.value = uid || "";
-        mediaUrlInput.value = "";
-        if (streamIdInput.value && !thumbUrlInput.value) {
-          thumbUrlInput.value = buildStreamThumbUrl(streamIdInput.value);
+        const useTus = Boolean(window.tus && typeof window.tus.Upload === "function");
+        if (!useTus) {
+          uploadStatus.textContent = "Resumable upload unavailable. Falling back.";
         }
+
+        if (useTus) {
+          const resp = await apiFetch("/api/admin/stream-tus-upload", {
+            method: "POST",
+            headers: {
+              "Tus-Resumable": "1.0.0",
+              "Upload-Length": String(file.size),
+              "Upload-Metadata": buildTusMetadata(file),
+            },
+          });
+          const data = await resp.json();
+          const uploadUrl = data?.uploadURL;
+          const uid = data?.uid;
+          if (!uploadUrl) throw new Error("Missing upload URL");
+          if (uid) {
+            streamIdInput.value = uid;
+            if (!thumbUrlInput.value) {
+              thumbUrlInput.value = buildStreamThumbUrl(uid);
+            }
+          }
+
+          await new Promise((resolve, reject) => {
+            const upload = new window.tus.Upload(file, {
+              uploadUrl,
+              chunkSize: 50 * 1024 * 1024,
+              retryDelays: [0, 1000, 3000, 5000, 8000],
+              onProgress(bytesSent, bytesTotal) {
+                if (!bytesTotal) return;
+                const percent = Math.min(100, Math.round((bytesSent / bytesTotal) * 100));
+                progressBar.style.width = `${percent}%`;
+                progressLabel.textContent = `${percent}%`;
+              },
+              onError(error) {
+                reject(error);
+              },
+              onSuccess() {
+                resolve();
+              },
+            });
+            upload.start();
+          });
+        } else {
+          const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
+          const data = await resp.json();
+          const uploadUrl = data?.result?.uploadURL;
+          const uid = data?.result?.uid;
+          if (!uploadUrl) throw new Error("Missing upload URL");
+          const formData = new FormData();
+          formData.append("file", file);
+          await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", uploadUrl, true);
+            xhr.upload.addEventListener("progress", (event) => {
+              if (!event.lengthComputable) return;
+              const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+              progressBar.style.width = `${percent}%`;
+              progressLabel.textContent = `${percent}%`;
+            });
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+              } else {
+                reject(new Error("Upload failed"));
+              }
+            };
+            xhr.onerror = () => reject(new Error("Upload failed"));
+            xhr.send(formData);
+          });
+          streamIdInput.value = uid || "";
+          if (streamIdInput.value && !thumbUrlInput.value) {
+            thumbUrlInput.value = buildStreamThumbUrl(streamIdInput.value);
+          }
+        }
+
+        mediaUrlInput.value = "";
         uploadComplete = true;
         streamUploadBtn.disabled = true;
         streamUploadBtn.textContent = "Upload successful";
         uploadStatus.textContent = "Upload complete. Stream ID added.";
       } catch (error) {
+        console.error("Stream upload failed", error);
         streamUploadBtn.textContent = "Upload failed";
         uploadStatus.textContent = "Upload failed. Check your connection and try again.";
       } finally {
