@@ -947,7 +947,7 @@ body.media-authenticated .media-edit-logout{
 }
 
 .media-thumb:hover .media-thumb-play{
-  transform: translateY(-1px);
+  transform: translate(-50%, -50%);
   border-color: rgba(85,185,255,0.55);
   background: rgba(10,18,30,0.85);
 }
