@@ -185,6 +185,7 @@ body.media-authenticated .media-login-button{
 .media-admin-actions .media-edit-reset,
 .media-admin-actions .media-edit-publish,
 .media-admin-actions .media-edit-refresh,
+.media-admin-actions .media-edit-sync,
 .media-admin-actions .media-edit-logout,
 .media-admin-actions .back-to-top{
   width: 100%;
@@ -329,6 +330,7 @@ body.media-authenticated .media-edit-publish{
 }
 
 .media-edit-refresh,
+.media-edit-sync,
 .media-edit-logout{
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -345,12 +347,19 @@ body.media-authenticated .media-edit-publish{
 }
 
 body.media-authenticated .media-edit-refresh,
+body.media-authenticated .media-edit-sync,
 body.media-authenticated .media-edit-logout{
   opacity: 0.7;
   pointer-events: auto;
 }
 
 .media-edit-refresh:hover{
+  opacity: 0.9;
+  border-color: rgba(85, 185, 255, 0.4);
+  background: rgba(10, 18, 30, 0.75);
+}
+
+.media-edit-sync:hover{
   opacity: 0.9;
   border-color: rgba(85, 185, 255, 0.4);
   background: rgba(10, 18, 30, 0.75);

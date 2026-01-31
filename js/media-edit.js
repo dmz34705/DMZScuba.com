@@ -1005,6 +1005,7 @@
     const publishButton = document.querySelector(".media-edit-publish");
     const resetButton = document.querySelector(".media-edit-reset");
     const refreshButton = document.querySelector(".media-edit-refresh");
+    const syncButton = document.querySelector(".media-edit-sync");
     const logoutButton = document.querySelector(".media-edit-logout");
     const statusLabel = document.getElementById("mediaAdminStatus");
     if (!toggle) return;
@@ -1221,6 +1222,33 @@
           // Ignore storage errors.
         }
         await window.DMZMedia.reloadFromServer();
+      });
+    }
+
+    if (syncButton) {
+      syncButton.addEventListener("click", async () => {
+        if (!getToken()) {
+          buildLoginModal(() => syncButton.click());
+          return;
+        }
+        syncButton.disabled = true;
+        syncButton.textContent = "Syncing...";
+        try {
+          const resp = await apiFetch("/api/admin/stream-date-sync", { method: "POST" });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            window.alert("Stream date sync failed.");
+          } else {
+            const count = data.updated || 0;
+            window.alert(`Stream dates synced (${count} updated).`);
+            await window.DMZMedia.reloadFromServer();
+          }
+        } catch (error) {
+          window.alert("Stream date sync failed.");
+        } finally {
+          syncButton.disabled = false;
+          syncButton.textContent = "Sync Stream Dates";
+        }
       });
     }
 

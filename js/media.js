@@ -547,7 +547,7 @@
     return map;
   }
 
-  function applySort(items) {
+  function applySort(items, indexMap) {
     const list = Array.isArray(items) ? [...items] : [];
     if (currentSort === "manual") return list;
     if (currentSort === "shuffle") {
@@ -568,6 +568,11 @@
         const bVal = parseDateValue(b);
         const aScore = aVal == null ? -Infinity : aVal;
         const bScore = bVal == null ? -Infinity : bVal;
+        if (aScore === bScore) {
+          const aIdx = indexMap && a && a.id ? indexMap.get(a.id) : 0;
+          const bIdx = indexMap && b && b.id ? indexMap.get(b.id) : 0;
+          return currentSort === "recent" ? aIdx - bIdx : bIdx - aIdx;
+        }
         return currentSort === "recent" ? bScore - aScore : aScore - bScore;
       });
     }
@@ -590,7 +595,7 @@
 
   function renderMediaWithSort() {
     const indexLookup = buildIndexLookup(state.mediaItems);
-    const displayItems = applySort(state.mediaItems);
+    const displayItems = applySort(state.mediaItems, indexLookup);
     renderMedia(displayItems, indexLookup);
     if (mediaGrid) {
       const isSorted = currentSort && currentSort !== "manual";

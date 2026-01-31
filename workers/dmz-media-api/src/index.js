@@ -305,6 +305,23 @@ async function handleBulkUpsert(request, env) {
     ? body.deleteStreamIds.filter(Boolean)
     : [];
   const now = new Date().toISOString();
+  async function fetchStreamCreated(streamId) {
+    if (!streamId || !env.CF_ACCOUNT_ID || !env.CF_STREAM_TOKEN) return "";
+    try {
+      const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${streamId}`;
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` },
+      });
+      const json = await resp.json();
+      const created =
+        (json && json.result && (json.result.created || json.result.created_at)) || "";
+      return created || "";
+    } catch (error) {
+      console.log("Stream lookup failed", streamId, error);
+      return "";
+    }
+  }
   const existingRows = await env.DB.prepare(
     "SELECT id, created_at FROM media_items WHERE id IS NOT NULL"
   ).all();
@@ -329,6 +346,10 @@ async function handleBulkUpsert(request, env) {
     const id = item.id || crypto.randomUUID();
     const tags = Array.isArray(item.tags) ? JSON.stringify(item.tags) : JSON.stringify([]);
     const meta = Array.isArray(item.meta) ? JSON.stringify(item.meta) : JSON.stringify([]);
+    let createdAt = item.createdAt || existingMap.get(id) || "";
+    if (!createdAt && item.streamId) {
+      createdAt = await fetchStreamCreated(item.streamId);
+    }
     await stmt
       .bind(
         id,
@@ -343,7 +364,7 @@ async function handleBulkUpsert(request, env) {
         item.streamId || "",
         meta,
         item.location || "",
-        item.createdAt || existingMap.get(id) || now
+        createdAt || now
       )
       .run();
   }
@@ -367,6 +388,39 @@ async function handleBulkUpsert(request, env) {
     }
   }
   return jsonResponse({ ok: true, count: items.length });
+}
+
+async function handleStreamDateSync(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const { results } = await env.DB.prepare(
+    "SELECT id, stream_id, created_at FROM media_items WHERE stream_id IS NOT NULL AND stream_id != ''"
+  ).all();
+  const rows = results || [];
+  let updated = 0;
+  for (const row of rows) {
+    if (!row || row.created_at) continue;
+    if (!env.CF_ACCOUNT_ID || !env.CF_STREAM_TOKEN) continue;
+    try {
+      const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${row.stream_id}`;
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${env.CF_STREAM_TOKEN}` },
+      });
+      const json = await resp.json();
+      const created =
+        (json && json.result && (json.result.created || json.result.created_at)) || "";
+      if (created) {
+        await env.DB.prepare("UPDATE media_items SET created_at = ? WHERE id = ?")
+          .bind(created, row.id)
+          .run();
+        updated += 1;
+      }
+    } catch (error) {
+      console.log("Stream sync failed", row.stream_id, error);
+    }
+  }
+  return jsonResponse({ ok: true, updated });
 }
 
 async function handleStreamDirectUpload(request, env) {
@@ -445,6 +499,8 @@ export default {
       response = await handleCreateMedia(request, env);
     } else if (pathname === "/api/admin/media-bulk" && request.method === "PUT") {
       response = await handleBulkUpsert(request, env);
+    } else if (pathname === "/api/admin/stream-date-sync" && request.method === "POST") {
+      response = await handleStreamDateSync(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {
       const id = pathname.split("/").pop();
       if (request.method === "PUT") {
