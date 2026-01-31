@@ -589,6 +589,7 @@
   }
 
   function renderMediaWithSort() {
+    state.mediaItems = state.mediaItems.map((item) => ensureCreatedAt(ensureItemId(item)));
     const indexLookup = buildIndexLookup(state.mediaItems);
     const displayItems = applySort(state.mediaItems);
     renderMedia(displayItems, indexLookup);
@@ -1331,6 +1332,7 @@
 
   window.DMZMedia = {
     getMediaItems() {
+      state.mediaItems = state.mediaItems.map((item) => ensureCreatedAt(ensureItemId(item)));
       return state.mediaItems;
     },
     getPhotoItems() {
