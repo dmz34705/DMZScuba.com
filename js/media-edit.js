@@ -1234,7 +1234,11 @@
         syncButton.disabled = true;
         syncButton.textContent = "Syncing...";
         try {
-          const resp = await apiFetch("/api/admin/stream-date-sync", { method: "POST" });
+          const resp = await apiFetch("/api/admin/stream-date-sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ force: true }),
+          });
           const data = await resp.json().catch(() => ({}));
           if (!resp.ok) {
             window.alert("Stream date sync failed.");

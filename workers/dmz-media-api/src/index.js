@@ -393,13 +393,16 @@ async function handleBulkUpsert(request, env) {
 async function handleStreamDateSync(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const body = await request.json().catch(() => ({}));
+  const force = Boolean(body.force);
   const { results } = await env.DB.prepare(
     "SELECT id, stream_id, created_at FROM media_items WHERE stream_id IS NOT NULL AND stream_id != ''"
   ).all();
   const rows = results || [];
   let updated = 0;
   for (const row of rows) {
-    if (!row || row.created_at) continue;
+    if (!row) continue;
+    if (!force && row.created_at) continue;
     if (!env.CF_ACCOUNT_ID || !env.CF_STREAM_TOKEN) continue;
     try {
       const url = `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/${row.stream_id}`;
