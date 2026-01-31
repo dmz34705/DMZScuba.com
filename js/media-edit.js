@@ -724,47 +724,60 @@
           uploadStatus.textContent = "Resumable upload unavailable. Falling back.";
         }
 
+        let tusCompleted = false;
         if (useTus) {
-          const resp = await apiFetch("/api/admin/stream-tus-upload", {
-            method: "POST",
-            headers: {
-              "Tus-Resumable": "1.0.0",
-              "Upload-Length": String(file.size),
-              "Upload-Metadata": buildTusMetadata(file),
-            },
-          });
-          const data = await resp.json();
-          const uploadUrl = data?.uploadURL;
-          const uid = data?.uid;
-          if (!uploadUrl) throw new Error("Missing upload URL");
-          if (uid) {
-            streamIdInput.value = uid;
-            if (!thumbUrlInput.value) {
-              thumbUrlInput.value = buildStreamThumbUrl(uid);
-            }
-          }
-
-          await new Promise((resolve, reject) => {
-            const upload = new window.tus.Upload(file, {
-              uploadUrl,
-              chunkSize: 50 * 1024 * 1024,
-              retryDelays: [0, 1000, 3000, 5000, 8000],
-              onProgress(bytesSent, bytesTotal) {
-                if (!bytesTotal) return;
-                const percent = Math.min(100, Math.round((bytesSent / bytesTotal) * 100));
-                progressBar.style.width = `${percent}%`;
-                progressLabel.textContent = `${percent}%`;
-              },
-              onError(error) {
-                reject(error);
-              },
-              onSuccess() {
-                resolve();
+          try {
+            const resp = await apiFetch("/api/admin/stream-tus-upload", {
+              method: "POST",
+              headers: {
+                "Tus-Resumable": "1.0.0",
+                "Upload-Length": String(file.size),
+                "Upload-Metadata": buildTusMetadata(file),
               },
             });
-            upload.start();
-          });
-        } else {
+            if (!resp.ok) {
+              const errorText = await resp.text();
+              throw new Error(`Resumable init failed (${resp.status}). ${errorText || ""}`.trim());
+            }
+            const data = await resp.json();
+            const uploadUrl = data?.uploadURL;
+            const uid = data?.uid;
+            if (!uploadUrl) throw new Error("Missing upload URL");
+            if (uid) {
+              streamIdInput.value = uid;
+              if (!thumbUrlInput.value) {
+                thumbUrlInput.value = buildStreamThumbUrl(uid);
+              }
+            }
+
+            await new Promise((resolve, reject) => {
+              const upload = new window.tus.Upload(file, {
+                uploadUrl,
+                chunkSize: 50 * 1024 * 1024,
+                retryDelays: [0, 1000, 3000, 5000, 8000],
+                onProgress(bytesSent, bytesTotal) {
+                  if (!bytesTotal) return;
+                  const percent = Math.min(100, Math.round((bytesSent / bytesTotal) * 100));
+                  progressBar.style.width = `${percent}%`;
+                  progressLabel.textContent = `${percent}%`;
+                },
+                onError(error) {
+                  reject(error);
+                },
+                onSuccess() {
+                  resolve();
+                },
+              });
+              upload.start();
+            });
+            tusCompleted = true;
+          } catch (error) {
+            console.error("Tus upload failed", error);
+            uploadStatus.textContent = "Resumable upload failed. Trying standard upload...";
+          }
+        }
+
+        if (!tusCompleted) {
           const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
           const data = await resp.json();
           const uploadUrl = data?.result?.uploadURL;
