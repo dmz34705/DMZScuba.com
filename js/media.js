@@ -24,7 +24,11 @@
   const emptyState = document.getElementById("mediaEmpty");
   const cardSizeInput = document.getElementById("mediaCardSize");
   const cardSizeValue = document.getElementById("mediaCardSizeValue");
-  const sortSelect = document.getElementById("mediaSort");
+  const sortField = document.querySelector(".media-sort");
+  const sortToggle = sortField ? sortField.querySelector(".dropdown-toggle") : null;
+  const sortValue = document.getElementById("mediaSortValue");
+  const sortPanel = sortField ? sortField.querySelector(".dropdown-panel") : null;
+  const sortOptions = sortField ? sortField.querySelectorAll(".dropdown-option") : null;
   const storageKey = "dmzMediaDraft";
   const cardSizeStorageKey = "dmzMediaCardSize";
   const selectedTags = new Set();
@@ -1120,14 +1124,15 @@
   }
 
   function bindFilters() {
-    if (!chips.length) return;
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        chips.forEach((c) => c.classList.remove("is-active"));
-        chip.classList.add("is-active");
-        applyActiveFilter();
+    if (chips.length) {
+      chips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+          chips.forEach((c) => c.classList.remove("is-active"));
+          chip.classList.add("is-active");
+          applyActiveFilter();
+        });
       });
-    });
+    }
 
     if (tagToggle && tagPanel) {
       tagToggle.addEventListener("click", (event) => {
@@ -1190,12 +1195,30 @@
       });
     }
 
-    if (sortSelect) {
-      sortSelect.addEventListener("change", () => {
-        currentSort = sortSelect.value || "manual";
-        shuffleOrder = null;
-        renderMediaWithSort();
-        applyActiveFilter();
+    if (sortToggle && sortField) {
+      sortToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const isOpen = sortField.classList.contains("is-open");
+        sortField.classList.toggle("is-open", !isOpen);
+        sortToggle.setAttribute("aria-expanded", !isOpen ? "true" : "false");
+      });
+    }
+
+    if (sortOptions && sortOptions.length) {
+      sortOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+          currentSort = option.getAttribute("data-sort") || "manual";
+          shuffleOrder = null;
+          if (sortValue) {
+            sortValue.textContent = option.textContent || "Manual";
+          }
+          if (sortField && sortToggle) {
+            sortField.classList.remove("is-open");
+            sortToggle.setAttribute("aria-expanded", "false");
+          }
+          renderMediaWithSort();
+          applyActiveFilter();
+        });
       });
     }
 
@@ -1213,6 +1236,10 @@
         if (locationPanel) locationPanel.classList.remove("is-open");
         if (locationToggle) locationToggle.setAttribute("aria-expanded", "false");
       }
+      if (sortField && !sortField.contains(event.target)) {
+        sortField.classList.remove("is-open");
+        if (sortToggle) sortToggle.setAttribute("aria-expanded", "false");
+      }
     });
 
     document.addEventListener("keydown", (event) => {
@@ -1220,6 +1247,8 @@
         setTagPanelOpen(false);
         if (locationPanel) locationPanel.classList.remove("is-open");
         if (locationToggle) locationToggle.setAttribute("aria-expanded", "false");
+        if (sortField) sortField.classList.remove("is-open");
+        if (sortToggle) sortToggle.setAttribute("aria-expanded", "false");
       }
     });
   }
@@ -1394,8 +1423,11 @@
     setSort(sortKey) {
       currentSort = String(sortKey || "manual");
       shuffleOrder = null;
-      if (sortSelect && sortSelect.value !== currentSort) {
-        sortSelect.value = currentSort;
+      if (sortOptions && sortOptions.length && sortValue) {
+        const match = [...sortOptions].find(
+          (option) => (option.getAttribute("data-sort") || "manual") === currentSort
+        );
+        sortValue.textContent = match ? match.textContent : "Manual";
       }
       renderMediaWithSort();
       applyActiveFilter();

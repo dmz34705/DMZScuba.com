@@ -458,35 +458,69 @@ body.media-authenticated .media-edit-logout{
   letter-spacing: 0.3px;
 }
 
-.filter-sort{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.media-sort{
+  position: relative;
+}
+
+.media-sort .dropdown-toggle{
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(7, 12, 20, 0.6);
+  color: rgba(234,242,255,0.86);
+  padding: 7px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
   height: 34px;
-  padding: 6px 10px;
-  color: rgba(234,242,255,0.8);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
 }
 
-.filter-sort-label{
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.6px;
-  opacity: 0.7;
-}
-
-.filter-sort select{
-  background: transparent;
-  border: none;
-  color: rgba(234,242,255,0.9);
-  font-size: 11px;
-  font-weight: 700;
+.media-sort .dropdown-toggle:focus{
   outline: none;
+}
+
+.media-sort .dropdown-toggle:focus-visible,
+.media-sort.is-open .dropdown-toggle{
+  border-color: rgba(85,185,255,0.55);
+  background: rgba(10, 18, 30, 0.8);
+  box-shadow: 0 0 0 3px rgba(85,185,255,0.12);
+}
+
+.media-sort .dropdown-panel{
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(7, 12, 20, 0.96);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+  display: none;
+  z-index: 30;
+}
+
+.media-sort.is-open .dropdown-panel{
+  display: grid;
+  gap: 6px;
+}
+
+.media-sort .dropdown-option{
+  border: 0;
+  background: rgba(255,255,255,0.04);
+  color: rgba(234,242,255,0.86);
+  padding: 8px 10px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.media-sort .dropdown-option:hover{
+  background: rgba(85,185,255,0.14);
 }
 
 .filter-range-label{
