@@ -921,7 +921,9 @@ body.media-authenticated .media-edit-logout{
 
 .media-thumb-play{
   position: absolute;
-  inset: auto 14px 14px auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 52px;
   height: 52px;
   border-radius: 999px;

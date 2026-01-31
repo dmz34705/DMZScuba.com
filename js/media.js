@@ -508,19 +508,6 @@
     return null;
   }
 
-  function parseDurationValue(item) {
-    const raw = item && (item.duration || item.length || item.durationSeconds);
-    if (raw == null) return null;
-    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
-    const text = String(raw).trim();
-    if (!text) return null;
-    if (/^\d+$/.test(text)) return Number(text);
-    const parts = text.split(":").map((part) => Number(part));
-    if (parts.some((part) => Number.isNaN(part))) return null;
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    return null;
-  }
 
   function parseViewsValue(item) {
     const raw = item && (item.views || item.viewCount);
@@ -580,13 +567,6 @@
       return list.sort((a, b) => {
         const aVal = parseViewsValue(a) ?? -Infinity;
         const bVal = parseViewsValue(b) ?? -Infinity;
-        return bVal - aVal;
-      });
-    }
-    if (currentSort === "duration") {
-      return list.sort((a, b) => {
-        const aVal = parseDurationValue(a) ?? -Infinity;
-        const bVal = parseDurationValue(b) ?? -Infinity;
         return bVal - aVal;
       });
     }
