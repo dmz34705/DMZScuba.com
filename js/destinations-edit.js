@@ -13,7 +13,7 @@
   const adminPanel = document.getElementById("destAdminPanel");
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButtons = document.querySelectorAll(".dest-admin-login");
-  const toggleButton = document.querySelector(".dest-admin-toggle");
+  const toggleButtons = document.querySelectorAll(".dest-admin-toggle");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
   const resetButton = document.querySelector(".dest-admin-reset");
@@ -842,7 +842,7 @@
   }
 
   function setupAdminControls() {
-    if (!adminBar || !adminPanel || !toggleButton) return;
+    if (!adminBar || !adminPanel || !toggleButtons.length) return;
 
     updateAuthState();
 
@@ -852,7 +852,9 @@
         return;
       }
       const isActive = document.body.classList.toggle("dest-edit-mode");
-      toggleButton.setAttribute("aria-pressed", isActive ? "true" : "false");
+      toggleButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
       adminPanel.classList.toggle("is-visible", isActive);
     };
 
@@ -866,7 +868,9 @@
       });
     }
 
-    toggleButton.addEventListener("click", toggleEditMode);
+    toggleButtons.forEach((button) => {
+      button.addEventListener("click", toggleEditMode);
+    });
 
 
     if (addButton) {
