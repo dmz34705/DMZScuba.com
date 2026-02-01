@@ -12,7 +12,7 @@
   const adminBar = document.getElementById("destAdminBar");
   const adminPanel = document.getElementById("destAdminPanel");
   const adminStatus = document.getElementById("destAdminStatus");
-  const loginButton = document.querySelector(".dest-admin-login");
+  const loginButtons = document.querySelectorAll(".dest-admin-login");
   const toggleButton = document.querySelector(".dest-admin-toggle");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
@@ -293,8 +293,10 @@
     if (adminStatus) {
       adminStatus.textContent = authed ? "Signed in" : "Signed out";
     }
-    if (loginButton) {
-      loginButton.textContent = authed ? "Re-auth" : "DMZ Login";
+    if (loginButtons.length) {
+      loginButtons.forEach((button) => {
+        button.textContent = authed ? "Re-auth" : "DMZ Login";
+      });
     }
   }
 
@@ -854,10 +856,12 @@
       adminPanel.classList.toggle("is-visible", isActive);
     };
 
-    if (loginButton) {
-      loginButton.addEventListener("click", () => {
-        buildLoginModal(() => {
-          updateAuthState();
+    if (loginButtons.length) {
+      loginButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buildLoginModal(() => {
+            updateAuthState();
+          });
         });
       });
     }
