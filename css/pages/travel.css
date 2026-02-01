@@ -9,6 +9,16 @@ body.travel-page {
   background-repeat: repeat-y;
 }
 
+body.travel-page .page {
+  background:
+    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.10) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.35) 0%, rgba(5, 11, 20, 0.9) 100%),
+    url("../../assets/images/hero/hero-globe.png");
+  background-size: 110% auto, auto, 110% auto;
+  background-position: center -80px, center, center -80px;
+  background-repeat: repeat-y;
+}
+
 .page-hero {
   padding: 44px 18px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -741,6 +751,11 @@ body .page .destination-card:hover {
 /* Increased spacing for hero section */
 body .page .page-hero {
   margin-bottom: 40px !important;
+}
+
+body.travel-page .site-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 
