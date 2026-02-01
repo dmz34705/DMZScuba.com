@@ -414,17 +414,21 @@ body .page .destination-card:hover {
   background: rgba(5, 11, 20, 0.92);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(234, 242, 255, 0.92);
-  padding: 10px 18px;
+  padding: 0 18px;
   font-weight: 600;
   letter-spacing: 0.2px;
   opacity: 0;
   transform: translateY(-10px);
-  transition: opacity 200ms ease, transform 200ms ease;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 200ms ease, transform 200ms ease, max-height 200ms ease, padding 200ms ease;
 }
 
 .dest-publish-banner.is-visible {
   opacity: 1;
   transform: translateY(0);
+  max-height: 60px;
+  padding: 10px 18px;
 }
 
 .dest-publish-banner.is-success {
