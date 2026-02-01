@@ -817,15 +817,15 @@ body.travel-page .travel-footer {
   right: auto;
 }
 
-.dest-admin-toggle.travel-login-button {
+body.dest-authenticated .travel-footer .dest-admin-login.travel-login-button {
   display: none;
 }
 
-body.dest-authenticated .dest-admin-login.travel-login-button {
+.travel-footer .dest-admin-toggle.travel-login-button {
   display: none;
 }
 
-body.dest-authenticated .dest-admin-toggle.travel-login-button {
+body.dest-authenticated .travel-footer .dest-admin-toggle.travel-login-button {
   display: inline-flex;
 }
 
