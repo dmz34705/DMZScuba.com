@@ -13,6 +13,7 @@
   const adminPanel = document.getElementById("destAdminPanel");
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButton = document.querySelector(".dest-admin-login");
+  const openButton = document.querySelector(".dest-admin-open");
   const toggleButton = document.querySelector(".dest-admin-toggle");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
@@ -844,6 +845,16 @@
 
     updateAuthState();
 
+    const toggleEditMode = () => {
+      if (!getToken()) {
+        buildLoginModal(() => toggleEditMode());
+        return;
+      }
+      const isActive = document.body.classList.toggle("dest-edit-mode");
+      toggleButton.setAttribute("aria-pressed", isActive ? "true" : "false");
+      adminPanel.classList.toggle("is-visible", isActive);
+    };
+
     if (loginButton) {
       loginButton.addEventListener("click", () => {
         buildLoginModal(() => {
@@ -852,15 +863,11 @@
       });
     }
 
-    toggleButton.addEventListener("click", () => {
-      if (!getToken()) {
-        buildLoginModal(() => toggleButton.click());
-        return;
-      }
-      const isActive = document.body.classList.toggle("dest-edit-mode");
-      toggleButton.setAttribute("aria-pressed", isActive ? "true" : "false");
-      adminPanel.classList.toggle("is-visible", isActive);
-    });
+    toggleButton.addEventListener("click", toggleEditMode);
+
+    if (openButton) {
+      openButton.addEventListener("click", toggleEditMode);
+    }
 
     if (addButton) {
       addButton.addEventListener("click", addDestination);

@@ -428,9 +428,9 @@ body .page .destination-card:hover {
 }
 
 .dest-admin-bar {
+  display: none;
   margin: 18px auto 0;
   max-width: var(--max);
-  display: flex;
   flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
@@ -470,6 +470,14 @@ body .page .destination-card:hover {
 .dest-admin-panel.is-visible {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+}
+
+.dest-edit-mode .dest-admin-bar {
+  display: flex;
+}
+
+.dest-admin-open {
+  align-self: flex-start;
 }
 
 .dest-admin-list {
