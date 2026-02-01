@@ -10,6 +10,7 @@
   padding: 14px 18px;
   border-radius: 14px;
   font-weight: 700;
+  color: var(--text);
   letter-spacing: 0.3px;
   border: 1px solid transparent;
   transition:

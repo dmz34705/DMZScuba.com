@@ -1,14 +1,3 @@
-﻿/* Match training hero spacing + alignment */
-body {
-  background:
-    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.14) 0%, rgba(5, 11, 20, 0) 60%),
-    linear-gradient(180deg, rgba(5, 11, 20, 0.88) 0%, rgba(7, 19, 37, 0.92) 100%),
-    url("../../assets/images/hero/hero-globe.png");
-  background-size: 110% auto;
-  background-position: center -80px;
-  background-repeat: repeat-y;
-}
-
 .page-hero {
   padding: 44px 18px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -80,7 +69,7 @@ body {
 }
 
 /* =========================
-   TRAVEL â€” INTERACTIVE GLOBE (POC)
+   TRAVEL — INTERACTIVE GLOBE (POC)
    ========================= */
 
 /* Adjusted globe wrap layout for perfect centering */
@@ -736,15 +725,9 @@ body .page .destination-card:hover {
 
 /* Increased spacing for hero section */
 body .page .page-hero {
-  margin-bottom: 60px !important; /* Tighten gap to globe section */
+  margin-bottom: 40px !important;
 }
 
-
-.site-footer {
-  margin-top: 40px;
-  padding: 20px;
-  background-color: #0d0e14;
-}
 
 /* Mobile destination grid adjustments */
 @media (max-width: 768px) {
@@ -754,6 +737,9 @@ body .page .page-hero {
     width: 100% !important; /* Ensure full-width layout on mobile */
   }
 }
+
+
+
 
 
 
