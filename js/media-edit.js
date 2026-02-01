@@ -1287,9 +1287,58 @@
           } else {
             const count = data.updated || 0;
             window.alert(`Stream dates synced (${count} updated).`);
-            await window.DMZMedia.reloadFromServer();
             if (window.DMZMedia && window.DMZMedia.setMediaItems) {
-              window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+              const draftItems = (window.DMZMedia.getMediaItems() || []).map((item) => ({
+                ...(item || {}),
+              }));
+              try {
+                const mediaResp = await fetch(`${apiRoot || ""}/api/media`, { cache: "no-store" });
+                if (mediaResp.ok) {
+                  const serverData = await mediaResp.json();
+                  const serverItems = Array.isArray(serverData.mediaItems)
+                    ? serverData.mediaItems
+                    : [];
+                  const serverById = new Map();
+                  const serverByStreamId = new Map();
+                  serverItems.forEach((item) => {
+                    if (!item) return;
+                    if (item.id) serverById.set(item.id, item);
+                    if (item.streamId) serverByStreamId.set(item.streamId, item);
+                  });
+                  const draftIds = new Set(
+                    draftItems.map((item) => item && item.id).filter(Boolean)
+                  );
+                  const draftStreamIds = new Set(
+                    draftItems.map((item) => item && item.streamId).filter(Boolean)
+                  );
+                  const hasDraftMatch = (item) => {
+                    if (!item) return false;
+                    if (item.id && draftIds.has(item.id)) return true;
+                    if (item.streamId && draftStreamIds.has(item.streamId)) return true;
+                    return false;
+                  };
+                  const merged = draftItems.map((item) => {
+                    if (!item) return item;
+                    const match =
+                      (item.id && serverById.get(item.id)) ||
+                      (item.streamId && serverByStreamId.get(item.streamId));
+                    if (!match) return item;
+                    return {
+                      ...item,
+                      createdAt: match.createdAt || item.createdAt,
+                      uploadedAt: match.uploadedAt || item.uploadedAt,
+                      date: match.date || item.date,
+                      uploadDate: match.uploadDate || item.uploadDate,
+                    };
+                  });
+                  const extras = serverItems.filter((item) => !hasDraftMatch(item));
+                  window.DMZMedia.setMediaItems([...merged, ...extras]);
+                } else {
+                  window.DMZMedia.setMediaItems(draftItems);
+                }
+              } catch (error) {
+                window.DMZMedia.setMediaItems(draftItems);
+              }
             }
             markDirty();
           }
