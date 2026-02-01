@@ -62,13 +62,12 @@
       <div class="section-head">
         <h2>Interactive Globe</h2>
         <p class="section-sub">Drag to rotate. Pinch to zoom. Tap a pin to visit a destination!</p>
-        <button class="btn secondary dest-admin-open" type="button">Edit Destinations</button>
       </div>
 
       <div class="dest-admin-bar" id="destAdminBar">
         <div class="dest-admin-left">
-          <button class="btn secondary dest-admin-login" type="button">DMZ Login</button>
-          <button class="btn secondary dest-admin-toggle" type="button" aria-pressed="false">Edit Destinations</button>
+          <button class="btn secondary dest-admin-login travel-login-button" type="button">DMZ Login</button>
+          <button class="dest-admin-toggle travel-login-button" type="button" aria-pressed="false">Edit Destinations</button>
           <button class="btn secondary dest-admin-add" type="button">Add Destination</button>
         </div>
         <div class="dest-admin-right">
@@ -266,8 +265,9 @@
       <div class="destination-list" id="destinationList"></div>
     </section>
 
-   <footer class="site-footer">
-  <small>© <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+   <footer class="site-footer travel-footer">
+  <span>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</span>
+  <button class="dest-admin-login travel-login-button" type="button">DMZ Login</button>
 </footer>
 
   </main>
@@ -281,6 +281,9 @@
 
 </body>
 </html>
+
+
+
 
 
 

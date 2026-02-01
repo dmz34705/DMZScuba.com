@@ -1,22 +1,22 @@
 /* Travel page background (match site mood + globe art) */
 body.travel-page {
   background:
-    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.12) 0%, rgba(5, 11, 20, 0) 60%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%),
-    url("../../assets/images/hero/hero-globe.png");
-  background-size: 110% auto, auto, 110% auto;
-  background-position: center -80px, center, center -80px;
-  background-repeat: repeat-y;
+    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.04) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.98) 0%, rgba(5, 11, 20, 1) 100%);
+  background-size: 120% auto, auto;
+  background-position: center -120px, center;
+  background-repeat: no-repeat;
 }
 
 body.travel-page .page {
   background:
     radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.10) 0%, rgba(5, 11, 20, 0) 60%),
-    linear-gradient(180deg, rgba(5, 11, 20, 0.35) 0%, rgba(5, 11, 20, 0.9) 100%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.35) 0%, rgba(5, 11, 20, 0.85) 100%),
     url("../../assets/images/hero/hero-globe.png");
-  background-size: 110% auto, auto, 110% auto;
-  background-position: center -80px, center, center -80px;
-  background-repeat: repeat-y;
+  background-size: 130% auto, auto, cover;
+  background-position: center -120px, center, center;
+  background-repeat: no-repeat;
+  background-attachment: scroll, scroll, fixed;
 }
 
 .page-hero {
@@ -756,6 +756,67 @@ body .page .page-hero {
 body.travel-page .site-footer {
   background: transparent;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.travel-page #destination-list {
+  padding-bottom: 0;
+}
+
+body.travel-page .travel-footer {
+  margin-top: 0;
+}
+
+.travel-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.travel-login-button {
+  position: absolute;
+  right: 18px;
+  bottom: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(7, 12, 20, 0.55);
+  color: rgba(234,242,255,0.55);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.dest-admin-bar .travel-login-button {
+  position: static;
+  bottom: auto;
+  right: auto;
+}
+
+.dest-admin-toggle.travel-login-button {
+  display: none;
+}
+
+body.dest-authenticated .dest-admin-login.travel-login-button {
+  display: none;
+}
+
+body.dest-authenticated .dest-admin-toggle.travel-login-button {
+  display: inline-flex;
+}
+
+.travel-login-button:hover{
+  opacity: 0.7;
+  border-color: rgba(255,255,255,0.35);
+  background: rgba(10, 18, 30, 0.7);
+}
+
+body.dest-authenticated .travel-login-button{
+  display: none;
 }
 
 

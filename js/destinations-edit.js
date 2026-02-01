@@ -13,7 +13,6 @@
   const adminPanel = document.getElementById("destAdminPanel");
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButton = document.querySelector(".dest-admin-login");
-  const openButton = document.querySelector(".dest-admin-open");
   const toggleButton = document.querySelector(".dest-admin-toggle");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
@@ -865,9 +864,6 @@
 
     toggleButton.addEventListener("click", toggleEditMode);
 
-    if (openButton) {
-      openButton.addEventListener("click", toggleEditMode);
-    }
 
     if (addButton) {
       addButton.addEventListener("click", addDestination);
