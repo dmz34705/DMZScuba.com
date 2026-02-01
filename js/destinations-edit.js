@@ -14,6 +14,7 @@
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButtons = document.querySelectorAll(".dest-admin-login");
   const toggleButtons = document.querySelectorAll(".dest-admin-toggle");
+  const collapseButton = document.querySelector(".dest-admin-collapse");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
   const resetButton = document.querySelector(".dest-admin-reset");
@@ -871,6 +872,17 @@
     toggleButtons.forEach((button) => {
       button.addEventListener("click", toggleEditMode);
     });
+
+    if (collapseButton) {
+      collapseButton.addEventListener("click", () => {
+        if (!document.body.classList.contains("dest-edit-mode")) return;
+        document.body.classList.remove("dest-edit-mode");
+        adminPanel.classList.remove("is-visible");
+        toggleButtons.forEach((button) => {
+          button.setAttribute("aria-pressed", "false");
+        });
+      });
+    }
 
 
     if (addButton) {
