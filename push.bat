@@ -43,6 +43,10 @@ git commit -m "%msg%"
 if errorlevel 1 goto commit_note
 
 REM Push
+echo --- Pulling latest (rebase) ---
+git pull --rebase
+if errorlevel 1 goto pull_failed
+
 echo --- Pushing to GitHub ---
 git push
 if errorlevel 1 goto push_failed
@@ -67,6 +71,10 @@ echo NOTE: Nothing new to commit (or commit failed).
 goto push_step
 
 :push_step
+echo --- Pulling latest (rebase) ---
+git pull --rebase
+if errorlevel 1 goto pull_failed
+
 echo --- Pushing to GitHub ---
 git push
 if errorlevel 1 goto push_failed
@@ -77,5 +85,10 @@ exit /b 0
 
 :push_failed
 echo ERROR: Push failed. (Possibly auth issue or remote mismatch.)
+pause
+exit /b 1
+
+:pull_failed
+echo ERROR: git pull --rebase failed. Resolve conflicts, then run "git rebase --continue" and re-run this script.
 pause
 exit /b 1
