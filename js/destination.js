@@ -1,4 +1,7 @@
 (() => {
+  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiBaseUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
+  const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
   const nameEl = document.getElementById("destName");
   const subtitleEl = document.getElementById("destSubtitle");
   const bulletsEl = document.getElementById("destBullets");
@@ -274,15 +277,36 @@
     const id = (params.get("id") || "").trim();
 
     try {
-      const [baseRes, expandedRes] = await Promise.all([
-        fetch("/assets/data/destinations.json", { cache: "no-store" }),
-        fetch("/assets/data/destinations-expanded.json", { cache: "no-store" }).catch(() => null),
+      let baseData = [];
+      let expandedData = [];
+
+      const [apiRes, apiExpandedRes] = await Promise.all([
+        fetch(apiBaseUrl, { cache: "no-store" }).catch(() => null),
+        fetch(apiExpandedUrl, { cache: "no-store" }).catch(() => null),
       ]);
 
-      if (!baseRes.ok) throw new Error("Failed to load destinations");
+      if (apiRes && apiRes.ok) {
+        const apiJson = await apiRes.json();
+        baseData = Array.isArray(apiJson.items) ? apiJson.items : [];
+      }
 
-      const baseData = await baseRes.json();
-      const expandedData = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
+      if (apiExpandedRes && apiExpandedRes.ok) {
+        const apiJson = await apiExpandedRes.json();
+        expandedData = Array.isArray(apiJson.items) ? apiJson.items : [];
+      }
+
+      if (!baseData.length) {
+        const baseRes = await fetch("/assets/data/destinations.json", { cache: "no-store" });
+        if (!baseRes.ok) throw new Error("Failed to load destinations");
+        baseData = await baseRes.json();
+      }
+
+      if (!expandedData.length) {
+        const expandedRes = await fetch("/assets/data/destinations-expanded.json", {
+          cache: "no-store",
+        }).catch(() => null);
+        expandedData = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
+      }
 
       const baseDest = (baseData || []).find((item) => item.id === id);
       const extraDest = (expandedData || []).find((item) => item.id === id);

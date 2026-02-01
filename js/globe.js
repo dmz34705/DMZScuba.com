@@ -61,6 +61,21 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   async function initDestinations() {
     try {
+      const admin = window.DMZDestinations;
+      if (admin && typeof admin.ready === "function") {
+        await admin.ready();
+        destinations = admin.getBaseItems() || [];
+        destinationsById = new Map(destinations.map((d) => [d.id, d]));
+        renderDestinationList();
+        if (typeof admin.subscribe === "function") {
+          admin.subscribe((next) => {
+            destinations = Array.isArray(next) ? next : [];
+            destinationsById = new Map(destinations.map((d) => [d.id, d]));
+            renderDestinationList();
+          });
+        }
+        return;
+      }
       const data = await loadDestinationsFromJson("/assets/data/destinations.json");
       destinations = data;
       destinationsById = new Map(destinations.map((d) => [d.id, d]));
@@ -138,6 +153,9 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   // Desktop hover: which pin is currently under the cursor
   let hoverPinId = null;
+
+  let pinDragging = null;
+  let pinDragMoved = false;
 
   // -------------------------
   // Mobile cluster "inspect" (tap once reveals label, tap again selects)
@@ -427,6 +445,41 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     return { x: cx + x1 * r, y: cy + y2 * r, z: z2, scale: 1 };
   }
 
+  function unprojectToLatLon(x, y, cx, cy, r) {
+    const nx = (x - cx) / r;
+    const ny = (y - cy) / r;
+    const d2 = nx * nx + ny * ny;
+    if (d2 > 1) return null;
+
+    const nz = Math.sqrt(1 - d2);
+    const cosX = Math.cos(rotX);
+    const sinX = Math.sin(rotX);
+    const y1 = ny * cosX + nz * sinX;
+    const z1 = -ny * sinX + nz * cosX;
+    const x1 = nx;
+
+    const cosY = Math.cos(rotY);
+    const sinY = Math.sin(rotY);
+    const x0 = x1 * cosY - z1 * sinY;
+    const z0 = x1 * sinY + z1 * cosY;
+    const y0 = y1;
+
+    const lat = -Math.asin(Math.max(-1, Math.min(1, y0))) * (180 / Math.PI);
+    const lon = -Math.atan2(z0, x0) * (180 / Math.PI);
+
+    return {
+      lat: lat - GLOBE_CONFIG.pinLatOffsetDeg,
+      lon: lon - GLOBE_CONFIG.pinLonOffsetDeg,
+    };
+  }
+
+  function normalizeLon(value) {
+    let lon = value;
+    while (lon > 180) lon -= 360;
+    while (lon < -180) lon += 360;
+    return lon;
+  }
+
   // -------------------------
   // Draw globe + grid
   // -------------------------
@@ -712,7 +765,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }
   }
 
-  function draw() {
+function draw() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
@@ -739,6 +792,17 @@ if (window.innerWidth > 768) {
 }
 
 }
+
+  function getGlobeMetrics() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const isMobileView = window.innerWidth <= 768;
+    const cx = w * 0.5;
+    const cy = isMobileView ? h * 0.5 : h * 0.52;
+    const baseR = Math.min(w, h) * (isMobileView ? 0.38 : 0.34);
+    const r = baseR * zoom;
+    return { cx, cy, r };
+  }
 
 
 
@@ -781,6 +845,29 @@ if (window.innerWidth > 768) {
     isInteracting = false;
   }
 
+  function startPinDrag(pinId) {
+    pinDragging = { id: pinId };
+    pinDragMoved = false;
+    isInteracting = true;
+    autoRotateEnabled = false;
+  }
+
+  function updatePinDrag(x, y) {
+    if (!pinDragging) return;
+    const admin = window.DMZDestinations;
+    if (!admin || typeof admin.setPinPosition !== "function") return;
+    const { cx, cy, r } = getGlobeMetrics();
+    const pos = unprojectToLatLon(x, y, cx, cy, r);
+    if (!pos) return;
+    admin.setPinPosition(pinDragging.id, pos.lat, normalizeLon(pos.lon));
+    pinDragMoved = true;
+  }
+
+  function endPinDrag() {
+    pinDragging = null;
+    isInteracting = false;
+  }
+
 function moveDrag(x, y) {
     const dx = x - lastX;
     const dy = y - lastY;
@@ -804,13 +891,29 @@ function moveDrag(x, y) {
 
 
 
-  canvas.addEventListener("mousedown", (e) => startDrag(e.offsetX, e.offsetY));
+  canvas.addEventListener("mousedown", (e) => {
+    const admin = window.DMZDestinations;
+    if (admin && typeof admin.isEditMode === "function" && admin.isEditMode()) {
+      const hit = pickPin(e.offsetX, e.offsetY);
+      if (hit) {
+        startPinDrag(hit.id);
+        return;
+      }
+    }
+    startDrag(e.offsetX, e.offsetY);
+  });
 
   // Desktop hover label control
   canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    if (pinDragging) {
+      updatePinDrag(x, y);
+      canvas.style.cursor = "grabbing";
+      return;
+    }
 
     const p = pickPin(x, y);
     hoverPinId = p ? p.id : null;
@@ -824,14 +927,37 @@ function moveDrag(x, y) {
   });
 
   window.addEventListener("mousemove", (e) => {
+    if (pinDragging) {
+      const rect = canvas.getBoundingClientRect();
+      updatePinDrag(e.clientX - rect.left, e.clientY - rect.top);
+      return;
+    }
     if (!dragging) return;
     const rect = canvas.getBoundingClientRect();
     moveDrag(e.clientX - rect.left, e.clientY - rect.top);
   });
 
-  window.addEventListener("mouseup", endDrag);
-  window.addEventListener("mouseleave", endDrag);
-  window.addEventListener("blur", endDrag);
+  window.addEventListener("mouseup", () => {
+    if (pinDragging) {
+      endPinDrag();
+      return;
+    }
+    endDrag();
+  });
+  window.addEventListener("mouseleave", () => {
+    if (pinDragging) {
+      endPinDrag();
+      return;
+    }
+    endDrag();
+  });
+  window.addEventListener("blur", () => {
+    if (pinDragging) {
+      endPinDrag();
+      return;
+    }
+    endDrag();
+  });
 
   // -------------------------
   // Wheel zoom (desktop/trackpad)
@@ -1051,6 +1177,11 @@ function handlePinTapMobile(x, y) {
     const dest = destinationsById.get(pin.id);
     if (!dest) return;
 
+    const admin = window.DMZDestinations;
+    if (admin && typeof admin.selectId === "function" && admin.isEditMode && admin.isEditMode()) {
+      admin.selectId(pin.id);
+    }
+
     const titleEl = document.getElementById("destTitle");
     const subEl = document.getElementById("destSub");
     const ul = document.getElementById("destBullets");
@@ -1136,6 +1267,10 @@ function handlePinTapMobile(x, y) {
   // If a touch tap just ran, ignore this one click.
   if (suppressNextClick) {
     suppressNextClick = false;
+    return;
+  }
+  if (pinDragMoved) {
+    pinDragMoved = false;
     return;
   }
 

@@ -2,6 +2,7 @@
   const dataUrl = "../../assets/data/media.json";
   const apiBase = (document.body && document.body.dataset.mediaApi) || "";
   const apiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
+  const destinationsApiUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
   const mediaGrid = document.getElementById("mediaGrid");
   const photoGrid = document.getElementById("photoGrid");
   const mediaSection = mediaGrid ? mediaGrid.closest(".section.media-wide") : null;
@@ -1256,17 +1257,25 @@
   }
 
   async function fetchMediaData() {
-    const [apiRes, fileRes, destRes] = await Promise.all([
+    const [apiRes, fileRes, destApiRes] = await Promise.all([
       fetch(apiUrl, { cache: "no-store" }),
       fetch(dataUrl, { cache: "no-store" }),
-      fetch("/assets/data/destinations.json", { cache: "no-store" }),
+      fetch(destinationsApiUrl, { cache: "no-store" }).catch(() => null),
     ]);
     const mediaRes = apiRes.ok ? apiRes : fileRes;
     if (!mediaRes.ok) {
       throw new Error(`Failed to load media data (${mediaRes.status})`);
     }
     const data = await mediaRes.json();
-    const destinations = destRes.ok ? await destRes.json() : [];
+    let destinations = [];
+    if (destApiRes && destApiRes.ok) {
+      const apiJson = await destApiRes.json();
+      destinations = Array.isArray(apiJson.items) ? apiJson.items : [];
+    }
+    if (!destinations.length) {
+      const destRes = await fetch("/assets/data/destinations.json", { cache: "no-store" });
+      destinations = destRes.ok ? await destRes.json() : [];
+    }
     return { data, destinations };
   }
 

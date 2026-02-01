@@ -189,6 +189,117 @@ function normalizeItem(row) {
   };
 }
 
+function parseJsonSafe(value, fallback) {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function normalizeDestinationRow(row) {
+  const data = parseJsonSafe(row && row.data, null);
+  if (!data || typeof data !== "object") return null;
+  if (!data.id && row && row.id) {
+    data.id = row.id;
+  }
+  return data;
+}
+
+async function fetchDestinationRows(env, table) {
+  const { results } = await env.DB.prepare(`SELECT * FROM ${table} ORDER BY updated_at DESC, rowid ASC`).all();
+  return results || [];
+}
+
+async function handleGetDestinations(env) {
+  const rows = await fetchDestinationRows(env, "destinations_base");
+  const items = rows.map(normalizeDestinationRow).filter(Boolean);
+  return jsonResponse(
+    { items },
+    200,
+    {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Cloudflare-CDN-Cache-Control": "no-store",
+    }
+  );
+}
+
+async function handleGetDestinationsExpanded(env) {
+  const rows = await fetchDestinationRows(env, "destinations_expanded");
+  const items = rows.map(normalizeDestinationRow).filter(Boolean);
+  return jsonResponse(
+    { items },
+    200,
+    {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Cloudflare-CDN-Cache-Control": "no-store",
+    }
+  );
+}
+
+async function handleGetDestinationById(env, id) {
+  if (!id) return jsonResponse({ ok: false, error: "Missing id." }, 400);
+  const baseRow = await env.DB.prepare("SELECT * FROM destinations_base WHERE id = ?").bind(id).first();
+  const expRow = await env.DB.prepare("SELECT * FROM destinations_expanded WHERE id = ?").bind(id).first();
+  const base = normalizeDestinationRow(baseRow);
+  const expanded = normalizeDestinationRow(expRow);
+  if (!base && !expanded) return jsonResponse({ ok: false, error: "Not found." }, 404);
+  return jsonResponse({ base, expanded }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleDestinationsBulkUpsert(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const body = await request.json().catch(() => ({}));
+  const baseItems = Array.isArray(body.baseItems) ? body.baseItems : [];
+  const expandedItems = Array.isArray(body.expandedItems) ? body.expandedItems : [];
+  const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
+  const now = new Date().toISOString();
+
+  const baseExisting = await env.DB.prepare("SELECT id, created_at FROM destinations_base").all();
+  const expandedExisting = await env.DB.prepare("SELECT id, created_at FROM destinations_expanded").all();
+  const baseCreatedMap = new Map((baseExisting.results || []).map((row) => [row.id, row.created_at]));
+  const expandedCreatedMap = new Map(
+    (expandedExisting.results || []).map((row) => [row.id, row.created_at])
+  );
+
+  if (deleteIds.length) {
+    const delBase = env.DB.prepare("DELETE FROM destinations_base WHERE id = ?");
+    const delExpanded = env.DB.prepare("DELETE FROM destinations_expanded WHERE id = ?");
+    for (const id of deleteIds) {
+      await delBase.bind(id).run();
+      await delExpanded.bind(id).run();
+    }
+  }
+
+  const baseStmt = env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_base (id, data, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  );
+  for (const item of baseItems) {
+    if (!item || !item.id) continue;
+    const createdAt = baseCreatedMap.get(item.id) || now;
+    const payload = JSON.stringify(item);
+    await baseStmt.bind(item.id, payload, createdAt, now).run();
+  }
+
+  const expandedStmt = env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_expanded (id, data, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  );
+  for (const item of expandedItems) {
+    if (!item || !item.id) continue;
+    const createdAt = expandedCreatedMap.get(item.id) || now;
+    const payload = JSON.stringify(item);
+    await expandedStmt.bind(item.id, payload, createdAt, now).run();
+  }
+
+  return jsonResponse({ ok: true, count: baseItems.length }, 200);
+}
+
 async function handleGetMedia(env) {
   await ensureSortOrderColumn(env);
   const { results } = await env.DB.prepare(
@@ -527,6 +638,15 @@ export default {
       response = await handleBulkUpsert(request, env);
     } else if (pathname === "/api/admin/stream-date-sync" && request.method === "POST") {
       response = await handleStreamDateSync(request, env);
+    } else if (pathname === "/api/destinations" && request.method === "GET") {
+      response = await handleGetDestinations(env);
+    } else if (pathname === "/api/destinations-expanded" && request.method === "GET") {
+      response = await handleGetDestinationsExpanded(env);
+    } else if (pathname.startsWith("/api/destinations/") && request.method === "GET") {
+      const id = pathname.split("/").pop();
+      response = await handleGetDestinationById(env, id);
+    } else if (pathname === "/api/admin/destinations-bulk" && request.method === "PUT") {
+      response = await handleDestinationsBulkUpsert(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {
       const id = pathname.split("/").pop();
       if (request.method === "PUT") {
