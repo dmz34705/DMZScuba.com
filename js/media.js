@@ -1,6 +1,7 @@
 (() => {
   const dataUrl = "../../assets/data/media.json";
-  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiBase =
+    (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
   const apiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
   const destinationsApiUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
   const mediaGrid = document.getElementById("mediaGrid");

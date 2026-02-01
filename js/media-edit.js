@@ -7,7 +7,8 @@
   };
   const thumbDefaultPath = "/assets/media/thumbnails/";
   const desktopDragQuery = window.matchMedia("(min-width: 981px)");
-  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiBase =
+    (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
   const apiRoot = apiBase || "";
   const tokenStorageKey = "dmzMediaToken";
   const draftStorageKey = "dmzMediaDraft";

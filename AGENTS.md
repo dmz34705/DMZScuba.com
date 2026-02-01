@@ -3,7 +3,7 @@
 ## Project snapshot
 - Static HTML/CSS/JS site with a Cloudflare Worker API.
 - Static pages live in `index.html` and `pages/**`.
-- Worker API lives in `workers/dmz-media-api/`.
+- Admin/content API lives in `workers/dmz-media-api/`.
 
 ## Local preview
 - Static site: run `Python Server.bat` and open `http://localhost:8080`.
@@ -16,7 +16,7 @@
 - Global JS: `js/main.js`.
 - Feature JS: `js/media.js`, `js/media-edit.js`, `js/globe.js`, `js/destination.js`, `js/course-builder.js`.
 - Data: `assets/data/destinations.json`, `assets/data/destinations-expanded.json`, `assets/data/media.json`.
-- Worker: `workers/dmz-media-api/src/index.js`, schema in `workers/dmz-media-api/schema.sql`.
+- Admin/content API: `workers/dmz-media-api/src/index.js`, schema in `workers/dmz-media-api/schema.sql`.
 
 ## Conventions
 - Keep paths rooted at `/assets/...` in HTML/JSON.

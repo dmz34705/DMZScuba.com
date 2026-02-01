@@ -1,5 +1,6 @@
 (() => {
-  const apiBase = (document.body && document.body.dataset.mediaApi) || "";
+  const apiBase =
+    (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
   const apiRoot = apiBase || "";
   const apiUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
   const apiExpandedUrl = apiBase
