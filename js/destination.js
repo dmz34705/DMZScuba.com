@@ -43,6 +43,18 @@
   const nonDivingTitleEl = document.getElementById("nonDivingTitle");
   const tripSnapshotTitleEl = document.getElementById("tripSnapshotTitle");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
+  const metaDescriptionEl = document.querySelector('meta[name="description"]');
+
+  function truncateText(text, maxLength) {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength - 1).trim()}…`;
+  }
+
+  function setMetaDescription(text) {
+    if (!metaDescriptionEl) return;
+    metaDescriptionEl.setAttribute("content", text);
+  }
 
   function mergeDestination(base, extra) {
     if (!base) return base;
@@ -227,6 +239,7 @@
       if (isoLabel) isoLabel.textContent = "Image coming soon.";
       setHeroImage(null);
       setDiveNowLinks(null);
+      setMetaDescription("Explore a DMZ Scuba destination and plan a dive trip on your terms.");
       return;
     }
 
@@ -270,6 +283,13 @@
 
     if (dest.name) {
       document.title = `DMZ Scuba | ${dest.name}`;
+    }
+
+    if (dest.name) {
+      const base = `Explore ${dest.name} with DMZ Scuba.`;
+      const details = dest.summary || dest.subtitle || dest.narrative || "";
+      const combined = `${base} ${details}`.trim();
+      setMetaDescription(truncateText(combined, 150));
     }
   }
 
