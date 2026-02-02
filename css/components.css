@@ -57,6 +57,17 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
+@media (max-width: 780px){
+  .site-header{
+    transition: transform 220ms ease;
+    will-change: transform;
+  }
+
+  .site-header.is-hidden{
+    transform: translateY(-110%);
+  }
+}
+
 .nav-container{
   max-width: var(--max);
   margin: 0 auto;

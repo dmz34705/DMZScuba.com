@@ -341,6 +341,54 @@ console.log("main.js loaded");
       });
     }
 
+    const header = document.querySelector(".site-header");
+    if (header) {
+      const mobileQuery = window.matchMedia("(max-width: 780px)");
+      let lastScrollY = window.scrollY;
+      let ticking = false;
+
+      const updateHeaderVisibility = () => {
+        if (!mobileQuery.matches) {
+          header.classList.remove("is-hidden");
+          lastScrollY = window.scrollY;
+          return;
+        }
+
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollY;
+
+        if (currentY <= 8) {
+          header.classList.remove("is-hidden");
+          lastScrollY = currentY;
+          return;
+        }
+
+        if (Math.abs(delta) < 6) {
+          return;
+        }
+
+        if (delta > 0) {
+          header.classList.add("is-hidden");
+        } else {
+          header.classList.remove("is-hidden");
+        }
+
+        lastScrollY = currentY;
+      };
+
+      const onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          updateHeaderVisibility();
+          ticking = false;
+        });
+      };
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", () => updateHeaderVisibility());
+    }
+
     // 1) Copy icon buttons
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-copy]");
