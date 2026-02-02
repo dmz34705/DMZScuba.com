@@ -71,36 +71,37 @@
 }
 
 .media-admin-panel{
-  margin: 28px auto 10px;
-  width: min(260px, calc(100% - 36px));
-  display: none;
-}
-
-body.media-authenticated .media-admin-panel{
+  margin: 28px auto 32px;
+  width: min(980px, calc(100% - 36px));
   display: block;
 }
 
 .media-admin-card{
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(7, 12, 20, 0.7);
-  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
-  padding: 10px 12px;
+  background: rgba(7, 12, 20, 0.8);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+  padding: 16px 18px;
   display: grid;
-  gap: 8px;
-  opacity: 0.85;
+  gap: 12px;
 }
 
 .media-admin-head{
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+}
+
+.media-admin-head-actions{
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
 .media-admin-title{
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: rgba(234,242,255,0.7);
@@ -108,9 +109,38 @@ body.media-authenticated .media-admin-panel{
 
 .media-admin-status{
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(234,242,255,0.95);
+}
+
+.media-admin-note{
+  margin: 0;
+  color: rgba(234,242,255,0.65);
+  font-size: 12.5px;
+}
+
+.media-admin-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.media-admin-section{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(5,11,20,0.55);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.media-admin-section h3{
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(234,242,255,0.7);
 }
 
 .media-admin-actions{
@@ -123,9 +153,9 @@ body.media-authenticated .media-admin-panel{
   border: 1px solid rgba(255,140,140,0.4);
   background: rgba(35,12,14,0.6);
   color: rgba(255,200,200,0.95);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.3px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   display: none;
 }
 
@@ -134,26 +164,24 @@ body.media-has-unsaved .media-admin-warning{
 }
 
 .media-login-button{
-  position: absolute;
-  right: 18px;
-  bottom: 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(7, 12, 20, 0.55);
-  color: rgba(234,242,255,0.55);
-  font-size: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(7, 12, 20, 0.7);
+  color: rgba(234,242,255,0.8);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   cursor: pointer;
-  opacity: 0.35;
-  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+  opacity: 0.85;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
 
 .media-login-button:hover{
-  opacity: 0.7;
+  opacity: 1;
   border-color: rgba(255,255,255,0.35);
   background: rgba(10, 18, 30, 0.7);
+  transform: translateY(-1px);
 }
 
 body.media-authenticated .media-login-button{
@@ -215,7 +243,7 @@ body.media-authenticated .media-login-button{
 }
 
 body.media-authenticated .media-edit-toggle{
-  opacity: 0.7;
+  opacity: 0.8;
   pointer-events: auto;
 }
 
@@ -294,7 +322,7 @@ body.media-edit-mode.media-authenticated .media-edit-reset{
 }
 
 body.media-authenticated .media-edit-publish{
-  opacity: 0.75;
+  opacity: 0.85;
   pointer-events: auto;
 }
 
