@@ -85,48 +85,48 @@
       </div>
     </section>
 
-    <div class="media-admin-layout">
-      <aside class="media-admin-panel" aria-label="Media admin controls">
-        <div class="media-admin-card" role="group" aria-label="Media edit actions">
-          <div class="media-admin-head">
-            <div>
-              <span class="media-admin-title">Media Admin</span>
-              <span class="media-admin-status" id="mediaAdminStatus">Signed out</span>
-            </div>
-            <div class="media-admin-head-actions">
-              <button class="media-login-button" type="button">DMZ Login</button>
-            </div>
+    <button class="media-admin-fab" type="button" aria-expanded="false" aria-controls="mediaAdminPanel">Media Admin</button>
+    <aside class="media-admin-panel" id="mediaAdminPanel" aria-label="Media admin controls">
+      <div class="media-admin-card" role="group" aria-label="Media edit actions">
+        <div class="media-admin-head">
+          <div>
+            <span class="media-admin-title">Media Admin</span>
+            <span class="media-admin-status" id="mediaAdminStatus">Signed out</span>
           </div>
-          <p class="media-admin-note">Sign in to edit, reorder, upload, and publish media updates.</p>
-          <div class="media-admin-grid">
-            <div class="media-admin-section">
-              <h3>Editing</h3>
-              <div class="media-admin-actions">
-                <button class="media-edit-toggle" type="button" aria-pressed="false">Edit + Upload</button>
-                <button class="media-edit-publish" type="button">Publish Changes</button>
-                <button class="media-edit-reset" type="button">Reset Draft</button>
-                <button class="media-edit-export" type="button">Export JSON</button>
-              </div>
-            </div>
-            <div class="media-admin-section">
-              <h3>Maintenance</h3>
-              <div class="media-admin-actions">
-                <button class="media-edit-refresh" type="button">Master Refresh</button>
-                <button class="media-edit-sync" type="button">Sync Stream Dates</button>
-                <button class="media-edit-logout" type="button">Log Out</button>
-                <a class="back-to-top" href="#top" aria-label="Back to top">Back to top</a>
-              </div>
-            </div>
-          </div>
-          <div class="media-admin-warning" id="mediaAdminWarning" aria-live="polite">
-            Unsaved changes. Do not refresh.
+          <div class="media-admin-head-actions">
+            <button class="media-login-button" type="button">DMZ Login</button>
+            <button class="media-admin-close" type="button" aria-label="Close admin panel">Close</button>
           </div>
         </div>
-      </aside>
+        <p class="media-admin-note">Sign in to edit, reorder, upload, and publish media updates.</p>
+        <div class="media-admin-grid">
+          <div class="media-admin-section">
+            <h3>Editing</h3>
+            <div class="media-admin-actions">
+              <button class="media-edit-toggle" type="button" aria-pressed="false">Edit + Upload</button>
+              <button class="media-edit-publish" type="button">Publish Changes</button>
+              <button class="media-edit-reset" type="button">Reset Draft</button>
+              <button class="media-edit-export" type="button">Export JSON</button>
+            </div>
+          </div>
+          <div class="media-admin-section">
+            <h3>Maintenance</h3>
+            <div class="media-admin-actions">
+              <button class="media-edit-refresh" type="button">Master Refresh</button>
+              <button class="media-edit-sync" type="button">Sync Stream Dates</button>
+              <button class="media-edit-logout" type="button">Log Out</button>
+              <a class="back-to-top" href="#top" aria-label="Back to top">Back to top</a>
+            </div>
+          </div>
+        </div>
+        <div class="media-admin-warning" id="mediaAdminWarning" aria-live="polite">
+          Unsaved changes. Do not refresh.
+        </div>
+      </div>
+    </aside>
 
-      <div class="media-admin-main">
-        <!-- Filter bar -->
-        <section class="section media-wide" id="latest">
+    <!-- Filter bar -->
+    <section class="section media-wide" id="latest">
       <div class="section-head">
         <div class="section-title">
           <h2>Browse Media</h2>
@@ -199,26 +199,24 @@
       <div class="media-empty" id="mediaEmpty" aria-live="polite">
         No media matches those filters yet. Try clearing filters or searching a different term.
       </div>
-        </section>
+    </section>
 
-        <!-- YouTube / Instagram callouts -->
-        <section class="section">
-          <div class="callout-grid">
-            <div class="callout-card">
-              <h2>YouTube</h2>
-              <p>Uncut dives, cinematic wreck footage, travel recaps, and skill sessions.</p>
-              <a class="btn primary" href="https://www.youtube.com/@divemasterzach34705" target="_blank" rel="noopener">View Channel</a>
-            </div>
+    <!-- YouTube / Instagram callouts -->
+    <section class="section">
+      <div class="callout-grid">
+        <div class="callout-card">
+          <h2>YouTube</h2>
+          <p>Uncut dives, cinematic wreck footage, travel recaps, and skill sessions.</p>
+          <a class="btn primary" href="https://www.youtube.com/@divemasterzach34705" target="_blank" rel="noopener">View Channel</a>
+        </div>
 
-            <div class="callout-card">
-              <h2>Instagram</h2>
-              <p>Short-form clips, trip highlights, and behind-the-scenes gear + training.</p>
-              <a class="btn secondary" href="https://www.instagram.com/dmzscuba?igsh=MW95dWJleGpzbDY3aQ%3D%3D&utm_source=qr" target="_blank" rel="noopener">Open Instagram</a>
-            </div>
-          </div>
-        </section>
+        <div class="callout-card">
+          <h2>Instagram</h2>
+          <p>Short-form clips, trip highlights, and behind-the-scenes gear + training.</p>
+          <a class="btn secondary" href="https://www.instagram.com/dmzscuba?igsh=MW95dWJleGpzbDY3aQ%3D%3D&utm_source=qr" target="_blank" rel="noopener">Open Instagram</a>
+        </div>
       </div>
-    </div>
+    </section>
 
     <footer class="site-footer media-footer">
       <span>&copy; 2026 DMZ Scuba. All rights reserved.</span>
@@ -240,6 +238,27 @@
       };
       updateTarget();
       window.addEventListener("resize", updateTarget);
+    })();
+
+    (() => {
+      const toggle = document.querySelector(".media-admin-fab");
+      const closeBtn = document.querySelector(".media-admin-close");
+      const panel = document.getElementById("mediaAdminPanel");
+      if (!toggle || !panel) return;
+
+      const setOpen = (next) => {
+        document.body.classList.toggle("media-admin-open", next);
+        toggle.setAttribute("aria-expanded", next ? "true" : "false");
+      };
+
+      toggle.addEventListener("click", () => setOpen(true));
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => setOpen(false));
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setOpen(false);
+      });
     })();
   </script>
 </body>
