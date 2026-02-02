@@ -74,6 +74,9 @@
   margin: 28px auto 32px;
   width: min(980px, calc(100% - 36px));
   display: block;
+  position: sticky;
+  top: 90px;
+  z-index: 20;
 }
 
 .media-admin-card{
