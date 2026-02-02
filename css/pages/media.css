@@ -71,8 +71,7 @@
 }
 
 .media-admin-panel{
-  margin: 28px auto 32px;
-  width: min(980px, calc(100% - 36px));
+  width: 100%;
   display: block;
   position: sticky;
   top: 90px;
@@ -80,11 +79,11 @@
 }
 
 .media-admin-card{
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(7, 12, 20, 0.8);
+  background: rgba(7, 12, 20, 0.9);
   box-shadow: 0 16px 38px rgba(0,0,0,0.45);
-  padding: 16px 18px;
+  padding: 14px 14px;
   display: grid;
   gap: 12px;
 }
@@ -120,27 +119,27 @@
 .media-admin-note{
   margin: 0;
   color: rgba(234,242,255,0.65);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .media-admin-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .media-admin-section{
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(5,11,20,0.55);
-  padding: 12px;
+  padding: 10px;
   display: grid;
   gap: 10px;
 }
 
 .media-admin-section h3{
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: rgba(234,242,255,0.7);
@@ -156,9 +155,9 @@
   border: 1px solid rgba(255,140,140,0.4);
   background: rgba(35,12,14,0.6);
   color: rgba(255,200,200,0.95);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.3px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: none;
 }
 
@@ -171,10 +170,10 @@ body.media-has-unsaved .media-admin-warning{
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(7, 12, 20, 0.7);
   color: rgba(234,242,255,0.8);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   cursor: pointer;
   opacity: 0.85;
   transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
@@ -196,7 +195,7 @@ body.media-authenticated .media-login-button{
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(7, 12, 20, 0.75);
   color: rgba(234,242,255,0.85);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 8px 12px;
@@ -229,7 +228,7 @@ body.media-authenticated .media-login-button{
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
   color: rgba(234, 242, 255, 0.75);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 7px 12px;
@@ -262,7 +261,7 @@ body.media-edit-mode .media-edit-toggle {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
   color: rgba(234, 242, 255, 0.75);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 7px 12px;
@@ -288,7 +287,7 @@ body.media-edit-mode.media-authenticated .media-edit-export{
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
   color: rgba(234, 242, 255, 0.75);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 7px 12px;
@@ -314,7 +313,7 @@ body.media-edit-mode.media-authenticated .media-edit-reset{
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
   color: rgba(234, 242, 255, 0.75);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 7px 12px;
@@ -367,7 +366,7 @@ body.media-authenticated .media-edit-publish{
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
   color: rgba(234, 242, 255, 0.75);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 7px 12px;
@@ -405,6 +404,42 @@ body.media-authenticated .media-edit-logout{
 @media (max-width: 780px){
   .media-admin-panel{
     width: min(100%, calc(100% - 24px));
+  }
+}
+
+.media-admin-layout{
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  max-width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 0 18px 24px;
+}
+
+.media-admin-main{
+  min-width: 0;
+}
+
+.media-admin-layout .section{
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.media-admin-layout .section.media-wide .section-head,
+.media-admin-layout .section.media-wide .filterbar,
+.media-admin-layout .section.media-wide .media-empty{
+  max-width: 100%;
+}
+
+@media (max-width: 980px){
+  .media-admin-layout{
+    grid-template-columns: 1fr;
+  }
+
+  .media-admin-panel{
+    position: static;
   }
 }
 
