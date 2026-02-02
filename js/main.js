@@ -356,6 +356,7 @@ console.log("main.js loaded");
 
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
+        const revealThreshold = 28;
 
         if (currentY <= 8) {
           header.classList.remove("is-hidden");
@@ -369,7 +370,7 @@ console.log("main.js loaded");
 
         if (delta > 0) {
           header.classList.add("is-hidden");
-        } else {
+        } else if (Math.abs(delta) >= revealThreshold) {
           header.classList.remove("is-hidden");
         }
 
