@@ -1,30 +1,37 @@
 /* Travel page background (match site mood + globe art) */
 body.travel-page {
   background:
-    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.04) 0%, rgba(5, 11, 20, 0) 60%),
-    linear-gradient(180deg, rgba(5, 11, 20, 0.98) 0%, rgba(5, 11, 20, 1) 100%);
-  background-size: 120% auto, auto;
-  background-position: center -120px, center;
-  background-repeat: no-repeat;
+    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.14) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.88) 0%, rgba(7, 19, 37, 0.92) 100%),
+    url("../../assets/images/hero/hero-globe.png");
+  background-size: 100% 100%, 100% 100%, 110% auto;
+  background-position: center top, center top, center -80px;
+  background-repeat: no-repeat, no-repeat, repeat-y;
 }
 
 body.travel-page .page {
-  background:
-    radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.10) 0%, rgba(5, 11, 20, 0) 60%),
-    linear-gradient(180deg, rgba(5, 11, 20, 0.35) 0%, rgba(5, 11, 20, 0.85) 100%),
-    url("../../assets/images/hero/hero-globe.png");
-  background-size: 130% auto, auto, cover;
-  background-position: center -120px, center, center;
-  background-repeat: no-repeat;
-  background-attachment: scroll, scroll, fixed;
+  background: transparent;
+}
+
+
+body.travel-page .site-header {
+  z-index: 60;
+}
+
+body.travel-page .dest-publish-banner {
+  z-index: 55;
 }
 
 .page-hero {
   padding: 44px 18px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-image: url("../../assets/images/hero/hero-travel2.png");
+  background:
+    radial-gradient(900px 520px at 30% 0%, rgba(60, 170, 255, 0.12) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(5, 11, 20, 0.38) 0%, rgba(5, 11, 20, 0.82) 70%, rgba(5, 11, 20, 0.98) 100%),
+    url("../../assets/images/hero/hero-travel.JPEG");
   background-size: cover;
-  background-position: 40% 50%;
+  background-position: 40% 45%;
+  background-repeat: no-repeat;
   position: relative;
 }
 
@@ -127,16 +134,19 @@ body .page .globe-shell {
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .page-hero{
-    background-image: none;
+    background: none;
   }
 
   .page-hero::before{
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url("../../assets/images/hero/hero-travel2.png");
+    background:
+      radial-gradient(900px 520px at 30% 0%, rgba(60, 170, 255, 0.12) 0%, rgba(5, 11, 20, 0) 60%),
+      linear-gradient(180deg, rgba(5, 11, 20, 0.38) 0%, rgba(5, 11, 20, 0.82) 70%, rgba(5, 11, 20, 0.98) 100%),
+      url("../../assets/images/hero/hero-travel.JPEG");
     background-size: cover;
-    background-position: 40% 50%;
+    background-position: 40% 45%;
     transform: scaleX(-1);
     z-index: 0;
   }
@@ -784,6 +794,15 @@ body.travel-page #destination-list {
 
 body.travel-page .travel-footer {
   margin-top: 0;
+}
+
+body.travel-page .travel-footer {
+  margin-top: 0;
+}
+
+body.travel-page #destination-list,
+body.travel-page .travel-footer {
+  background: transparent;
 }
 
 .travel-footer {

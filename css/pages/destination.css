@@ -3,9 +3,9 @@ body {
     radial-gradient(1200px 600px at 30% 0%, rgba(60, 170, 255, 0.14) 0%, rgba(5, 11, 20, 0) 60%),
     linear-gradient(180deg, rgba(5, 11, 20, 0.88) 0%, rgba(7, 19, 37, 0.92) 100%),
     url("../../assets/images/hero/hero-globe.png");
-  background-size: 110% auto;
-  background-position: center -80px;
-  background-repeat: repeat-y;
+  background-size: 100% 100%, 100% 100%, 110% auto;
+  background-position: center top, center top, center -80px;
+  background-repeat: no-repeat, no-repeat, repeat-y;
 }
 
 .destination-hero {
