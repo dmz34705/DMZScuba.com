@@ -126,67 +126,69 @@
 
     <!-- Filter bar -->
     <section class="section media-wide" id="latest">
-      <div class="section-head">
-        <div class="section-title">
-          <h2>Browse Media</h2>
-          <p class="section-sub">Filter by type, tags, or location to find exactly what you want.</p>
+      <div class="media-controls">
+        <div class="section-head">
+          <div class="section-title">
+            <h2>Browse Media</h2>
+            <p class="section-sub">Filter by type, tags, or location to find exactly what you want.</p>
+          </div>
+          <div class="filterbar-meta">
+            <span class="results-count" id="mediaResultsCount">0</span>
+            <label class="filter-range">
+              <span class="filter-range-label">Card Size</span>
+              <input id="mediaCardSize" type="range" min="220" max="380" value="280" step="20" />
+              <span class="filter-range-value" id="mediaCardSizeValue">280px</span>
+            </label>
+            <button class="filter-clear-all" id="mediaClearFilters" type="button">Clear Filters</button>
+          </div>
         </div>
-        <div class="filterbar-meta">
-          <span class="results-count" id="mediaResultsCount">0</span>
-          <label class="filter-range">
-            <span class="filter-range-label">Card Size</span>
-            <input id="mediaCardSize" type="range" min="220" max="380" value="280" step="20" />
-            <span class="filter-range-value" id="mediaCardSizeValue">280px</span>
-          </label>
-          <button class="filter-clear-all" id="mediaClearFilters" type="button">Clear Filters</button>
-        </div>
-      </div>
 
-      <div class="filterbar" role="group" aria-label="Filter media">
-        <label class="filter-search" aria-label="Search media">
-          <span class="filter-search-label">Search</span>
-          <input id="mediaSearch" type="search" placeholder="Search media..." autocomplete="off" />
-        </label>
-        <button class="chip is-active" type="button" data-filter="all">All</button>
-        <button class="chip" type="button" data-filter="video">Video</button>
-        <button class="chip" type="button" data-filter="photo">Photo</button>
-        <button class="chip" type="button" data-filter="wreck">Wreck</button>
-        <button class="chip" type="button" data-filter="reef">Reef</button>
-        <button class="chip" type="button" data-filter="training">Training</button>
-        <div class="dropdown-field media-sort" role="group" aria-label="Sort media">
-          <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="mediaSortPanel">
-            Sort: <span class="dropdown-value" id="mediaSortValue">Manual</span>
-          </button>
-          <div class="dropdown-panel" id="mediaSortPanel" role="group" aria-label="Sort options">
-            <button class="dropdown-option" type="button" data-sort="manual">Manual</button>
-            <button class="dropdown-option" type="button" data-sort="recent">Most Recent</button>
-            <button class="dropdown-option" type="button" data-sort="oldest">Oldest</button>
-            <button class="dropdown-option" type="button" data-sort="views">Most Viewed</button>
-            <button class="dropdown-option" type="button" data-sort="shuffle">Shuffle</button>
-          </div>
-        </div>
-        <div class="filter-dropdown" data-role="tag-filter">
-          <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="tagFilterPanel">
-            Tags <span class="filter-count">0</span>
-          </button>
-          <div class="filter-panel" id="tagFilterPanel" role="group" aria-label="Filter tags">
-            <div class="filter-panel-head">
-              <span>Filter tags</span>
-              <button class="filter-clear" type="button">Clear</button>
+        <div class="filterbar" role="group" aria-label="Filter media">
+          <label class="filter-search" aria-label="Search media">
+            <span class="filter-search-label">Search</span>
+            <input id="mediaSearch" type="search" placeholder="Search media..." autocomplete="off" />
+          </label>
+          <button class="chip is-active" type="button" data-filter="all">All</button>
+          <button class="chip" type="button" data-filter="video">Video</button>
+          <button class="chip" type="button" data-filter="photo">Photo</button>
+          <button class="chip" type="button" data-filter="wreck">Wreck</button>
+          <button class="chip" type="button" data-filter="reef">Reef</button>
+          <button class="chip" type="button" data-filter="training">Training</button>
+          <div class="dropdown-field media-sort" role="group" aria-label="Sort media">
+            <button class="dropdown-toggle" type="button" aria-expanded="false" aria-controls="mediaSortPanel">
+              Sort: <span class="dropdown-value" id="mediaSortValue">Manual</span>
+            </button>
+            <div class="dropdown-panel" id="mediaSortPanel" role="group" aria-label="Sort options">
+              <button class="dropdown-option" type="button" data-sort="manual">Manual</button>
+              <button class="dropdown-option" type="button" data-sort="recent">Most Recent</button>
+              <button class="dropdown-option" type="button" data-sort="oldest">Oldest</button>
+              <button class="dropdown-option" type="button" data-sort="views">Most Viewed</button>
+              <button class="dropdown-option" type="button" data-sort="shuffle">Shuffle</button>
             </div>
-            <div class="filter-list"></div>
           </div>
-        </div>
-        <div class="filter-dropdown" data-role="location-filter">
-          <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="locationFilterPanel">
-            Location: <span class="filter-selection">All</span>
-          </button>
-          <div class="filter-panel" id="locationFilterPanel" role="group" aria-label="Filter locations">
-            <div class="filter-panel-head">
-              <span>Filter locations</span>
-              <button class="filter-clear" type="button">Clear</button>
+          <div class="filter-dropdown" data-role="tag-filter">
+            <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="tagFilterPanel">
+              Tags <span class="filter-count">0</span>
+            </button>
+            <div class="filter-panel" id="tagFilterPanel" role="group" aria-label="Filter tags">
+              <div class="filter-panel-head">
+                <span>Filter tags</span>
+                <button class="filter-clear" type="button">Clear</button>
+              </div>
+              <div class="filter-list"></div>
             </div>
-            <div class="filter-list"></div>
+          </div>
+          <div class="filter-dropdown" data-role="location-filter">
+            <button class="filter-toggle" type="button" aria-expanded="false" aria-controls="locationFilterPanel">
+              Location: <span class="filter-selection">All</span>
+            </button>
+            <div class="filter-panel" id="locationFilterPanel" role="group" aria-label="Filter locations">
+              <div class="filter-panel-head">
+                <span>Filter locations</span>
+                <button class="filter-clear" type="button">Clear</button>
+              </div>
+              <div class="filter-list"></div>
+            </div>
           </div>
         </div>
       </div>
