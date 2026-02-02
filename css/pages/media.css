@@ -515,6 +515,8 @@ body.media-authenticated .media-admin-fab{
   padding: 14px 14px 10px;
   display: grid;
   gap: 10px;
+  max-width: var(--media-controls-width, 100%);
+  margin: 0 auto;
 }
 
 .section-head{
