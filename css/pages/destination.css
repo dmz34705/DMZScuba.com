@@ -161,94 +161,164 @@ body {
   }
 }
 
-.dest-page-admin-bar {
-  display: none;
-  margin: 18px auto 0;
-  max-width: var(--max);
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: 14px;
+.dest-page-admin-panel {
+  width: min(300px, 90vw);
+  position: fixed;
+  top: 110px;
+  right: 18px;
+  z-index: 40;
+  transform: translateX(calc(100% + 24px));
+  transition: transform 180ms ease, opacity 180ms ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.dest-page-admin-open .dest-page-admin-panel {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dest-page-admin-card {
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(5, 11, 20, 0.65);
-  backdrop-filter: blur(6px);
+  background: rgba(7, 12, 20, 0.9);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  max-height: calc(100vh - 160px);
+  overflow: auto;
 }
 
-body.dest-page-editing .dest-page-admin-bar {
+.dest-page-admin-head {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.dest-page-admin-left,
-.dest-page-admin-right {
+.dest-page-admin-head-actions {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
 
-.dest-page-admin-status {
+.dest-page-admin-title {
+  display: block;
   font-size: 12px;
-  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
   color: rgba(234, 242, 255, 0.7);
 }
 
-.dest-page-edit-panel {
-  display: none;
-  margin: 16px auto 0;
-  max-width: var(--max);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(5, 11, 20, 0.78);
-  padding: 18px;
-  gap: 14px;
+.dest-page-admin-status {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.95);
 }
 
-body.dest-page-editing .dest-page-edit-panel {
-  display: grid;
-}
-
-.dest-page-edit-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dest-page-edit-head h3 {
-  margin: 0 0 6px;
-  font-size: 13px;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: rgba(234, 242, 255, 0.78);
-}
-
-.dest-page-edit-head p {
+.dest-page-admin-note {
   margin: 0;
-  font-size: 12.5px;
+  color: rgba(234, 242, 255, 0.65);
+  font-size: 12px;
+}
+
+.dest-page-admin-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.dest-page-admin-section {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 11, 20, 0.55);
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.dest-page-admin-section h3 {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(234, 242, 255, 0.7);
+}
+
+.dest-page-admin-hint {
+  margin: 0;
   color: rgba(234, 242, 255, 0.6);
+  font-size: 11.5px;
+}
+
+.dest-page-admin-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.dest-page-admin-actions button {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(7, 12, 20, 0.65);
+  color: rgba(234, 242, 255, 0.75);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.dest-page-admin-actions button:hover {
+  opacity: 0.9;
+  border-color: rgba(85, 185, 255, 0.4);
+  background: rgba(10, 18, 30, 0.75);
+}
+
+.dest-page-admin-close {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(7, 12, 20, 0.7);
+  color: rgba(234, 242, 255, 0.7);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.dest-page-admin-close:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(10, 18, 30, 0.7);
+  transform: translateY(-1px);
 }
 
 .dest-page-edit-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  grid-template-columns: 1fr;
 }
 
-.dest-page-edit-panel label {
+.dest-page-edit-grid label {
   display: grid;
-  gap: 8px;
-  font-size: 12.5px;
+  gap: 6px;
+  font-size: 11.5px;
   color: rgba(234, 242, 255, 0.7);
 }
 
-.dest-page-edit-panel input {
-  padding: 11px 12px;
+.dest-page-edit-grid input {
+  padding: 10px 11px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(10, 18, 30, 0.65);
   color: rgba(234, 242, 255, 0.95);
+  font-size: 12px;
 }
 
 .dest-page-add {
@@ -280,12 +350,12 @@ body.dest-page-editing [contenteditable="true"] {
   position: relative;
 }
 
-.dest-page-footer-toggle {
+.dest-page-login-button {
   position: absolute;
   right: 18px;
   bottom: 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(7, 12, 20, 0.55);
   color: rgba(234, 242, 255, 0.55);
   font-size: 10px;
@@ -294,15 +364,59 @@ body.dest-page-editing [contenteditable="true"] {
   padding: 6px 10px;
   cursor: pointer;
   opacity: 0.35;
-  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
 
-.dest-page-footer-toggle:hover {
+.dest-page-login-button:hover {
   opacity: 0.7;
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(10, 18, 30, 0.7);
+  transform: translateY(-1px);
 }
 
-.dest-page-footer-toggle {
-  display: inline-flex;
+body.dest-page-authenticated .dest-page-login-button {
+  display: none;
+}
+
+.dest-page-admin-fab {
+  position: fixed;
+  top: 110px;
+  right: 18px;
+  z-index: 39;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 14, 24, 0.92);
+  color: rgba(234, 242, 255, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dest-page-admin-fab:hover {
+  transform: translateY(-1px);
+  border-color: rgba(85, 185, 255, 0.45);
+  background: rgba(10, 18, 30, 0.95);
+}
+
+body.dest-page-admin-open .dest-page-admin-fab {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.dest-page-authenticated .dest-page-admin-fab {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 780px) {
+  .dest-page-admin-panel {
+    width: min(100%, calc(100% - 24px));
+    right: 12px;
+  }
 }

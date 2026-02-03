@@ -53,36 +53,47 @@
       </div>
     </section>
 
-    <div class="dest-page-admin-bar" id="destPageAdminBar">
-      <div class="dest-page-admin-left">
-        <button class="btn secondary dest-page-login" type="button">DMZ Login</button>
-        <button class="btn secondary dest-page-edit-toggle" type="button" aria-pressed="false">Edit Page</button>
-      </div>
-      <div class="dest-page-admin-right">
-        <span class="dest-page-admin-status" id="destPageAdminStatus">Signed out</span>
-        <button class="btn secondary dest-page-cancel" type="button">Cancel</button>
-        <button class="btn primary dest-page-save" type="button">Save Changes</button>
-      </div>
-    </div>
-
-    <div class="dest-page-edit-panel" id="destPageEditPanel">
-      <div class="dest-page-edit-head">
-        <div>
-          <h3>Page Media</h3>
-          <p>Use Cloudflare Images URLs for the hero + isometric panels.</p>
+    <button class="dest-page-admin-fab" type="button" aria-expanded="false" aria-controls="destPageAdminPanel">
+      Destination Admin
+    </button>
+    <aside class="dest-page-admin-panel" id="destPageAdminPanel" aria-label="Destination admin controls">
+      <div class="dest-page-admin-card" role="group" aria-label="Destination edit actions">
+        <div class="dest-page-admin-head">
+          <div>
+            <span class="dest-page-admin-title">Destination Admin</span>
+            <span class="dest-page-admin-status" id="destPageAdminStatus">Signed out</span>
+          </div>
+          <div class="dest-page-admin-head-actions">
+            <button class="dest-page-admin-close" type="button" aria-label="Close admin panel">Close</button>
+          </div>
+        </div>
+        <p class="dest-page-admin-note">Sign in to update destination copy and media.</p>
+        <div class="dest-page-admin-grid">
+          <div class="dest-page-admin-section">
+            <h3>Editing</h3>
+            <div class="dest-page-admin-actions">
+              <button class="dest-page-edit-toggle" type="button" aria-pressed="false">Edit Page</button>
+              <button class="dest-page-save" type="button">Save Changes</button>
+              <button class="dest-page-cancel" type="button">Cancel</button>
+            </div>
+          </div>
+          <div class="dest-page-admin-section">
+            <h3>Page Media</h3>
+            <p class="dest-page-admin-hint">Use Cloudflare Images URLs for the hero + isometric panels.</p>
+            <div class="dest-page-edit-grid">
+              <label>
+                Hero Image URL
+                <input type="text" id="destEditHeroImage" placeholder="https://imagedelivery.net/..." />
+              </label>
+              <label>
+                Isometric Image URL
+                <input type="text" id="destEditIsoImage" placeholder="https://imagedelivery.net/..." />
+              </label>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="dest-page-edit-grid">
-        <label>
-          Hero Image URL
-          <input type="text" id="destEditHeroImage" placeholder="https://imagedelivery.net/..." />
-        </label>
-        <label>
-          Isometric Image URL
-          <input type="text" id="destEditIsoImage" placeholder="https://imagedelivery.net/..." />
-        </label>
-      </div>
-    </div>
+    </aside>
 
     <div class="page-main">
       <section class="content-section">
@@ -188,7 +199,7 @@
 
   <footer class="site-footer">
     <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
-    <button class="dest-page-footer-toggle" type="button" aria-pressed="false">Edit Page</button>
+    <button class="dest-page-login-button" type="button">DMZ Login</button>
   </footer>
   </div>
 

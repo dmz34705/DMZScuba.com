@@ -46,16 +46,17 @@
   const tripSnapshotTitleEl = document.getElementById("tripSnapshotTitle");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const metaDescriptionEl = document.querySelector('meta[name="description"]');
-  const adminBar = document.getElementById("destPageAdminBar");
+  const adminPanel = document.getElementById("destPageAdminPanel");
+  const adminFab = document.querySelector(".dest-page-admin-fab");
+  const adminClose = document.querySelector(".dest-page-admin-close");
   const adminStatus = document.getElementById("destPageAdminStatus");
-  const loginButton = document.querySelector(".dest-page-login");
+  const loginButton = document.querySelector(".dest-page-login-button");
   const editToggle = document.querySelector(".dest-page-edit-toggle");
   const saveButton = document.querySelector(".dest-page-save");
   const cancelButton = document.querySelector(".dest-page-cancel");
   const heroInput = document.getElementById("destEditHeroImage");
   const isoInput = document.getElementById("destEditIsoImage");
   const addButtons = document.querySelectorAll(".dest-page-add");
-  const footerToggle = document.querySelector(".dest-page-footer-toggle");
 
   let currentBase = null;
   let currentExpanded = null;
@@ -100,9 +101,6 @@
     if (adminStatus) {
       adminStatus.textContent = authed ? "Signed in" : "Signed out";
     }
-    if (loginButton) {
-      loginButton.textContent = authed ? "Re-auth" : "DMZ Login";
-    }
     updateEditButtonLabels();
   }
 
@@ -111,7 +109,6 @@
     const editing = document.body.classList.contains("dest-page-editing");
     const label = !authed ? "DMZ Login" : editing ? "Close Editor" : "Edit Page";
     if (editToggle) editToggle.textContent = label;
-    if (footerToggle) footerToggle.textContent = label;
   }
 
   function buildLoginModal(onSuccess) {
@@ -420,7 +417,6 @@
   function setEditMode(active) {
     document.body.classList.toggle("dest-page-editing", active);
     if (editToggle) editToggle.setAttribute("aria-pressed", active ? "true" : "false");
-    if (footerToggle) footerToggle.setAttribute("aria-pressed", active ? "true" : "false");
     updateEditButtonLabels();
 
     const editableEls = [
@@ -763,13 +759,22 @@
   }
 
   function setupAdminControls() {
-    if (!adminBar) return;
+    if (!adminPanel) return;
     updateAuthState();
     bindEditableListeners();
 
+    const setPanelOpen = (next) => {
+      document.body.classList.toggle("dest-page-admin-open", next);
+      if (adminFab) adminFab.setAttribute("aria-expanded", next ? "true" : "false");
+    };
+
     const toggleEditMode = () => {
       if (!getToken()) {
-        buildLoginModal(() => toggleEditMode());
+        buildLoginModal(() => {
+          updateAuthState();
+          setPanelOpen(true);
+          toggleEditMode();
+        });
         return;
       }
       const next = !document.body.classList.contains("dest-page-editing");
@@ -778,7 +783,10 @@
 
     if (loginButton) {
       loginButton.addEventListener("click", () => {
-        buildLoginModal(() => updateAuthState());
+        buildLoginModal(() => {
+          updateAuthState();
+          setPanelOpen(true);
+        });
       });
     }
 
@@ -786,8 +794,24 @@
       editToggle.addEventListener("click", toggleEditMode);
     }
 
-    if (footerToggle) {
-      footerToggle.addEventListener("click", toggleEditMode);
+    if (adminFab) {
+      adminFab.addEventListener("click", () => setPanelOpen(true));
+    }
+
+    if (adminClose) {
+      adminClose.addEventListener("click", () => setPanelOpen(false));
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setPanelOpen(false);
+    });
+
+    if (adminPanel) {
+      adminPanel.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target && target.closest(".dest-page-admin-card")) return;
+        setPanelOpen(false);
+      });
     }
 
     if (saveButton) {
