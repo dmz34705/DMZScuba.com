@@ -345,22 +345,30 @@ console.log("main.js loaded");
     if (header) {
       const mobileQuery = window.matchMedia("(max-width: 780px)");
       let lastScrollY = window.scrollY;
+      let scrollAccum = 0;
+      let lastDirection = 0;
       let ticking = false;
 
       const updateHeaderVisibility = () => {
         if (!mobileQuery.matches) {
           header.classList.remove("is-hidden");
           lastScrollY = window.scrollY;
+          scrollAccum = 0;
+          lastDirection = 0;
           return;
         }
 
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
-        const revealThreshold = 28;
+        const revealThreshold = 80;
+        const hideThreshold = 24;
+        const minStartHideY = 64;
 
         if (currentY <= 8) {
           header.classList.remove("is-hidden");
           lastScrollY = currentY;
+          scrollAccum = 0;
+          lastDirection = 0;
           return;
         }
 
@@ -368,9 +376,18 @@ console.log("main.js loaded");
           return;
         }
 
-        if (delta > 0) {
-          header.classList.add("is-hidden");
-        } else if (Math.abs(delta) >= revealThreshold) {
+        const direction = delta > 0 ? 1 : -1;
+        if (direction !== lastDirection) {
+          scrollAccum = 0;
+          lastDirection = direction;
+        }
+        scrollAccum += Math.abs(delta);
+
+        if (direction > 0) {
+          if (currentY >= minStartHideY && scrollAccum >= hideThreshold) {
+            header.classList.add("is-hidden");
+          }
+        } else if (scrollAccum >= revealThreshold) {
           header.classList.remove("is-hidden");
         }
 
