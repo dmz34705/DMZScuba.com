@@ -328,6 +328,7 @@
     updateMediaGridWidth();
     updateMediaControlsWidth();
     updateCardSizeVisibility();
+    setupVideoPauseObserver();
   }
 
   function updateMediaGridWidth() {
@@ -377,6 +378,7 @@
   }
 
   let videoThumbObserver = null;
+  let videoPauseObserver = null;
 
   function setupVideoThumbObserver() {
     if (!mediaGrid || !("IntersectionObserver" in window)) return;
@@ -397,6 +399,28 @@
     mediaGrid
       .querySelectorAll(".media-thumb.is-video[data-video-src]:not([data-thumb-loaded])")
       .forEach((thumb) => videoThumbObserver.observe(thumb));
+  }
+
+  function setupVideoPauseObserver() {
+    if (!mediaGrid || !("IntersectionObserver" in window)) return;
+    if (videoPauseObserver) {
+      videoPauseObserver.disconnect();
+    }
+    videoPauseObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (!video || !(video instanceof HTMLVideoElement)) return;
+          if (!entry.isIntersecting && !video.paused) {
+            video.pause();
+          }
+        });
+      },
+      { root: null, threshold: 0.15 }
+    );
+    mediaGrid
+      .querySelectorAll(".media-thumb-video")
+      .forEach((video) => videoPauseObserver.observe(video));
   }
 
   function prefetchVideoThumb(thumb) {
@@ -1486,4 +1510,16 @@
   window.addEventListener("load", () => {
     queueMasonryUpdate();
   });
+
+  const backToTop = document.querySelector(".media-back-to-top");
+  if (backToTop) {
+    const toggleVisibility = () => {
+      backToTop.classList.toggle("is-visible", window.scrollY > 600);
+    };
+    window.addEventListener("scroll", toggleVisibility, { passive: true });
+    toggleVisibility();
+    backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 })();
