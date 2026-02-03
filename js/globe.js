@@ -15,7 +15,9 @@
 
 // Mobile = square, Desktop = cinematic
 const isMobile = window.innerWidth <= 768;
-const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Math.round(targetW * 0.56));
+const wrapH = wrap ? wrap.clientHeight : 0;
+const targetH =
+  !isMobile && wrapH > 40 ? wrapH : (isMobile ? targetW : Math.round(targetW * 0.56));
 
 
     canvas.style.width = targetW + "px";
