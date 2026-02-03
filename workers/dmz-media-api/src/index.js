@@ -593,6 +593,29 @@ function buildImagesDeliveryUrl(env, imageId) {
   return `https://imagedelivery.net/${delivery}/${imageId}/${variant}`;
 }
 
+function extractImagesHash(env) {
+  const delivery = String(env.CF_IMAGES_DELIVERY || "").trim();
+  if (!delivery) return "";
+  const match = delivery.match(/imagedelivery\.net\/([^/]+)/i);
+  if (match && match[1]) return match[1];
+  if (delivery.includes("{id}")) {
+    return delivery
+      .replace("https://", "")
+      .replace("http://", "")
+      .split("/")[1] || "";
+  }
+  return delivery;
+}
+
+function extractImageIdFromUrl(url, env) {
+  if (!url) return "";
+  const hash = extractImagesHash(env);
+  if (!hash) return "";
+  const pattern = new RegExp(`imagedelivery\\.net/${hash}/([^/]+)/`, "i");
+  const match = String(url).match(pattern);
+  return match && match[1] ? match[1] : "";
+}
+
 async function handleImagesDirectUpload(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
@@ -619,6 +642,32 @@ async function handleImagesDirectUpload(request, env) {
   const id = json?.result?.id || "";
   const deliveryUrl = buildImagesDeliveryUrl(env, id);
   return jsonResponse({ ok: true, uploadURL, id, deliveryUrl }, 200);
+}
+
+async function handleImagesDelete(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const token = String(env.CF_IMAGES_TOKEN || "").trim();
+  const accountId = String(env.CF_IMAGES_ACCOUNT_ID || env.CF_ACCOUNT_ID || "").trim();
+  if (!token || !accountId) {
+    return jsonResponse({ ok: false, error: "Images delete not configured." }, 500);
+  }
+  const body = await request.json().catch(() => ({}));
+  const id = String(body.id || "").trim() || extractImageIdFromUrl(body.url, env);
+  if (!id) return jsonResponse({ ok: false, error: "Missing image id." }, 400);
+
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v1/${id}`;
+  const resp = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    return jsonResponse({ ok: false, error: "Images delete failed.", details: json }, 500);
+  }
+  return jsonResponse({ ok: true, id }, 200);
 }
 
 async function handleStreamTusUpload(request, env) {
@@ -673,6 +722,8 @@ export default {
       response = await handleStreamTusUpload(request, env);
     } else if (pathname === "/api/admin/images-direct-upload" && request.method === "POST") {
       response = await handleImagesDirectUpload(request, env);
+    } else if (pathname === "/api/admin/images-delete" && request.method === "POST") {
+      response = await handleImagesDelete(request, env);
     } else if (pathname === "/api/admin/media" && request.method === "POST") {
       response = await handleCreateMedia(request, env);
     } else if (pathname === "/api/admin/media-bulk" && request.method === "PUT") {

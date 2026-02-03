@@ -177,6 +177,24 @@
     return deliveryUrl;
   }
 
+  function isCloudflareImageUrl(value) {
+    if (!value) return false;
+    return String(value).includes("imagedelivery.net/");
+  }
+
+  async function deleteImageByUrl(url) {
+    if (!url || !isCloudflareImageUrl(url)) return;
+    try {
+      await apiFetch("/api/admin/images-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+    } catch (error) {
+      // ignore delete failures
+    }
+  }
+
   function mergeDestination(base, extra) {
     if (!base) return extra || base;
     if (!extra) return base;
@@ -967,6 +985,7 @@
       heroUploadInput.addEventListener("change", async () => {
         const file = heroUploadInput.files ? heroUploadInput.files[0] : null;
         if (!file) return;
+        const previousUrl = fieldHeroImage ? fieldHeroImage.value.trim() : "";
         try {
           const url = await uploadImageFile(file, heroUploadStatus);
           if (url && fieldHeroImage) {
@@ -976,6 +995,9 @@
               markDirty();
               validateCurrent();
             }
+          }
+          if (previousUrl && previousUrl !== url) {
+            deleteImageByUrl(previousUrl);
           }
         } catch (error) {
           if (heroUploadStatus) heroUploadStatus.textContent = "Upload failed.";
@@ -992,6 +1014,7 @@
       isoUploadInput.addEventListener("change", async () => {
         const file = isoUploadInput.files ? isoUploadInput.files[0] : null;
         if (!file) return;
+        const previousUrl = fieldIsoImage ? fieldIsoImage.value.trim() : "";
         try {
           const url = await uploadImageFile(file, isoUploadStatus);
           if (url && fieldIsoImage) {
@@ -1001,6 +1024,9 @@
               markDirty();
               validateCurrent();
             }
+          }
+          if (previousUrl && previousUrl !== url) {
+            deleteImageByUrl(previousUrl);
           }
         } catch (error) {
           if (isoUploadStatus) isoUploadStatus.textContent = "Upload failed.";
