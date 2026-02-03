@@ -47,6 +47,12 @@
   const applyJsonButton = document.getElementById("destApplyJson");
   const formatJsonButton = document.getElementById("destFormatJson");
   const validationEl = document.getElementById("destAdminValidation");
+  const heroUploadInput = document.getElementById("destHeroUpload");
+  const heroUploadButton = document.getElementById("destHeroUploadBtn");
+  const heroUploadStatus = document.getElementById("destHeroUploadStatus");
+  const isoUploadInput = document.getElementById("destIsoUpload");
+  const isoUploadButton = document.getElementById("destIsoUploadBtn");
+  const isoUploadStatus = document.getElementById("destIsoUploadStatus");
 
   let isDirty = false;
   let bannerTimer = null;
@@ -120,6 +126,55 @@
       headers.Authorization = `Bearer ${token}`;
     }
     return fetch(`${apiRoot}${path}`, { ...options, headers });
+  }
+
+  async function requestImagesDirectUpload() {
+    if (!getToken()) {
+      return new Promise((resolve) => {
+        buildLoginModal(() => resolve(requestImagesDirectUpload()));
+      });
+    }
+    const resp = await apiFetch("/api/admin/images-direct-upload", { method: "POST" });
+    if (!resp.ok) {
+      throw new Error("Images direct upload failed.");
+    }
+    return resp.json();
+  }
+
+  async function uploadImageFile(file, statusEl) {
+    if (!file) return null;
+    if (statusEl) statusEl.textContent = "Requesting upload...";
+    const data = await requestImagesDirectUpload();
+    const uploadURL = data?.uploadURL;
+    const deliveryUrl = data?.deliveryUrl || "";
+    if (!uploadURL) throw new Error("Missing upload URL.");
+
+    if (statusEl) statusEl.textContent = "Uploading...";
+    await new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadURL, true);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!statusEl || !event.lengthComputable) return;
+        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+        statusEl.textContent = `Uploading... ${percent}%`;
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error("Upload failed"));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.send(formData);
+    });
+
+    if (statusEl) {
+      statusEl.textContent = deliveryUrl ? "Upload complete." : "Upload complete. Add URL manually.";
+    }
+    return deliveryUrl;
   }
 
   function mergeDestination(base, extra) {
@@ -904,6 +959,57 @@
     }
   }
 
+  function setupImageUploads() {
+    if (heroUploadButton && heroUploadInput) {
+      heroUploadButton.addEventListener("click", () => {
+        heroUploadInput.click();
+      });
+      heroUploadInput.addEventListener("change", async () => {
+        const file = heroUploadInput.files ? heroUploadInput.files[0] : null;
+        if (!file) return;
+        try {
+          const url = await uploadImageFile(file, heroUploadStatus);
+          if (url && fieldHeroImage) {
+            fieldHeroImage.value = url;
+            if (state.selectedId) {
+              updateBase(state.selectedId, { heroImage: url });
+              markDirty();
+              validateCurrent();
+            }
+          }
+        } catch (error) {
+          if (heroUploadStatus) heroUploadStatus.textContent = "Upload failed.";
+        } finally {
+          heroUploadInput.value = "";
+        }
+      });
+    }
+
+    if (isoUploadButton && isoUploadInput) {
+      isoUploadButton.addEventListener("click", () => {
+        isoUploadInput.click();
+      });
+      isoUploadInput.addEventListener("change", async () => {
+        const file = isoUploadInput.files ? isoUploadInput.files[0] : null;
+        if (!file) return;
+        try {
+          const url = await uploadImageFile(file, isoUploadStatus);
+          if (url && fieldIsoImage) {
+            fieldIsoImage.value = url;
+            if (state.selectedId) {
+              updateBase(state.selectedId, { isoImage: url });
+              markDirty();
+              validateCurrent();
+            }
+          }
+        } catch (error) {
+          if (isoUploadStatus) isoUploadStatus.textContent = "Upload failed.";
+        } finally {
+          isoUploadInput.value = "";
+        }
+      });
+    }
+  }
   function setupTabs() {
     const tabs = document.querySelectorAll(".dest-admin-tab");
     const panels = document.querySelectorAll(".dest-admin-tab-panel");
@@ -1217,6 +1323,7 @@
     setupAdminControls();
     bindEditor();
     setupTabs();
+    setupImageUploads();
     validateCurrent();
   }
 

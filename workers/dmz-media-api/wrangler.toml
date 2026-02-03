@@ -13,3 +13,8 @@ ALLOWED_ORIGINS = "https://dmzscuba-com.pages.dev,https://dmzscuba.com,http://lo
 RESEND_FROM_EMAIL = "no-reply@dmzscuba.com"
 RESEND_FROM_NAME = "DMZ Scuba"
 RESEND_TO = "info@dmzscuba.com"
+# Cloudflare Images (set via dashboard/vars or secrets)
+# CF_IMAGES_TOKEN = ""
+# CF_IMAGES_ACCOUNT_ID = ""
+# CF_IMAGES_DELIVERY = "<your-images-hash-or-delivery-url>"
+# CF_IMAGES_VARIANT = "public"

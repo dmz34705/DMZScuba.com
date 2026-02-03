@@ -709,6 +709,33 @@ body .page .destination-card:hover {
   resize: vertical;
 }
 
+.dest-admin-upload {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  padding: 12px;
+  background: rgba(10, 18, 30, 0.35);
+}
+
+.dest-admin-upload-card {
+  display: grid;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: rgba(234, 242, 255, 0.65);
+}
+
+.dest-admin-upload-status {
+  min-height: 16px;
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(234, 242, 255, 0.7);
+}
+
 .dest-admin-span {
   grid-column: 1 / -1;
 }

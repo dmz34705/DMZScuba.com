@@ -146,6 +146,20 @@
                     Isometric Image
                     <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" required />
                   </label>
+                  <div class="dest-admin-upload dest-admin-span">
+                    <div class="dest-admin-upload-card">
+                      <span>Upload hero image</span>
+                      <input type="file" id="destHeroUpload" accept="image/*" hidden />
+                      <button class="btn secondary" type="button" id="destHeroUploadBtn">Upload Image</button>
+                      <div class="dest-admin-upload-status" id="destHeroUploadStatus"></div>
+                    </div>
+                    <div class="dest-admin-upload-card">
+                      <span>Upload isometric image</span>
+                      <input type="file" id="destIsoUpload" accept="image/*" hidden />
+                      <button class="btn secondary" type="button" id="destIsoUploadBtn">Upload Image</button>
+                      <div class="dest-admin-upload-status" id="destIsoUploadStatus"></div>
+                    </div>
+                  </div>
                   <label>
                     Iso Title
                     <input type="text" id="destFieldIsoTitle" placeholder="Resort view title" />
