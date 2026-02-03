@@ -64,170 +64,190 @@
         <p class="section-sub">Drag to rotate. Pinch to zoom. Tap a pin to visit a destination!</p>
       </div>
 
-      <div class="dest-admin-bar" id="destAdminBar">
-        <div class="dest-admin-left">
-          <button class="btn secondary dest-admin-login travel-login-button" type="button">DMZ Login</button>
-          <button class="dest-admin-toggle travel-login-button" type="button" aria-pressed="false">Edit Destinations</button>
-          <button class="btn secondary dest-admin-add" type="button">Add Destination</button>
-        </div>
-        <div class="dest-admin-right">
-          <span class="dest-admin-status" id="destAdminStatus">Signed out</span>
-          <button class="btn secondary dest-admin-refresh" type="button">Master Refresh</button>
-          <button class="btn secondary dest-admin-reset" type="button">Reset Draft</button>
-          <button class="btn primary dest-admin-publish" type="button">Publish</button>
-          <button class="btn secondary dest-admin-collapse" type="button">Close</button>
-        </div>
-      </div>
-
-      <div class="dest-admin-panel" id="destAdminPanel">
-        <div class="dest-admin-list">
-          <div class="dest-admin-list-head">
-            <input class="dest-admin-search" id="destAdminSearch" type="search" placeholder="Search destinations" />
-          </div>
-          <select class="dest-admin-select" id="destAdminSelect" aria-label="Select destination"></select>
-        </div>
-        <div class="dest-admin-editor" id="destAdminEditor">
-          <div class="dest-admin-empty">
-            Select a destination to edit.
-          </div>
-          <form class="dest-admin-form" id="destAdminForm">
-            <div class="dest-admin-actions">
-              <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
+      <button class="dest-admin-fab" type="button" aria-expanded="false" aria-controls="destAdminPanel">
+        Destination Admin
+      </button>
+      <aside class="dest-admin-panel" id="destAdminPanel" aria-label="Destination admin controls">
+        <div class="dest-admin-card" role="group" aria-label="Destination edit actions">
+          <div class="dest-admin-head">
+            <div>
+              <span class="dest-admin-title">Destination Admin</span>
+              <span class="dest-admin-status" id="destAdminStatus">Signed out</span>
             </div>
-            <div class="dest-admin-validation" id="destAdminValidation" aria-live="polite"></div>
-            <div class="dest-admin-tabs" role="tablist" aria-label="Destination editor sections">
-              <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Core</button>
-              <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Media + Snapshot</button>
-              <button class="dest-admin-tab" type="button" data-tab="expanded" role="tab" aria-selected="false">Expanded Copy</button>
-              <button class="dest-admin-tab" type="button" data-tab="json" role="tab" aria-selected="false">Advanced JSON</button>
+            <div class="dest-admin-head-actions">
+              <button class="dest-admin-collapse dest-admin-close" type="button" aria-label="Close admin panel">Close</button>
             </div>
-
-            <div class="dest-admin-tab-panel is-active" data-tab="core" role="tabpanel">
-              <div class="dest-admin-section">
-                <h3>Core</h3>
-                <div class="dest-admin-grid">
-                  <label class="dest-admin-required">
-                    ID
-                    <input type="text" id="destFieldId" placeholder="cozumel" required />
-                  </label>
-                  <label class="dest-admin-required">
-                    Name
-                    <input type="text" id="destFieldName" placeholder="Cozumel" required />
-                  </label>
-                  <label>
-                    Subtitle
-                    <input type="text" id="destFieldSubtitle" placeholder="Short destination overview" />
-                  </label>
-                  <label>
-                    Tags (comma separated)
-                    <input type="text" id="destFieldTags" placeholder="Reef, Drift, Resort" />
-                  </label>
-                  <label class="dest-admin-required">
-                    Latitude
-                    <input type="number" step="0.01" min="-90" max="90" id="destFieldLat" required />
-                  </label>
-                  <label class="dest-admin-required">
-                    Longitude
-                    <input type="number" step="0.01" min="-180" max="180" id="destFieldLon" required />
-                  </label>
-                </div>
+          </div>
+          <p class="dest-admin-note">Sign in to edit, upload, and publish destination updates.</p>
+          <div class="dest-admin-grid dest-admin-grid--actions">
+            <div class="dest-admin-section">
+              <h3>Editing</h3>
+              <div class="dest-admin-actions">
+                <button class="btn secondary dest-admin-login" type="button">DMZ Login</button>
+                <button class="dest-admin-toggle" type="button" aria-pressed="false">Edit Destinations</button>
+                <button class="btn secondary dest-admin-add" type="button">Add Destination</button>
               </div>
             </div>
+            <div class="dest-admin-section">
+              <h3>Publishing</h3>
+              <div class="dest-admin-actions">
+                <button class="btn primary dest-admin-publish" type="button">Publish</button>
+                <button class="btn secondary dest-admin-reset" type="button">Reset Draft</button>
+                <button class="btn secondary dest-admin-refresh" type="button">Master Refresh</button>
+              </div>
+            </div>
+          </div>
+          <div class="dest-admin-shell" id="destAdminBar">
+            <div class="dest-admin-list">
+              <div class="dest-admin-list-head">
+                <input class="dest-admin-search" id="destAdminSearch" type="search" placeholder="Search destinations" />
+              </div>
+              <select class="dest-admin-select" id="destAdminSelect" aria-label="Select destination"></select>
+            </div>
+            <div class="dest-admin-editor" id="destAdminEditor">
+              <div class="dest-admin-empty">
+                Select a destination to edit.
+              </div>
+              <form class="dest-admin-form" id="destAdminForm">
+                <div class="dest-admin-actions">
+                  <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
+                </div>
+                <div class="dest-admin-validation" id="destAdminValidation" aria-live="polite"></div>
+                <div class="dest-admin-tabs" role="tablist" aria-label="Destination editor sections">
+                  <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Core</button>
+                  <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Media + Snapshot</button>
+                  <button class="dest-admin-tab" type="button" data-tab="expanded" role="tab" aria-selected="false">Expanded Copy</button>
+                  <button class="dest-admin-tab" type="button" data-tab="json" role="tab" aria-selected="false">Advanced JSON</button>
+                </div>
 
-            <div class="dest-admin-tab-panel" data-tab="media" role="tabpanel">
-              <div class="dest-admin-section">
-                <h3>Media + Snapshot</h3>
-                <div class="dest-admin-grid">
-                  <label class="dest-admin-required">
-                    Hero Image
-                    <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" required />
-                  </label>
-                  <label class="dest-admin-required">
-                    Isometric Image
-                    <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" required />
-                  </label>
-                  <div class="dest-admin-upload dest-admin-span">
-                    <div class="dest-admin-upload-card">
-                      <span>Upload hero image</span>
-                      <input type="file" id="destHeroUpload" accept="image/*" hidden />
-                      <button class="btn secondary" type="button" id="destHeroUploadBtn">Upload Image</button>
-                      <div class="dest-admin-upload-status" id="destHeroUploadStatus"></div>
-                    </div>
-                    <div class="dest-admin-upload-card">
-                      <span>Upload isometric image</span>
-                      <input type="file" id="destIsoUpload" accept="image/*" hidden />
-                      <button class="btn secondary" type="button" id="destIsoUploadBtn">Upload Image</button>
-                      <div class="dest-admin-upload-status" id="destIsoUploadStatus"></div>
+                <div class="dest-admin-tab-panel is-active" data-tab="core" role="tabpanel">
+                  <div class="dest-admin-section">
+                    <h3>Core</h3>
+                    <div class="dest-admin-grid">
+                      <label class="dest-admin-required">
+                        ID
+                        <input type="text" id="destFieldId" placeholder="cozumel" required />
+                      </label>
+                      <label class="dest-admin-required">
+                        Name
+                        <input type="text" id="destFieldName" placeholder="Cozumel" required />
+                      </label>
+                      <label>
+                        Subtitle
+                        <input type="text" id="destFieldSubtitle" placeholder="Short destination overview" />
+                      </label>
+                      <label>
+                        Tags (comma separated)
+                        <input type="text" id="destFieldTags" placeholder="Reef, Drift, Resort" />
+                      </label>
+                      <label class="dest-admin-required">
+                        Latitude
+                        <input type="number" step="0.01" min="-90" max="90" id="destFieldLat" required />
+                      </label>
+                      <label class="dest-admin-required">
+                        Longitude
+                        <input type="number" step="0.01" min="-180" max="180" id="destFieldLon" required />
+                      </label>
                     </div>
                   </div>
-                  <label>
-                    Iso Title
-                    <input type="text" id="destFieldIsoTitle" placeholder="Resort view title" />
-                  </label>
-                  <label>
-                    Iso Description
-                    <input type="text" id="destFieldIsoDesc" placeholder="Short iso description" />
-                  </label>
-                  <label class="dest-admin-span dest-admin-required">
-                    Summary
-                    <textarea id="destFieldSummary" rows="3" required></textarea>
-                  </label>
-                  <label class="dest-admin-span">
-                    Trip Bullets (one per line)
-                    <textarea id="destFieldBullets" rows="4"></textarea>
-                  </label>
                 </div>
-              </div>
-            </div>
 
-            <div class="dest-admin-tab-panel" data-tab="expanded" role="tabpanel">
-              <div class="dest-admin-section">
-                <h3>Expanded Copy</h3>
-                <div class="dest-admin-grid">
-                  <label class="dest-admin-span">
-                    Narrative
-                    <textarea id="destFieldNarrative" rows="4"></textarea>
-                  </label>
-                  <label class="dest-admin-span">
-                    Day-to-Day
-                    <textarea id="destFieldDayToDay" rows="3"></textarea>
-                  </label>
-                  <label class="dest-admin-span">
-                    Resort Details
-                    <textarea id="destFieldResortDetails" rows="3"></textarea>
-                  </label>
-                  <label class="dest-admin-span">
-                    Logistics Details
-                    <textarea id="destFieldLogisticsDetails" rows="3"></textarea>
-                  </label>
+                <div class="dest-admin-tab-panel" data-tab="media" role="tabpanel">
+                  <div class="dest-admin-section">
+                    <h3>Media + Snapshot</h3>
+                    <div class="dest-admin-grid">
+                      <label class="dest-admin-required">
+                        Hero Image
+                        <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" required />
+                      </label>
+                      <label class="dest-admin-required">
+                        Isometric Image
+                        <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" required />
+                      </label>
+                      <div class="dest-admin-upload dest-admin-span">
+                        <div class="dest-admin-upload-card">
+                          <span>Upload hero image</span>
+                          <input type="file" id="destHeroUpload" accept="image/*" hidden />
+                          <button class="btn secondary" type="button" id="destHeroUploadBtn">Upload Image</button>
+                          <div class="dest-admin-upload-status" id="destHeroUploadStatus"></div>
+                        </div>
+                        <div class="dest-admin-upload-card">
+                          <span>Upload isometric image</span>
+                          <input type="file" id="destIsoUpload" accept="image/*" hidden />
+                          <button class="btn secondary" type="button" id="destIsoUploadBtn">Upload Image</button>
+                          <div class="dest-admin-upload-status" id="destIsoUploadStatus"></div>
+                        </div>
+                      </div>
+                      <label>
+                        Iso Title
+                        <input type="text" id="destFieldIsoTitle" placeholder="Resort view title" />
+                      </label>
+                      <label>
+                        Iso Description
+                        <input type="text" id="destFieldIsoDesc" placeholder="Short iso description" />
+                      </label>
+                      <label class="dest-admin-span dest-admin-required">
+                        Summary
+                        <textarea id="destFieldSummary" rows="3" required></textarea>
+                      </label>
+                      <label class="dest-admin-span">
+                        Trip Bullets (one per line)
+                        <textarea id="destFieldBullets" rows="4"></textarea>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div class="dest-admin-tab-panel" data-tab="json" role="tabpanel">
-              <div class="dest-admin-section">
-                <h3>Advanced JSON</h3>
-                <div class="dest-admin-grid">
-                  <label class="dest-admin-span">
-                    Base JSON
-                    <textarea id="destFieldBaseJson" rows="10" spellcheck="false"></textarea>
-                  </label>
-                  <label class="dest-admin-span">
-                    Expanded JSON
-                    <textarea id="destFieldExpandedJson" rows="12" spellcheck="false"></textarea>
-                  </label>
+                <div class="dest-admin-tab-panel" data-tab="expanded" role="tabpanel">
+                  <div class="dest-admin-section">
+                    <h3>Expanded Copy</h3>
+                    <div class="dest-admin-grid">
+                      <label class="dest-admin-span">
+                        Narrative
+                        <textarea id="destFieldNarrative" rows="4"></textarea>
+                      </label>
+                      <label class="dest-admin-span">
+                        Day-to-Day
+                        <textarea id="destFieldDayToDay" rows="3"></textarea>
+                      </label>
+                      <label class="dest-admin-span">
+                        Resort Details
+                        <textarea id="destFieldResortDetails" rows="3"></textarea>
+                      </label>
+                      <label class="dest-admin-span">
+                        Logistics Details
+                        <textarea id="destFieldLogisticsDetails" rows="3"></textarea>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <div class="dest-admin-actions">
-                  <button class="btn secondary" type="button" id="destApplyJson">Apply JSON</button>
-                  <button class="btn secondary" type="button" id="destFormatJson">Format JSON</button>
+
+                <div class="dest-admin-tab-panel" data-tab="json" role="tabpanel">
+                  <div class="dest-admin-section">
+                    <h3>Advanced JSON</h3>
+                    <div class="dest-admin-grid">
+                      <label class="dest-admin-span">
+                        Base JSON
+                        <textarea id="destFieldBaseJson" rows="10" spellcheck="false"></textarea>
+                      </label>
+                      <label class="dest-admin-span">
+                        Expanded JSON
+                        <textarea id="destFieldExpandedJson" rows="12" spellcheck="false"></textarea>
+                      </label>
+                    </div>
+                    <div class="dest-admin-actions">
+                      <button class="btn secondary" type="button" id="destApplyJson">Apply JSON</button>
+                      <button class="btn secondary" type="button" id="destFormatJson">Format JSON</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </aside>
 
-      <div class="globe-shell">
+  <div class="globe-shell">
         <div class="globe-wrap" id="globeWrap">
           <canvas id="globeCanvas" width="920" height="520" aria-label="Interactive destination globe"></canvas>
         </div>

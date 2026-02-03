@@ -11,6 +11,8 @@
 
   const adminBar = document.getElementById("destAdminBar");
   const adminPanel = document.getElementById("destAdminPanel");
+  const adminFab = document.querySelector(".dest-admin-fab");
+  const adminClose = document.querySelector(".dest-admin-close");
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButtons = document.querySelectorAll(".dest-admin-login");
   const toggleButtons = document.querySelectorAll(".dest-admin-toggle");
@@ -1244,20 +1246,32 @@
   }
 
   function setupAdminControls() {
-    if (!adminBar || !adminPanel || !toggleButtons.length) return;
+    if (!adminPanel || !toggleButtons.length) return;
 
     updateAuthState();
+
+    const setPanelOpen = (next) => {
+      document.body.classList.toggle("dest-admin-open", next);
+      if (adminFab) adminFab.setAttribute("aria-expanded", next ? "true" : "false");
+    };
+
+    const setEditMode = (next) => {
+      document.body.classList.toggle("dest-edit-mode", next);
+      toggleButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", next ? "true" : "false");
+      });
+      if (next) {
+        setPanelOpen(true);
+      }
+    };
 
     const toggleEditMode = () => {
       if (!getToken()) {
         buildLoginModal(() => toggleEditMode());
         return;
       }
-      const isActive = document.body.classList.toggle("dest-edit-mode");
-      toggleButtons.forEach((button) => {
-        button.setAttribute("aria-pressed", isActive ? "true" : "false");
-      });
-      adminPanel.classList.toggle("is-visible", isActive);
+      const isActive = !document.body.classList.contains("dest-edit-mode");
+      setEditMode(isActive);
     };
 
     if (loginButtons.length) {
@@ -1265,6 +1279,7 @@
         button.addEventListener("click", () => {
           buildLoginModal(() => {
             updateAuthState();
+            setPanelOpen(true);
           });
         });
       });
@@ -1276,14 +1291,22 @@
 
     if (collapseButton) {
       collapseButton.addEventListener("click", () => {
-        if (!document.body.classList.contains("dest-edit-mode")) return;
-        document.body.classList.remove("dest-edit-mode");
-        adminPanel.classList.remove("is-visible");
-        toggleButtons.forEach((button) => {
-          button.setAttribute("aria-pressed", "false");
-        });
+        setEditMode(false);
+        setPanelOpen(false);
       });
     }
+
+    if (adminFab) {
+      adminFab.addEventListener("click", () => setPanelOpen(true));
+    }
+
+    if (adminClose) {
+      adminClose.addEventListener("click", () => setPanelOpen(false));
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setPanelOpen(false);
+    });
 
 
     if (addButton) {
