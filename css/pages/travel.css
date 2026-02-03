@@ -545,6 +545,9 @@ body.dest-admin-open .dest-admin-panel {
 
 .dest-admin-panel .dest-admin-actions .btn,
 .dest-admin-actions .dest-admin-toggle {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(7, 12, 20, 0.65);
