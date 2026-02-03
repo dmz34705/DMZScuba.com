@@ -670,6 +670,15 @@ body .page .destination-card:hover {
   color: rgba(234, 242, 255, 0.7);
 }
 
+.dest-admin-required::after {
+  content: "Required";
+  justify-self: start;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: rgba(255, 214, 153, 0.75);
+}
+
 .dest-admin-grid input,
 .dest-admin-grid textarea {
   padding: 11px 12px;
@@ -677,6 +686,23 @@ body .page .destination-card:hover {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(10, 18, 30, 0.65);
   color: rgba(234, 242, 255, 0.95);
+}
+
+.dest-admin-grid input.is-invalid,
+.dest-admin-grid textarea.is-invalid {
+  border-color: rgba(226, 27, 35, 0.85);
+  box-shadow: 0 0 0 2px rgba(226, 27, 35, 0.2);
+}
+
+.dest-admin-validation {
+  min-height: 18px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(255, 214, 153, 0.85);
+}
+
+.dest-admin-validation.is-error {
+  color: rgba(226, 27, 35, 0.85);
 }
 
 .dest-admin-grid textarea {

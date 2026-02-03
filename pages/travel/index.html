@@ -94,6 +94,7 @@
             <div class="dest-admin-actions">
               <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
             </div>
+            <div class="dest-admin-validation" id="destAdminValidation" aria-live="polite"></div>
             <div class="dest-admin-tabs" role="tablist" aria-label="Destination editor sections">
               <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Core</button>
               <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Media + Snapshot</button>
@@ -105,13 +106,13 @@
               <div class="dest-admin-section">
                 <h3>Core</h3>
                 <div class="dest-admin-grid">
-                  <label>
+                  <label class="dest-admin-required">
                     ID
-                    <input type="text" id="destFieldId" placeholder="cozumel" />
+                    <input type="text" id="destFieldId" placeholder="cozumel" required />
                   </label>
-                  <label>
+                  <label class="dest-admin-required">
                     Name
-                    <input type="text" id="destFieldName" placeholder="Cozumel" />
+                    <input type="text" id="destFieldName" placeholder="Cozumel" required />
                   </label>
                   <label>
                     Subtitle
@@ -121,13 +122,13 @@
                     Tags (comma separated)
                     <input type="text" id="destFieldTags" placeholder="Reef, Drift, Resort" />
                   </label>
-                  <label>
+                  <label class="dest-admin-required">
                     Latitude
-                    <input type="number" step="0.01" id="destFieldLat" />
+                    <input type="number" step="0.01" min="-90" max="90" id="destFieldLat" required />
                   </label>
-                  <label>
+                  <label class="dest-admin-required">
                     Longitude
-                    <input type="number" step="0.01" id="destFieldLon" />
+                    <input type="number" step="0.01" min="-180" max="180" id="destFieldLon" required />
                   </label>
                 </div>
               </div>
@@ -137,13 +138,13 @@
               <div class="dest-admin-section">
                 <h3>Media + Snapshot</h3>
                 <div class="dest-admin-grid">
-                  <label>
+                  <label class="dest-admin-required">
                     Hero Image
-                    <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" />
+                    <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" required />
                   </label>
-                  <label>
+                  <label class="dest-admin-required">
                     Isometric Image
-                    <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" />
+                    <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" required />
                   </label>
                   <label>
                     Iso Title
@@ -153,9 +154,9 @@
                     Iso Description
                     <input type="text" id="destFieldIsoDesc" placeholder="Short iso description" />
                   </label>
-                  <label class="dest-admin-span">
+                  <label class="dest-admin-span dest-admin-required">
                     Summary
-                    <textarea id="destFieldSummary" rows="3"></textarea>
+                    <textarea id="destFieldSummary" rows="3" required></textarea>
                   </label>
                   <label class="dest-admin-span">
                     Trip Bullets (one per line)

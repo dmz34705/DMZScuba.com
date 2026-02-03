@@ -46,6 +46,7 @@
   const fieldExpandedJson = document.getElementById("destFieldExpandedJson");
   const applyJsonButton = document.getElementById("destApplyJson");
   const formatJsonButton = document.getElementById("destFormatJson");
+  const validationEl = document.getElementById("destAdminValidation");
 
   let isDirty = false;
   let bannerTimer = null;
@@ -543,6 +544,57 @@
     el.value = value == null ? "" : String(value);
   }
 
+  function setInvalid(el, isInvalid) {
+    if (!el) return;
+    el.classList.toggle("is-invalid", Boolean(isInvalid));
+  }
+
+  function validateCurrent() {
+    if (!validationEl) return;
+    if (!state.selectedId) {
+      validationEl.textContent = "";
+      validationEl.classList.remove("is-error");
+      return;
+    }
+
+    const issues = [];
+    const idValue = fieldId ? fieldId.value.trim() : "";
+    const nameValue = fieldName ? fieldName.value.trim() : "";
+    const latValue = fieldLat ? Number(fieldLat.value) : NaN;
+    const lonValue = fieldLon ? Number(fieldLon.value) : NaN;
+    const heroValue = fieldHeroImage ? fieldHeroImage.value.trim() : "";
+    const isoValue = fieldIsoImage ? fieldIsoImage.value.trim() : "";
+    const summaryValue = fieldSummary ? fieldSummary.value.trim() : "";
+
+    setInvalid(fieldId, !idValue);
+    setInvalid(fieldName, !nameValue);
+    setInvalid(fieldLat, !Number.isFinite(latValue) || latValue < -90 || latValue > 90);
+    setInvalid(fieldLon, !Number.isFinite(lonValue) || lonValue < -180 || lonValue > 180);
+    setInvalid(fieldHeroImage, !heroValue);
+    setInvalid(fieldIsoImage, !isoValue);
+    setInvalid(fieldSummary, !summaryValue);
+
+    if (!idValue) issues.push("ID");
+    if (!nameValue) issues.push("Name");
+    if (!Number.isFinite(latValue) || latValue < -90 || latValue > 90) {
+      issues.push("Latitude (-90 to 90)");
+    }
+    if (!Number.isFinite(lonValue) || lonValue < -180 || lonValue > 180) {
+      issues.push("Longitude (-180 to 180)");
+    }
+    if (!heroValue) issues.push("Hero image");
+    if (!isoValue) issues.push("Isometric image");
+    if (!summaryValue) issues.push("Summary");
+
+    if (issues.length) {
+      validationEl.textContent = `Missing or invalid: ${issues.join(", ")}`;
+      validationEl.classList.add("is-error");
+    } else {
+      validationEl.textContent = "All required fields look good.";
+      validationEl.classList.remove("is-error");
+    }
+  }
+
   function fillEditor() {
     const base = getBaseById(state.selectedId);
     const expanded = getExpandedById(state.selectedId);
@@ -552,7 +604,10 @@
     if (emptyState) emptyState.style.display = hasSelection ? "none" : "block";
     if (form) form.style.display = hasSelection ? "block" : "none";
 
-    if (!hasSelection) return;
+    if (!hasSelection) {
+      validateCurrent();
+      return;
+    }
 
     setFormValue(fieldId, merged.id || "");
     setFormValue(fieldName, merged.name || "");
@@ -579,6 +634,7 @@
       const expSource = expanded || (merged ? { id: merged.id } : { id: state.selectedId });
       fieldExpandedJson.value = JSON.stringify(expSource, null, 2);
     }
+    validateCurrent();
   }
 
   function selectId(id) {
@@ -685,6 +741,7 @@
       updateBase(state.selectedId, { subtitle: fieldSubtitle.value.trim() });
       markDirty();
       renderList();
+      validateCurrent();
     });
 
     bindField(fieldTags, () => {
@@ -692,6 +749,7 @@
       const tags = parseList(fieldTags.value);
       updateBase(state.selectedId, { tags });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLat, () => {
@@ -699,6 +757,7 @@
       const lat = Number(fieldLat.value);
       updateBase(state.selectedId, { lat: Number.isFinite(lat) ? lat : 0 });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLon, () => {
@@ -706,36 +765,42 @@
       const lon = Number(fieldLon.value);
       updateBase(state.selectedId, { lon: Number.isFinite(lon) ? lon : 0 });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldHeroImage, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { heroImage: fieldHeroImage.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldIsoImage, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoImage: fieldIsoImage.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldIsoTitle, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoTitle: fieldIsoTitle.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldIsoDesc, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoDesc: fieldIsoDesc.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldSummary, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { summary: fieldSummary.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldBullets, () => {
@@ -743,6 +808,7 @@
       const bullets = parseList(fieldBullets.value);
       updateBase(state.selectedId, { bullets });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldNarrative, () => {
@@ -750,6 +816,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { narrative: fieldNarrative.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldDayToDay, () => {
@@ -757,6 +824,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { dayToDay: fieldDayToDay.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldResortDetails, () => {
@@ -764,6 +832,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { resortDetails: fieldResortDetails.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLogisticsDetails, () => {
@@ -771,6 +840,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { logisticsDetails: fieldLogisticsDetails.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     if (applyJsonButton) {
@@ -804,6 +874,7 @@
           renderList();
           fillEditor();
           markDirty();
+          validateCurrent();
         } catch (error) {
           openModal({
             title: "Invalid JSON",
@@ -828,6 +899,7 @@
           const source = expanded || { id: state.selectedId };
           fieldExpandedJson.value = JSON.stringify(source, null, 2);
         }
+        validateCurrent();
       });
     }
   }
@@ -1145,6 +1217,7 @@
     setupAdminControls();
     bindEditor();
     setupTabs();
+    validateCurrent();
   }
 
   window.DMZDestinations = {
