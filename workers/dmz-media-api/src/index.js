@@ -582,9 +582,9 @@ async function handleStreamDirectUpload(request, env) {
   return jsonResponse(json, 200);
 }
 
-function buildImagesDeliveryUrl(env, imageId) {
+function buildImagesDeliveryUrl(env, imageId, variantOverride = "") {
   if (!imageId) return "";
-  const variant = String(env.CF_IMAGES_VARIANT || "public").trim();
+  const variant = String(variantOverride || env.CF_IMAGES_VARIANT || "public").trim();
   const delivery = String(env.CF_IMAGES_DELIVERY || "").trim();
   if (!delivery) return "";
   if (delivery.includes("{id}")) {
@@ -624,6 +624,13 @@ async function handleImagesDirectUpload(request, env) {
   if (!token || !accountId) {
     return jsonResponse({ ok: false, error: "Images upload not configured." }, 500);
   }
+  let variantOverride = "";
+  try {
+    const body = await request.json();
+    variantOverride = String(body?.variant || "").trim();
+  } catch (error) {
+    // ignore missing/invalid JSON
+  }
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`;
   const formData = new FormData();
   formData.append("requireSignedURLs", "false");
@@ -640,7 +647,7 @@ async function handleImagesDirectUpload(request, env) {
   }
   const uploadURL = json?.result?.uploadURL || "";
   const id = json?.result?.id || "";
-  const deliveryUrl = buildImagesDeliveryUrl(env, id);
+  const deliveryUrl = buildImagesDeliveryUrl(env, id, variantOverride);
   return jsonResponse({ ok: true, uploadURL, id, deliveryUrl }, 200);
 }
 

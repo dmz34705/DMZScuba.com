@@ -128,23 +128,27 @@
     return fetch(`${apiRoot}${path}`, { ...options, headers });
   }
 
-  async function requestImagesDirectUpload() {
+  async function requestImagesDirectUpload(variant) {
     if (!getToken()) {
       return new Promise((resolve) => {
-        buildLoginModal(() => resolve(requestImagesDirectUpload()));
+        buildLoginModal(() => resolve(requestImagesDirectUpload(variant)));
       });
     }
-    const resp = await apiFetch("/api/admin/images-direct-upload", { method: "POST" });
+    const resp = await apiFetch("/api/admin/images-direct-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variant }),
+    });
     if (!resp.ok) {
       throw new Error("Images direct upload failed.");
     }
     return resp.json();
   }
 
-  async function uploadImageFile(file, statusEl) {
+  async function uploadImageFile(file, statusEl, variant) {
     if (!file) return null;
     if (statusEl) statusEl.textContent = "Requesting upload...";
-    const data = await requestImagesDirectUpload();
+    const data = await requestImagesDirectUpload(variant);
     const uploadURL = data?.uploadURL;
     const deliveryUrl = data?.deliveryUrl || "";
     if (!uploadURL) throw new Error("Missing upload URL.");
@@ -987,7 +991,7 @@
         if (!file) return;
         const previousUrl = fieldHeroImage ? fieldHeroImage.value.trim() : "";
         try {
-          const url = await uploadImageFile(file, heroUploadStatus);
+          const url = await uploadImageFile(file, heroUploadStatus, "travelhero");
           if (url && fieldHeroImage) {
             fieldHeroImage.value = url;
             if (state.selectedId) {
@@ -1016,7 +1020,7 @@
         if (!file) return;
         const previousUrl = fieldIsoImage ? fieldIsoImage.value.trim() : "";
         try {
-          const url = await uploadImageFile(file, isoUploadStatus);
+          const url = await uploadImageFile(file, isoUploadStatus, "traveliso");
           if (url && fieldIsoImage) {
             fieldIsoImage.value = url;
             if (state.selectedId) {
