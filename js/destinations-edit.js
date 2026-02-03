@@ -20,6 +20,7 @@
   const resetButton = document.querySelector(".dest-admin-reset");
   const refreshButton = document.querySelector(".dest-admin-refresh");
   const deleteButton = document.getElementById("destDelete");
+  const revertButton = document.getElementById("destRevert");
   const listEl = document.getElementById("destAdminList");
   const searchInput = document.getElementById("destAdminSearch");
 
@@ -46,14 +47,21 @@
   const fieldExpandedJson = document.getElementById("destFieldExpandedJson");
   const applyJsonButton = document.getElementById("destApplyJson");
   const formatJsonButton = document.getElementById("destFormatJson");
+  const validationEl = document.getElementById("destAdminValidation");
+  const heroPreview = document.getElementById("destHeroPreview");
+  const isoPreview = document.getElementById("destIsoPreview");
 
   let isDirty = false;
   let bannerTimer = null;
+  const emptyPreviewSrc =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
   const state = {
     baseItems: [],
     expandedItems: [],
     mergedItems: [],
+    originalBaseItems: [],
+    originalExpandedItems: [],
     selectedId: "",
   };
 
@@ -101,6 +109,7 @@
   function setDirty(next) {
     isDirty = Boolean(next);
     document.body.classList.toggle("dest-has-unsaved", isDirty);
+    renderList();
     if (isDirty) {
       showPublishBanner("Destinations not published. Please publish to save.");
     } else {
@@ -176,6 +185,43 @@
 
   function getExpandedById(id) {
     return state.expandedItems.find((item) => item && item.id === id) || null;
+  }
+
+  function getOriginalBaseById(id) {
+    return state.originalBaseItems.find((item) => item && item.id === id) || null;
+  }
+
+  function getOriginalExpandedById(id) {
+    return state.originalExpandedItems.find((item) => item && item.id === id) || null;
+  }
+
+  function cloneItems(items) {
+    return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
+  }
+
+  function stableStringify(value) {
+    if (value === undefined) return "null";
+    if (Array.isArray(value)) {
+      return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+    }
+    if (value && typeof value === "object") {
+      const keys = Object.keys(value).sort();
+      return `{${keys
+        .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+        .join(",")}}`;
+    }
+    return JSON.stringify(value);
+  }
+
+  function isItemDirty(id) {
+    const currentBase = getBaseById(id);
+    const currentExpanded = getExpandedById(id);
+    const originalBase = getOriginalBaseById(id);
+    const originalExpanded = getOriginalExpandedById(id);
+    const baseChanged = stableStringify(currentBase || null) !== stableStringify(originalBase || null);
+    const expandedChanged =
+      stableStringify(currentExpanded || null) !== stableStringify(originalExpanded || null);
+    return baseChanged || expandedChanged;
   }
 
   function setItems(baseItems, expandedItems) {
@@ -396,6 +442,106 @@
     });
   }
 
+  function closeExistingModal() {
+    const modal = document.querySelector(".media-edit-modal");
+    if (modal) modal.remove();
+  }
+
+  function openModal({
+    title = "DMZ Admin",
+    message = "",
+    fields = [],
+    confirmLabel = "Confirm",
+    cancelLabel = "Cancel",
+    showCancel = true,
+    danger = false,
+  }) {
+    closeExistingModal();
+    return new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.className = "media-edit-modal";
+      const card = document.createElement("div");
+      card.className = "media-edit-modal-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+      const hint = document.createElement("p");
+      hint.className = "media-edit-modal-hint";
+      hint.textContent = message;
+
+      const formEl = document.createElement("form");
+      formEl.className = "media-edit-form";
+
+      const inputs = {};
+      fields.forEach((field) => {
+        const label = document.createElement("label");
+        label.textContent = field.label || "Field";
+        const input = document.createElement("input");
+        input.type = field.type || "text";
+        input.name = field.name || "value";
+        if (field.placeholder) input.placeholder = field.placeholder;
+        if (field.value) input.value = field.value;
+        if (field.required) input.required = true;
+        inputs[input.name] = input;
+        formEl.appendChild(label);
+        formEl.appendChild(input);
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "media-edit-modal-actions";
+      let cancelBtn = null;
+      if (showCancel) {
+        cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "media-edit-cancel";
+        cancelBtn.textContent = cancelLabel;
+        actions.appendChild(cancelBtn);
+      }
+      const confirmBtn = document.createElement("button");
+      confirmBtn.type = "submit";
+      confirmBtn.className = "media-edit-save";
+      confirmBtn.textContent = confirmLabel;
+      if (danger) {
+        confirmBtn.style.borderColor = "rgba(226, 27, 35, 0.6)";
+        confirmBtn.style.color = "rgba(226, 27, 35, 0.95)";
+      }
+      actions.appendChild(confirmBtn);
+
+      card.appendChild(heading);
+      if (message) card.appendChild(hint);
+      if (fields.length) card.appendChild(formEl);
+      card.appendChild(actions);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      const close = (result) => {
+        overlay.remove();
+        resolve(result);
+      };
+
+      if (cancelBtn) cancelBtn.addEventListener("click", () => close({ ok: false }));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) close({ ok: false });
+      });
+
+      formEl.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const values = {};
+        Object.keys(inputs).forEach((key) => {
+          values[key] = inputs[key].value;
+        });
+        close({ ok: true, values });
+      });
+
+      if (!fields.length) {
+        confirmBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          close({ ok: true });
+        });
+      }
+    });
+  }
+
   function renderList() {
     if (!listEl) return;
     const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -422,11 +568,21 @@
       title.className = "dest-admin-item-title";
       title.textContent = item.name || item.id || "Destination";
 
+      const badge = document.createElement("span");
+      badge.className = "dest-admin-item-badge";
+      badge.textContent = "Draft";
+      if (isItemDirty(item.id)) {
+        button.classList.add("is-dirty");
+      } else {
+        badge.classList.add("is-hidden");
+      }
+
       const sub = document.createElement("span");
       sub.className = "dest-admin-item-sub";
       sub.textContent = item.subtitle || "No subtitle";
 
       button.appendChild(title);
+      button.appendChild(badge);
       button.appendChild(sub);
       button.addEventListener("click", () => {
         selectId(item.id);
@@ -440,6 +596,63 @@
     el.value = value == null ? "" : String(value);
   }
 
+  function setPreviewImage(imgEl, src) {
+    if (!imgEl) return;
+    const nextSrc = src && String(src).trim() ? String(src).trim() : emptyPreviewSrc;
+    imgEl.src = nextSrc;
+  }
+
+  function setInvalid(el, isInvalid) {
+    if (!el) return;
+    el.classList.toggle("is-invalid", Boolean(isInvalid));
+  }
+
+  function validateCurrent() {
+    if (!validationEl) return;
+    if (!state.selectedId) {
+      validationEl.textContent = "";
+      validationEl.classList.remove("is-error");
+      return;
+    }
+
+    const issues = [];
+    const idValue = fieldId ? fieldId.value.trim() : "";
+    const nameValue = fieldName ? fieldName.value.trim() : "";
+    const latValue = fieldLat ? Number(fieldLat.value) : NaN;
+    const lonValue = fieldLon ? Number(fieldLon.value) : NaN;
+    const heroValue = fieldHeroImage ? fieldHeroImage.value.trim() : "";
+    const isoValue = fieldIsoImage ? fieldIsoImage.value.trim() : "";
+    const summaryValue = fieldSummary ? fieldSummary.value.trim() : "";
+
+    setInvalid(fieldId, !idValue);
+    setInvalid(fieldName, !nameValue);
+    setInvalid(fieldLat, !Number.isFinite(latValue) || latValue < -90 || latValue > 90);
+    setInvalid(fieldLon, !Number.isFinite(lonValue) || lonValue < -180 || lonValue > 180);
+    setInvalid(fieldHeroImage, !heroValue);
+    setInvalid(fieldIsoImage, !isoValue);
+    setInvalid(fieldSummary, !summaryValue);
+
+    if (!idValue) issues.push("ID");
+    if (!nameValue) issues.push("Name");
+    if (!Number.isFinite(latValue) || latValue < -90 || latValue > 90) {
+      issues.push("Latitude (-90 to 90)");
+    }
+    if (!Number.isFinite(lonValue) || lonValue < -180 || lonValue > 180) {
+      issues.push("Longitude (-180 to 180)");
+    }
+    if (!heroValue) issues.push("Hero image");
+    if (!isoValue) issues.push("Isometric image");
+    if (!summaryValue) issues.push("Summary");
+
+    if (issues.length) {
+      validationEl.textContent = `Missing or invalid: ${issues.join(", ")}`;
+      validationEl.classList.add("is-error");
+    } else {
+      validationEl.textContent = "All required fields look good.";
+      validationEl.classList.remove("is-error");
+    }
+  }
+
   function fillEditor() {
     const base = getBaseById(state.selectedId);
     const expanded = getExpandedById(state.selectedId);
@@ -449,7 +662,12 @@
     if (emptyState) emptyState.style.display = hasSelection ? "none" : "block";
     if (form) form.style.display = hasSelection ? "block" : "none";
 
-    if (!hasSelection) return;
+    if (!hasSelection) {
+      setPreviewImage(heroPreview, "");
+      setPreviewImage(isoPreview, "");
+      validateCurrent();
+      return;
+    }
 
     setFormValue(fieldId, merged.id || "");
     setFormValue(fieldName, merged.name || "");
@@ -467,6 +685,8 @@
     setFormValue(fieldDayToDay, merged.dayToDay || "");
     setFormValue(fieldResortDetails, merged.resortDetails || merged.resort?.description || "");
     setFormValue(fieldLogisticsDetails, merged.logisticsDetails || merged.logistics || "");
+    setPreviewImage(heroPreview, merged.heroImage || "");
+    setPreviewImage(isoPreview, merged.isoImage || "");
 
     if (fieldBaseJson) {
       const baseSource = base || merged || { id: state.selectedId };
@@ -476,6 +696,7 @@
       const expSource = expanded || (merged ? { id: merged.id } : { id: state.selectedId });
       fieldExpandedJson.value = JSON.stringify(expSource, null, 2);
     }
+    validateCurrent();
   }
 
   function selectId(id) {
@@ -526,7 +747,12 @@
     if (oldId === normalized) return true;
     const exists = state.baseItems.some((item) => item && item.id === normalized);
     if (exists) {
-      window.alert("That ID is already in use.");
+      openModal({
+        title: "ID already in use",
+        message: "That destination ID is already in use. Choose a different ID.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
       return false;
     }
 
@@ -577,6 +803,7 @@
       updateBase(state.selectedId, { subtitle: fieldSubtitle.value.trim() });
       markDirty();
       renderList();
+      validateCurrent();
     });
 
     bindField(fieldTags, () => {
@@ -584,6 +811,7 @@
       const tags = parseList(fieldTags.value);
       updateBase(state.selectedId, { tags });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLat, () => {
@@ -591,6 +819,7 @@
       const lat = Number(fieldLat.value);
       updateBase(state.selectedId, { lat: Number.isFinite(lat) ? lat : 0 });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLon, () => {
@@ -598,36 +827,44 @@
       const lon = Number(fieldLon.value);
       updateBase(state.selectedId, { lon: Number.isFinite(lon) ? lon : 0 });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldHeroImage, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { heroImage: fieldHeroImage.value.trim() });
       markDirty();
+      setPreviewImage(heroPreview, fieldHeroImage.value);
+      validateCurrent();
     });
 
     bindField(fieldIsoImage, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoImage: fieldIsoImage.value.trim() });
       markDirty();
+      setPreviewImage(isoPreview, fieldIsoImage.value);
+      validateCurrent();
     });
 
     bindField(fieldIsoTitle, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoTitle: fieldIsoTitle.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldIsoDesc, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { isoDesc: fieldIsoDesc.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldSummary, () => {
       if (!state.selectedId) return;
       updateBase(state.selectedId, { summary: fieldSummary.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldBullets, () => {
@@ -635,6 +872,7 @@
       const bullets = parseList(fieldBullets.value);
       updateBase(state.selectedId, { bullets });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldNarrative, () => {
@@ -642,6 +880,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { narrative: fieldNarrative.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldDayToDay, () => {
@@ -649,6 +888,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { dayToDay: fieldDayToDay.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldResortDetails, () => {
@@ -656,6 +896,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { resortDetails: fieldResortDetails.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     bindField(fieldLogisticsDetails, () => {
@@ -663,6 +904,7 @@
       ensureExpandedItem(state.selectedId);
       updateExpanded(state.selectedId, { logisticsDetails: fieldLogisticsDetails.value.trim() });
       markDirty();
+      validateCurrent();
     });
 
     if (applyJsonButton) {
@@ -696,8 +938,14 @@
           renderList();
           fillEditor();
           markDirty();
+          validateCurrent();
         } catch (error) {
-          window.alert("JSON parse failed. Please check formatting.");
+          openModal({
+            title: "Invalid JSON",
+            message: "JSON parse failed. Please check formatting.",
+            confirmLabel: "Close",
+            showCancel: false,
+          });
         }
       });
     }
@@ -715,56 +963,139 @@
           const source = expanded || { id: state.selectedId };
           fieldExpandedJson.value = JSON.stringify(source, null, 2);
         }
+        validateCurrent();
       });
     }
   }
 
   function addDestination() {
-    const name = window.prompt("Destination name?");
-    if (!name) return;
-    const id = normalizeId(name);
-    if (!id) return;
-    if (state.baseItems.some((item) => item && item.id === id)) {
-      window.alert("That destination already exists.");
-      return;
-    }
-    const baseItem = {
-      id,
-      name: name.trim(),
-      subtitle: "",
-      lat: 0,
-      lon: 0,
-      tags: [],
-      heroImage: "",
-      isoImage: "",
-      isoTitle: "",
-      isoDesc: "",
-      summary: "",
-      bullets: [],
-    };
-    state.baseItems.push(baseItem);
-    state.expandedItems.push({ id });
-    rebuildMerged();
-    saveDraft();
-    selectId(id);
-    markDirty();
-    notify();
+    openModal({
+      title: "Add Destination",
+      message: "Enter a destination name to create the new record.",
+      fields: [
+        {
+          label: "Destination name",
+          name: "name",
+          placeholder: "Cozumel",
+          required: true,
+        },
+      ],
+      confirmLabel: "Create",
+    }).then((result) => {
+      if (!result.ok) return;
+      const name = String(result.values?.name || "").trim();
+      if (!name) return;
+      const id = normalizeId(name);
+      if (!id) return;
+      if (state.baseItems.some((item) => item && item.id === id)) {
+        openModal({
+          title: "Already exists",
+          message: "That destination ID already exists. Pick a different name.",
+          confirmLabel: "Close",
+          showCancel: false,
+        });
+        return;
+      }
+      const baseItem = {
+        id,
+        name,
+        subtitle: "",
+        lat: 0,
+        lon: 0,
+        tags: [],
+        heroImage: "",
+        isoImage: "",
+        isoTitle: "",
+        isoDesc: "",
+        summary: "",
+        bullets: [],
+      };
+      state.baseItems.push(baseItem);
+      state.expandedItems.push({ id });
+      rebuildMerged();
+      saveDraft();
+      selectId(id);
+      markDirty();
+      notify();
+    });
   }
 
   function deleteDestination() {
     if (!state.selectedId) return;
-    const confirmDelete = window.confirm("Delete this destination? It will be removed on publish.");
-    if (!confirmDelete) return;
-    const id = state.selectedId;
-    state.baseItems = state.baseItems.filter((item) => item && item.id !== id);
-    state.expandedItems = state.expandedItems.filter((item) => item && item.id !== id);
-    state.selectedId = "";
-    rebuildMerged();
-    saveDraft();
-    renderList();
-    fillEditor();
-    markDirty();
-    notify();
+    openModal({
+      title: "Delete destination?",
+      message: "This destination will be removed on publish. You can still undo by resetting the draft.",
+      confirmLabel: "Delete",
+      danger: true,
+    }).then((result) => {
+      if (!result.ok) return;
+      const id = state.selectedId;
+      state.baseItems = state.baseItems.filter((item) => item && item.id !== id);
+      state.expandedItems = state.expandedItems.filter((item) => item && item.id !== id);
+      state.selectedId = "";
+      rebuildMerged();
+      saveDraft();
+      renderList();
+      fillEditor();
+      markDirty();
+      notify();
+    });
+  }
+
+  function revertDestination() {
+    if (!state.selectedId) return;
+    if (!isItemDirty(state.selectedId)) {
+      openModal({
+        title: "Nothing to revert",
+        message: "This destination matches the last fetched data.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
+      return;
+    }
+    openModal({
+      title: "Revert destination?",
+      message: "This will discard local edits for the selected destination.",
+      confirmLabel: "Revert",
+      danger: true,
+    }).then((result) => {
+      if (!result.ok) return;
+      const id = state.selectedId;
+      const originalBase = getOriginalBaseById(id);
+      const originalExpanded = getOriginalExpandedById(id);
+
+      if (originalBase) {
+        const existingBase = getBaseById(id);
+        if (existingBase) {
+          Object.keys(existingBase).forEach((key) => delete existingBase[key]);
+          Object.assign(existingBase, cloneItems([originalBase])[0]);
+        } else {
+          state.baseItems.push(cloneItems([originalBase])[0]);
+        }
+      } else {
+        state.baseItems = state.baseItems.filter((item) => item && item.id !== id);
+      }
+
+      if (originalExpanded) {
+        const existingExpanded = getExpandedById(id);
+        if (existingExpanded) {
+          Object.keys(existingExpanded).forEach((key) => delete existingExpanded[key]);
+          Object.assign(existingExpanded, cloneItems([originalExpanded])[0]);
+        } else {
+          state.expandedItems.push(cloneItems([originalExpanded])[0]);
+        }
+      } else {
+        state.expandedItems = state.expandedItems.filter((item) => item && item.id !== id);
+      }
+
+      rebuildMerged();
+      saveDraft();
+      renderList();
+      fillEditor();
+      const anyDirty = state.baseItems.some((item) => item && isItemDirty(item.id));
+      setDirty(anyDirty);
+      notify();
+    });
   }
 
   async function publishDestinations() {
@@ -797,26 +1128,47 @@
         }),
       });
       if (!resp.ok) {
-        window.alert("Publish failed. Check your login or API.");
+        openModal({
+          title: "Publish failed",
+          message: "Check your login or API connection and try again.",
+          confirmLabel: "Close",
+          showCancel: false,
+        });
         return;
       }
-      window.alert("Destinations published to DMZ.");
+      openModal({
+        title: "Published",
+        message: "Destinations published to DMZ.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
       try {
         window.localStorage.removeItem(draftStorageKey);
       } catch (error) {
         // ignore
       }
+      state.originalBaseItems = cloneItems(state.baseItems);
+      state.originalExpandedItems = cloneItems(state.expandedItems);
       setDirty(false);
       showPublishBanner("Destinations published.", "success", 2000);
     } catch (error) {
-      window.alert("Publish failed. Check your login or API.");
+      openModal({
+        title: "Publish failed",
+        message: "Check your login or API connection and try again.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
     }
   }
 
   async function refreshFromServer() {
     if (isDirty) {
-      const ok = window.confirm("Unsaved changes will be lost. Continue with master refresh?");
-      if (!ok) return;
+      const result = await openModal({
+        title: "Master refresh?",
+        message: "Unsaved changes will be lost. Continue with master refresh?",
+        confirmLabel: "Refresh",
+      });
+      if (!result.ok) return;
     }
     setDirty(false);
     hidePublishBanner();
@@ -826,20 +1178,29 @@
       // ignore
     }
     const data = await fetchDestinationsData();
+    state.originalBaseItems = cloneItems(data.baseItems);
+    state.originalExpandedItems = cloneItems(data.expandedItems);
     setItems(data.baseItems, data.expandedItems);
   }
 
   function clearDraft() {
-    const ok = window.confirm("Discard local edits and reload from live data?");
-    if (!ok) return;
-    setDirty(false);
-    hidePublishBanner();
-    try {
-      window.localStorage.removeItem(draftStorageKey);
-    } catch (error) {
-      // ignore
-    }
-    window.location.reload();
+    openModal({
+      title: "Reset draft?",
+      message: "Discard local edits and reload from live data?",
+      confirmLabel: "Reset",
+      danger: true,
+    }).then((result) => {
+      if (!result.ok) return;
+      setDirty(false);
+      hidePublishBanner();
+      try {
+        window.localStorage.removeItem(draftStorageKey);
+      } catch (error) {
+        // ignore
+      }
+      window.location.reload();
+    });
+    return;
   }
 
   function setupAdminControls() {
@@ -905,6 +1266,10 @@
       deleteButton.addEventListener("click", deleteDestination);
     }
 
+    if (revertButton) {
+      revertButton.addEventListener("click", revertDestination);
+    }
+
     if (searchInput) {
       searchInput.addEventListener("input", () => renderList());
     }
@@ -926,6 +1291,8 @@
   async function init() {
     const data = await fetchDestinationsData();
     const draft = loadDraft();
+    state.originalBaseItems = cloneItems(data.baseItems);
+    state.originalExpandedItems = cloneItems(data.expandedItems);
 
     if (draft && Array.isArray(draft.baseItems)) {
       state.baseItems = draft.baseItems;
@@ -943,6 +1310,7 @@
     fillEditor();
     setupAdminControls();
     bindEditor();
+    validateCurrent();
   }
 
   window.DMZDestinations = {
