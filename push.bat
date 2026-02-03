@@ -21,15 +21,19 @@ echo --- Git status ---
 git status
 echo.
 
+REM Pull latest before committing to reduce conflicts (autostash if needed)
+echo --- Pulling latest (rebase + autostash) ---
+git pull --rebase --autostash
+if errorlevel 1 goto pull_failed
+
 REM Add all changes
 echo --- Adding changes ---
 git add -A
 if errorlevel 1 goto add_failed
 
-REM Pull latest before committing to reduce conflicts (autostash if needed)
-echo --- Pulling latest (rebase + autostash) ---
-git pull --rebase --autostash
-if errorlevel 1 goto pull_failed
+REM Check if anything is staged
+for /f %%i in ('git status --porcelain') do set "has_changes=1"
+if not defined has_changes goto push_step
 
 REM Ask for commit message
 set "msg="
@@ -47,11 +51,6 @@ REM Commit
 echo --- Committing ---
 git commit -m "%msg%"
 if errorlevel 1 goto commit_note
-
-REM Pull latest after commit (autostash if needed)
-echo --- Pulling latest (rebase + autostash) ---
-git pull --rebase --autostash
-if errorlevel 1 goto pull_failed
 
 REM Push
 echo --- Pushing to GitHub ---
