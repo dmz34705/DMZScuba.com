@@ -363,8 +363,17 @@ console.log("main.js loaded");
         const revealThreshold = 80;
         const hideThreshold = 24;
         const minStartHideY = 64;
+        const staticUntilY = 140;
 
         if (currentY <= 8) {
+          header.classList.remove("is-hidden");
+          lastScrollY = currentY;
+          scrollAccum = 0;
+          lastDirection = 0;
+          return;
+        }
+
+        if (currentY < staticUntilY) {
           header.classList.remove("is-hidden");
           lastScrollY = currentY;
           scrollAccum = 0;
