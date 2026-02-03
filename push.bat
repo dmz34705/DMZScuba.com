@@ -12,13 +12,19 @@ echo === DMZScuba Git Push ===
 echo Current folder: %cd%
 echo.
 
-REM Confirm this is a git repo
-if not exist ".git" goto not_repo
+REM Confirm this is a git repo (supports gitdir file)
+git rev-parse --is-inside-work-tree >nul 2>&1
+if errorlevel 1 goto not_repo
 
 REM Show changes
 echo --- Git status ---
 git status
 echo.
+
+REM Pull latest before committing to reduce conflicts
+echo --- Pulling latest (rebase) ---
+git pull --rebase
+if errorlevel 1 goto pull_failed
 
 REM Add all changes
 echo --- Adding changes ---
@@ -43,12 +49,8 @@ git commit -m "%msg%"
 if errorlevel 1 goto commit_note
 
 REM Push
-echo --- Pulling latest (rebase) ---
-git pull --rebase
-if errorlevel 1 goto pull_failed
-
 echo --- Pushing to GitHub ---
-git push
+git push origin main
 if errorlevel 1 goto push_failed
 
 echo.
@@ -71,12 +73,8 @@ echo NOTE: Nothing new to commit (or commit failed).
 goto push_step
 
 :push_step
-echo --- Pulling latest (rebase) ---
-git pull --rebase
-if errorlevel 1 goto pull_failed
-
 echo --- Pushing to GitHub ---
-git push
+git push origin main
 if errorlevel 1 goto push_failed
 echo.
 echo Push complete.
