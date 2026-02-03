@@ -245,9 +245,34 @@ body {
       linear-gradient(180deg, rgba(5, 11, 20, 0.38) 0%, rgba(5, 11, 20, 0.82) 70%, rgba(5, 11, 20, 0.98) 100%),
       var(--destination-hero-image, url("../../assets/images/hero/hero-travel2.png"));
     background-size: cover;
-    background-position: 40% 45%;
+    background-position: center 40%;
     transform: scaleX(-1);
     z-index: 0;
+  }
+
+  .destination-hero .page-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .destination-hero-logo {
+    max-width: 240px;
+    justify-self: center;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .iso-placeholder {
+    width: 100%;
+    max-width: 100%;
+    min-height: 180px;
+  }
+
+  .iso-placeholder .iso-image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
   }
 }
 
