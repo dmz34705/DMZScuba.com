@@ -452,7 +452,7 @@ body .page .destination-card:hover {
 }
 
 .dest-admin-panel {
-  width: min(900px, calc(100% - 36px));
+  width: min(920px, calc(100% - 36px));
   position: fixed;
   top: 110px;
   right: 18px;
@@ -472,7 +472,7 @@ body.dest-admin-open .dest-admin-panel {
 .dest-admin-card {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(7, 12, 20, 0.92);
+  background: rgba(7, 12, 20, 0.9);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
   padding: 14px;
   display: grid;
@@ -543,6 +543,7 @@ body.dest-admin-open .dest-admin-panel {
   gap: 8px;
 }
 
+.dest-admin-panel .dest-admin-actions .btn,
 .dest-admin-actions .dest-admin-toggle {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -554,12 +555,25 @@ body.dest-admin-open .dest-admin-panel {
   padding: 7px 12px;
   cursor: pointer;
   transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+  text-transform: uppercase;
 }
 
+.dest-admin-panel .dest-admin-actions .btn:hover,
 .dest-admin-actions .dest-admin-toggle:hover {
   opacity: 0.9;
   border-color: rgba(85, 185, 255, 0.4);
   background: rgba(10, 18, 30, 0.75);
+}
+
+.dest-admin-panel .dest-admin-actions .btn.primary {
+  border-color: rgba(85, 185, 255, 0.55);
+  background: rgba(12, 22, 36, 0.85);
+  color: rgba(234, 242, 255, 0.95);
+}
+
+.dest-admin-panel .dest-admin-actions .btn.secondary {
+  background: rgba(7, 12, 20, 0.7);
+  color: rgba(234, 242, 255, 0.8);
 }
 
 .dest-admin-shell {
@@ -579,6 +593,13 @@ body.dest-edit-mode .dest-admin-shell {
   gap: 14px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding-right: 14px;
+}
+
+.dest-admin-search,
+.dest-admin-select,
+.dest-admin-grid input,
+.dest-admin-grid textarea {
+  border-radius: 12px;
 }
 
 .dest-admin-list-head {
