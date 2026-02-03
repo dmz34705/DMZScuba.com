@@ -345,6 +345,7 @@ console.log("main.js loaded");
     if (header) {
       const mobileQuery = window.matchMedia("(max-width: 780px)");
       let lastScrollY = window.scrollY;
+      let maxScrollY = window.scrollY;
       let scrollAccum = 0;
       let lastDirection = 0;
       let ticking = false;
@@ -360,7 +361,7 @@ console.log("main.js loaded");
 
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
-        const revealThreshold = 140;
+        const revealThreshold = 200;
         const hideThreshold = 24;
         const minStartHideY = 64;
         const staticUntilY = 140;
@@ -392,12 +393,19 @@ console.log("main.js loaded");
         }
         scrollAccum += Math.abs(delta);
 
+        if (currentY > maxScrollY) {
+          maxScrollY = currentY;
+        }
+
         if (direction > 0) {
           if (currentY >= minStartHideY && scrollAccum >= hideThreshold) {
             header.classList.add("is-hidden");
           }
-        } else if (scrollAccum >= revealThreshold) {
-          header.classList.remove("is-hidden");
+        } else {
+          const distanceFromPeak = maxScrollY - currentY;
+          if (distanceFromPeak >= revealThreshold) {
+            header.classList.remove("is-hidden");
+          }
         }
 
         lastScrollY = currentY;
