@@ -55,6 +55,7 @@
   const heroInput = document.getElementById("destEditHeroImage");
   const isoInput = document.getElementById("destEditIsoImage");
   const addButtons = document.querySelectorAll(".dest-page-add");
+  const footerToggle = document.querySelector(".dest-page-footer-toggle");
 
   let currentBase = null;
   let currentExpanded = null;
@@ -102,6 +103,15 @@
     if (loginButton) {
       loginButton.textContent = authed ? "Re-auth" : "DMZ Login";
     }
+    updateEditButtonLabels();
+  }
+
+  function updateEditButtonLabels() {
+    const authed = Boolean(getToken());
+    const editing = document.body.classList.contains("dest-page-editing");
+    const label = !authed ? "DMZ Login" : editing ? "Close Editor" : "Edit Page";
+    if (editToggle) editToggle.textContent = label;
+    if (footerToggle) footerToggle.textContent = label;
   }
 
   function buildLoginModal(onSuccess) {
@@ -190,6 +200,7 @@
           return;
         }
         setToken(data.token);
+        updateAuthState();
         close();
         if (typeof onSuccess === "function") onSuccess();
       } catch (err) {
@@ -409,6 +420,8 @@
   function setEditMode(active) {
     document.body.classList.toggle("dest-page-editing", active);
     if (editToggle) editToggle.setAttribute("aria-pressed", active ? "true" : "false");
+    if (footerToggle) footerToggle.setAttribute("aria-pressed", active ? "true" : "false");
+    updateEditButtonLabels();
 
     const editableEls = [
       nameEl,
@@ -754,6 +767,15 @@
     updateAuthState();
     bindEditableListeners();
 
+    const toggleEditMode = () => {
+      if (!getToken()) {
+        buildLoginModal(() => toggleEditMode());
+        return;
+      }
+      const next = !document.body.classList.contains("dest-page-editing");
+      setEditMode(next);
+    };
+
     if (loginButton) {
       loginButton.addEventListener("click", () => {
         buildLoginModal(() => updateAuthState());
@@ -761,14 +783,11 @@
     }
 
     if (editToggle) {
-      editToggle.addEventListener("click", () => {
-        if (!getToken()) {
-          buildLoginModal(() => editToggle.click());
-          return;
-        }
-        const next = !document.body.classList.contains("dest-page-editing");
-        setEditMode(next);
-      });
+      editToggle.addEventListener("click", toggleEditMode);
+    }
+
+    if (footerToggle) {
+      footerToggle.addEventListener("click", toggleEditMode);
     }
 
     if (saveButton) {

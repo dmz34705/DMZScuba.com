@@ -49,14 +49,22 @@
     </div>
 
     <div class="dest-page-edit-panel" id="destPageEditPanel">
-      <label>
-        Hero Image URL
-        <input type="text" id="destEditHeroImage" placeholder="https://imagedelivery.net/..." />
-      </label>
-      <label>
-        Isometric Image URL
-        <input type="text" id="destEditIsoImage" placeholder="https://imagedelivery.net/..." />
-      </label>
+      <div class="dest-page-edit-head">
+        <div>
+          <h3>Page Media</h3>
+          <p>Use Cloudflare Images URLs for the hero + isometric panels.</p>
+        </div>
+      </div>
+      <div class="dest-page-edit-grid">
+        <label>
+          Hero Image URL
+          <input type="text" id="destEditHeroImage" placeholder="https://imagedelivery.net/..." />
+        </label>
+        <label>
+          Isometric Image URL
+          <input type="text" id="destEditIsoImage" placeholder="https://imagedelivery.net/..." />
+        </label>
+      </div>
     </div>
 
     <section class="page-hero destination-hero">
@@ -180,6 +188,7 @@
 
   <footer class="site-footer">
     <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+    <button class="dest-page-footer-toggle" type="button" aria-pressed="false">Edit Page</button>
   </footer>
   </div>
 
