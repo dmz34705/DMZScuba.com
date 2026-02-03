@@ -396,6 +396,106 @@
     });
   }
 
+  function closeExistingModal() {
+    const modal = document.querySelector(".media-edit-modal");
+    if (modal) modal.remove();
+  }
+
+  function openModal({
+    title = "DMZ Admin",
+    message = "",
+    fields = [],
+    confirmLabel = "Confirm",
+    cancelLabel = "Cancel",
+    showCancel = true,
+    danger = false,
+  }) {
+    closeExistingModal();
+    return new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.className = "media-edit-modal";
+      const card = document.createElement("div");
+      card.className = "media-edit-modal-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+      const hint = document.createElement("p");
+      hint.className = "media-edit-modal-hint";
+      hint.textContent = message;
+
+      const formEl = document.createElement("form");
+      formEl.className = "media-edit-form";
+
+      const inputs = {};
+      fields.forEach((field) => {
+        const label = document.createElement("label");
+        label.textContent = field.label || "Field";
+        const input = document.createElement("input");
+        input.type = field.type || "text";
+        input.name = field.name || "value";
+        if (field.placeholder) input.placeholder = field.placeholder;
+        if (field.value) input.value = field.value;
+        if (field.required) input.required = true;
+        inputs[input.name] = input;
+        formEl.appendChild(label);
+        formEl.appendChild(input);
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "media-edit-modal-actions";
+      let cancelBtn = null;
+      if (showCancel) {
+        cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "media-edit-cancel";
+        cancelBtn.textContent = cancelLabel;
+        actions.appendChild(cancelBtn);
+      }
+      const confirmBtn = document.createElement("button");
+      confirmBtn.type = "submit";
+      confirmBtn.className = "media-edit-save";
+      confirmBtn.textContent = confirmLabel;
+      if (danger) {
+        confirmBtn.style.borderColor = "rgba(226, 27, 35, 0.6)";
+        confirmBtn.style.color = "rgba(226, 27, 35, 0.95)";
+      }
+      actions.appendChild(confirmBtn);
+
+      card.appendChild(heading);
+      if (message) card.appendChild(hint);
+      if (fields.length) card.appendChild(formEl);
+      card.appendChild(actions);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      const close = (result) => {
+        overlay.remove();
+        resolve(result);
+      };
+
+      if (cancelBtn) cancelBtn.addEventListener("click", () => close({ ok: false }));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) close({ ok: false });
+      });
+
+      formEl.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const values = {};
+        Object.keys(inputs).forEach((key) => {
+          values[key] = inputs[key].value;
+        });
+        close({ ok: true, values });
+      });
+
+      if (!fields.length) {
+        confirmBtn.addEventListener("click", (event) => {
+          event.preventDefault();
+          close({ ok: true });
+        });
+      }
+    });
+  }
+
   function renderList() {
     if (!listEl) return;
     const term = searchInput ? searchInput.value.trim().toLowerCase() : "";
@@ -526,7 +626,12 @@
     if (oldId === normalized) return true;
     const exists = state.baseItems.some((item) => item && item.id === normalized);
     if (exists) {
-      window.alert("That ID is already in use.");
+      openModal({
+        title: "ID already in use",
+        message: "That destination ID is already in use. Choose a different ID.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
       return false;
     }
 
@@ -697,7 +802,12 @@
           fillEditor();
           markDirty();
         } catch (error) {
-          window.alert("JSON parse failed. Please check formatting.");
+          openModal({
+            title: "Invalid JSON",
+            message: "JSON parse failed. Please check formatting.",
+            confirmLabel: "Close",
+            showCancel: false,
+          });
         }
       });
     }
@@ -720,51 +830,77 @@
   }
 
   function addDestination() {
-    const name = window.prompt("Destination name?");
-    if (!name) return;
-    const id = normalizeId(name);
-    if (!id) return;
-    if (state.baseItems.some((item) => item && item.id === id)) {
-      window.alert("That destination already exists.");
-      return;
-    }
-    const baseItem = {
-      id,
-      name: name.trim(),
-      subtitle: "",
-      lat: 0,
-      lon: 0,
-      tags: [],
-      heroImage: "",
-      isoImage: "",
-      isoTitle: "",
-      isoDesc: "",
-      summary: "",
-      bullets: [],
-    };
-    state.baseItems.push(baseItem);
-    state.expandedItems.push({ id });
-    rebuildMerged();
-    saveDraft();
-    selectId(id);
-    markDirty();
-    notify();
+    openModal({
+      title: "Add Destination",
+      message: "Enter a destination name to create the new record.",
+      fields: [
+        {
+          label: "Destination name",
+          name: "name",
+          placeholder: "Cozumel",
+          required: true,
+        },
+      ],
+      confirmLabel: "Create",
+    }).then((result) => {
+      if (!result.ok) return;
+      const name = String(result.values?.name || "").trim();
+      if (!name) return;
+      const id = normalizeId(name);
+      if (!id) return;
+      if (state.baseItems.some((item) => item && item.id === id)) {
+        openModal({
+          title: "Already exists",
+          message: "That destination ID already exists. Pick a different name.",
+          confirmLabel: "Close",
+          showCancel: false,
+        });
+        return;
+      }
+      const baseItem = {
+        id,
+        name,
+        subtitle: "",
+        lat: 0,
+        lon: 0,
+        tags: [],
+        heroImage: "",
+        isoImage: "",
+        isoTitle: "",
+        isoDesc: "",
+        summary: "",
+        bullets: [],
+      };
+      state.baseItems.push(baseItem);
+      state.expandedItems.push({ id });
+      rebuildMerged();
+      saveDraft();
+      selectId(id);
+      markDirty();
+      notify();
+    });
   }
 
   function deleteDestination() {
     if (!state.selectedId) return;
-    const confirmDelete = window.confirm("Delete this destination? It will be removed on publish.");
-    if (!confirmDelete) return;
-    const id = state.selectedId;
-    state.baseItems = state.baseItems.filter((item) => item && item.id !== id);
-    state.expandedItems = state.expandedItems.filter((item) => item && item.id !== id);
-    state.selectedId = "";
-    rebuildMerged();
-    saveDraft();
-    renderList();
-    fillEditor();
-    markDirty();
-    notify();
+    openModal({
+      title: "Delete destination?",
+      message: "This destination will be removed on publish. You can still undo by resetting the draft.",
+      confirmLabel: "Delete",
+      danger: true,
+    }).then((result) => {
+      if (!result.ok) return;
+      const id = state.selectedId;
+      state.baseItems = state.baseItems.filter((item) => item && item.id !== id);
+      state.expandedItems = state.expandedItems.filter((item) => item && item.id !== id);
+      state.selectedId = "";
+      rebuildMerged();
+      saveDraft();
+      renderList();
+      fillEditor();
+      markDirty();
+      notify();
+    });
   }
 
   async function publishDestinations() {
@@ -797,10 +933,20 @@
         }),
       });
       if (!resp.ok) {
-        window.alert("Publish failed. Check your login or API.");
+        openModal({
+          title: "Publish failed",
+          message: "Check your login or API connection and try again.",
+          confirmLabel: "Close",
+          showCancel: false,
+        });
         return;
       }
-      window.alert("Destinations published to DMZ.");
+      openModal({
+        title: "Published",
+        message: "Destinations published to DMZ.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
       try {
         window.localStorage.removeItem(draftStorageKey);
       } catch (error) {
@@ -809,14 +955,23 @@
       setDirty(false);
       showPublishBanner("Destinations published.", "success", 2000);
     } catch (error) {
-      window.alert("Publish failed. Check your login or API.");
+      openModal({
+        title: "Publish failed",
+        message: "Check your login or API connection and try again.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
     }
   }
 
   async function refreshFromServer() {
     if (isDirty) {
-      const ok = window.confirm("Unsaved changes will be lost. Continue with master refresh?");
-      if (!ok) return;
+      const result = await openModal({
+        title: "Master refresh?",
+        message: "Unsaved changes will be lost. Continue with master refresh?",
+        confirmLabel: "Refresh",
+      });
+      if (!result.ok) return;
     }
     setDirty(false);
     hidePublishBanner();
@@ -830,16 +985,23 @@
   }
 
   function clearDraft() {
-    const ok = window.confirm("Discard local edits and reload from live data?");
-    if (!ok) return;
-    setDirty(false);
-    hidePublishBanner();
-    try {
-      window.localStorage.removeItem(draftStorageKey);
-    } catch (error) {
-      // ignore
-    }
-    window.location.reload();
+    openModal({
+      title: "Reset draft?",
+      message: "Discard local edits and reload from live data?",
+      confirmLabel: "Reset",
+      danger: true,
+    }).then((result) => {
+      if (!result.ok) return;
+      setDirty(false);
+      hidePublishBanner();
+      try {
+        window.localStorage.removeItem(draftStorageKey);
+      } catch (error) {
+        // ignore
+      }
+      window.location.reload();
+    });
+    return;
   }
 
   function setupAdminControls() {
