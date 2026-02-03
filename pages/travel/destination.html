@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/destination.css?v=1.0" />
+  <link rel="stylesheet" href="/css/pages/destination.css?v=1.1" />
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 
@@ -36,6 +36,29 @@
   </header>
 
   <main class="page">
+    <div class="dest-page-admin-bar" id="destPageAdminBar">
+      <div class="dest-page-admin-left">
+        <button class="btn secondary dest-page-login" type="button">DMZ Login</button>
+        <button class="btn secondary dest-page-edit-toggle" type="button" aria-pressed="false">Edit Page</button>
+      </div>
+      <div class="dest-page-admin-right">
+        <span class="dest-page-admin-status" id="destPageAdminStatus">Signed out</span>
+        <button class="btn secondary dest-page-cancel" type="button">Cancel</button>
+        <button class="btn primary dest-page-save" type="button">Save Changes</button>
+      </div>
+    </div>
+
+    <div class="dest-page-edit-panel" id="destPageEditPanel">
+      <label>
+        Hero Image URL
+        <input type="text" id="destEditHeroImage" placeholder="https://imagedelivery.net/..." />
+      </label>
+      <label>
+        Isometric Image URL
+        <input type="text" id="destEditIsoImage" placeholder="https://imagedelivery.net/..." />
+      </label>
+    </div>
+
     <section class="page-hero destination-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
@@ -68,6 +91,7 @@
           <div class="content-section two-col-side right">
             <h2 id="tripSnapshotTitle">Trip Snapshot</h2>
             <ul class="content-steps" id="destBullets"></ul>
+            <button class="dest-page-add" type="button" data-list="destBullets">Add bullet</button>
           </div>
         </div>
       </section>
@@ -84,6 +108,7 @@
             <h3 id="travelLogisticsTitle">Travel Logistics</h3>
             <p id="logisticsDetailsText">Logistics details loading.</p>
             <ul class="content-steps" id="logisticsTipsList"></ul>
+            <button class="dest-page-add" type="button" data-list="logisticsTipsList">Add logistics tip</button>
           </div>
         </div>
       </section>
@@ -126,14 +151,17 @@
           <div>
             <h3 id="conditionsTitle">Conditions</h3>
             <ul class="content-steps" id="conditionsList"></ul>
+            <button class="dest-page-add" type="button" data-list="conditionsList">Add condition</button>
           </div>
           <div>
             <h3 id="diveSitesTitle">Dive Sites</h3>
             <ul class="content-steps" id="diveSitesList"></ul>
+            <button class="dest-page-add" type="button" data-list="diveSitesList">Add dive site</button>
           </div>
           <div>
             <h3 id="nonDivingTitle">Non-Diving</h3>
             <ul class="content-steps" id="nonDivingList"></ul>
+            <button class="dest-page-add" type="button" data-list="nonDivingList">Add non-diving item</button>
           </div>
         </div>
       </section>
