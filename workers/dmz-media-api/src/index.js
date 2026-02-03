@@ -602,13 +602,14 @@ async function handleImagesDirectUpload(request, env) {
     return jsonResponse({ ok: false, error: "Images upload not configured." }, 500);
   }
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/images/v2/direct_upload`;
+  const formData = new FormData();
+  formData.append("requireSignedURLs", "false");
   const resp = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
     },
-    body: JSON.stringify({ requireSignedURLs: false }),
+    body: formData,
   });
   const json = await resp.json();
   if (!resp.ok) {
