@@ -360,7 +360,7 @@ console.log("main.js loaded");
 
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
-        const revealThreshold = 80;
+        const revealThreshold = 140;
         const hideThreshold = 24;
         const minStartHideY = 64;
         const staticUntilY = 140;
