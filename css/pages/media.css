@@ -582,6 +582,10 @@ body.media-authenticated .media-admin-fab{
   letter-spacing: 0.3px;
 }
 
+.filter-range.is-hidden{
+  display: none;
+}
+
 .media-sort{
   position: relative;
 }

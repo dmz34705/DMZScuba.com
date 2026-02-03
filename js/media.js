@@ -26,6 +26,7 @@
   const emptyState = document.getElementById("mediaEmpty");
   const cardSizeInput = document.getElementById("mediaCardSize");
   const cardSizeValue = document.getElementById("mediaCardSizeValue");
+  const cardSizeWrap = cardSizeInput ? cardSizeInput.closest(".filter-range") : null;
   const sortField = document.querySelector(".media-sort");
   const sortToggle = sortField ? sortField.querySelector(".dropdown-toggle") : null;
   const sortValue = document.getElementById("mediaSortValue");
@@ -326,6 +327,7 @@
     });
     updateMediaGridWidth();
     updateMediaControlsWidth();
+    updateCardSizeVisibility();
   }
 
   function updateMediaGridWidth() {
@@ -361,6 +363,17 @@
     if (width > 0) {
       mediaSection.style.setProperty("--media-controls-width", `${width}px`);
     }
+  }
+
+  function updateCardSizeVisibility() {
+    if (!mediaGrid || !cardSizeWrap) return;
+    const styles = window.getComputedStyle(mediaGrid);
+    const columns = styles
+      .getPropertyValue("grid-template-columns")
+      .split(" ")
+      .filter(Boolean);
+    const hasMultipleColumns = columns.length > 1;
+    cardSizeWrap.classList.toggle("is-hidden", !hasMultipleColumns);
   }
 
   let videoThumbObserver = null;
@@ -892,6 +905,7 @@
       // Ignore storage errors.
     }
     queueMasonryUpdate();
+    updateCardSizeVisibility();
   }
 
   function loadCardSize() {
