@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/travel.css?v=1.1" />
+  <link rel="stylesheet" href="/css/pages/travel.css?v=1.2" />
   <link rel="stylesheet" href="/css/responsive.css" />
 
 </head>
@@ -94,103 +94,118 @@
             <div class="dest-admin-actions">
               <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
             </div>
-            <div class="dest-admin-section">
-              <h3>Core</h3>
-              <div class="dest-admin-grid">
-                <label>
-                  ID
-                  <input type="text" id="destFieldId" placeholder="cozumel" />
-                </label>
-                <label>
-                  Name
-                  <input type="text" id="destFieldName" placeholder="Cozumel" />
-                </label>
-                <label>
-                  Subtitle
-                  <input type="text" id="destFieldSubtitle" placeholder="Short destination overview" />
-                </label>
-                <label>
-                  Tags (comma separated)
-                  <input type="text" id="destFieldTags" placeholder="Reef, Drift, Resort" />
-                </label>
-                <label>
-                  Latitude
-                  <input type="number" step="0.01" id="destFieldLat" />
-                </label>
-                <label>
-                  Longitude
-                  <input type="number" step="0.01" id="destFieldLon" />
-                </label>
+            <div class="dest-admin-tabs" role="tablist" aria-label="Destination editor sections">
+              <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Core</button>
+              <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Media + Snapshot</button>
+              <button class="dest-admin-tab" type="button" data-tab="expanded" role="tab" aria-selected="false">Expanded Copy</button>
+              <button class="dest-admin-tab" type="button" data-tab="json" role="tab" aria-selected="false">Advanced JSON</button>
+            </div>
+
+            <div class="dest-admin-tab-panel is-active" data-tab="core" role="tabpanel">
+              <div class="dest-admin-section">
+                <h3>Core</h3>
+                <div class="dest-admin-grid">
+                  <label>
+                    ID
+                    <input type="text" id="destFieldId" placeholder="cozumel" />
+                  </label>
+                  <label>
+                    Name
+                    <input type="text" id="destFieldName" placeholder="Cozumel" />
+                  </label>
+                  <label>
+                    Subtitle
+                    <input type="text" id="destFieldSubtitle" placeholder="Short destination overview" />
+                  </label>
+                  <label>
+                    Tags (comma separated)
+                    <input type="text" id="destFieldTags" placeholder="Reef, Drift, Resort" />
+                  </label>
+                  <label>
+                    Latitude
+                    <input type="number" step="0.01" id="destFieldLat" />
+                  </label>
+                  <label>
+                    Longitude
+                    <input type="number" step="0.01" id="destFieldLon" />
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="dest-admin-section">
-              <h3>Media + Snapshot</h3>
-              <div class="dest-admin-grid">
-                <label>
-                  Hero Image
-                  <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" />
-                </label>
-                <label>
-                  Isometric Image
-                  <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" />
-                </label>
-                <label>
-                  Iso Title
-                  <input type="text" id="destFieldIsoTitle" placeholder="Resort view title" />
-                </label>
-                <label>
-                  Iso Description
-                  <input type="text" id="destFieldIsoDesc" placeholder="Short iso description" />
-                </label>
-                <label class="dest-admin-span">
-                  Summary
-                  <textarea id="destFieldSummary" rows="3"></textarea>
-                </label>
-                <label class="dest-admin-span">
-                  Trip Bullets (one per line)
-                  <textarea id="destFieldBullets" rows="4"></textarea>
-                </label>
+            <div class="dest-admin-tab-panel" data-tab="media" role="tabpanel">
+              <div class="dest-admin-section">
+                <h3>Media + Snapshot</h3>
+                <div class="dest-admin-grid">
+                  <label>
+                    Hero Image
+                    <input type="text" id="destFieldHeroImage" placeholder="/assets/images/destinations/hero.png" />
+                  </label>
+                  <label>
+                    Isometric Image
+                    <input type="text" id="destFieldIsoImage" placeholder="/assets/images/isometric/iso.jpg" />
+                  </label>
+                  <label>
+                    Iso Title
+                    <input type="text" id="destFieldIsoTitle" placeholder="Resort view title" />
+                  </label>
+                  <label>
+                    Iso Description
+                    <input type="text" id="destFieldIsoDesc" placeholder="Short iso description" />
+                  </label>
+                  <label class="dest-admin-span">
+                    Summary
+                    <textarea id="destFieldSummary" rows="3"></textarea>
+                  </label>
+                  <label class="dest-admin-span">
+                    Trip Bullets (one per line)
+                    <textarea id="destFieldBullets" rows="4"></textarea>
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="dest-admin-section">
-              <h3>Expanded Copy</h3>
-              <div class="dest-admin-grid">
-                <label class="dest-admin-span">
-                  Narrative
-                  <textarea id="destFieldNarrative" rows="4"></textarea>
-                </label>
-                <label class="dest-admin-span">
-                  Day-to-Day
-                  <textarea id="destFieldDayToDay" rows="3"></textarea>
-                </label>
-                <label class="dest-admin-span">
-                  Resort Details
-                  <textarea id="destFieldResortDetails" rows="3"></textarea>
-                </label>
-                <label class="dest-admin-span">
-                  Logistics Details
-                  <textarea id="destFieldLogisticsDetails" rows="3"></textarea>
-                </label>
+            <div class="dest-admin-tab-panel" data-tab="expanded" role="tabpanel">
+              <div class="dest-admin-section">
+                <h3>Expanded Copy</h3>
+                <div class="dest-admin-grid">
+                  <label class="dest-admin-span">
+                    Narrative
+                    <textarea id="destFieldNarrative" rows="4"></textarea>
+                  </label>
+                  <label class="dest-admin-span">
+                    Day-to-Day
+                    <textarea id="destFieldDayToDay" rows="3"></textarea>
+                  </label>
+                  <label class="dest-admin-span">
+                    Resort Details
+                    <textarea id="destFieldResortDetails" rows="3"></textarea>
+                  </label>
+                  <label class="dest-admin-span">
+                    Logistics Details
+                    <textarea id="destFieldLogisticsDetails" rows="3"></textarea>
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="dest-admin-section">
-              <h3>Advanced JSON</h3>
-              <div class="dest-admin-grid">
-                <label class="dest-admin-span">
-                  Base JSON
-                  <textarea id="destFieldBaseJson" rows="10" spellcheck="false"></textarea>
-                </label>
-                <label class="dest-admin-span">
-                  Expanded JSON
-                  <textarea id="destFieldExpandedJson" rows="12" spellcheck="false"></textarea>
-                </label>
-              </div>
-              <div class="dest-admin-actions">
-                <button class="btn secondary" type="button" id="destApplyJson">Apply JSON</button>
-                <button class="btn secondary" type="button" id="destFormatJson">Format JSON</button>
+            <div class="dest-admin-tab-panel" data-tab="json" role="tabpanel">
+              <div class="dest-admin-section">
+                <h3>Advanced JSON</h3>
+                <div class="dest-admin-grid">
+                  <label class="dest-admin-span">
+                    Base JSON
+                    <textarea id="destFieldBaseJson" rows="10" spellcheck="false"></textarea>
+                  </label>
+                  <label class="dest-admin-span">
+                    Expanded JSON
+                    <textarea id="destFieldExpandedJson" rows="12" spellcheck="false"></textarea>
+                  </label>
+                </div>
+                <div class="dest-admin-actions">
+                  <button class="btn secondary" type="button" id="destApplyJson">Apply JSON</button>
+                  <button class="btn secondary" type="button" id="destFormatJson">Format JSON</button>
+                </div>
               </div>
             </div>
           </form>

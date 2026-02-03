@@ -829,6 +829,34 @@
     }
   }
 
+  function setupTabs() {
+    const tabs = document.querySelectorAll(".dest-admin-tab");
+    const panels = document.querySelectorAll(".dest-admin-tab-panel");
+    if (!tabs.length || !panels.length) return;
+
+    const activate = (key) => {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.tab === key;
+        tab.classList.toggle("is-active", isActive);
+        tab.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+      panels.forEach((panel) => {
+        panel.classList.toggle("is-active", panel.dataset.tab === key);
+      });
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        activate(tab.dataset.tab);
+      });
+    });
+
+    const current = document.querySelector(".dest-admin-tab.is-active") || tabs[0];
+    if (current) {
+      activate(current.dataset.tab);
+    }
+  }
+
   function addDestination() {
     openModal({
       title: "Add Destination",
@@ -1105,6 +1133,7 @@
     fillEditor();
     setupAdminControls();
     bindEditor();
+    setupTabs();
   }
 
   window.DMZDestinations = {
