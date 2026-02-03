@@ -54,6 +54,7 @@
   const editToggle = document.querySelector(".dest-page-edit-toggle");
   const saveButton = document.querySelector(".dest-page-save");
   const cancelButton = document.querySelector(".dest-page-cancel");
+  const logoutButton = document.querySelector(".dest-page-logout");
   const heroInput = document.getElementById("destEditHeroImage");
   const isoInput = document.getElementById("destEditIsoImage");
   const addButtons = document.querySelectorAll(".dest-page-add");
@@ -109,6 +110,7 @@
     const editing = document.body.classList.contains("dest-page-editing");
     const label = !authed ? "DMZ Login" : editing ? "Close Editor" : "Edit Page";
     if (editToggle) editToggle.textContent = label;
+    if (logoutButton) logoutButton.style.display = authed ? "inline-flex" : "none";
   }
 
   function buildLoginModal(onSuccess) {
@@ -822,6 +824,15 @@
       cancelButton.addEventListener("click", () => {
         if (isDirty && !window.confirm("Discard edits and reload this destination?")) return;
         window.location.reload();
+      });
+    }
+
+    if (logoutButton) {
+      logoutButton.addEventListener("click", () => {
+        setToken("");
+        updateAuthState();
+        setEditMode(false);
+        setPanelOpen(false);
       });
     }
 
