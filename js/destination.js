@@ -57,6 +57,12 @@
   const logoutButton = document.querySelector(".dest-page-logout");
   const heroInput = document.getElementById("destEditHeroImage");
   const isoInput = document.getElementById("destEditIsoImage");
+  const heroUploadInput = document.getElementById("destHeroUpload");
+  const heroUploadButton = document.getElementById("destHeroUploadBtn");
+  const heroUploadStatus = document.getElementById("destHeroUploadStatus");
+  const isoUploadInput = document.getElementById("destIsoUpload");
+  const isoUploadButton = document.getElementById("destIsoUploadBtn");
+  const isoUploadStatus = document.getElementById("destIsoUploadStatus");
   const addButtons = document.querySelectorAll(".dest-page-add");
 
   let currentBase = null;
@@ -94,6 +100,77 @@
       headers.Authorization = `Bearer ${token}`;
     }
     return fetch(path, { ...options, headers });
+  }
+
+  async function requestImagesDirectUpload(variant) {
+    if (!getToken()) {
+      return new Promise((resolve) => {
+        buildLoginModal(() => resolve(requestImagesDirectUpload(variant)));
+      });
+    }
+    const resp = await apiFetch(`${apiBase || ""}/api/admin/images-direct-upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variant }),
+    });
+    if (!resp.ok) {
+      throw new Error("Images direct upload failed.");
+    }
+    return resp.json();
+  }
+
+  async function uploadImageFile(file, statusEl, variant) {
+    if (!file) return null;
+    if (statusEl) statusEl.textContent = "Requesting upload...";
+    const data = await requestImagesDirectUpload(variant);
+    const uploadURL = data?.uploadURL;
+    const deliveryUrl = data?.deliveryUrl || "";
+    if (!uploadURL) throw new Error("Missing upload URL.");
+
+    if (statusEl) statusEl.textContent = "Uploading...";
+    await new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadURL, true);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!statusEl || !event.lengthComputable) return;
+        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+        statusEl.textContent = `Uploading... ${percent}%`;
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error("Upload failed"));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.send(formData);
+    });
+
+    if (statusEl) {
+      statusEl.textContent = deliveryUrl ? "Upload complete." : "Upload complete. Add URL manually.";
+    }
+    return deliveryUrl;
+  }
+
+  function isCloudflareImageUrl(value) {
+    if (!value) return false;
+    return String(value).includes("imagedelivery.net/");
+  }
+
+  async function deleteImageByUrl(url) {
+    if (!url || !isCloudflareImageUrl(url)) return;
+    try {
+      await apiFetch(`${apiBase || ""}/api/admin/images-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+    } catch (error) {
+      // ignore delete failures
+    }
   }
 
   function updateAuthState() {
@@ -845,6 +922,58 @@
         if (target) addListItem(target);
       });
     });
+
+    if (heroUploadButton && heroUploadInput) {
+      heroUploadButton.addEventListener("click", () => {
+        heroUploadInput.click();
+      });
+      heroUploadInput.addEventListener("change", async () => {
+        const file = heroUploadInput.files ? heroUploadInput.files[0] : null;
+        if (!file) return;
+        const previousUrl = heroInput ? heroInput.value.trim() : "";
+        try {
+          const url = await uploadImageFile(file, heroUploadStatus, "travelhero");
+          if (url && heroInput) {
+            heroInput.value = url;
+            setHeroImage(url);
+            markDirty();
+          }
+          if (previousUrl && previousUrl !== url) {
+            deleteImageByUrl(previousUrl);
+          }
+        } catch (error) {
+          if (heroUploadStatus) heroUploadStatus.textContent = "Upload failed.";
+        } finally {
+          heroUploadInput.value = "";
+        }
+      });
+    }
+
+    if (isoUploadButton && isoUploadInput) {
+      isoUploadButton.addEventListener("click", () => {
+        isoUploadInput.click();
+      });
+      isoUploadInput.addEventListener("change", async () => {
+        const file = isoUploadInput.files ? isoUploadInput.files[0] : null;
+        if (!file) return;
+        const previousUrl = isoInput ? isoInput.value.trim() : "";
+        try {
+          const url = await uploadImageFile(file, isoUploadStatus, "traveliso");
+          if (url && isoInput) {
+            isoInput.value = url;
+            renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: url, name: nameEl?.textContent || "" });
+            markDirty();
+          }
+          if (previousUrl && previousUrl !== url) {
+            deleteImageByUrl(previousUrl);
+          }
+        } catch (error) {
+          if (isoUploadStatus) isoUploadStatus.textContent = "Upload failed.";
+        } finally {
+          isoUploadInput.value = "";
+        }
+      });
+    }
   }
 
   loadDestination();
