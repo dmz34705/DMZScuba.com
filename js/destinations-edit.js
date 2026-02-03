@@ -20,7 +20,7 @@
   const resetButton = document.querySelector(".dest-admin-reset");
   const refreshButton = document.querySelector(".dest-admin-refresh");
   const deleteButton = document.getElementById("destDelete");
-  const listEl = document.getElementById("destAdminList");
+  const listEl = document.getElementById("destAdminSelect");
   const searchInput = document.getElementById("destAdminSearch");
 
   const emptyState = adminPanel ? adminPanel.querySelector(".dest-admin-empty") : null;
@@ -504,35 +504,38 @@
     );
 
     listEl.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a destination...";
+    listEl.appendChild(placeholder);
+
+    const matches = [];
+    const selectedItem = state.selectedId
+      ? items.find((item) => item && item.id === state.selectedId)
+      : null;
+
     items.forEach((item) => {
       if (!item || !item.id) return;
       if (term) {
         const hay = `${item.name || ""} ${item.subtitle || ""} ${item.id}`.toLowerCase();
         if (!hay.includes(term)) return;
       }
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "dest-admin-item";
-      button.dataset.id = item.id;
-      if (item.id === state.selectedId) {
-        button.classList.add("is-active");
-      }
-
-      const title = document.createElement("span");
-      title.className = "dest-admin-item-title";
-      title.textContent = item.name || item.id || "Destination";
-
-      const sub = document.createElement("span");
-      sub.className = "dest-admin-item-sub";
-      sub.textContent = item.subtitle || "No subtitle";
-
-      button.appendChild(title);
-      button.appendChild(sub);
-      button.addEventListener("click", () => {
-        selectId(item.id);
-      });
-      listEl.appendChild(button);
+      matches.push(item);
     });
+
+    if (selectedItem && !matches.some((item) => item.id === selectedItem.id)) {
+      matches.unshift(selectedItem);
+    }
+
+    matches.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.name || item.id || "Destination";
+      listEl.appendChild(option);
+    });
+
+    listEl.value = state.selectedId || "";
   }
 
   function setFormValue(el, value) {
@@ -1093,6 +1096,14 @@
 
     if (deleteButton) {
       deleteButton.addEventListener("click", deleteDestination);
+    }
+
+    if (listEl) {
+      listEl.addEventListener("change", () => {
+        const nextId = listEl.value;
+        if (!nextId) return;
+        selectId(nextId);
+      });
     }
 
     if (searchInput) {
