@@ -208,6 +208,9 @@ body {
   scroll-snap-type: x mandatory;
   padding: 10px 8px 18px;
   align-items: stretch;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   --media-card-height: 600px;
   --media-stack-gap: 16px;
   --compact-thumb-height: 150px;
@@ -247,9 +250,9 @@ body {
 
 .destination-media-grid .media-card {
   border-radius: var(--radius);
-  border: 1px solid rgba(255,255,255,0.10);
-  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
-  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   overflow: hidden;
   position: relative;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -262,8 +265,8 @@ body {
 
 .destination-media-grid .media-card:hover{
   transform: translateY(-2px);
-  border-color: rgba(85,185,255,0.35);
-  background: linear-gradient(180deg, rgba(85,185,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+  border-color: transparent;
+  background: transparent;
   z-index: 1;
 }
 
