@@ -188,6 +188,7 @@ body {
   border: 0;
   background: transparent;
   padding: 0 0 8px;
+  box-shadow: none;
   display: grid;
   gap: 12px;
 }
@@ -466,6 +467,7 @@ body {
 .destination-media {
   position: relative;
   overflow: visible;
+  background: transparent;
 }
 
 .media-arrow {
