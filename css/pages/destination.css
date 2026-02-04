@@ -358,9 +358,23 @@ body {
 }
 
 .destination-overview-grid {
+  margin-top: 16px;
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.overview-hero-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(1200px 600px at 20% 0%, rgba(60, 170, 255, 0.18) 0%, rgba(5, 11, 20, 0) 60%),
+    linear-gradient(180deg, rgba(8, 14, 24, 0.82) 0%, rgba(6, 12, 22, 0.92) 100%);
+  padding: 20px;
+}
+
+.overview-hero-card h2 {
+  margin-top: 0;
 }
 
 .overview-card {
