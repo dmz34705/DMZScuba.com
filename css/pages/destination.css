@@ -208,7 +208,7 @@ body {
   align-items: stretch;
   --media-card-height: 600px;
   --media-stack-gap: 16px;
-  --compact-thumb-height: 100px;
+  --compact-thumb-height: 150px;
 }
 
 .destination-media-grid .media-card {
@@ -376,7 +376,7 @@ body {
 }
 
 .destination-media-grid .media-card.is-compact .media-thumb-img{
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .destination-media-grid .media-card.is-compact .media-body h3{
