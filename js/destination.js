@@ -1280,7 +1280,9 @@
       const blocks = getBlocks();
       const target = blocks[index];
       if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+      // Scroll within the media grid only; avoid moving the page on mobile.
+      const targetLeft = target.offsetLeft;
+      mediaGrid.scrollTo({ left: targetLeft, behavior: "smooth" });
       setActiveDot(index);
     };
 
