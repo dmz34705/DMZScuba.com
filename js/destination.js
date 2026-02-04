@@ -281,6 +281,35 @@
     target.appendChild(overlay);
   }
 
+  function applyThumbAspect(thumb, width, height) {
+    if (!thumb || !width || !height) return;
+    thumb.style.setProperty("--media-ratio", `${width} / ${height}`);
+    const ratio = width / height;
+    if (ratio >= 1.1) {
+      thumb.classList.add("is-horizontal");
+    } else {
+      thumb.classList.remove("is-horizontal");
+    }
+  }
+
+  function renderMeta(metaItems, location, target) {
+    const items = Array.isArray(metaItems) ? [...metaItems] : [];
+    if (location && !items.some((entry) => String(entry || "").toLowerCase() === location.toLowerCase())) {
+      items.push(location);
+    }
+    if (items.length === 0) return;
+    items.forEach((item, index) => {
+      if (index > 0) {
+        const sep = document.createElement("span");
+        sep.textContent = "/";
+        target.appendChild(sep);
+      }
+      const span = document.createElement("span");
+      span.textContent = item;
+      target.appendChild(span);
+    });
+  }
+
   function debugLog(...args) {
     if (!isDev) return;
     console.log(...args);
@@ -945,7 +974,7 @@
 
       const thumb = document.createElement("button");
       thumb.type = "button";
-      thumb.className = "media-thumb";
+      thumb.className = "media-thumb media-link";
       thumb.setAttribute("aria-label", item.title || "Open trip clip");
 
       if (thumbUrl && isImageUrl(thumbUrl)) {
@@ -955,15 +984,22 @@
         img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
         img.loading = "lazy";
         img.decoding = "async";
+        img.addEventListener("load", () => {
+          applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
+        });
         thumb.appendChild(img);
+        thumb.classList.add("has-thumb");
       } else {
         const faux = document.createElement("div");
         faux.className = "media-thumb-faux";
         faux.textContent = item.title || "Trip clip";
         thumb.appendChild(faux);
+        applyThumbAspect(thumb, 16, 9);
       }
 
       if (isVideo) addPlayOverlay(thumb);
+      if (youtubeId) thumb.classList.add("is-youtube");
+      if (isVideo) thumb.classList.add("is-video");
 
       thumb.addEventListener("click", () => {
         if (youtubeId) {
@@ -983,8 +1019,16 @@
         }
       });
 
+      const badge = document.createElement("span");
+      badge.className = "media-badge";
+      badge.textContent = item.badge || (item.type ? item.type.toUpperCase() : "MEDIA");
+
       const body = document.createElement("div");
       body.className = "media-body";
+
+      const badgeRow = document.createElement("div");
+      badgeRow.className = "media-badge-row";
+      badgeRow.appendChild(badge);
 
       const title = document.createElement("h3");
       title.textContent = item.title || "Trip Clip";
@@ -992,9 +1036,20 @@
       const description = document.createElement("p");
       description.textContent =
         item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
+      if (!item.description) {
+        description.classList.add("media-desc-empty");
+      }
 
+      const meta = document.createElement("div");
+      meta.className = "media-meta";
+      renderMeta(item.meta, item.location, meta);
+
+      body.appendChild(badgeRow);
       body.appendChild(title);
       body.appendChild(description);
+      if ((item.meta && item.meta.length) || item.location) {
+        body.appendChild(meta);
+      }
 
       card.appendChild(thumb);
       card.appendChild(body);
