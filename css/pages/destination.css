@@ -408,6 +408,10 @@ body {
   min-height: calc((var(--media-card-height) - var(--media-stack-gap)) / 2);
 }
 
+.destination-media-grid .media-stack .media-card.is-compact {
+  height: calc((var(--media-card-height) - var(--media-stack-gap)) / 2);
+}
+
 .destination-media-grid .media-card.is-compact .media-thumb{
   height: var(--compact-thumb-height) !important;
   min-height: var(--compact-thumb-height);
