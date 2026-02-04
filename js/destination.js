@@ -4,6 +4,8 @@
   const apiBaseUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
   const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
   const apiAdminBulkUrl = apiBase ? `${apiBase}/api/admin/destinations-bulk` : "/api/admin/destinations-bulk";
+  const mediaApiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
+  const mediaDataUrl = "/assets/data/media.json";
   const tokenStorageKey = "dmzMediaToken";
   const nameEl = document.getElementById("destName");
   const subtitleEl = document.getElementById("destSubtitle");
@@ -59,6 +61,8 @@
   const howItWorksEl = document.getElementById("destHowItWorks");
   const contentMomentsEl = document.getElementById("destContentMoments");
   const mediaStatusEl = document.getElementById("destMediaStatus");
+  const mediaGrid = document.getElementById("destMediaGrid");
+  const mediaLink = document.getElementById("destMediaLink");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const metaDescriptionEl = document.querySelector('meta[name="description"]');
   const adminPanel = document.getElementById("destPageAdminPanel");
@@ -84,6 +88,7 @@
   let currentExpanded = null;
   let currentId = "";
   let isDirty = false;
+  let mediaRequestId = 0;
   const isDev =
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
     window.location.hostname.endsWith(".local");
@@ -92,6 +97,180 @@
     if (!text) return "";
     if (text.length <= maxLength) return text;
     return `${text.slice(0, maxLength - 1).trim()}…`;
+  }
+
+  function normalizeKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function matchesLocationKey(locationKey, targetKey) {
+    if (!locationKey || !targetKey) return false;
+    return locationKey === targetKey || locationKey.includes(targetKey) || targetKey.includes(locationKey);
+  }
+
+  function resolveUrl(url) {
+    if (!url) return "";
+    const normalized = url.replace(/\\/g, "/");
+    if (normalized.startsWith("assets/")) {
+      return `/${normalized}`;
+    }
+    if (normalized.startsWith("./assets/")) {
+      return `/${normalized.slice(2)}`;
+    }
+    if (/^(?:[a-z]+:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
+      return url;
+    }
+    if (url.startsWith("/")) return url;
+    try {
+      return new URL(url, window.location.href).href;
+    } catch (error) {
+      return url;
+    }
+  }
+
+  function isImageUrl(url) {
+    return /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/i.test(url);
+  }
+
+  function isVideoUrl(url) {
+    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
+  }
+
+  function getStreamIdFromUrl(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname;
+      if (host.includes("videodelivery.net") || host.includes("cloudflarestream.com") || host.includes("iframe.videodelivery.net")) {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts[0]) return parts[0];
+      }
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function buildStreamThumb(id) {
+    if (!id) return "";
+    return `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s`;
+  }
+
+  function getYouTubeId(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (parsed.hostname.includes("youtu.be")) {
+        return parsed.pathname.replace("/", "");
+      }
+      if (parsed.hostname.includes("youtube.com")) {
+        if (parsed.searchParams.get("v")) {
+          return parsed.searchParams.get("v") || "";
+        }
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        const embedIndex = parts.indexOf("embed");
+        if (embedIndex !== -1 && parts[embedIndex + 1]) {
+          return parts[embedIndex + 1];
+        }
+      }
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function buildYouTubeThumb(id) {
+    if (!id) return "";
+    return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+  }
+
+  function ensureMediaModal() {
+    let modal = document.querySelector(".media-video-modal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.className = "media-video-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="media-video-modal-card" role="dialog" aria-modal="true">
+        <button class="media-video-close" type="button" aria-label="Close video">x</button>
+        <div class="media-video-frame" role="presentation"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => {
+      modal.setAttribute("aria-hidden", "true");
+      const frame = modal.querySelector(".media-video-frame");
+      if (frame) frame.innerHTML = "";
+    };
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) close();
+    });
+
+    const closeBtn = modal.querySelector(".media-video-close");
+    if (closeBtn) closeBtn.addEventListener("click", close);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
+        close();
+      }
+    });
+
+    return modal;
+  }
+
+  function openYoutubeModal(id, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+    iframe.title = title || "YouTube video";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    frame.appendChild(iframe);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function openStreamModal(id, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://iframe.videodelivery.net/${id}?autoplay=true`;
+    iframe.title = title || "Cloudflare Stream video";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    frame.appendChild(iframe);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function openVideoModal(url, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.autoplay = true;
+    video.title = title || "Video";
+    frame.appendChild(video);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function addPlayOverlay(target) {
+    if (!target || target.querySelector(".media-thumb-play")) return;
+    const overlay = document.createElement("span");
+    overlay.className = "media-thumb-play";
+    overlay.setAttribute("aria-hidden", "true");
+    target.appendChild(overlay);
   }
 
   function debugLog(...args) {
@@ -730,6 +909,184 @@
     });
   }
 
+  function setMediaLink(dest) {
+    if (!mediaLink) return;
+    if (!dest) {
+      mediaLink.href = "../media/index.html";
+      return;
+    }
+    const param = dest.id || dest.name || "";
+    mediaLink.href = param
+      ? `../media/index.html?location=${encodeURIComponent(param)}`
+      : "../media/index.html";
+  }
+
+  function buildDestinationKeys(dest) {
+    const keys = new Set();
+    [dest?.id, dest?.name, dest?.heroTitle, dest?.subtitle].forEach((value) => {
+      const key = normalizeKey(value);
+      if (key) keys.add(key);
+    });
+    return [...keys];
+  }
+
+  function filterDestinationMedia(items, dest) {
+    const keys = buildDestinationKeys(dest);
+    if (!keys.length) return [];
+    return (items || []).filter((item) => {
+      if (!item) return false;
+      const locationKey = normalizeKey(item.location);
+      const tagKeys = Array.isArray(item.tags) ? item.tags.map(normalizeKey) : [];
+      return keys.some(
+        (key) =>
+          matchesLocationKey(locationKey, key) ||
+          tagKeys.some((tag) => matchesLocationKey(tag, key))
+      );
+    });
+  }
+
+  function renderDestinationMedia(items, dest) {
+    if (!mediaGrid) return;
+    mediaGrid.innerHTML = "";
+    const subset = (items || []).slice(0, 6);
+    subset.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "media-card";
+
+      const mediaUrl = resolveUrl(item.url || "");
+      const youtubeId = getYouTubeId(mediaUrl);
+      const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+      const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
+
+      let thumbUrl = resolveUrl(item.thumbUrl || "");
+      if (!thumbUrl) {
+        if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
+        else if (streamId) thumbUrl = buildStreamThumb(streamId);
+      }
+
+      const thumb = document.createElement("button");
+      thumb.type = "button";
+      thumb.className = "media-thumb";
+      thumb.setAttribute("aria-label", item.title || "Open trip clip");
+
+      if (thumbUrl && isImageUrl(thumbUrl)) {
+        const img = document.createElement("img");
+        img.className = "media-thumb-img";
+        img.src = thumbUrl;
+        img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
+        img.loading = "lazy";
+        img.decoding = "async";
+        thumb.appendChild(img);
+      } else {
+        const faux = document.createElement("div");
+        faux.className = "media-thumb-faux";
+        faux.textContent = item.title || "Trip clip";
+        thumb.appendChild(faux);
+      }
+
+      if (isVideo) addPlayOverlay(thumb);
+
+      thumb.addEventListener("click", () => {
+        if (youtubeId) {
+          openYoutubeModal(youtubeId, item.title);
+          return;
+        }
+        if (streamId) {
+          openStreamModal(streamId, item.title);
+          return;
+        }
+        if (mediaUrl && isVideoUrl(mediaUrl)) {
+          openVideoModal(mediaUrl, item.title);
+          return;
+        }
+        if (mediaUrl) {
+          window.open(mediaUrl, "_blank", "noopener");
+        }
+      });
+
+      const body = document.createElement("div");
+      body.className = "media-body";
+
+      const title = document.createElement("h3");
+      title.textContent = item.title || "Trip Clip";
+
+      const description = document.createElement("p");
+      description.textContent =
+        item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
+
+      body.appendChild(title);
+      body.appendChild(description);
+
+      card.appendChild(thumb);
+      card.appendChild(body);
+      mediaGrid.appendChild(card);
+    });
+
+    if (mediaStatusEl) {
+      mediaStatusEl.textContent = subset.length
+        ? `Latest trip clips from ${dest?.name || "this destination"}.`
+        : dest?.mediaStatus ||
+          "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
+    }
+  }
+
+  async function fetchMediaData() {
+    const cacheBuster = isDev ? `?v=${Date.now()}` : "";
+    const safeFetch = async (url, options, label) => {
+      try {
+        const res = await fetch(url, options);
+        debugLog(`[Destination Media] ${label}:`, url, res.status);
+        return res;
+      } catch (error) {
+        debugLog(`[Destination Media] ${label} failed:`, url, error);
+        return null;
+      }
+    };
+
+    const apiRes = await safeFetch(mediaApiUrl, { cache: "no-store" }, "API");
+    if (apiRes && apiRes.ok) return apiRes.json();
+
+    const fileRes = await safeFetch(`${mediaDataUrl}${cacheBuster}`, { cache: "no-store" }, "JSON");
+    if (!fileRes || !fileRes.ok) {
+      throw new Error("Failed to load media data.");
+    }
+    return fileRes.json();
+  }
+
+  async function loadDestinationMedia(dest) {
+    setMediaLink(dest);
+    if (!mediaGrid) return;
+    const requestId = ++mediaRequestId;
+    mediaGrid.innerHTML = "";
+    if (mediaStatusEl) mediaStatusEl.textContent = "Loading trip clips...";
+    setMediaLink(dest);
+
+    try {
+      const data = await fetchMediaData();
+      if (requestId !== mediaRequestId) return;
+      const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
+      const matches = filterDestinationMedia(items, dest);
+      renderDestinationMedia(matches, dest);
+    } catch (error) {
+      console.error("Failed to load destination media:", error);
+      if (requestId !== mediaRequestId) return;
+      if (mediaStatusEl) {
+        mediaStatusEl.textContent =
+          dest?.mediaStatus || "Trip clips unavailable right now. Check back soon.";
+      }
+    }
+  }
+
+  function clearDestinationMedia(message) {
+    if (mediaGrid) mediaGrid.innerHTML = "";
+    if (mediaStatusEl) {
+      mediaStatusEl.textContent =
+        message ||
+        "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
+    }
+    setMediaLink(null);
+  }
+
   function renderDestination(dest) {
     if (!dest) {
       setText(nameEl, "Destination Not Found");
@@ -777,7 +1134,7 @@
       renderPerfectFor([], []);
       renderHowItWorks([]);
       renderContentMoments([]);
-      if (mediaStatusEl) mediaStatusEl.textContent = "Trip clips coming soon.";
+      clearDestinationMedia("Trip clips coming soon.");
       return;
     }
 
@@ -836,11 +1193,7 @@
       dest.contentMoments ||
         (dest.diveSites ? dest.diveSites.slice(0, 4) : []),
     );
-    if (mediaStatusEl) {
-      mediaStatusEl.textContent =
-        dest.mediaStatus ||
-        "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
-    }
+    loadDestinationMedia(dest);
 
     if (interestLocationInput) interestLocationInput.value = displayName || "";
     if (interestIdInput) interestIdInput.value = dest.id || "";

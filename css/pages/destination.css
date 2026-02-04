@@ -183,7 +183,7 @@ body {
   margin-top: 12px;
 }
 
-.destination-media .media-card {
+.destination-media .media-panel-card {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(7, 12, 20, 0.7);
@@ -196,6 +196,107 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.destination-media-grid {
+  margin-top: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.destination-media-grid .media-card {
+  padding: 0;
+}
+
+.destination-media-grid .media-body {
+  padding: 14px 16px;
+}
+
+.media-thumb-play{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(8,12,18,0.75);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.media-thumb-play::before{
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 14px solid rgba(234,242,255,0.95);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  margin-left: 3px;
+}
+
+.media-thumb:hover .media-thumb-play{
+  transform: translate(-50%, -50%);
+  border-color: rgba(85,185,255,0.55);
+  background: rgba(10,18,30,0.85);
+}
+
+.media-video-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 14, 0.8);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+  padding: 28px 18px;
+}
+
+.media-video-modal[aria-hidden="true"]{
+  display: none;
+}
+
+.media-video-modal-card{
+  width: min(960px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(7, 12, 20, 0.96);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.6);
+  padding: 12px;
+  position: relative;
+}
+
+.media-video-frame{
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.media-video-frame iframe,
+.media-video-frame video{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.media-video-close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(8,12,18,0.85);
+  color: rgba(234,242,255,0.9);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .dmz-honey {
