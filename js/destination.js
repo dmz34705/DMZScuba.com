@@ -61,6 +61,7 @@
   const mediaStatusEl = document.getElementById("destMediaStatus");
   const mediaGrid = document.getElementById("destMediaGrid");
   const mediaLink = document.getElementById("destMediaLink");
+  const mediaDots = document.getElementById("destMediaDots");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const metaDescriptionEl = document.querySelector('meta[name="description"]');
   const adminPanel = document.getElementById("destPageAdminPanel");
@@ -87,6 +88,8 @@
   let currentId = "";
   let isDirty = false;
   let mediaRequestId = 0;
+  let mediaScrollHandler = null;
+  let mediaResizeHandler = null;
   const isDev =
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
     window.location.hostname.endsWith(".local");
@@ -1005,6 +1008,64 @@
         : dest?.mediaStatus ||
           "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
     }
+
+    initMediaCarousel(subset.length);
+  }
+
+  function initMediaCarousel(total) {
+    if (!mediaGrid || !mediaDots) return;
+    mediaDots.innerHTML = "";
+    if (total <= 3) {
+      mediaGrid.classList.remove("is-scroll");
+      mediaDots.hidden = true;
+      return;
+    }
+
+    const pageCount = Math.ceil(total / 3);
+    mediaGrid.classList.add("is-scroll");
+    mediaDots.hidden = false;
+
+    const setActiveDot = (index) => {
+      mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
+        dot.classList.toggle("is-active", i === index);
+      });
+    };
+
+    const scrollToPage = (index) => {
+      const width = mediaGrid.getBoundingClientRect().width || 1;
+      mediaGrid.scrollTo({ left: width * index, behavior: "smooth" });
+      setActiveDot(index);
+    };
+
+    for (let i = 0; i < pageCount; i += 1) {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "media-dot";
+      dot.setAttribute("aria-label", `Show clips ${i * 3 + 1} to ${Math.min(total, (i + 1) * 3)}`);
+      dot.addEventListener("click", () => scrollToPage(i));
+      mediaDots.appendChild(dot);
+    }
+
+    setActiveDot(0);
+
+    if (mediaScrollHandler) {
+      mediaGrid.removeEventListener("scroll", mediaScrollHandler);
+    }
+    mediaScrollHandler = () => {
+      const width = mediaGrid.getBoundingClientRect().width || 1;
+      const index = Math.round(mediaGrid.scrollLeft / width);
+      setActiveDot(Math.min(pageCount - 1, Math.max(0, index)));
+    };
+    mediaGrid.addEventListener("scroll", mediaScrollHandler, { passive: true });
+
+    if (mediaResizeHandler) {
+      window.removeEventListener("resize", mediaResizeHandler);
+    }
+    mediaResizeHandler = () => {
+      mediaGrid.scrollTo({ left: 0 });
+      setActiveDot(0);
+    };
+    window.addEventListener("resize", mediaResizeHandler);
   }
 
   async function fetchMediaData() {

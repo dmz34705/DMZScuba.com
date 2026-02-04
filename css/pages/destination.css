@@ -200,15 +200,60 @@ body {
 
 .destination-media-grid {
   margin-top: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
 }
 
 .destination-media-grid .media-card {
   padding: 0;
+  flex: 0 0 calc((100% - 32px) / 3);
+  scroll-snap-align: start;
 }
 
 .destination-media-grid .media-body {
   padding: 14px 16px;
+}
+
+.destination-media-grid.is-scroll {
+  scroll-padding-inline: 6px;
+}
+
+.destination-media-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.destination-media-grid::-webkit-scrollbar-track {
+  background: rgba(5, 11, 20, 0.35);
+  border-radius: 999px;
+}
+
+.destination-media-grid::-webkit-scrollbar-thumb {
+  background: rgba(85, 185, 255, 0.35);
+  border-radius: 999px;
+}
+
+.media-dots {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.media-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(234, 242, 255, 0.3);
+  cursor: pointer;
+  padding: 0;
+}
+
+.media-dot.is-active {
+  background: rgba(85, 185, 255, 0.85);
 }
 
 .media-thumb-play{
@@ -611,6 +656,10 @@ body {
 
   .destination-hero-info .two-col-side {
     padding-left: 0;
+  }
+
+  .destination-media-grid .media-card {
+    flex-basis: 80%;
   }
 }
 
