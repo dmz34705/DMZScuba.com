@@ -291,6 +291,10 @@ body {
   background: #000;
 }
 
+.destination-media-grid .media-card:not(.is-compact) .media-thumb-img{
+  object-fit: cover;
+}
+
 .destination-media-grid .media-thumb.is-horizontal .media-thumb-img{
   object-fit: cover;
 }
