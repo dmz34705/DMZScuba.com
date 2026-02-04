@@ -250,9 +250,9 @@ body {
 
 .destination-media-grid .media-card {
   border-radius: var(--radius);
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0);
   overflow: hidden;
   position: relative;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
