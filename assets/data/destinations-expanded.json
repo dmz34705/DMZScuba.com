@@ -326,13 +326,13 @@
   },
   {
     "id": "roatan",
-    "summary": "Roatan offers warm reef and wall dives with short rides and calm conditions. It is an easy Caribbean option with a relaxed daily pace.",
-    "narrative": "Roatan is built around straightforward boat diving, with two or three dives per day and plenty of time to unwind. The reefs are close to shore, and the walls deliver dramatic depth without extreme logistics. It is a solid choice for mixed-experience groups and divers who want an easy rhythm.",
+    "summary": "Warm reef and wall dives with short rides and a relaxed daily pace. Easy Caribbean logistics without feeling rushed.",
+    "narrative": "Roatan keeps the plan simple: quick transfers, short boat rides, and plenty of surface time between dives. The walls add drama, the reefs stay colorful, and the rhythm works for mixed-experience groups. Tell us your dates and cert level, and we will build the right schedule.",
     "resort": {
-      "description": "Tranquil Seas Roatan provides a quiet, boutique setup with personalized service and easy access to boat schedules. The focus is on comfort, flexibility, and simple daily flow."
+      "description": "Tranquil Seas Roatan is a quiet, boutique setup with small-group service and flexible boat times. Expect an easy pace and quick access to the dock."
     },
-    "dayToDay": "Two or three boat dives are typical, with relaxed surface intervals back at the resort or on the boat. Night dives are easy to add when conditions are calm.",
-    "resortDetails": "The boutique setup keeps groups small and schedules flexible. It is easy to adjust dive plans based on experience level or weather.",
+    "dayToDay": "Most days include two or three boat dives with relaxed surface intervals back at the resort or on the boat. Night dives are easy to add when conditions are calm.",
+    "resortDetails": "Small groups keep the schedule flexible so sites can match experience levels and goals.",
     "diveSites": [
       "Mary's Place",
       "West End Wall",
@@ -343,15 +343,15 @@
       "Mandy's Eel Garden"
     ],
     "seasonality": "Year-round; spring and summer are calm with warm water. Late summer can bring brief storms but diving remains strong.",
-    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Seasonal directs make travel easier at peak times.",
-    "logisticsDetails": "US dollars are widely accepted. Transfers are straightforward and short, but plan for airport congestion on heavy travel days.",
+    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Seasonal direct flights make travel easier at peak times.",
+    "logisticsDetails": "US dollars are widely accepted. Transfers are short, but plan extra time for airport congestion on busy travel days.",
     "logisticsTips": [
       "Pack light layers for breezy boat rides.",
       "Carry small bills for tips and taxis.",
       "Confirm baggage limits on island flights.",
       "Ask about night dive schedules early."
     ],
-    "experience": "Open Water ok, Advanced recommended for walls and deeper profiles.",
+    "experience": "Open Water ok; Advanced recommended for walls and deeper profiles.",
     "nonDiving": [
       "West End shops",
       "Beach days",
@@ -360,11 +360,11 @@
       "Local markets"
     ],
     "bullets": [
-      "Best for: easy Caribbean diving and healthy reefs.",
+      "Best for: wall + reef dives, easy logistics, warm water.",
       "Conditions: warm water with light currents.",
       "Dive rhythm: two to three dives per day with short rides.",
       "Skill: Open Water ok; Advanced for deeper walls.",
-      "Logistics: easy transfers and relaxed daily pace.",
+      "Logistics: easy transfers and a relaxed daily pace.",
       "Extras: great for mixed groups and non-divers."
     ],
     "diveSiteHighlights": [

@@ -736,7 +736,7 @@
   {
     "id": "roatan",
     "name": "Roatan",
-    "subtitle": "Unmatched topography anywhere in the Caribbean. With some incredibly unique marine life as well!",
+    "subtitle": "Caribbean walls, reef gardens, and easy boat rides that keep the trip simple and rewarding.",
     "lat": 18.2,
     "lon": -86,
     "tags": [
@@ -748,11 +748,11 @@
     "heroImage": "/assets/images/destinations/roatan-hero.jpeg",
     "isoImage": "/assets/images/isometric/roatan-iso.jpg",
     "isoTitle": "Tranquil Seas Roatan",
-    "isoDesc": "Boutique eco-lodge with easy access to Roatan's best reefs and walls.",
-    "summary": "Warm reef diving and easy resort access with short boat rides and calm conditions. Great for relaxed multi-day dive schedules.",
+    "isoDesc": "Boutique eco-lodge with easy access to Roatan's walls and reef gardens.",
+    "summary": "Short boat rides, warm water, and dramatic walls make Roatan a low-stress trip with a big underwater payoff. Great for mixed groups and relaxed multi-day schedules.",
     "resort": {
       "name": "Tranquil Seas Roatan",
-      "description": "Small eco-lodge with personalized service, perfect for relaxed days, flexible dive schedules, and easy boat access."
+      "description": "Small eco-lodge with personalized service, flexible schedules, and quick access to the boat dock."
     },
     "diveSites": [
       "Mary's Place",
@@ -768,9 +768,9 @@
       "temperature": "78-84 F",
       "currents": "Light"
     },
-    "seasonality": "Year-round; spring and summer are calm. Late summer can be hot with occasional rain.",
-    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Direct flights are available seasonally.",
-    "experience": "Open Water; Advanced for walls and deeper profiles.",
+    "seasonality": "Year-round; spring and summer are calm. Late summer can be hot with brief rain.",
+    "logistics": "Fly into RTB; 20-45 minute transfer depending on lodging. Seasonal direct flights at peak times.",
+    "experience": "Open Water ok; Advanced recommended for walls and deeper profiles.",
     "nonDiving": [
       "West End shops",
       "Beach days",
@@ -778,22 +778,22 @@
       "Snorkeling from shore",
       "Local markets"
     ],
-    "narrative": "Roatan is effortless Caribbean diving with vibrant reefs and memorable walls just minutes from shore. Pair it with a quiet eco-lodge and you get a relaxed pace without sacrificing quality underwater time. It is an excellent option for groups with mixed experience levels.",
+    "narrative": "Roatan keeps the plan simple: short transfers, quick boat rides, and colorful reefs with dramatic walls. The pace is relaxed, but the diving stays interesting for every experience level. Tell us your dates and cert level, and we will build the right schedule.",
     "bullets": [
-      "Best for: reef dives, dramatic topography, healthy reefs.",
-      "Conditions: warm water; 3-5mm recommended.",
-      "Skill: Open Water+ recommended; Advanced helps.",
-      "Dive style: short rides, two to three dives per day.",
-      "Logistics: easy transfers and flexible schedules.",
-      "Extras: guided dives, training progression, land-based activities."
+      "Best for: wall + reef dives, easy logistics, warm water.",
+      "Conditions: 78-84 F, light currents, 60-100 ft vis.",
+      "Dive rhythm: short rides, two to three dives per day.",
+      "Skill: Open Water ok; Advanced for deeper walls.",
+      "Resort: small-group service and flexible schedules.",
+      "Get involved: share dates, cert level, and goals."
     ],
     "whyItWorks": {
-      "vibe": "Unmatched topography anywhere in the Caribbean.",
-      "whoLovesIt": "Divers who want simple logistics and lots of bottom time.",
+      "vibe": "Caribbean walls and reef gardens with short boat rides.",
+      "whoLovesIt": "Divers who want easy logistics, relaxed pacing, and strong underwater variety.",
       "signatureMoments": [
         "A headline dive that feels larger than life.",
-        "A second, different environment that keeps the week fresh.",
-        "A relaxed surface-interval rhythm that makes multi-dive days feel easy."
+        "A different style of site that keeps the week fresh.",
+        "A relaxed surface interval that makes multi-dive days easy."
       ]
     },
     "sampleItinerary": [
@@ -807,11 +807,11 @@
       },
       {
         "day": "Day 3",
-        "plan": "Headline site day (wall/wreck/cenote/kelp); slower pace and extra photo time."
+        "plan": "Headline site day (wall or wreck); slower pace and extra photo time."
       },
       {
         "day": "Day 4",
-        "plan": "Choose-your-own: reefs + critters, or a deeper/advanced option."
+        "plan": "Choose-your-own: shallow reefs and critters, or a deeper wall option."
       },
       {
         "day": "Day 5",
