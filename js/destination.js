@@ -310,6 +310,10 @@
     });
   }
 
+  function getItemKey(item, index) {
+    return item && item.id ? item.id : `idx-${index}`;
+  }
+
   function debugLog(...args) {
     if (!isDev) return;
     console.log(...args);
@@ -957,103 +961,139 @@
     });
   }
 
-  function renderDestinationMedia(items, dest) {
+  function createDestinationMediaCard(item, dest, compact = false) {
+    const card = document.createElement("article");
+    card.className = compact ? "media-card is-compact" : "media-card";
+
+    const mediaUrl = resolveUrl(item.url || "");
+    const youtubeId = getYouTubeId(mediaUrl);
+    const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+    const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
+    const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
+
+    const thumb = document.createElement("button");
+    thumb.type = "button";
+    thumb.className = "media-thumb media-link";
+    thumb.setAttribute("aria-label", item.title || "Open trip clip");
+
+    if (thumbUrl && isImageUrl(thumbUrl)) {
+      const img = document.createElement("img");
+      img.className = "media-thumb-img";
+      img.src = thumbUrl;
+      img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("load", () => {
+        applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
+      });
+      thumb.appendChild(img);
+      thumb.classList.add("has-thumb");
+    } else {
+      const faux = document.createElement("div");
+      faux.className = "media-thumb-faux";
+      faux.textContent = item.title || "Trip clip";
+      thumb.appendChild(faux);
+      applyThumbAspect(thumb, 16, 9);
+    }
+
+    if (isVideo) addPlayOverlay(thumb);
+    if (youtubeId) thumb.classList.add("is-youtube");
+    if (isVideo) thumb.classList.add("is-video");
+
+    thumb.addEventListener("click", () => {
+      if (youtubeId) {
+        openYoutubeModal(youtubeId, item.title);
+        return;
+      }
+      if (streamId) {
+        openStreamModal(streamId, item.title);
+        return;
+      }
+      if (mediaUrl && isVideoUrl(mediaUrl)) {
+        openVideoModal(mediaUrl, item.title);
+        return;
+      }
+      if (mediaUrl) {
+        window.open(mediaUrl, "_blank", "noopener");
+      }
+    });
+
+    const badge = document.createElement("span");
+    badge.className = "media-badge";
+    badge.textContent = item.badge || (item.type ? item.type.toUpperCase() : "MEDIA");
+
+    const body = document.createElement("div");
+    body.className = "media-body";
+
+    const badgeRow = document.createElement("div");
+    badgeRow.className = "media-badge-row";
+    badgeRow.appendChild(badge);
+
+    const title = document.createElement("h3");
+    title.textContent = item.title || "Trip Clip";
+
+    const description = document.createElement("p");
+    description.textContent =
+      item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
+    if (!item.description) {
+      description.classList.add("media-desc-empty");
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "media-meta";
+    renderMeta(item.meta, item.location, meta);
+
+    body.appendChild(badgeRow);
+    body.appendChild(title);
+    body.appendChild(description);
+    if ((item.meta && item.meta.length) || item.location) {
+      body.appendChild(meta);
+    }
+
+    card.appendChild(thumb);
+    card.appendChild(body);
+    return card;
+  }
+
+  function buildMediaBlocks(items, orientationMap) {
+    const blocks = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      const key = getItemKey(item, i);
+      const orientation = orientationMap.get(key) || "unknown";
+      if (orientation === "horizontal" && i + 1 < items.length) {
+        const next = items[i + 1];
+        const nextKey = getItemKey(next, i + 1);
+        const nextOrientation = orientationMap.get(nextKey) || "unknown";
+        if (nextOrientation === "horizontal") {
+          blocks.push({ type: "stack", items: [item, next] });
+          i += 1;
+          continue;
+        }
+      }
+      blocks.push({ type: "single", item });
+    }
+    return blocks;
+  }
+
+  function renderDestinationMedia(items, dest, orientationMap) {
     if (!mediaGrid) return;
     mediaGrid.innerHTML = "";
     const subset = (items || []).slice(0, 6);
-    subset.forEach((item) => {
-      const card = document.createElement("article");
-      card.className = "media-card";
+    const map = orientationMap || new Map();
+    const blocks = buildMediaBlocks(subset, map);
 
-      const mediaUrl = resolveUrl(item.url || "");
-      const youtubeId = getYouTubeId(mediaUrl);
-      const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
-      const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
-
-      const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
-
-      const thumb = document.createElement("button");
-      thumb.type = "button";
-      thumb.className = "media-thumb media-link";
-      thumb.setAttribute("aria-label", item.title || "Open trip clip");
-
-      if (thumbUrl && isImageUrl(thumbUrl)) {
-        const img = document.createElement("img");
-        img.className = "media-thumb-img";
-        img.src = thumbUrl;
-        img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.addEventListener("load", () => {
-          applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
+    blocks.forEach((block) => {
+      if (block.type === "stack") {
+        const stack = document.createElement("div");
+        stack.className = "media-stack";
+        block.items.forEach((item) => {
+          stack.appendChild(createDestinationMediaCard(item, dest, true));
         });
-        thumb.appendChild(img);
-        thumb.classList.add("has-thumb");
+        mediaGrid.appendChild(stack);
       } else {
-        const faux = document.createElement("div");
-        faux.className = "media-thumb-faux";
-        faux.textContent = item.title || "Trip clip";
-        thumb.appendChild(faux);
-        applyThumbAspect(thumb, 16, 9);
+        mediaGrid.appendChild(createDestinationMediaCard(block.item, dest));
       }
-
-      if (isVideo) addPlayOverlay(thumb);
-      if (youtubeId) thumb.classList.add("is-youtube");
-      if (isVideo) thumb.classList.add("is-video");
-
-      thumb.addEventListener("click", () => {
-        if (youtubeId) {
-          openYoutubeModal(youtubeId, item.title);
-          return;
-        }
-        if (streamId) {
-          openStreamModal(streamId, item.title);
-          return;
-        }
-        if (mediaUrl && isVideoUrl(mediaUrl)) {
-          openVideoModal(mediaUrl, item.title);
-          return;
-        }
-        if (mediaUrl) {
-          window.open(mediaUrl, "_blank", "noopener");
-        }
-      });
-
-      const badge = document.createElement("span");
-      badge.className = "media-badge";
-      badge.textContent = item.badge || (item.type ? item.type.toUpperCase() : "MEDIA");
-
-      const body = document.createElement("div");
-      body.className = "media-body";
-
-      const badgeRow = document.createElement("div");
-      badgeRow.className = "media-badge-row";
-      badgeRow.appendChild(badge);
-
-      const title = document.createElement("h3");
-      title.textContent = item.title || "Trip Clip";
-
-      const description = document.createElement("p");
-      description.textContent =
-        item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
-      if (!item.description) {
-        description.classList.add("media-desc-empty");
-      }
-
-      const meta = document.createElement("div");
-      meta.className = "media-meta";
-      renderMeta(item.meta, item.location, meta);
-
-      body.appendChild(badgeRow);
-      body.appendChild(title);
-      body.appendChild(description);
-      if ((item.meta && item.meta.length) || item.location) {
-        body.appendChild(meta);
-      }
-
-      card.appendChild(thumb);
-      card.appendChild(body);
-      mediaGrid.appendChild(card);
     });
 
     if (mediaStatusEl) {
@@ -1063,7 +1103,7 @@
           "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
     }
 
-    initMediaCarousel(subset.length);
+    initMediaCarousel(blocks.length);
   }
 
   function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
@@ -1110,24 +1150,47 @@
     return fields.some((value) => /vertical|portrait/i.test(String(value || "")));
   }
 
-  async function prioritizeVerticalMedia(items) {
-    const list = Array.isArray(items) ? [...items] : [];
+  function hasHorizontalHint(item) {
+    const fields = [
+      ...(item.meta || []),
+      ...(item.tags || []),
+      item.badge,
+      item.title,
+      item.description,
+    ];
+    return fields.some((value) => /horizontal|landscape/i.test(String(value || "")));
+  }
+
+  async function getMediaOrientations(items) {
+    const list = Array.isArray(items) ? items : [];
     const entries = await Promise.all(
       list.map(async (item, index) => {
-        if (!item) return { item, index, isVertical: false };
-        if (hasVerticalHint(item)) return { item, index, isVertical: true };
+        const key = getItemKey(item, index);
+        if (!item) return [key, "unknown"];
+        if (hasVerticalHint(item)) return [key, "vertical"];
+        if (hasHorizontalHint(item)) return [key, "horizontal"];
         const mediaUrl = resolveUrl(item.url || "");
         const youtubeId = getYouTubeId(mediaUrl);
         const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
         const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
         const aspect = await getImageAspect(thumbUrl);
-        if (!aspect || !aspect.width || !aspect.height) {
-          return { item, index, isVertical: false };
-        }
+        if (!aspect || !aspect.width || !aspect.height) return [key, "unknown"];
         const ratio = aspect.height / aspect.width;
-        return { item, index, isVertical: ratio >= 1.15 };
+        if (ratio >= 1.15) return [key, "vertical"];
+        if (ratio <= 0.85) return [key, "horizontal"];
+        return [key, "square"];
       })
     );
+    return new Map(entries);
+  }
+
+  function prioritizeVerticalMedia(items, orientationMap) {
+    const list = Array.isArray(items) ? [...items] : [];
+    const entries = list.map((item, index) => {
+      const key = getItemKey(item, index);
+      const orientation = orientationMap.get(key) || "unknown";
+      return { item, index, isVertical: orientation === "vertical" };
+    });
     return entries
       .sort((a, b) => {
         if (a.isVertical !== b.isVertical) return a.isVertical ? -1 : 1;
@@ -1260,9 +1323,10 @@
       if (requestId !== mediaRequestId) return;
       const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
       const matches = filterDestinationMedia(items, dest);
-      const ordered = await prioritizeVerticalMedia(matches);
+      const orientationMap = await getMediaOrientations(matches);
+      const ordered = prioritizeVerticalMedia(matches, orientationMap);
       if (requestId !== mediaRequestId) return;
-      renderDestinationMedia(ordered, dest);
+      renderDestinationMedia(ordered, dest, orientationMap);
     } catch (error) {
       console.error("Failed to load destination media:", error);
       if (requestId !== mediaRequestId) return;
