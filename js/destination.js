@@ -941,11 +941,7 @@
       const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
       const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
 
-      let thumbUrl = resolveUrl(item.thumbUrl || "");
-      if (!thumbUrl) {
-        if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
-        else if (streamId) thumbUrl = buildStreamThumb(streamId);
-      }
+      const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
 
       const thumb = document.createElement("button");
       thumb.type = "button";
@@ -1013,6 +1009,76 @@
     }
 
     initMediaCarousel(subset.length);
+  }
+
+  function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
+    let thumbUrl = resolveUrl(item.thumbUrl || "");
+    if (!thumbUrl) {
+      if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
+      else if (streamId) thumbUrl = buildStreamThumb(streamId);
+      else if (item.type === "photo" && isImageUrl(mediaUrl)) thumbUrl = mediaUrl;
+    }
+    return thumbUrl;
+  }
+
+  async function getImageAspect(url) {
+    if (!url) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      let done = false;
+      const finish = (result) => {
+        if (done) return;
+        done = true;
+        resolve(result);
+      };
+      const timer = setTimeout(() => finish(null), 1200);
+      img.onload = () => {
+        clearTimeout(timer);
+        finish({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        finish(null);
+      };
+      img.src = url;
+    });
+  }
+
+  function hasVerticalHint(item) {
+    const fields = [
+      ...(item.meta || []),
+      ...(item.tags || []),
+      item.badge,
+      item.title,
+      item.description,
+    ];
+    return fields.some((value) => /vertical|portrait/i.test(String(value || "")));
+  }
+
+  async function prioritizeVerticalMedia(items) {
+    const list = Array.isArray(items) ? [...items] : [];
+    const entries = await Promise.all(
+      list.map(async (item, index) => {
+        if (!item) return { item, index, isVertical: false };
+        if (hasVerticalHint(item)) return { item, index, isVertical: true };
+        const mediaUrl = resolveUrl(item.url || "");
+        const youtubeId = getYouTubeId(mediaUrl);
+        const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+        const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
+        const aspect = await getImageAspect(thumbUrl);
+        if (!aspect || !aspect.width || !aspect.height) {
+          return { item, index, isVertical: false };
+        }
+        const ratio = aspect.height / aspect.width;
+        return { item, index, isVertical: ratio >= 1.15 };
+      })
+    );
+    return entries
+      .sort((a, b) => {
+        if (a.isVertical !== b.isVertical) return a.isVertical ? -1 : 1;
+        return a.index - b.index;
+      })
+      .map((entry) => entry.item);
   }
 
   function initMediaCarousel(total) {
@@ -1133,14 +1199,15 @@
     const requestId = ++mediaRequestId;
     mediaGrid.innerHTML = "";
     if (mediaStatusEl) mediaStatusEl.textContent = "Loading trip clips...";
-    setMediaLink(dest);
 
     try {
       const data = await fetchMediaData();
       if (requestId !== mediaRequestId) return;
       const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
       const matches = filterDestinationMedia(items, dest);
-      renderDestinationMedia(matches, dest);
+      const ordered = await prioritizeVerticalMedia(matches);
+      if (requestId !== mediaRequestId) return;
+      renderDestinationMedia(ordered, dest);
     } catch (error) {
       console.error("Failed to load destination media:", error);
       if (requestId !== mediaRequestId) return;
