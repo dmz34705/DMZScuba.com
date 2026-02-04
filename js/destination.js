@@ -93,6 +93,10 @@
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
     window.location.hostname.endsWith(".local");
 
+  function isEditing() {
+    return document.body.classList.contains("dest-page-editing");
+  }
+
   function truncateText(text, maxLength) {
     if (!text) return "";
     if (text.length <= maxLength) return text;
@@ -677,6 +681,7 @@
       diveSitesTitleEl,
       nonDivingTitleEl,
       tripSnapshotTitleEl,
+      mediaStatusEl,
     ];
     editableEls.forEach((el) => {
       if (!el) return;
@@ -696,14 +701,27 @@
     });
   }
 
-  function addDeleteButton(li) {
+  function addDeleteButton(li, force = false) {
     if (!li || li.querySelector(".dest-page-delete")) return;
+    if (!force && !isEditing()) return;
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "dest-page-delete";
     btn.setAttribute("aria-label", "Delete item");
     btn.innerHTML = "&#128465;";
     li.appendChild(btn);
+  }
+
+  function syncDeleteButtons(active) {
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
+    lists.forEach((list) => {
+      if (!list) return;
+      if (active) {
+        list.querySelectorAll("li").forEach((li) => addDeleteButton(li, true));
+      } else {
+        list.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
+      }
+    });
   }
 
   function bindDeleteHandlers() {
@@ -774,6 +792,7 @@
       diveSitesTitleEl,
       nonDivingTitleEl,
       tripSnapshotTitleEl,
+      mediaStatusEl,
     ];
 
     editableEls.forEach((el) => setEditable(el, active));
@@ -783,6 +802,7 @@
     setListEditable(logisticsTipsEl, active);
     setListEditable(conditionsEl, active);
     setHighlightsEditable(active);
+    syncDeleteButtons(active);
 
     if (heroInput) {
       heroInput.disabled = !active;
@@ -1310,7 +1330,11 @@
   function readList(el) {
     if (!el) return [];
     return [...el.querySelectorAll("li")]
-      .map((li) => li.textContent.trim())
+      .map((li) => {
+        const clone = li.cloneNode(true);
+        clone.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
+        return clone.textContent.trim();
+      })
       .filter(Boolean);
   }
 
@@ -1397,6 +1421,7 @@
       diveSitesTitle: diveSitesTitleEl ? diveSitesTitleEl.textContent.trim() : "",
       nonDivingTitle: nonDivingTitleEl ? nonDivingTitleEl.textContent.trim() : "",
       tripSnapshotTitle: tripSnapshotTitleEl ? tripSnapshotTitleEl.textContent.trim() : "",
+      mediaStatus: mediaStatusEl ? mediaStatusEl.textContent.trim() : "",
     };
 
     const resp = await apiFetch(apiAdminBulkUrl, {
@@ -1424,7 +1449,7 @@
     const li = document.createElement("li");
     li.textContent = "New item";
     li.setAttribute("contenteditable", "true");
-    addDeleteButton(li);
+    addDeleteButton(li, true);
     list.appendChild(li);
     li.focus();
     markDirty();
