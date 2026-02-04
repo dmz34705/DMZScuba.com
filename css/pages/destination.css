@@ -395,7 +395,6 @@ body {
 
 .destination-hero-iso {
   padding-right: 22px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .destination-hero-info .two-col-side {
@@ -608,7 +607,6 @@ body {
 
   .destination-hero-iso {
     padding-right: 0;
-    border-right: 0;
   }
 
   .destination-hero-info .two-col-side {
