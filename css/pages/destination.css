@@ -393,6 +393,19 @@ body {
   align-items: start;
 }
 
+.destination-hero-iso {
+  padding-right: 22px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.destination-hero-info .two-col-side {
+  padding-left: 22px;
+}
+
+.day-to-day-block {
+  margin-top: 18px;
+}
+
 .trip-logistics {
   margin-top: 14px;
   padding-top: 12px;
@@ -591,6 +604,15 @@ body {
 
   .dest-interest-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .destination-hero-iso {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .destination-hero-info .two-col-side {
+    padding-left: 0;
   }
 }
 
