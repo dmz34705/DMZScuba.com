@@ -1242,6 +1242,10 @@
       return;
     }
 
+    const getBlocks = () =>
+      [...mediaGrid.children].filter((el) =>
+        el.classList.contains("media-card") || el.classList.contains("media-stack")
+      );
     const pageCount = Math.ceil(total / 3);
     mediaGrid.classList.add("is-scroll");
     mediaDots.hidden = false;
@@ -1249,8 +1253,19 @@
     if (mediaNext) mediaNext.hidden = false;
 
     const getPageIndex = () => {
-      const width = mediaGrid.getBoundingClientRect().width || 1;
-      return Math.round(mediaGrid.scrollLeft / width);
+      const blocks = getBlocks();
+      if (!blocks.length) return 0;
+      const left = mediaGrid.scrollLeft;
+      let closest = 0;
+      let minDelta = Infinity;
+      blocks.forEach((block, index) => {
+        const delta = Math.abs(block.offsetLeft - left);
+        if (delta < minDelta) {
+          minDelta = delta;
+          closest = index;
+        }
+      });
+      return closest;
     };
 
     const setActiveDot = (index) => {
@@ -1262,8 +1277,10 @@
     };
 
     const scrollToPage = (index) => {
-      const width = mediaGrid.getBoundingClientRect().width || 1;
-      mediaGrid.scrollTo({ left: width * index, behavior: "smooth" });
+      const blocks = getBlocks();
+      const target = blocks[index];
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
       setActiveDot(index);
     };
 
