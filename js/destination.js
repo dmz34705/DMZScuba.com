@@ -44,6 +44,21 @@
   const diveSitesTitleEl = document.getElementById("diveSitesTitle");
   const nonDivingTitleEl = document.getElementById("nonDivingTitle");
   const tripSnapshotTitleEl = document.getElementById("tripSnapshotTitle");
+  const heroWhyEl = document.getElementById("destHeroWhy");
+  const heroBadgesEl = document.getElementById("destHeroBadges");
+  const interestToggle = document.getElementById("destInterestToggle");
+  const interestForm = document.getElementById("destInterestForm");
+  const interestLocationInput = document.getElementById("destInterestLocation");
+  const interestIdInput = document.getElementById("destInterestId");
+  const errorPanel = document.getElementById("destErrorPanel");
+  const errorMessageEl = document.getElementById("destErrorMessage");
+  const retryButton = document.getElementById("destRetryButton");
+  const tripFactsList = document.getElementById("tripFactsList");
+  const vibeTextEl = document.getElementById("destVibeText");
+  const perfectForEl = document.getElementById("destPerfectFor");
+  const howItWorksEl = document.getElementById("destHowItWorks");
+  const contentMomentsEl = document.getElementById("destContentMoments");
+  const mediaStatusEl = document.getElementById("destMediaStatus");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const metaDescriptionEl = document.querySelector('meta[name="description"]');
   const adminPanel = document.getElementById("destPageAdminPanel");
@@ -69,6 +84,9 @@
   let currentExpanded = null;
   let currentId = "";
   let isDirty = false;
+  const isDev =
+    ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
+    window.location.hostname.endsWith(".local");
 
   function truncateText(text, maxLength) {
     if (!text) return "";
@@ -76,9 +94,29 @@
     return `${text.slice(0, maxLength - 1).trim()}…`;
   }
 
+  function debugLog(...args) {
+    if (!isDev) return;
+    console.log(...args);
+  }
+
   function setMetaDescription(text) {
     if (!metaDescriptionEl) return;
     metaDescriptionEl.setAttribute("content", text);
+  }
+
+  function showErrorPanel(message) {
+    if (errorMessageEl) {
+      errorMessageEl.textContent = message || "Try refreshing or pick another destination.";
+    }
+    if (errorPanel) {
+      errorPanel.hidden = false;
+    }
+  }
+
+  function hideErrorPanel() {
+    if (errorPanel) {
+      errorPanel.hidden = true;
+    }
   }
 
   function getToken() {
@@ -581,8 +619,11 @@
     const params = new URLSearchParams();
     params.set("interest", "travel");
 
-    if (dest?.name) {
-      params.set("location", dest.name);
+    if (dest?.heroTitle || dest?.name) {
+      params.set("location", dest.heroTitle || dest.name);
+    }
+    if (dest?.id) {
+      params.set("destination", dest.id);
     }
 
     const href = `../contact/index.html?${params.toString()}#dive-now`;
@@ -591,10 +632,110 @@
     });
   }
 
+  function renderHeroBadges(items) {
+    if (!heroBadgesEl) return;
+    heroBadgesEl.innerHTML = "";
+    (items || []).forEach((item) => {
+      if (!item) return;
+      const badge = document.createElement("span");
+      badge.className = "hero-badge";
+      badge.textContent = item;
+      heroBadgesEl.appendChild(badge);
+    });
+  }
+
+  function deriveDiverLevel(dest) {
+    const tags = dest?.tags || [];
+    if (tags.includes("Beginner Friendly")) return "Beginner-friendly";
+    if (tags.some((tag) => /advanced/i.test(tag))) return "Intermediate to advanced";
+    return "Varies by experience";
+  }
+
+  function renderTripFacts(dest) {
+    if (!tripFactsList) return;
+    tripFactsList.innerHTML = "";
+    if (!dest) return;
+    const tripFacts = dest?.tripFacts || {};
+    const facts = [];
+    const bestTime = tripFacts.bestTimeToGo || "Varies by season";
+    const waterTemp = tripFacts.waterTempRange || dest?.conditions?.temperature || "Varies by season";
+    const visibility = tripFacts.visibilityRange || dest?.conditions?.visibility || "Varies by season";
+    const exposure =
+      tripFacts.exposureProtection || dest?.packing?.exposureProtection || "Varies by season";
+    const diverLevel = tripFacts.diverLevel || deriveDiverLevel(dest);
+    const travelReq =
+      tripFacts.travelRequirements ||
+      "Passport required. Plan for a full travel day including connections and transfers.";
+
+    if (bestTime) facts.push(["Best time to go", bestTime]);
+    if (waterTemp) facts.push(["Water temp", waterTemp]);
+    if (visibility) facts.push(["Typical visibility", visibility]);
+    if (exposure) facts.push(["Exposure protection", exposure]);
+    if (diverLevel) facts.push(["Diver level", diverLevel]);
+    if (tripFacts.nitrox) facts.push(["Nitrox", tripFacts.nitrox]);
+    if (travelReq) facts.push(["Travel requirements", travelReq]);
+
+    facts.forEach(([label, value]) => {
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const detail = document.createElement("dd");
+      detail.textContent = value;
+      tripFactsList.appendChild(term);
+      tripFactsList.appendChild(detail);
+    });
+  }
+
+  function renderVibe(dest) {
+    if (!vibeTextEl) return;
+    const vibe =
+      dest?.vibe ||
+      dest?.whyItWorks?.vibe ||
+      dest?.summary ||
+      "A relaxed dive rhythm with enough drama to keep every drop cinematic.";
+    vibeTextEl.textContent = vibe;
+  }
+
+  function renderPerfectFor(items, fallback = []) {
+    if (!perfectForEl) return;
+    perfectForEl.innerHTML = "";
+    const list = items?.length ? items : fallback?.length ? fallback : ["Trip fit details coming soon."];
+    (list || []).forEach((item) => {
+      if (!item) return;
+      const li = document.createElement("li");
+      li.textContent = item;
+      perfectForEl.appendChild(li);
+    });
+  }
+
+  function renderHowItWorks(items) {
+    if (!howItWorksEl) return;
+    howItWorksEl.innerHTML = "";
+    (items || []).forEach((item) => {
+      if (!item) return;
+      const li = document.createElement("li");
+      li.textContent = item;
+      howItWorksEl.appendChild(li);
+    });
+  }
+
+  function renderContentMoments(items) {
+    if (!contentMomentsEl) return;
+    contentMomentsEl.innerHTML = "";
+    const list = items?.length ? items : ["Moment list coming soon."];
+    list.forEach((item) => {
+      if (!item) return;
+      const li = document.createElement("li");
+      li.textContent = item;
+      contentMomentsEl.appendChild(li);
+    });
+  }
+
   function renderDestination(dest) {
     if (!dest) {
       setText(nameEl, "Destination Not Found");
       setText(subtitleEl, "Return to the travel page to pick a destination.");
+      setText(heroWhyEl, "We could not load this destination.");
+      renderHeroBadges([]);
       renderBullets([]);
       renderList(diveSitesEl, []);
       renderList(nonDivingEl, []);
@@ -631,11 +772,20 @@
       setHeroImage(null);
       setDiveNowLinks(null);
       setMetaDescription("Explore a DMZ Scuba destination and plan a dive trip on your terms.");
+      renderTripFacts(null);
+      if (vibeTextEl) vibeTextEl.textContent = "Trip vibe unavailable.";
+      renderPerfectFor([], []);
+      renderHowItWorks([]);
+      renderContentMoments([]);
+      if (mediaStatusEl) mediaStatusEl.textContent = "Trip clips coming soon.";
       return;
     }
 
-    setText(nameEl, dest.name || "Destination");
+    const displayName = dest.heroTitle || dest.name || "Destination";
+    setText(nameEl, displayName);
     setText(subtitleEl, dest.subtitle || "Explore this destination with DMZ Scuba.");
+    setText(heroWhyEl, dest.heroWhy || dest.summary || "Plan a dive trip that matches your goals.");
+    renderHeroBadges(dest.heroHighlights || dest.highlights || dest.tags || []);
     renderBullets(dest.bullets);
     renderList(diveSitesEl, dest.diveSites);
     renderList(nonDivingEl, dest.nonDiving);
@@ -671,13 +821,39 @@
     renderIso(dest);
     setHeroImage(dest.heroImage);
     setDiveNowLinks(dest);
-
-    if (dest.name) {
-      document.title = `DMZ Scuba | ${dest.name}`;
+    renderTripFacts(dest);
+    renderVibe(dest);
+    renderPerfectFor(dest.perfectFor, dest.tags);
+    renderHowItWorks(
+      dest.howItWorks || [
+        "Reserve your spot with a deposit.",
+        "We help with flights, packing, and timing.",
+        "DMZ handles dive logistics and schedules.",
+        "You show up and dive."
+      ],
+    );
+    renderContentMoments(
+      dest.contentMoments ||
+        (dest.diveSites ? dest.diveSites.slice(0, 4) : []),
+    );
+    if (mediaStatusEl) {
+      mediaStatusEl.textContent =
+        dest.mediaStatus ||
+        "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
     }
 
-    if (dest.name) {
-      const base = `Explore ${dest.name} with DMZ Scuba.`;
+    if (interestLocationInput) interestLocationInput.value = displayName || "";
+    if (interestIdInput) interestIdInput.value = dest.id || "";
+    if (interestForm && displayName) {
+      interestForm.dataset.subject = `Travel interest: ${displayName}`;
+    }
+
+    if (displayName) {
+      document.title = `DMZ Scuba | ${displayName}`;
+    }
+
+    if (displayName) {
+      const base = `Explore ${displayName} with DMZ Scuba.`;
       const details = dest.summary || dest.subtitle || dest.narrative || "";
       const combined = `${base} ${details}`.trim();
       setMetaDescription(truncateText(combined, 150));
@@ -695,16 +871,36 @@
 
   async function loadDestination() {
     const params = new URLSearchParams(window.location.search);
-    const id = (params.get("id") || "").trim();
+    const id = (params.get("id") || params.get("destination") || "").trim().toLowerCase();
     currentId = id;
+    hideErrorPanel();
+    debugLog("[Destination] resolved id:", id);
+
+    if (!id) {
+      showErrorPanel("Pick a destination to see the full trip details.");
+      renderDestination(null);
+      return;
+    }
 
     try {
       let baseData = [];
       let expandedData = [];
+      const cacheBuster = isDev ? `?v=${Date.now()}` : "";
+
+      const safeFetch = async (url, options, label) => {
+        try {
+          const res = await fetch(url, options);
+          debugLog(`[Destination] ${label}:`, url, res.status);
+          return res;
+        } catch (error) {
+          debugLog(`[Destination] ${label} failed:`, url, error);
+          return null;
+        }
+      };
 
       const [apiRes, apiExpandedRes] = await Promise.all([
-        fetch(apiBaseUrl, { cache: "no-store" }).catch(() => null),
-        fetch(apiExpandedUrl, { cache: "no-store" }).catch(() => null),
+        safeFetch(apiBaseUrl, { cache: "no-store" }, "API base"),
+        safeFetch(apiExpandedUrl, { cache: "no-store" }, "API expanded"),
       ]);
 
       if (apiRes && apiRes.ok) {
@@ -718,15 +914,21 @@
       }
 
       if (!baseData.length) {
-        const baseRes = await fetch("/assets/data/destinations.json", { cache: "no-store" });
-        if (!baseRes.ok) throw new Error("Failed to load destinations");
+        const baseRes = await safeFetch(
+          `/assets/data/destinations.json${cacheBuster}`,
+          { cache: "no-store" },
+          "JSON base",
+        );
+        if (!baseRes || !baseRes.ok) throw new Error("Failed to load destinations");
         baseData = await baseRes.json();
       }
 
       if (!expandedData.length) {
-        const expandedRes = await fetch("/assets/data/destinations-expanded.json", {
-          cache: "no-store",
-        }).catch(() => null);
+        const expandedRes = await safeFetch(
+          `/assets/data/destinations-expanded.json${cacheBuster}`,
+          { cache: "no-store" },
+          "JSON expanded",
+        );
         expandedData = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
       }
 
@@ -738,9 +940,16 @@
       if (heroInput) heroInput.value = dest?.heroImage || "";
       if (isoInput) isoInput.value = dest?.isoImage || "";
 
+      if (!dest) {
+        showErrorPanel("We could not find that destination. Try another destination.");
+        renderDestination(null);
+        return;
+      }
+
       renderDestination(dest);
     } catch (err) {
       console.error("Failed to load destination:", err);
+      showErrorPanel("We couldn't load this destination. Try refreshing or pick another destination.");
       renderDestination(null);
     }
   }
@@ -1008,6 +1217,38 @@
     }
   }
 
+  function setupPageControls() {
+    if (retryButton) {
+      retryButton.addEventListener("click", () => loadDestination());
+    }
+
+    const toggleInterestForm = () => {
+      if (!interestForm) return;
+      const nextOpen = interestForm.hasAttribute("hidden");
+      interestForm.toggleAttribute("hidden", !nextOpen);
+      if (interestToggle) {
+        interestToggle.setAttribute("aria-expanded", nextOpen ? "true" : "false");
+      }
+      if (nextOpen) {
+        interestForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    };
+
+    document.querySelectorAll(".dest-interest-toggle").forEach((button) => {
+      button.addEventListener("click", () => toggleInterestForm());
+    });
+
+    if (interestForm) {
+      interestForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (window.DMZForms && typeof window.DMZForms.submit === "function") {
+          window.DMZForms.submit(interestForm, { requireEmail: true });
+        }
+      });
+    }
+  }
+
   loadDestination();
   setupAdminControls();
+  setupPageControls();
 })();

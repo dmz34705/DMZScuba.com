@@ -48,6 +48,164 @@ body {
   object-fit: contain;
 }
 
+.hero-why {
+  margin-top: 8px;
+  max-width: 560px;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.hero-badge {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 14, 24, 0.75);
+  color: rgba(234, 242, 255, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 6px 12px;
+}
+
+.dest-interest-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.dest-interest-form[hidden] {
+  display: none;
+}
+
+.dest-interest-grid {
+  display: grid;
+  gap: 10px 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.dest-interest-field {
+  display: grid;
+  gap: 6px;
+}
+
+.dest-interest-field label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: rgba(234, 242, 255, 0.7);
+}
+
+.dest-interest-field input {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(7, 12, 20, 0.55);
+  color: rgba(234, 242, 255, 0.95);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.dest-interest-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.destination-error .error-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 18, 30, 0.85);
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.destination-error h2 {
+  margin: 0;
+}
+
+.error-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.facts-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.facts-grid dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(234, 242, 255, 0.65);
+  margin-bottom: 6px;
+}
+
+.facts-grid dd {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.facts-note {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.vibe-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.vibe-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 14, 24, 0.6);
+  padding: 16px;
+}
+
+.vibe-card h2,
+.vibe-card h3 {
+  margin-top: 0;
+}
+
+.destination-moments ul {
+  margin-top: 12px;
+}
+
+.destination-media .media-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 12, 20, 0.7);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.destination-media .media-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dmz-honey {
+  position: absolute;
+  left: -9999px;
+  height: 1px;
+  width: 1px;
+  opacity: 0;
+}
+
 .iso-placeholder {
   margin-top: 12px;
   height: auto;
@@ -314,6 +472,10 @@ body {
     max-width: 240px;
     justify-self: center;
     margin: 0 auto;
+  }
+
+  .dest-interest-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

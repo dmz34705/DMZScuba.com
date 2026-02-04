@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 
-<body data-admin-api="https://dmz-media-api.zacharylisowski55.workers.dev">
+<body data-admin-api="https://dmz-media-api.zacharylisowski55.workers.dev" data-contact-api="https://dmz-media-api.zacharylisowski55.workers.dev">
   <div class="page">
   <header class="site-header">
     <div class="nav-container">
@@ -41,10 +41,35 @@
         <div class="page-hero-copy">
           <h1 id="destName">Destination</h1>
           <p class="page-hero-sub" id="destSubtitle">Destination details are loading.</p>
+          <p class="page-hero-sub hero-why" id="destHeroWhy">Summary loading.</p>
+          <div class="hero-badges" id="destHeroBadges"></div>
           <div class="page-hero-actions">
-            <a class="btn primary dive-now-link" href="../contact/index.html#dive-now">Dive Now</a>
-            <a class="btn secondary" href="./index.html#destination-list">Back to Travel</a>
+            <a class="btn primary dive-now-link" href="../contact/index.html#dive-now">Reserve / Dive Now</a>
+            <button class="btn secondary dest-interest-toggle" type="button" id="destInterestToggle" aria-expanded="false" aria-controls="destInterestForm">Join the interest list</button>
+            <a class="btn secondary dest-back-link" href="./index.html#destination-list">Back to Travel</a>
           </div>
+          <form class="dest-interest-form" id="destInterestForm" data-form-name="Destination Interest" data-subject="Travel interest" hidden>
+            <input type="hidden" name="interest" value="travel" />
+            <input type="hidden" name="location" id="destInterestLocation" value="" />
+            <input type="hidden" name="destination" id="destInterestId" value="" />
+            <input type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" class="dmz-honey" />
+            <div class="dest-interest-grid">
+              <div class="dest-interest-field">
+                <label for="destInterestName">Name</label>
+                <input id="destInterestName" name="name" type="text" autocomplete="name" placeholder="Your name" />
+              </div>
+              <div class="dest-interest-field">
+                <label for="destInterestEmail">Email</label>
+                <input id="destInterestEmail" name="email" type="email" autocomplete="email" placeholder="you@email.com" required />
+              </div>
+              <div class="dest-interest-field">
+                <label for="destInterestPhone">Phone (optional)</label>
+                <input id="destInterestPhone" name="phone" type="tel" autocomplete="tel" placeholder="555-555-5555" />
+              </div>
+            </div>
+            <button class="btn primary" type="submit">Get trip info</button>
+            <p class="dest-interest-note">We will send dates, pricing, and spots as they open.</p>
+          </form>
         </div>
 
         <div class="page-hero-card destination-hero-logo">
@@ -111,6 +136,17 @@
     </aside>
 
     <div class="page-main">
+      <section class="content-section destination-error" id="destErrorPanel" hidden>
+        <div class="error-card">
+          <h2>We could not load this destination.</h2>
+          <p id="destErrorMessage">Try refreshing or pick another destination.</p>
+          <div class="error-actions">
+            <button class="btn primary" type="button" id="destRetryButton">Retry</button>
+            <a class="btn secondary" href="./index.html#destination-list">Back to Travel</a>
+          </div>
+        </div>
+      </section>
+
       <section class="content-section destination-overview">
         <div class="destination-overview-grid">
           <div class="overview-card">
@@ -128,6 +164,45 @@
           <div class="overview-card">
             <h3 id="seasonalityTitle">Seasonality</h3>
             <p id="seasonalityText">Seasonality loading.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section destination-facts">
+        <h2>Trip Facts</h2>
+        <dl class="facts-grid" id="tripFactsList"></dl>
+        <p class="facts-note">Details may vary by season and daily conditions.</p>
+      </section>
+
+      <section class="content-section destination-vibe">
+        <div class="vibe-grid">
+          <div class="vibe-card">
+            <h2>The Vibe</h2>
+            <p id="destVibeText">The vibe details are loading.</p>
+          </div>
+          <div class="vibe-card">
+            <h3>Perfect for</h3>
+            <ul class="content-steps" id="destPerfectFor"></ul>
+          </div>
+          <div class="vibe-card">
+            <h3>How it works</h3>
+            <ol class="content-steps" id="destHowItWorks"></ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section destination-moments">
+        <h2>Content Moments</h2>
+        <ul class="content-steps" id="destContentMoments"></ul>
+      </section>
+
+      <section class="content-section destination-media" id="destMediaPanel">
+        <div class="media-card">
+          <h2>Trip Clips</h2>
+          <p id="destMediaStatus">Trip clips coming soon. Follow DMZ or join the interest list to get first access.</p>
+          <div class="media-actions">
+            <a class="btn secondary" href="../media/index.html">See DMZ media</a>
+            <button class="btn primary dest-interest-toggle" type="button" data-target="destInterestForm">Join the interest list</button>
           </div>
         </div>
       </section>
