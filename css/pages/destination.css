@@ -208,7 +208,7 @@ body {
   align-items: stretch;
   --media-card-height: 520px;
   --media-stack-gap: 16px;
-  --compact-thumb-height: 120px;
+  --compact-thumb-height: 96px;
 }
 
 .destination-media-grid .media-card {
@@ -358,16 +358,11 @@ body {
 }
 
 .destination-media-grid .media-card.is-compact .media-body{
-  padding: 10px 12px 12px;
+  padding: 12px 14px 14px;
   min-height: 0;
 }
 
-.destination-media-grid .media-card.is-compact .media-body h3{
-  font-size: clamp(13px, calc(260px / 22), 16px);
-}
-
 .destination-media-grid .media-card.is-compact .media-body p{
-  font-size: clamp(11px, calc(260px / 26), 13.5px);
   -webkit-line-clamp: 4;
 }
 
