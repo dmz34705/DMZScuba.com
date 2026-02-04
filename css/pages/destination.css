@@ -206,6 +206,8 @@ body {
   scroll-snap-type: x mandatory;
   padding-bottom: 8px;
   align-items: stretch;
+  --media-card-height: 520px;
+  --media-stack-gap: 16px;
 }
 
 .destination-media-grid .media-card {
@@ -213,15 +215,17 @@ body {
   flex: 0 0 calc((100% - 32px) / 3);
   scroll-snap-align: start;
   height: 100%;
+  min-height: var(--media-card-height);
 }
 
 .destination-media-grid .media-stack {
   flex: 0 0 calc((100% - 32px) / 3);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--media-stack-gap);
   scroll-snap-align: start;
   height: 100%;
+  min-height: var(--media-card-height);
 }
 
 .destination-media-grid .media-body {
@@ -245,6 +249,7 @@ body {
   flex-direction: column;
   padding: 12px;
   height: 100%;
+  min-height: var(--media-card-height);
 }
 
 .destination-media-grid .media-card:hover{
@@ -374,6 +379,7 @@ body {
 
 .destination-media-grid .media-stack .media-card {
   flex: 1 1 0;
+  min-height: calc((var(--media-card-height) - var(--media-stack-gap)) / 2);
 }
 
 .destination-media-grid.is-scroll {
@@ -864,6 +870,10 @@ body {
 
   .destination-media-grid .media-stack {
     flex-basis: 80%;
+  }
+
+  .destination-media-grid {
+    --media-card-height: 460px;
   }
 }
 
