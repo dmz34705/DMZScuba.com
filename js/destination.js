@@ -93,6 +93,7 @@
   let mediaScrollHandler = null;
   let mediaResizeHandler = null;
   let mediaAutoScrollTimer = null;
+  let mediaHeightSyncTimer = null;
   const isDev =
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
     window.location.hostname.endsWith(".local");
@@ -290,6 +291,26 @@
     } else {
       thumb.classList.remove("is-horizontal");
     }
+  }
+
+  function syncMediaCardHeights() {
+    if (!mediaGrid) return;
+    const primaryCards = [...mediaGrid.querySelectorAll(".media-card:not(.is-compact)")];
+    const fallbackCards = [...mediaGrid.querySelectorAll(".media-card")];
+    const cards = primaryCards.length ? primaryCards : fallbackCards;
+    if (!cards.length) return;
+    const heights = cards.map((card) => card.getBoundingClientRect().height).filter((h) => h > 0);
+    if (!heights.length) return;
+    const maxHeight = Math.max(...heights);
+    mediaGrid.style.setProperty("--media-card-height", `${Math.round(maxHeight)}px`);
+  }
+
+  function scheduleMediaHeightSync() {
+    if (mediaHeightSyncTimer) clearTimeout(mediaHeightSyncTimer);
+    mediaHeightSyncTimer = setTimeout(() => {
+      syncMediaCardHeights();
+      mediaHeightSyncTimer = null;
+    }, 80);
   }
 
   function renderMeta(metaItems, location, target) {
@@ -985,6 +1006,7 @@
       img.decoding = "async";
       img.addEventListener("load", () => {
         applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
+        scheduleMediaHeightSync();
       });
       thumb.appendChild(img);
       thumb.classList.add("has-thumb");
@@ -1104,6 +1126,9 @@
     }
 
     initMediaCarousel(blocks.length);
+    requestAnimationFrame(() => {
+      syncMediaCardHeights();
+    });
   }
 
   function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
@@ -1261,6 +1286,7 @@
     mediaResizeHandler = () => {
       mediaGrid.scrollTo({ left: 0 });
       setActiveDot(0);
+      scheduleMediaHeightSync();
     };
     window.addEventListener("resize", mediaResizeHandler);
 
