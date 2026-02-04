@@ -58,7 +58,6 @@
   const vibeTextEl = document.getElementById("destVibeText");
   const perfectForEl = document.getElementById("destPerfectFor");
   const howItWorksEl = document.getElementById("destHowItWorks");
-  const contentMomentsEl = document.getElementById("destContentMoments");
   const mediaStatusEl = document.getElementById("destMediaStatus");
   const mediaGrid = document.getElementById("destMediaGrid");
   const mediaLink = document.getElementById("destMediaLink");
@@ -812,7 +811,6 @@
     setListEditable(conditionsEl, active);
     setListEditable(perfectForEl, active);
     setListEditable(howItWorksEl, active);
-    setListEditable(contentMomentsEl, active);
     setHighlightsEditable(active);
     syncDeleteButtons(active);
 
@@ -885,18 +883,6 @@
       const li = document.createElement("li");
       li.textContent = item;
       howItWorksEl.appendChild(li);
-    });
-  }
-
-  function renderContentMoments(items) {
-    if (!contentMomentsEl) return;
-    contentMomentsEl.innerHTML = "";
-    const list = items?.length ? items : ["Moment list coming soon."];
-    list.forEach((item) => {
-      if (!item) return;
-      const li = document.createElement("li");
-      li.textContent = item;
-      contentMomentsEl.appendChild(li);
     });
   }
 
@@ -1123,7 +1109,6 @@
       if (vibeTextEl) vibeTextEl.textContent = "Trip vibe unavailable.";
       renderPerfectFor([], []);
       renderHowItWorks([]);
-      renderContentMoments([]);
       clearDestinationMedia("Trip clips coming soon.");
       return;
     }
@@ -1177,10 +1162,6 @@
         "DMZ handles dive logistics and schedules.",
         "You show up and dive."
       ],
-    );
-    renderContentMoments(
-      dest.contentMoments ||
-        (dest.diveSites ? dest.diveSites.slice(0, 4) : []),
     );
     loadDestinationMedia(dest);
 
@@ -1395,7 +1376,6 @@
       vibe: vibeTextEl ? vibeTextEl.textContent.trim() : "",
       perfectFor: readList(perfectForEl),
       howItWorks: readList(howItWorksEl),
-      contentMoments: readList(contentMomentsEl),
     };
 
     const resp = await apiFetch(apiAdminBulkUrl, {
