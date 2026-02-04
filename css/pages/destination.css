@@ -98,6 +98,61 @@ body {
   gap: 16px;
 }
 
+.destination-overview-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.overview-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 14, 24, 0.6);
+  padding: 16px;
+}
+
+.overview-card h2,
+.overview-card h3 {
+  margin-top: 0;
+}
+
+.destination-hero-info .two-col-grid {
+  align-items: start;
+}
+
+.trip-logistics {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.destination-flow .content-columns {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+.ops-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.ops-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 12, 20, 0.6);
+  padding: 16px;
+}
+
+.ops-card h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .destination-flow .content-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .site-highlight-card {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
