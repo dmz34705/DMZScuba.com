@@ -55,7 +55,6 @@
   const errorPanel = document.getElementById("destErrorPanel");
   const errorMessageEl = document.getElementById("destErrorMessage");
   const retryButton = document.getElementById("destRetryButton");
-  const tripFactsList = document.getElementById("tripFactsList");
   const vibeTextEl = document.getElementById("destVibeText");
   const perfectForEl = document.getElementById("destPerfectFor");
   const howItWorksEl = document.getElementById("destHowItWorks");
@@ -553,12 +552,18 @@
     el.textContent = text;
   }
 
+  function cleanListText(text) {
+    return String(text || "")
+      .replace(/🗑️?/g, "")
+      .trim();
+  }
+
   function renderBullets(bullets) {
     if (!bulletsEl) return;
     bulletsEl.innerHTML = "";
     (bullets || []).forEach((item) => {
       const li = document.createElement("li");
-      li.textContent = item;
+      li.textContent = cleanListText(item);
       addDeleteButton(li);
       bulletsEl.appendChild(li);
     });
@@ -569,7 +574,7 @@
     el.innerHTML = "";
     (items || []).forEach((item) => {
       const li = document.createElement("li");
-      li.textContent = item;
+      li.textContent = cleanListText(item);
       addDeleteButton(li);
       el.appendChild(li);
     });
@@ -589,7 +594,7 @@
     entries.forEach(([label, value]) => {
       if (!value) return;
       const li = document.createElement("li");
-      li.textContent = `${label}: ${value}`;
+      li.textContent = cleanListText(`${label}: ${value}`);
       addDeleteButton(li);
       conditionsEl.appendChild(li);
     });
@@ -682,6 +687,8 @@
       nonDivingTitleEl,
       tripSnapshotTitleEl,
       mediaStatusEl,
+      heroWhyEl,
+      vibeTextEl,
     ];
     editableEls.forEach((el) => {
       if (!el) return;
@@ -793,6 +800,8 @@
       nonDivingTitleEl,
       tripSnapshotTitleEl,
       mediaStatusEl,
+      heroWhyEl,
+      vibeTextEl,
     ];
 
     editableEls.forEach((el) => setEditable(el, active));
@@ -801,6 +810,9 @@
     setListEditable(nonDivingEl, active);
     setListEditable(logisticsTipsEl, active);
     setListEditable(conditionsEl, active);
+    setListEditable(perfectForEl, active);
+    setListEditable(howItWorksEl, active);
+    setListEditable(contentMomentsEl, active);
     setHighlightsEditable(active);
     syncDeleteButtons(active);
 
@@ -840,47 +852,6 @@
       badge.className = "hero-badge";
       badge.textContent = item;
       heroBadgesEl.appendChild(badge);
-    });
-  }
-
-  function deriveDiverLevel(dest) {
-    const tags = dest?.tags || [];
-    if (tags.includes("Beginner Friendly")) return "Beginner-friendly";
-    if (tags.some((tag) => /advanced/i.test(tag))) return "Intermediate to advanced";
-    return "Varies by experience";
-  }
-
-  function renderTripFacts(dest) {
-    if (!tripFactsList) return;
-    tripFactsList.innerHTML = "";
-    if (!dest) return;
-    const tripFacts = dest?.tripFacts || {};
-    const facts = [];
-    const bestTime = tripFacts.bestTimeToGo || "Varies by season";
-    const waterTemp = tripFacts.waterTempRange || dest?.conditions?.temperature || "Varies by season";
-    const visibility = tripFacts.visibilityRange || dest?.conditions?.visibility || "Varies by season";
-    const exposure =
-      tripFacts.exposureProtection || dest?.packing?.exposureProtection || "Varies by season";
-    const diverLevel = tripFacts.diverLevel || deriveDiverLevel(dest);
-    const travelReq =
-      tripFacts.travelRequirements ||
-      "Passport required. Plan for a full travel day including connections and transfers.";
-
-    if (bestTime) facts.push(["Best time to go", bestTime]);
-    if (waterTemp) facts.push(["Water temp", waterTemp]);
-    if (visibility) facts.push(["Typical visibility", visibility]);
-    if (exposure) facts.push(["Exposure protection", exposure]);
-    if (diverLevel) facts.push(["Diver level", diverLevel]);
-    if (tripFacts.nitrox) facts.push(["Nitrox", tripFacts.nitrox]);
-    if (travelReq) facts.push(["Travel requirements", travelReq]);
-
-    facts.forEach(([label, value]) => {
-      const term = document.createElement("dt");
-      term.textContent = label;
-      const detail = document.createElement("dd");
-      detail.textContent = value;
-      tripFactsList.appendChild(term);
-      tripFactsList.appendChild(detail);
     });
   }
 
@@ -1149,7 +1120,6 @@
       setHeroImage(null);
       setDiveNowLinks(null);
       setMetaDescription("Explore a DMZ Scuba destination and plan a dive trip on your terms.");
-      renderTripFacts(null);
       if (vibeTextEl) vibeTextEl.textContent = "Trip vibe unavailable.";
       renderPerfectFor([], []);
       renderHowItWorks([]);
@@ -1198,7 +1168,6 @@
     renderIso(dest);
     setHeroImage(dest.heroImage);
     setDiveNowLinks(dest);
-    renderTripFacts(dest);
     renderVibe(dest);
     renderPerfectFor(dest.perfectFor, dest.tags);
     renderHowItWorks(
@@ -1333,7 +1302,7 @@
       .map((li) => {
         const clone = li.cloneNode(true);
         clone.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
-        return clone.textContent.trim();
+        return cleanListText(clone.textContent);
       })
       .filter(Boolean);
   }
@@ -1422,6 +1391,11 @@
       nonDivingTitle: nonDivingTitleEl ? nonDivingTitleEl.textContent.trim() : "",
       tripSnapshotTitle: tripSnapshotTitleEl ? tripSnapshotTitleEl.textContent.trim() : "",
       mediaStatus: mediaStatusEl ? mediaStatusEl.textContent.trim() : "",
+      heroWhy: heroWhyEl ? heroWhyEl.textContent.trim() : "",
+      vibe: vibeTextEl ? vibeTextEl.textContent.trim() : "",
+      perfectFor: readList(perfectForEl),
+      howItWorks: readList(howItWorksEl),
+      contentMoments: readList(contentMomentsEl),
     };
 
     const resp = await apiFetch(apiAdminBulkUrl, {
