@@ -250,9 +250,9 @@ body {
 
 .destination-media-grid .media-card {
   border-radius: var(--radius);
-  border: 1px solid transparent;
-  background: rgba(0, 0, 0, 0);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0);
+  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.45);
   overflow: hidden;
   position: relative;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -265,8 +265,8 @@ body {
 
 .destination-media-grid .media-card:hover{
   transform: translateY(-2px);
-  border-color: transparent;
-  background: transparent;
+  border-color: rgba(85,185,255,0.35);
+  background: linear-gradient(180deg, rgba(85,185,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
   z-index: 1;
 }
 
