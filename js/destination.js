@@ -93,6 +93,8 @@
   let mediaScrollHandler = null;
   let mediaResizeHandler = null;
   let mediaAutoScrollTimer = null;
+  let mediaAutoDirection = 1;
+  let mediaUserInteracted = false;
   let mediaHeightSyncTimer = null;
   const isDev =
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
@@ -1236,6 +1238,7 @@
         clearInterval(mediaAutoScrollTimer);
         mediaAutoScrollTimer = null;
       }
+      mediaUserInteracted = false;
       return;
     }
 
@@ -1244,6 +1247,11 @@
     mediaDots.hidden = false;
     if (mediaPrev) mediaPrev.hidden = false;
     if (mediaNext) mediaNext.hidden = false;
+
+    const getPageIndex = () => {
+      const width = mediaGrid.getBoundingClientRect().width || 1;
+      return Math.round(mediaGrid.scrollLeft / width);
+    };
 
     const setActiveDot = (index) => {
       mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
@@ -1257,6 +1265,14 @@
       const width = mediaGrid.getBoundingClientRect().width || 1;
       mediaGrid.scrollTo({ left: width * index, behavior: "smooth" });
       setActiveDot(index);
+    };
+
+    const stopAutoScroll = () => {
+      mediaUserInteracted = true;
+      if (mediaAutoScrollTimer) {
+        clearInterval(mediaAutoScrollTimer);
+        mediaAutoScrollTimer = null;
+      }
     };
 
     for (let i = 0; i < pageCount; i += 1) {
@@ -1274,11 +1290,13 @@
       mediaGrid.removeEventListener("scroll", mediaScrollHandler);
     }
     mediaScrollHandler = () => {
-      const width = mediaGrid.getBoundingClientRect().width || 1;
-      const index = Math.round(mediaGrid.scrollLeft / width);
+      const index = getPageIndex();
       setActiveDot(Math.min(pageCount - 1, Math.max(0, index)));
     };
     mediaGrid.addEventListener("scroll", mediaScrollHandler, { passive: true });
+    mediaGrid.addEventListener("pointerdown", stopAutoScroll, { passive: true });
+    mediaGrid.addEventListener("wheel", stopAutoScroll, { passive: true });
+    mediaGrid.addEventListener("touchstart", stopAutoScroll, { passive: true });
 
     if (mediaResizeHandler) {
       window.removeEventListener("resize", mediaResizeHandler);
@@ -1292,24 +1310,37 @@
 
     if (mediaPrev) {
       mediaPrev.onclick = () => {
-        const width = mediaGrid.getBoundingClientRect().width || 1;
-        mediaGrid.scrollBy({ left: -width, behavior: "smooth" });
+        stopAutoScroll();
+        const index = getPageIndex();
+        const nextIndex = Math.max(0, index - 1);
+        scrollToPage(nextIndex);
       };
     }
     if (mediaNext) {
       mediaNext.onclick = () => {
-        const width = mediaGrid.getBoundingClientRect().width || 1;
-        mediaGrid.scrollBy({ left: width, behavior: "smooth" });
+        stopAutoScroll();
+        const index = getPageIndex();
+        const nextIndex = Math.min(pageCount - 1, index + 1);
+        scrollToPage(nextIndex);
       };
     }
 
     if (mediaAutoScrollTimer) {
       clearInterval(mediaAutoScrollTimer);
     }
+    mediaAutoDirection = 1;
+    mediaUserInteracted = false;
     mediaAutoScrollTimer = setInterval(() => {
-      const width = mediaGrid.getBoundingClientRect().width || 1;
-      const index = Math.round(mediaGrid.scrollLeft / width);
-      const nextIndex = index + 1 >= pageCount ? 0 : index + 1;
+      if (mediaUserInteracted) return;
+      const index = getPageIndex();
+      let nextIndex = index + mediaAutoDirection;
+      if (nextIndex >= pageCount) {
+        mediaAutoDirection = -1;
+        nextIndex = pageCount - 2 >= 0 ? pageCount - 2 : 0;
+      } else if (nextIndex < 0) {
+        mediaAutoDirection = 1;
+        nextIndex = 1 < pageCount ? 1 : 0;
+      }
       scrollToPage(nextIndex);
     }, 15000);
   }
