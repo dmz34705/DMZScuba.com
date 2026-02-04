@@ -1229,7 +1229,8 @@
   function initMediaCarousel(total) {
     if (!mediaGrid || !mediaDots) return;
     mediaDots.innerHTML = "";
-    if (total <= 3) {
+    const cardsPerPage = window.matchMedia("(max-width: 980px)").matches ? 1 : 3;
+    if (total <= cardsPerPage) {
       mediaGrid.classList.remove("is-scroll");
       mediaDots.hidden = true;
       if (mediaPrev) mediaPrev.hidden = true;
@@ -1246,7 +1247,7 @@
       [...mediaGrid.children].filter((el) =>
         el.classList.contains("media-card") || el.classList.contains("media-stack")
       );
-    const pageCount = Math.ceil(total / 3);
+    const pageCount = Math.ceil(total / cardsPerPage);
     mediaGrid.classList.add("is-scroll");
     mediaDots.hidden = false;
     if (mediaPrev) mediaPrev.hidden = false;
@@ -1265,7 +1266,7 @@
           closest = index;
         }
       });
-      return closest;
+      return Math.round(closest / cardsPerPage);
     };
 
     const setActiveDot = (index) => {
@@ -1278,7 +1279,8 @@
 
     const scrollToPage = (index) => {
       const blocks = getBlocks();
-      const target = blocks[index];
+      const targetIndex = Math.min(blocks.length - 1, Math.max(0, index * cardsPerPage));
+      const target = blocks[targetIndex];
       if (!target) return;
       // Scroll within the media grid only; avoid moving the page on mobile.
       const targetLeft = target.offsetLeft;
@@ -1298,7 +1300,10 @@
       const dot = document.createElement("button");
       dot.type = "button";
       dot.className = "media-dot";
-      dot.setAttribute("aria-label", `Show clips ${i * 3 + 1} to ${Math.min(total, (i + 1) * 3)}`);
+      dot.setAttribute(
+        "aria-label",
+        `Show clips ${i * cardsPerPage + 1} to ${Math.min(total, (i + 1) * cardsPerPage)}`
+      );
       dot.addEventListener("click", () => scrollToPage(i));
       mediaDots.appendChild(dot);
     }
