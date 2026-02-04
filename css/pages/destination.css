@@ -507,6 +507,41 @@ body.dest-page-editing [contenteditable="true"] {
   border-radius: 6px;
 }
 
+body.dest-page-editing .content-steps li {
+  position: relative;
+  padding-right: 28px;
+}
+
+.dest-page-delete {
+  position: absolute;
+  right: 0;
+  top: 2px;
+  border: 0;
+  background: rgba(10, 18, 30, 0.7);
+  color: rgba(234, 242, 255, 0.75);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+body.dest-page-editing .dest-page-delete {
+  display: inline-flex;
+}
+
+.dest-page-delete:hover {
+  opacity: 0.9;
+  border-color: rgba(255, 140, 140, 0.45);
+  background: rgba(20, 10, 12, 0.75);
+  transform: translateY(-1px);
+}
+
 .site-footer {
   position: relative;
 }

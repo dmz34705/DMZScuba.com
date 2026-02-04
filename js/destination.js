@@ -338,6 +338,7 @@
     (bullets || []).forEach((item) => {
       const li = document.createElement("li");
       li.textContent = item;
+      addDeleteButton(li);
       bulletsEl.appendChild(li);
     });
   }
@@ -348,6 +349,7 @@
     (items || []).forEach((item) => {
       const li = document.createElement("li");
       li.textContent = item;
+      addDeleteButton(li);
       el.appendChild(li);
     });
   }
@@ -367,6 +369,7 @@
       if (!value) return;
       const li = document.createElement("li");
       li.textContent = `${label}: ${value}`;
+      addDeleteButton(li);
       conditionsEl.appendChild(li);
     });
   }
@@ -473,6 +476,33 @@
       } else {
         li.removeAttribute("contenteditable");
       }
+    });
+  }
+
+  function addDeleteButton(li) {
+    if (!li || li.querySelector(".dest-page-delete")) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dest-page-delete";
+    btn.setAttribute("aria-label", "Delete item");
+    btn.innerHTML = "&#128465;";
+    li.appendChild(btn);
+  }
+
+  function bindDeleteHandlers() {
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
+    lists.forEach((list) => {
+      if (!list) return;
+      list.addEventListener("click", (event) => {
+        const button = event.target.closest(".dest-page-delete");
+        if (!button) return;
+        const li = button.closest("li");
+        if (!li) return;
+        const ok = window.confirm("Delete this item?");
+        if (!ok) return;
+        li.remove();
+        markDirty();
+      });
     });
   }
 
@@ -832,6 +862,7 @@
     const li = document.createElement("li");
     li.textContent = "New item";
     li.setAttribute("contenteditable", "true");
+    addDeleteButton(li);
     list.appendChild(li);
     li.focus();
     markDirty();
@@ -841,6 +872,7 @@
     if (!adminPanel) return;
     updateAuthState();
     bindEditableListeners();
+    bindDeleteHandlers();
 
     const setPanelOpen = (next) => {
       document.body.classList.toggle("dest-page-admin-open", next);
