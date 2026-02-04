@@ -916,14 +916,18 @@ body {
 
   .destination-media-grid .media-card {
     flex-basis: 80%;
+    scroll-snap-align: center;
   }
 
   .destination-media-grid .media-stack {
     flex-basis: 80%;
+    scroll-snap-align: center;
   }
 
   .destination-media-grid {
     --media-card-height: 520px;
+    padding-inline: 10%;
+    scroll-padding-inline: 10%;
   }
 }
 
