@@ -273,7 +273,7 @@ body {
 }
 
 .destination-media-grid .media-card.is-compact .media-thumb:not([data-aspect]){
-  min-height: 150px;
+  min-height: 120px;
 }
 
 .destination-media-grid .media-thumb-img{
@@ -362,6 +362,14 @@ body {
 
 .destination-media-grid .media-card.is-compact .media-body p{
   font-size: clamp(11px, calc(260px / 26), 13.5px);
+}
+
+.destination-media-grid .media-card.is-compact .media-thumb{
+  max-height: 140px;
+}
+
+.destination-media-grid .media-card.is-compact .media-thumb-img{
+  object-fit: cover;
 }
 
 .destination-media-grid .media-body p.media-desc-empty{
