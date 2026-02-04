@@ -62,6 +62,8 @@
   const mediaGrid = document.getElementById("destMediaGrid");
   const mediaLink = document.getElementById("destMediaLink");
   const mediaDots = document.getElementById("destMediaDots");
+  const mediaPrev = document.getElementById("destMediaPrev");
+  const mediaNext = document.getElementById("destMediaNext");
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const metaDescriptionEl = document.querySelector('meta[name="description"]');
   const adminPanel = document.getElementById("destPageAdminPanel");
@@ -90,6 +92,7 @@
   let mediaRequestId = 0;
   let mediaScrollHandler = null;
   let mediaResizeHandler = null;
+  let mediaAutoScrollTimer = null;
   const isDev =
     ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
     window.location.hostname.endsWith(".local");
@@ -1018,17 +1021,27 @@
     if (total <= 3) {
       mediaGrid.classList.remove("is-scroll");
       mediaDots.hidden = true;
+      if (mediaPrev) mediaPrev.hidden = true;
+      if (mediaNext) mediaNext.hidden = true;
+      if (mediaAutoScrollTimer) {
+        clearInterval(mediaAutoScrollTimer);
+        mediaAutoScrollTimer = null;
+      }
       return;
     }
 
     const pageCount = Math.ceil(total / 3);
     mediaGrid.classList.add("is-scroll");
     mediaDots.hidden = false;
+    if (mediaPrev) mediaPrev.hidden = false;
+    if (mediaNext) mediaNext.hidden = false;
 
     const setActiveDot = (index) => {
       mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
         dot.classList.toggle("is-active", i === index);
       });
+      if (mediaPrev) mediaPrev.disabled = index === 0;
+      if (mediaNext) mediaNext.disabled = index === pageCount - 1;
     };
 
     const scrollToPage = (index) => {
@@ -1066,6 +1079,29 @@
       setActiveDot(0);
     };
     window.addEventListener("resize", mediaResizeHandler);
+
+    if (mediaPrev) {
+      mediaPrev.onclick = () => {
+        const width = mediaGrid.getBoundingClientRect().width || 1;
+        mediaGrid.scrollBy({ left: -width, behavior: "smooth" });
+      };
+    }
+    if (mediaNext) {
+      mediaNext.onclick = () => {
+        const width = mediaGrid.getBoundingClientRect().width || 1;
+        mediaGrid.scrollBy({ left: width, behavior: "smooth" });
+      };
+    }
+
+    if (mediaAutoScrollTimer) {
+      clearInterval(mediaAutoScrollTimer);
+    }
+    mediaAutoScrollTimer = setInterval(() => {
+      const width = mediaGrid.getBoundingClientRect().width || 1;
+      const index = Math.round(mediaGrid.scrollLeft / width);
+      const nextIndex = index + 1 >= pageCount ? 0 : index + 1;
+      scrollToPage(nextIndex);
+    }, 15000);
   }
 
   async function fetchMediaData() {

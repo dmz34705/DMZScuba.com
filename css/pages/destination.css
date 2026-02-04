@@ -222,17 +222,15 @@ body {
 }
 
 .destination-media-grid::-webkit-scrollbar {
-  height: 8px;
+  height: 0;
 }
 
 .destination-media-grid::-webkit-scrollbar-track {
-  background: rgba(5, 11, 20, 0.35);
-  border-radius: 999px;
+  background: transparent;
 }
 
 .destination-media-grid::-webkit-scrollbar-thumb {
-  background: rgba(85, 185, 255, 0.35);
-  border-radius: 999px;
+  background: transparent;
 }
 
 .media-dots {
@@ -254,6 +252,49 @@ body {
 
 .media-dot.is-active {
   background: rgba(85, 185, 255, 0.85);
+}
+
+.destination-media {
+  position: relative;
+}
+
+.media-arrow {
+  position: absolute;
+  top: calc(50% + 20px);
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 14, 24, 0.92);
+  color: rgba(234, 242, 255, 0.9);
+  font-size: 24px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.media-arrow:hover {
+  transform: translateY(-50%) scale(1.05);
+  border-color: rgba(85, 185, 255, 0.45);
+  background: rgba(10, 18, 30, 0.95);
+}
+
+.media-arrow[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.media-arrow-prev {
+  left: -12px;
+}
+
+.media-arrow-next {
+  right: -12px;
 }
 
 .media-thumb-play{
