@@ -743,7 +743,7 @@
     el.innerHTML = safe;
   }
 
-  function showDebugPanel(payload, response) {
+  function showDebugPanel(payload, response, stage = "save") {
     const params = new URLSearchParams(window.location.search);
     if (!params.has("debug")) return;
     let panel = document.getElementById("destDebugPanel");
@@ -757,14 +757,19 @@
         "box-shadow:0 12px 30px rgba(0,0,0,0.3)";
       document.body.appendChild(panel);
     }
-    const statusLine = response ? `status: ${response.status}` : "status: pending";
+    const statusLine = response
+      ? `status: ${response.status}`
+      : stage === "load"
+        ? "status: loaded"
+        : "status: pending";
     const safePayload = {
       logistics: payload?.baseItems?.[0]?.logistics || "",
       logisticsDetails: payload?.expandedItems?.[0]?.logisticsDetails || "",
       logisticsTips: payload?.expandedItems?.[0]?.logisticsTips || [],
     };
     panel.innerHTML =
-      `<div><strong>Destination Save Debug</strong></div>` +
+      `<div><strong>Destination Debug</strong></div>` +
+      `<div>stage: ${stage}</div>` +
       `<div>${statusLine}</div>` +
       `<pre style="white-space:pre-wrap;margin:8px 0 0;">${JSON.stringify(safePayload, null, 2)}</pre>`;
   }
@@ -1710,6 +1715,20 @@
       setListEditable(conditionsEl, true);
       setHighlightsEditable(true);
     }
+
+    showDebugPanel(
+      {
+        baseItems: [{ logistics: dest.logistics || "" }],
+        expandedItems: [
+          {
+            logisticsDetails: dest.logisticsDetails || "",
+            logisticsTips: dest.logisticsTips || [],
+          },
+        ],
+      },
+      null,
+      "load"
+    );
   }
 
   async function loadDestination() {
@@ -1935,13 +1954,13 @@
       expandedItems: [expanded],
       deleteIds: [],
     };
-    showDebugPanel(payload, null);
+    showDebugPanel(payload, null, "save");
     const resp = await apiFetch(apiAdminBulkUrl, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    showDebugPanel(payload, resp);
+    showDebugPanel(payload, resp, "save");
     if (!resp.ok) {
       window.alert("Save failed. Check your login or API.");
       return;
