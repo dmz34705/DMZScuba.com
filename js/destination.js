@@ -1867,6 +1867,9 @@
     const logisticsValue = readRichText(logisticsEl);
     const logisticsDetailsValue = readRichText(logisticsDetailsEl);
     const mergedLogistics = logisticsValue || logisticsDetailsValue || "";
+    const previousDetails = currentExpanded?.logisticsDetails || "";
+    const detailsChanged = logisticsDetailsValue && logisticsDetailsValue !== previousDetails;
+    const finalLogisticsDetails = detailsChanged ? logisticsDetailsValue : mergedLogistics;
     const base = {
       ...(currentBase || {}),
       id: currentId,
@@ -1900,7 +1903,7 @@
       narrative: readRichText(narrativeEl),
       dayToDay: readRichText(dayToDayEl),
       resortDetails: readRichText(resortDetailsEl),
-      logisticsDetails: logisticsDetailsValue || mergedLogistics,
+      logisticsDetails: finalLogisticsDetails,
       logisticsTips: readList(logisticsTipsEl),
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
