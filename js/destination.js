@@ -1651,7 +1651,7 @@
     setRichText(experienceEl, dest.experience || "Experience details coming soon.");
     setRichText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
     setRichText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
-    setRichText(logisticsDetailsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
+    setRichText(logisticsDetailsEl, dest.logistics || dest.logisticsDetails || "Logistics details coming soon.");
     renderList(logisticsTipsEl, dest.logisticsTips);
     renderHighlights(dest.diveSiteHighlights);
     setText(dayToDayTitleEl, dest.dayToDayTitle || "Day-to-Day Diving");
