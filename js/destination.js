@@ -658,15 +658,17 @@
     const allowedTags = new Set([
       "P",
       "BR",
-      "STRONG",
-      "B",
-      "EM",
-      "I",
       "UL",
       "OL",
       "LI",
       "A",
       "DIV",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
     ]);
 
     const walk = (node) => {
@@ -687,7 +689,7 @@
         }
         if (child.nodeType === Node.ELEMENT_NODE) {
           const tag = child.tagName;
-          if (tag === "DIV") {
+          if (tag === "DIV" || /^H[1-6]$/.test(tag)) {
             const p = document.createElement("p");
             while (child.firstChild) p.appendChild(child.firstChild);
             child.replaceWith(p);
@@ -706,6 +708,12 @@
             child.setAttribute("href", safeHref);
             child.setAttribute("rel", "noopener");
             child.setAttribute("target", "_blank");
+          }
+          // Strip inline styles/classes/ids to prevent font overrides.
+          [...child.attributes].forEach((attr) => {
+            const name = attr.name.toLowerCase();
+            if (tag === "A" && ["href", "rel", "target"].includes(name)) return;
+            child.removeAttribute(attr.name);
           }
           walk(child);
         }
