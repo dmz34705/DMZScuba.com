@@ -58,6 +58,7 @@
 
   let isDirty = false;
   let bannerTimer = null;
+  let lastDraftAt = 0;
 
   const state = {
     baseItems: [],
@@ -299,12 +300,15 @@
 
   function saveDraft() {
     try {
+      const updatedAt = Date.now();
       const payload = {
         baseItems: state.baseItems,
         expandedItems: state.expandedItems,
         selectedId: state.selectedId,
+        updatedAt,
       };
       window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
+      lastDraftAt = updatedAt;
     } catch (error) {
       console.warn("Destination draft save failed.", error);
     }
@@ -316,6 +320,9 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== "object") return null;
+      if (parsed.updatedAt) {
+        lastDraftAt = Math.max(lastDraftAt, Number(parsed.updatedAt) || 0);
+      }
       return parsed;
     } catch (error) {
       console.warn("Destination draft load failed.", error);
@@ -1147,6 +1154,24 @@
   async function publishDestinations() {
     if (!getToken()) {
       buildLoginModal(() => publishDestinations());
+      return;
+    }
+    const lastKnownDraftAt = lastDraftAt;
+    const draft = loadDraft();
+    const draftAt = Number(draft && draft.updatedAt ? draft.updatedAt : 0) || 0;
+    if (draft && draftAt > lastKnownDraftAt) {
+      state.baseItems = Array.isArray(draft.baseItems) ? draft.baseItems : [];
+      state.expandedItems = Array.isArray(draft.expandedItems) ? draft.expandedItems : [];
+      state.selectedId = draft.selectedId || state.selectedId;
+      rebuildMerged();
+      setDirty(true);
+    } else if (!isDirty) {
+      openModal({
+        title: "Nothing to publish",
+        message: "No local travel edits were found. Destination page saves are already live.",
+        confirmLabel: "Close",
+        showCancel: false,
+      });
       return;
     }
     let deleteIds = [];
