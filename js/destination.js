@@ -7,6 +7,7 @@
   const mediaApiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
   const mediaDataUrl = "/assets/data/media.json";
   const tokenStorageKey = "dmzMediaToken";
+  const draftStorageKey = "dmzDestinationsDraft";
   const nameEl = document.getElementById("destName");
   const subtitleEl = document.getElementById("destSubtitle");
   const bulletsEl = document.getElementById("destBullets");
@@ -372,6 +373,38 @@
       return;
     }
     window.sessionStorage.setItem(tokenStorageKey, token);
+  }
+
+  function updateDraftCache(base, expanded) {
+    try {
+      const raw = window.localStorage.getItem(draftStorageKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== "object") return;
+
+      const upsert = (items, item) => {
+        if (!Array.isArray(items) || !item || !item.id) return items;
+        const next = [...items];
+        const index = next.findIndex((entry) => entry && entry.id === item.id);
+        if (index >= 0) {
+          next[index] = item;
+          return next;
+        }
+        next.push(item);
+        return next;
+      };
+
+      const nextDraft = { ...draft };
+      if (Array.isArray(draft.baseItems)) {
+        nextDraft.baseItems = upsert(draft.baseItems, base);
+      }
+      if (Array.isArray(draft.expandedItems)) {
+        nextDraft.expandedItems = upsert(draft.expandedItems, expanded);
+      }
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
+    } catch (error) {
+      console.warn("Destination draft sync failed.", error);
+    }
   }
 
   async function apiFetch(path, options = {}) {
@@ -1758,6 +1791,7 @@
     isDirty = false;
     currentBase = base;
     currentExpanded = expanded;
+    updateDraftCache(base, expanded);
     setEditMode(false);
   }
 
