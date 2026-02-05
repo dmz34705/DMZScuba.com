@@ -651,6 +651,65 @@
     el.textContent = text;
   }
 
+  function sanitizeRichText(html) {
+    if (!html) return "";
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    const allowedTags = new Set([
+      "P",
+      "BR",
+      "STRONG",
+      "B",
+      "EM",
+      "I",
+      "UL",
+      "OL",
+      "LI",
+      "A",
+    ]);
+
+    const walk = (node) => {
+      const children = [...node.childNodes];
+      children.forEach((child) => {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          const tag = child.tagName;
+          if (!allowedTags.has(tag)) {
+            const text = document.createTextNode(child.textContent || "");
+            child.replaceWith(text);
+            return;
+          }
+          if (tag === "A") {
+            const href = child.getAttribute("href") || "";
+            const safeHref =
+              href.startsWith("http://") || href.startsWith("https://") ? href : "";
+            child.setAttribute("href", safeHref);
+            child.setAttribute("rel", "noopener");
+            child.setAttribute("target", "_blank");
+          }
+          walk(child);
+        }
+      });
+    };
+
+    walk(wrapper);
+    return wrapper.innerHTML.trim();
+  }
+
+  function readRichText(el) {
+    if (!el) return "";
+    return sanitizeRichText(el.innerHTML);
+  }
+
+  function setRichText(el, html) {
+    if (!el) return;
+    const safe = sanitizeRichText(html);
+    if (!safe) {
+      el.textContent = "";
+      return;
+    }
+    el.innerHTML = safe;
+  }
+
   function cleanListText(text) {
     return String(text || "")
       .replace(/🗑️?/g, "")
@@ -960,7 +1019,7 @@
       dest?.whyItWorks?.vibe ||
       dest?.summary ||
       "A relaxed dive rhythm with enough drama to keep every drop cinematic.";
-    vibeTextEl.textContent = vibe;
+    setRichText(vibeTextEl, vibe);
   }
 
   function renderPerfectFor(items, fallback = []) {
@@ -1470,22 +1529,22 @@
     if (!dest) {
       setText(nameEl, "Destination Not Found");
       setText(subtitleEl, "Return to the travel page to pick a destination.");
-      setText(heroWhyEl, "We could not load this destination.");
+      setRichText(heroWhyEl, "We could not load this destination.");
       renderHeroBadges([]);
       renderBullets([]);
       renderList(diveSitesEl, []);
       renderList(nonDivingEl, []);
       renderConditions(null);
-      setText(narrativeEl, "We could not find that destination.");
-      setText(summaryEl, "Summary unavailable.");
+      setRichText(narrativeEl, "We could not find that destination.");
+      setRichText(summaryEl, "Summary unavailable.");
       setText(resortNameEl, "Resort name unavailable.");
       setText(resortDescEl, "Resort details unavailable.");
-      setText(seasonalityEl, "Seasonality unavailable.");
-      setText(logisticsEl, "Logistics unavailable.");
-      setText(experienceEl, "Experience info unavailable.");
-      setText(dayToDayEl, "Day-to-day details unavailable.");
-      setText(resortDetailsEl, "Resort details unavailable.");
-      setText(logisticsDetailsEl, "Logistics details unavailable.");
+      setRichText(seasonalityEl, "Seasonality unavailable.");
+      setRichText(logisticsEl, "Logistics unavailable.");
+      setRichText(experienceEl, "Experience info unavailable.");
+      setRichText(dayToDayEl, "Day-to-day details unavailable.");
+      setRichText(resortDetailsEl, "Resort details unavailable.");
+      setRichText(logisticsDetailsEl, "Logistics details unavailable.");
       renderList(logisticsTipsEl, []);
       renderHighlights([]);
       setText(dayToDayTitleEl, "Day-to-Day Diving");
@@ -1508,7 +1567,7 @@
       setHeroImage(null);
       setDiveNowLinks(null);
       setMetaDescription("Explore a DMZ Scuba destination and plan a dive trip on your terms.");
-      if (vibeTextEl) vibeTextEl.textContent = "Trip vibe unavailable.";
+      setRichText(vibeTextEl, "Trip vibe unavailable.");
       renderPerfectFor([], []);
       renderHowItWorks([]);
       clearDestinationMedia("Trip clips coming soon.");
@@ -1518,22 +1577,22 @@
     const displayName = dest.heroTitle || dest.name || "Destination";
     setText(nameEl, displayName);
     setText(subtitleEl, dest.subtitle || "Explore this destination with DMZ Scuba.");
-    setText(heroWhyEl, dest.heroWhy || dest.summary || "Plan a dive trip that matches your goals.");
+    setRichText(heroWhyEl, dest.heroWhy || dest.summary || "Plan a dive trip that matches your goals.");
     renderHeroBadges(dest.heroHighlights || dest.highlights || dest.tags || []);
     renderBullets(dest.bullets);
     renderList(diveSitesEl, dest.diveSites);
     renderList(nonDivingEl, dest.nonDiving);
     renderConditions(dest.conditions);
-    setText(narrativeEl, dest.narrative || "Explore this destination with DMZ Scuba.");
-    setText(summaryEl, dest.summary || "Trip summary coming soon.");
+    setRichText(narrativeEl, dest.narrative || "Explore this destination with DMZ Scuba.");
+    setRichText(summaryEl, dest.summary || "Trip summary coming soon.");
     setText(resortNameEl, dest.resort?.name || "Resort details");
     setText(resortDescEl, dest.resort?.description || "Resort details coming soon.");
-    setText(seasonalityEl, dest.seasonality || "Seasonality details coming soon.");
-    setText(logisticsEl, dest.logistics || "Logistics details coming soon.");
-    setText(experienceEl, dest.experience || "Experience details coming soon.");
-    setText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
-    setText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
-    setText(logisticsDetailsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
+    setRichText(seasonalityEl, dest.seasonality || "Seasonality details coming soon.");
+    setRichText(logisticsEl, dest.logistics || "Logistics details coming soon.");
+    setRichText(experienceEl, dest.experience || "Experience details coming soon.");
+    setRichText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
+    setRichText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
+    setRichText(logisticsDetailsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
     renderList(logisticsTipsEl, dest.logisticsTips);
     renderHighlights(dest.diveSiteHighlights);
     setText(dayToDayTitleEl, dest.dayToDayTitle || "Day-to-Day Diving");
@@ -1755,13 +1814,13 @@
       isoImage: isoInput ? isoInput.value.trim() : currentBase?.isoImage || "",
       isoTitle: isoTitleEl ? isoTitleEl.textContent.trim() : "",
       isoDesc: isoDescEl ? isoDescEl.textContent.trim() : "",
-      summary: summaryEl ? summaryEl.textContent.trim() : "",
+      summary: readRichText(summaryEl),
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
-      seasonality: seasonalityEl ? seasonalityEl.textContent.trim() : "",
-      logistics: logisticsEl ? logisticsEl.textContent.trim() : "",
-      experience: experienceEl ? experienceEl.textContent.trim() : "",
+      seasonality: readRichText(seasonalityEl),
+      logistics: readRichText(logisticsEl),
+      experience: readRichText(experienceEl),
       resort: {
         ...(currentBase?.resort || {}),
         name: resortNameEl ? resortNameEl.textContent.trim() : "",
@@ -1776,10 +1835,10 @@
     const expanded = {
       ...(currentExpanded || {}),
       id: currentId,
-      narrative: narrativeEl ? narrativeEl.textContent.trim() : "",
-      dayToDay: dayToDayEl ? dayToDayEl.textContent.trim() : "",
-      resortDetails: resortDetailsEl ? resortDetailsEl.textContent.trim() : "",
-      logisticsDetails: logisticsDetailsEl ? logisticsDetailsEl.textContent.trim() : "",
+      narrative: readRichText(narrativeEl),
+      dayToDay: readRichText(dayToDayEl),
+      resortDetails: readRichText(resortDetailsEl),
+      logisticsDetails: readRichText(logisticsDetailsEl),
       logisticsTips: readList(logisticsTipsEl),
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
@@ -1800,8 +1859,8 @@
       nonDivingTitle: nonDivingTitleEl ? nonDivingTitleEl.textContent.trim() : "",
       tripSnapshotTitle: tripSnapshotTitleEl ? tripSnapshotTitleEl.textContent.trim() : "",
       mediaStatus: mediaStatusEl ? mediaStatusEl.textContent.trim() : "",
-      heroWhy: heroWhyEl ? heroWhyEl.textContent.trim() : "",
-      vibe: vibeTextEl ? vibeTextEl.textContent.trim() : "",
+      heroWhy: readRichText(heroWhyEl),
+      vibe: readRichText(vibeTextEl),
       perfectFor: readList(perfectForEl),
       howItWorks: readList(howItWorksEl),
     };
