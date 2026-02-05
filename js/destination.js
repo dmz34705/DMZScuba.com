@@ -1890,8 +1890,7 @@
       return;
     }
     const logisticsValue = readRichText(logisticsEl);
-    const logisticsDetailsValue = readRichText(logisticsDetailsEl);
-    const finalLogisticsDetails = logisticsDetailsValue || logisticsValue || "";
+    const finalLogisticsDetails = logisticsValue || "";
     const base = {
       ...(currentBase || {}),
       id: currentId,
@@ -1906,7 +1905,7 @@
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
       seasonality: readRichText(seasonalityEl),
-      logistics: currentBase?.logistics || "",
+      logistics: logisticsValue || currentBase?.logistics || "",
       experience: readRichText(experienceEl),
       resort: {
         ...(currentBase?.resort || {}),
