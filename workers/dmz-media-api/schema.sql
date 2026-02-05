@@ -36,3 +36,11 @@ CREATE TABLE IF NOT EXISTS destinations_expanded (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS destinations (
+  id TEXT PRIMARY KEY,
+  base_json TEXT NOT NULL,
+  expanded_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
