@@ -743,6 +743,32 @@
     el.innerHTML = safe;
   }
 
+  function showDebugPanel(payload, response) {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("debug")) return;
+    let panel = document.getElementById("destDebugPanel");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "destDebugPanel";
+      panel.style.cssText =
+        "position:fixed;bottom:16px;right:16px;max-width:420px;max-height:60vh;overflow:auto;" +
+        "background:#0b0b0b;color:#f5f5f5;padding:12px 14px;border-radius:10px;z-index:9999;" +
+        "font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;" +
+        "box-shadow:0 12px 30px rgba(0,0,0,0.3)";
+      document.body.appendChild(panel);
+    }
+    const statusLine = response ? `status: ${response.status}` : "status: pending";
+    const safePayload = {
+      logistics: payload?.baseItems?.[0]?.logistics || "",
+      logisticsDetails: payload?.expandedItems?.[0]?.logisticsDetails || "",
+      logisticsTips: payload?.expandedItems?.[0]?.logisticsTips || [],
+    };
+    panel.innerHTML =
+      `<div><strong>Destination Save Debug</strong></div>` +
+      `<div>${statusLine}</div>` +
+      `<pre style="white-space:pre-wrap;margin:8px 0 0;">${JSON.stringify(safePayload, null, 2)}</pre>`;
+  }
+
   function cleanListText(text) {
     return String(text || "")
       .replace(/🗑️?/g, "")
@@ -1901,15 +1927,18 @@
       howItWorks: readList(howItWorksEl),
     };
 
+    const payload = {
+      baseItems: [base],
+      expandedItems: [expanded],
+      deleteIds: [],
+    };
+    showDebugPanel(payload, null);
     const resp = await apiFetch(apiAdminBulkUrl, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        baseItems: [base],
-        expandedItems: [expanded],
-        deleteIds: [],
-      }),
+      body: JSON.stringify(payload),
     });
+    showDebugPanel(payload, resp);
     if (!resp.ok) {
       window.alert("Save failed. Check your login or API.");
       return;
