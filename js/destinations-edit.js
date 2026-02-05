@@ -59,6 +59,7 @@
   let isDirty = false;
   let bannerTimer = null;
   let lastDraftAt = 0;
+  const dirtyIds = new Set();
 
   const state = {
     baseItems: [],
@@ -119,6 +120,11 @@
   }
 
   function markDirty() {
+    setDirty(true);
+  }
+
+  function markDirtyId(id) {
+    if (id) dirtyIds.add(id);
     setDirty(true);
   }
 
@@ -305,6 +311,7 @@
         baseItems: state.baseItems,
         expandedItems: state.expandedItems,
         selectedId: state.selectedId,
+        dirtyIds: [...dirtyIds],
         updatedAt,
       };
       window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
@@ -322,6 +329,12 @@
       if (!parsed || typeof parsed !== "object") return null;
       if (parsed.updatedAt) {
         lastDraftAt = Math.max(lastDraftAt, Number(parsed.updatedAt) || 0);
+      }
+      if (Array.isArray(parsed.dirtyIds)) {
+        dirtyIds.clear();
+        parsed.dirtyIds.forEach((id) => {
+          if (id) dirtyIds.add(id);
+        });
       }
       return parsed;
     } catch (error) {
@@ -738,6 +751,7 @@
     saveDraft();
     renderList();
     notify();
+    markDirtyId(id);
   }
 
   function updateExpanded(id, patch) {
@@ -747,6 +761,7 @@
     rebuildMerged();
     saveDraft();
     notify();
+    markDirtyId(id);
   }
 
   function ensureBaseItem(id) {
@@ -790,6 +805,7 @@
     renderList();
     fillEditor();
     notify();
+    markDirtyId(normalized);
     return true;
   }
 
@@ -1124,7 +1140,7 @@
       rebuildMerged();
       saveDraft();
       selectId(id);
-      markDirty();
+      markDirtyId(id);
       notify();
     });
   }
@@ -1165,7 +1181,7 @@
       state.selectedId = draft.selectedId || state.selectedId;
       rebuildMerged();
       setDirty(true);
-    } else if (!isDirty) {
+    } else if (!isDirty && dirtyIds.size === 0) {
       openModal({
         title: "Nothing to publish",
         message: "No local travel edits were found. Destination page saves are already live.",
@@ -1189,12 +1205,30 @@
       // ignore delete sync errors
     }
     try {
+      const idsToPublish = new Set(dirtyIds);
+      const baseItems = [];
+      const expandedItems = [];
+      idsToPublish.forEach((id) => {
+        const base = getBaseById(id);
+        const expanded = getExpandedById(id);
+        if (base) baseItems.push(base);
+        if (expanded) expandedItems.push(expanded);
+      });
+      if (!baseItems.length && !expandedItems.length && !deleteIds.length) {
+        openModal({
+          title: "Nothing to publish",
+          message: "No local travel edits were found. Destination page saves are already live.",
+          confirmLabel: "Close",
+          showCancel: false,
+        });
+        return;
+      }
       const resp = await apiFetch("/api/admin/destinations-bulk", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          baseItems: state.baseItems,
-          expandedItems: state.expandedItems,
+          baseItems,
+          expandedItems,
           deleteIds,
         }),
       });
@@ -1215,6 +1249,7 @@
       });
       try {
         window.localStorage.removeItem(draftStorageKey);
+        dirtyIds.clear();
       } catch (error) {
         // ignore
       }
@@ -1374,7 +1409,7 @@
     base.lon = lon;
     rebuildMerged();
     saveDraft();
-    markDirty();
+    markDirtyId(id);
     if (state.selectedId === id) {
       fillEditor();
     }

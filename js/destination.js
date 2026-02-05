@@ -378,17 +378,8 @@
   function updateDraftCache(base, expanded) {
     try {
       const raw = window.localStorage.getItem(draftStorageKey);
+      if (!raw) return;
       const now = Date.now();
-      if (!raw) {
-        const payload = {
-          baseItems: [base],
-          expandedItems: [expanded],
-          selectedId: base?.id || "",
-          updatedAt: now,
-        };
-        window.localStorage.setItem(draftStorageKey, JSON.stringify(payload));
-        return;
-      }
       const draft = JSON.parse(raw);
       if (!draft || typeof draft !== "object") return;
 
@@ -410,6 +401,9 @@
       }
       if (Array.isArray(draft.expandedItems)) {
         nextDraft.expandedItems = upsert(draft.expandedItems, expanded);
+      }
+      if (Array.isArray(draft.dirtyIds) && base?.id) {
+        nextDraft.dirtyIds = draft.dirtyIds.filter((id) => id && id !== base.id);
       }
       nextDraft.updatedAt = now;
       window.localStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
