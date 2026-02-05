@@ -714,7 +714,7 @@
             const name = attr.name.toLowerCase();
             if (tag === "A" && ["href", "rel", "target"].includes(name)) return;
             child.removeAttribute(attr.name);
-          }
+          });
           walk(child);
         }
       });
