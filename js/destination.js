@@ -1610,6 +1610,8 @@
     try {
       let baseData = [];
       let expandedData = [];
+      let baseJson = null;
+      let expandedJson = null;
       const cacheBuster = isDev ? `?v=${Date.now()}` : "";
 
       const safeFetch = async (url, options, label) => {
@@ -1638,27 +1640,48 @@
         expandedData = Array.isArray(apiJson.items) ? apiJson.items : [];
       }
 
-      if (!baseData.length) {
+      const loadBaseJson = async () => {
+        if (baseJson) return baseJson;
         const baseRes = await safeFetch(
           `/assets/data/destinations.json${cacheBuster}`,
           { cache: "no-store" },
           "JSON base",
         );
         if (!baseRes || !baseRes.ok) throw new Error("Failed to load destinations");
-        baseData = await baseRes.json();
-      }
+        baseJson = await baseRes.json();
+        return baseJson;
+      };
 
-      if (!expandedData.length) {
+      const loadExpandedJson = async () => {
+        if (expandedJson) return expandedJson;
         const expandedRes = await safeFetch(
           `/assets/data/destinations-expanded.json${cacheBuster}`,
           { cache: "no-store" },
           "JSON expanded",
         );
-        expandedData = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
+        expandedJson = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
+        return expandedJson;
+      };
+
+      if (!baseData.length) {
+        baseData = await loadBaseJson();
       }
 
-      const baseDest = (baseData || []).find((item) => item.id === id);
-      const extraDest = (expandedData || []).find((item) => item.id === id);
+      if (!expandedData.length) {
+        expandedData = await loadExpandedJson();
+      }
+
+      let baseDest = (baseData || []).find((item) => item.id === id);
+      let extraDest = (expandedData || []).find((item) => item.id === id);
+
+      if (!baseDest) {
+        const jsonBase = await loadBaseJson();
+        baseDest = (jsonBase || []).find((item) => item.id === id);
+      }
+      if (!extraDest) {
+        const jsonExpanded = await loadExpandedJson();
+        extraDest = (jsonExpanded || []).find((item) => item.id === id);
+      }
       const dest = mergeDestination(baseDest, extraDest);
       currentBase = baseDest || null;
       currentExpanded = extraDest || null;

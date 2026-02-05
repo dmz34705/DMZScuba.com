@@ -346,6 +346,8 @@
   async function fetchDestinationsData() {
     let baseItems = [];
     let expandedItems = [];
+    let baseJson = [];
+    let expandedJson = [];
 
     try {
       const apiRes = await fetch(apiUrl, { cache: "no-store" });
@@ -357,11 +359,13 @@
       // ignore
     }
 
-    if (!baseItems.length) {
+    try {
       const fallbackRes = await fetch("/assets/data/destinations.json", { cache: "no-store" });
       if (fallbackRes.ok) {
-        baseItems = await fallbackRes.json();
+        baseJson = await fallbackRes.json();
       }
+    } catch (error) {
+      baseJson = [];
     }
 
     try {
@@ -374,16 +378,28 @@
       // ignore
     }
 
-    if (!expandedItems.length) {
-      try {
-        const fallbackRes = await fetch("/assets/data/destinations-expanded.json", { cache: "no-store" });
-        if (fallbackRes.ok) {
-          expandedItems = await fallbackRes.json();
-        }
-      } catch (error) {
-        expandedItems = [];
+    try {
+      const fallbackRes = await fetch("/assets/data/destinations-expanded.json", { cache: "no-store" });
+      if (fallbackRes.ok) {
+        expandedJson = await fallbackRes.json();
       }
+    } catch (error) {
+      expandedJson = [];
     }
+
+    const mergeById = (fallback, overrides) => {
+      const merged = new Map();
+      (fallback || []).forEach((item) => {
+        if (item && item.id) merged.set(item.id, item);
+      });
+      (overrides || []).forEach((item) => {
+        if (item && item.id) merged.set(item.id, item);
+      });
+      return [...merged.values()];
+    };
+
+    baseItems = mergeById(baseJson, baseItems);
+    expandedItems = mergeById(expandedJson, expandedItems);
 
     return { baseItems, expandedItems };
   }
