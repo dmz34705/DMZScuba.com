@@ -1656,7 +1656,7 @@
     setRichText(experienceEl, dest.experience || "Experience details coming soon.");
     setRichText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
     setRichText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
-    setRichText(logisticsDetailsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
+    setRichText(logisticsDetailsEl, dest.logisticsDetails || "Logistics details coming soon.");
     renderList(logisticsTipsEl, dest.logisticsTips);
     renderHighlights(dest.diveSiteHighlights);
     setText(dayToDayTitleEl, dest.dayToDayTitle || "Day-to-Day Diving");
@@ -1885,10 +1885,7 @@
     }
     const logisticsValue = readRichText(logisticsEl);
     const logisticsDetailsValue = readRichText(logisticsDetailsEl);
-    const mergedLogistics = logisticsValue || logisticsDetailsValue || "";
-    const previousDetails = currentExpanded?.logisticsDetails || "";
-    const detailsChanged = logisticsDetailsValue && logisticsDetailsValue !== previousDetails;
-    const finalLogisticsDetails = detailsChanged ? logisticsDetailsValue : mergedLogistics;
+    const finalLogisticsDetails = logisticsDetailsValue || logisticsValue || "";
     const base = {
       ...(currentBase || {}),
       id: currentId,
@@ -1903,7 +1900,7 @@
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
       seasonality: readRichText(seasonalityEl),
-      logistics: mergedLogistics,
+      logistics: currentBase?.logistics || "",
       experience: readRichText(experienceEl),
       resort: {
         ...(currentBase?.resort || {}),
