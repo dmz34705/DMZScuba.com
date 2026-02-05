@@ -1834,6 +1834,9 @@
       buildLoginModal(() => saveDestination());
       return;
     }
+    const logisticsValue = readRichText(logisticsEl);
+    const logisticsDetailsValue = readRichText(logisticsDetailsEl);
+    const mergedLogistics = logisticsValue || logisticsDetailsValue || "";
     const base = {
       ...(currentBase || {}),
       id: currentId,
@@ -1848,7 +1851,7 @@
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
       seasonality: readRichText(seasonalityEl),
-      logistics: readRichText(logisticsEl),
+      logistics: mergedLogistics,
       experience: readRichText(experienceEl),
       resort: {
         ...(currentBase?.resort || {}),
@@ -1867,7 +1870,7 @@
       narrative: readRichText(narrativeEl),
       dayToDay: readRichText(dayToDayEl),
       resortDetails: readRichText(resortDetailsEl),
-      logisticsDetails: readRichText(logisticsDetailsEl),
+      logisticsDetails: logisticsDetailsValue || mergedLogistics,
       logisticsTips: readList(logisticsTipsEl),
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
