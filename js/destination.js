@@ -666,13 +666,34 @@
       "OL",
       "LI",
       "A",
+      "DIV",
     ]);
 
     const walk = (node) => {
       const children = [...node.childNodes];
       children.forEach((child) => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          const text = child.textContent || "";
+          if (text.includes("\n")) {
+            const parts = text.split("\n");
+            const frag = document.createDocumentFragment();
+            parts.forEach((part, index) => {
+              if (part) frag.appendChild(document.createTextNode(part));
+              if (index < parts.length - 1) frag.appendChild(document.createElement("br"));
+            });
+            child.replaceWith(frag);
+          }
+          return;
+        }
         if (child.nodeType === Node.ELEMENT_NODE) {
           const tag = child.tagName;
+          if (tag === "DIV") {
+            const p = document.createElement("p");
+            while (child.firstChild) p.appendChild(child.firstChild);
+            child.replaceWith(p);
+            walk(p);
+            return;
+          }
           if (!allowedTags.has(tag)) {
             const text = document.createTextNode(child.textContent || "");
             child.replaceWith(text);
