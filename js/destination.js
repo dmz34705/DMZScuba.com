@@ -1652,11 +1652,11 @@
     setText(resortNameEl, dest.resort?.name || "Resort details");
     setText(resortDescEl, dest.resort?.description || "Resort details coming soon.");
     setRichText(seasonalityEl, dest.seasonality || "Seasonality details coming soon.");
-    setRichText(logisticsEl, dest.logistics || "Logistics details coming soon.");
+    setRichText(logisticsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
     setRichText(experienceEl, dest.experience || "Experience details coming soon.");
     setRichText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
     setRichText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
-    setRichText(logisticsDetailsEl, dest.logisticsDetails || "Logistics details coming soon.");
+    setRichText(logisticsDetailsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
     renderList(logisticsTipsEl, dest.logisticsTips);
     renderHighlights(dest.diveSiteHighlights);
     setText(dayToDayTitleEl, dest.dayToDayTitle || "Day-to-Day Diving");
