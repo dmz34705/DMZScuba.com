@@ -728,7 +728,7 @@
     if (!el) return "";
     const html = sanitizeRichText(el.innerHTML);
     if (html) return html;
-    const text = (el.textContent || "").trim();
+    const text = (el.innerText || el.textContent || "").trim();
     if (!text) return "";
     return sanitizeRichText(text.replace(/\n/g, "<br>"));
   }
