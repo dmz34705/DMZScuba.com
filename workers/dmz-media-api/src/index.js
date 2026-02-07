@@ -478,8 +478,9 @@ async function handleUpsertDestinationById(request, env, id) {
   )
     .bind(id, payload, createdAt, now)
     .run();
-
-  return jsonResponse({ ok: true, item: nextItem }, 200, { "Cache-Control": "no-store" });
+  const row = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
+  const savedItem = normalizeUnifiedDestination(row) || nextItem;
+  return jsonResponse({ ok: true, item: savedItem }, 200, { "Cache-Control": "no-store" });
 }
 
 async function handleDestinationsBulkUpsert(request, env) {

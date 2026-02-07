@@ -1764,109 +1764,27 @@
     }
 
     try {
-      const byIdRes = await fetch(`${apiByIdUrl}${encodeURIComponent(id)}`, { cache: "no-store" }).catch(
-        () => null
-      );
-      if (byIdRes && byIdRes.ok) {
-        const byIdJson = await byIdRes.json().catch(() => ({}));
-        const item = byIdJson && byIdJson.item ? byIdJson.item : null;
-        if (item && item.id) {
-          currentBase = item;
-          currentExpanded = item;
-          if (heroInput) heroInput.value = item.heroImage || "";
-          if (isoInput) isoInput.value = item.isoImage || "";
-          renderDestination(item);
-          return;
-        }
-      }
-
-      let baseData = [];
-      let expandedData = [];
-      let baseJson = null;
-      let expandedJson = null;
-      const cacheBuster = isDev ? `?v=${Date.now()}` : "";
-
-      const safeFetch = async (url, options, label) => {
-        try {
-          const res = await fetch(url, options);
-          debugLog(`[Destination] ${label}:`, url, res.status);
-          return res;
-        } catch (error) {
-          debugLog(`[Destination] ${label} failed:`, url, error);
-          return null;
-        }
-      };
-
-      const [apiRes, apiExpandedRes] = await Promise.all([
-        safeFetch(apiBaseUrl, { cache: "no-store" }, "API base"),
-        safeFetch(apiExpandedUrl, { cache: "no-store" }, "API expanded"),
-      ]);
-
-      if (apiRes && apiRes.ok) {
-        const apiJson = await apiRes.json();
-        baseData = Array.isArray(apiJson.items) ? apiJson.items : [];
-      }
-
-      if (apiExpandedRes && apiExpandedRes.ok) {
-        const apiJson = await apiExpandedRes.json();
-        expandedData = Array.isArray(apiJson.items) ? apiJson.items : [];
-      }
-
-      const loadBaseJson = async () => {
-        if (baseJson) return baseJson;
-        const baseRes = await safeFetch(
-          `/assets/data/destinations.json${cacheBuster}`,
-          { cache: "no-store" },
-          "JSON base",
-        );
-        if (!baseRes || !baseRes.ok) throw new Error("Failed to load destinations");
-        baseJson = await baseRes.json();
-        return baseJson;
-      };
-
-      const loadExpandedJson = async () => {
-        if (expandedJson) return expandedJson;
-        const expandedRes = await safeFetch(
-          `/assets/data/destinations-expanded.json${cacheBuster}`,
-          { cache: "no-store" },
-          "JSON expanded",
-        );
-        expandedJson = expandedRes && expandedRes.ok ? await expandedRes.json() : [];
-        return expandedJson;
-      };
-
-      if (!baseData.length) {
-        baseData = await loadBaseJson();
-      }
-
-      if (!expandedData.length) {
-        expandedData = await loadExpandedJson();
-      }
-
-      let baseDest = (baseData || []).find((item) => item.id === id);
-      let extraDest = (expandedData || []).find((item) => item.id === id);
-
-      if (!baseDest) {
-        const jsonBase = await loadBaseJson();
-        baseDest = (jsonBase || []).find((item) => item.id === id);
-      }
-      if (!extraDest) {
-        const jsonExpanded = await loadExpandedJson();
-        extraDest = (jsonExpanded || []).find((item) => item.id === id);
-      }
-      const dest = mergeDestination(baseDest, extraDest);
-      currentBase = baseDest || null;
-      currentExpanded = extraDest || null;
-      if (heroInput) heroInput.value = dest?.heroImage || "";
-      if (isoInput) isoInput.value = dest?.isoImage || "";
-
-      if (!dest) {
-        showErrorPanel("We could not find that destination. Try another destination.");
+      const byIdRes = await fetch(`${apiByIdUrl}${encodeURIComponent(id)}?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-store" },
+      }).catch(() => null);
+      if (!byIdRes || !byIdRes.ok) {
+        showErrorPanel("Destination API load failed. Check API routing or login.");
         renderDestination(null);
         return;
       }
-
-      renderDestination(dest);
+      const byIdJson = await byIdRes.json().catch(() => ({}));
+      const item = byIdJson && byIdJson.item ? byIdJson.item : null;
+      if (!item || !item.id) {
+        showErrorPanel("Destination API returned no item.");
+        renderDestination(null);
+        return;
+      }
+      currentBase = item;
+      currentExpanded = item;
+      if (heroInput) heroInput.value = item.heroImage || "";
+      if (isoInput) isoInput.value = item.isoImage || "";
+      renderDestination(item);
     } catch (err) {
       console.error("Failed to load destination:", err);
       showErrorPanel("We couldn't load this destination. Try refreshing or pick another destination.");
@@ -2002,11 +1920,12 @@
       window.alert("Save failed: API did not confirm write.");
       return;
     }
+    const savedItem = saveResult.item && saveResult.item.id ? saveResult.item : payload.items[0];
     isDirty = false;
-    currentBase = payload.items[0];
-    currentExpanded = payload.items[0];
-    updateDraftCache(payload.items[0], payload.items[0]);
-    renderDestination(payload.items[0]);
+    currentBase = savedItem;
+    currentExpanded = savedItem;
+    updateDraftCache(savedItem, savedItem);
+    renderDestination(savedItem);
     setEditMode(false);
   }
 
