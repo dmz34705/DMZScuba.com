@@ -207,6 +207,48 @@ function normalizeDestinationRow(row) {
   return data;
 }
 
+function mergeDestinationRecords(base, extra) {
+  if (!base && !extra) return null;
+  if (!base) return { ...(extra || {}) };
+  if (!extra) return { ...(base || {}) };
+
+  const merged = { ...base, ...extra };
+  const mergeArray = (first, second) => {
+    if (!Array.isArray(first) && !Array.isArray(second)) return null;
+    const seen = new Set();
+    const next = [];
+    [...(first || []), ...(second || [])].forEach((item) => {
+      if (item == null) return;
+      const key =
+        typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+          ? String(item).trim()
+          : JSON.stringify(item);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      next.push(item);
+    });
+    return next;
+  };
+
+  ["tags", "bullets", "diveSites", "nonDiving", "logisticsTips", "perfectFor", "howItWorks"].forEach(
+    (key) => {
+      const mergedArray = mergeArray(base[key], extra[key]);
+      if (mergedArray) merged[key] = mergedArray;
+    }
+  );
+
+  if (base.resort || extra.resort) {
+    merged.resort = { ...(base.resort || {}), ...(extra.resort || {}) };
+  }
+  if (base.conditions || extra.conditions) {
+    merged.conditions = { ...(base.conditions || {}), ...(extra.conditions || {}) };
+  }
+  if (base.whyItWorks || extra.whyItWorks) {
+    merged.whyItWorks = { ...(base.whyItWorks || {}), ...(extra.whyItWorks || {}) };
+  }
+  return merged;
+}
+
 async function ensureDestinationsTable(env) {
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS destinations (
@@ -217,6 +259,11 @@ async function ensureDestinationsTable(env) {
       updated_at TEXT NOT NULL
     )`
   ).run();
+  try {
+    await env.DB.prepare("ALTER TABLE destinations ADD COLUMN data_json TEXT").run();
+  } catch (error) {
+    // Column already exists.
+  }
 }
 
 async function fetchDestinationRows(env, table) {
@@ -224,11 +271,18 @@ async function fetchDestinationRows(env, table) {
   return results || [];
 }
 
-function normalizeUnifiedDestination(row, key) {
-  const json = parseJsonSafe(row && row[key], null);
-  if (!json || typeof json !== "object") return null;
-  if (!json.id && row && row.id) json.id = row.id;
-  return json;
+function normalizeUnifiedDestination(row) {
+  const direct = parseJsonSafe(row && row.data_json, null);
+  if (direct && typeof direct === "object") {
+    if (!direct.id && row && row.id) direct.id = row.id;
+    return direct;
+  }
+  const base = parseJsonSafe(row && row.base_json, null);
+  const expanded = parseJsonSafe(row && row.expanded_json, null);
+  const merged = mergeDestinationRecords(base, expanded);
+  if (!merged || typeof merged !== "object") return null;
+  if (!merged.id && row && row.id) merged.id = row.id;
+  return merged;
 }
 
 function pickTimestamp(baseRow, expRow, field, fallback) {
@@ -242,8 +296,19 @@ function pickTimestamp(baseRow, expRow, field, fallback) {
 
 async function backfillDestinations(env) {
   await ensureDestinationsTable(env);
-  const existing = await env.DB.prepare("SELECT COUNT(*) as count FROM destinations").first();
-  if (existing && existing.count > 0) return;
+  const existingRows = await env.DB.prepare(
+    "SELECT id, base_json, expanded_json, data_json, created_at, updated_at FROM destinations"
+  ).all();
+  const existing = existingRows.results || [];
+  if (existing.length) {
+    const update = env.DB.prepare("UPDATE destinations SET data_json = ? WHERE id = ?");
+    for (const row of existing) {
+      const current = normalizeUnifiedDestination(row);
+      if (!current || !current.id) continue;
+      await update.bind(JSON.stringify(current), row.id).run();
+    }
+    return;
+  }
 
   const baseRows = await env.DB.prepare(
     "SELECT id, data, created_at, updated_at FROM destinations_base"
@@ -259,18 +324,21 @@ async function backfillDestinations(env) {
 
   const now = new Date().toISOString();
   const insert = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?)`
+    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
   );
 
   for (const id of ids) {
     const baseRow = baseMap.get(id);
     const expRow = expandedMap.get(id);
-    const baseJson = baseRow && baseRow.data ? baseRow.data : "{}";
-    const expandedJson = expRow && expRow.data ? expRow.data : "{}";
+    const baseData = normalizeDestinationRow(baseRow);
+    const expandedData = normalizeDestinationRow(expRow);
+    const unified = mergeDestinationRecords(baseData, expandedData) || { id };
+    if (!unified.id) unified.id = id;
+    const unifiedJson = JSON.stringify(unified);
     const createdAt = pickTimestamp(baseRow, expRow, "created_at", now);
     const updatedAt = [baseRow?.updated_at, expRow?.updated_at].filter(Boolean).sort().pop() || now;
-    await insert.bind(id, baseJson, expandedJson, createdAt, updatedAt).run();
+    await insert.bind(id, unifiedJson, unifiedJson, unifiedJson, createdAt, updatedAt).run();
   }
 }
 
@@ -280,7 +348,7 @@ async function handleGetDestinations(env) {
     "SELECT * FROM destinations ORDER BY updated_at DESC, rowid ASC"
   ).all();
   const unifiedItems = (unifiedRows.results || [])
-    .map((row) => normalizeUnifiedDestination(row, "base_json"))
+    .map((row) => normalizeUnifiedDestination(row))
     .filter(Boolean);
   if (unifiedItems.length) {
     return jsonResponse(
@@ -312,7 +380,7 @@ async function handleGetDestinationsExpanded(env) {
     "SELECT * FROM destinations ORDER BY updated_at DESC, rowid ASC"
   ).all();
   const unifiedItems = (unifiedRows.results || [])
-    .map((row) => normalizeUnifiedDestination(row, "expanded_json"))
+    .map((row) => normalizeUnifiedDestination(row))
     .filter(Boolean);
   if (unifiedItems.length) {
     return jsonResponse(
@@ -343,35 +411,33 @@ async function handleGetDestinationById(env, id) {
   await backfillDestinations(env);
   const unifiedRow = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
   if (unifiedRow) {
-    const base = normalizeUnifiedDestination(unifiedRow, "base_json");
-    const expanded = normalizeUnifiedDestination(unifiedRow, "expanded_json");
-    return jsonResponse({ base, expanded }, 200, { "Cache-Control": "no-store" });
+    const item = normalizeUnifiedDestination(unifiedRow);
+    if (item) {
+      return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
+    }
   }
   const baseRow = await env.DB.prepare("SELECT * FROM destinations_base WHERE id = ?").bind(id).first();
   const expRow = await env.DB.prepare("SELECT * FROM destinations_expanded WHERE id = ?").bind(id).first();
   const base = normalizeDestinationRow(baseRow);
   const expanded = normalizeDestinationRow(expRow);
-  if (!base && !expanded) return jsonResponse({ ok: false, error: "Not found." }, 404);
-  return jsonResponse({ base, expanded }, 200, { "Cache-Control": "no-store" });
+  const item = mergeDestinationRecords(base, expanded);
+  if (!item) return jsonResponse({ ok: false, error: "Not found." }, 404);
+  if (!item.id) item.id = id;
+  return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
 }
 
 async function handleDestinationsBulkUpsert(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
   const body = await request.json().catch(() => ({}));
-  const baseItems = Array.isArray(body.baseItems) ? body.baseItems : [];
-  const expandedItems = Array.isArray(body.expandedItems) ? body.expandedItems : [];
+  const items = Array.isArray(body.items) ? body.items : [];
   const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
   const now = new Date().toISOString();
 
   await ensureDestinationsTable(env);
 
-  const baseExisting = await env.DB.prepare("SELECT id, created_at FROM destinations_base").all();
-  const expandedExisting = await env.DB.prepare("SELECT id, created_at FROM destinations_expanded").all();
-  const baseCreatedMap = new Map((baseExisting.results || []).map((row) => [row.id, row.created_at]));
-  const expandedCreatedMap = new Map(
-    (expandedExisting.results || []).map((row) => [row.id, row.created_at])
-  );
+  const unifiedExisting = await env.DB.prepare("SELECT id, created_at FROM destinations").all();
+  const createdMap = new Map((unifiedExisting.results || []).map((row) => [row.id, row.created_at]));
 
   if (deleteIds.length) {
     const delBase = env.DB.prepare("DELETE FROM destinations_base WHERE id = ?");
@@ -384,49 +450,39 @@ async function handleDestinationsBulkUpsert(request, env) {
     }
   }
 
+  const ids = new Set();
+  items.forEach((item) => {
+    if (item && item.id) ids.add(item.id);
+  });
+
+  const unifiedStmt = env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  );
   const baseStmt = env.DB.prepare(
     `INSERT OR REPLACE INTO destinations_base (id, data, created_at, updated_at)
      VALUES (?, ?, ?, ?)`
   );
-  for (const item of baseItems) {
-    if (!item || !item.id) continue;
-    const createdAt = baseCreatedMap.get(item.id) || now;
-    const payload = JSON.stringify(item);
-    await baseStmt.bind(item.id, payload, createdAt, now).run();
-  }
-
   const expandedStmt = env.DB.prepare(
     `INSERT OR REPLACE INTO destinations_expanded (id, data, created_at, updated_at)
      VALUES (?, ?, ?, ?)`
   );
-  for (const item of expandedItems) {
-    if (!item || !item.id) continue;
-    const createdAt = expandedCreatedMap.get(item.id) || now;
-    const payload = JSON.stringify(item);
-    await expandedStmt.bind(item.id, payload, createdAt, now).run();
-  }
 
-  const ids = new Set([
-    ...baseItems.map((item) => item && item.id).filter(Boolean),
-    ...expandedItems.map((item) => item && item.id).filter(Boolean),
-  ]);
-  const unifiedStmt = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?)`
-  );
   for (const id of ids) {
     const existing = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
-    const existingBase = normalizeUnifiedDestination(existing, "base_json") || { id };
-    const existingExpanded = normalizeUnifiedDestination(existing, "expanded_json") || { id };
-    const baseItem = baseItems.find((item) => item && item.id === id) || existingBase;
-    const expandedItem = expandedItems.find((item) => item && item.id === id) || existingExpanded;
-    const createdAt = existing && existing.created_at ? existing.created_at : now;
+    const directItem = items.find((item) => item && item.id === id) || { id };
+    const nextItem = { ...directItem };
+    if (!nextItem.id) nextItem.id = id;
+    const createdAt = createdMap.get(id) || (existing && existing.created_at) || now;
+    const payload = JSON.stringify(nextItem);
     await unifiedStmt
-      .bind(id, JSON.stringify(baseItem), JSON.stringify(expandedItem), createdAt, now)
+      .bind(id, payload, payload, payload, createdAt, now)
       .run();
+    await baseStmt.bind(id, payload, createdAt, now).run();
+    await expandedStmt.bind(id, payload, createdAt, now).run();
   }
 
-  return jsonResponse({ ok: true, count: baseItems.length }, 200);
+  return jsonResponse({ ok: true, count: ids.size }, 200);
 }
 
 async function handleGetMedia(env) {

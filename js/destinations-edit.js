@@ -1222,15 +1222,14 @@
     }
     try {
       const idsToPublish = new Set(dirtyIds);
-      const baseItems = [];
-      const expandedItems = [];
+      const items = [];
       idsToPublish.forEach((id) => {
         const base = getBaseById(id);
         const expanded = getExpandedById(id);
-        if (base) baseItems.push(base);
-        if (expanded) expandedItems.push(expanded);
+        const merged = mergeDestination(base || { id }, expanded || { id });
+        if (merged && merged.id) items.push(merged);
       });
-      if (!baseItems.length && !expandedItems.length && !deleteIds.length) {
+      if (!items.length && !deleteIds.length) {
         openModal({
           title: "Nothing to publish",
           message: "No local travel edits were found. Destination page saves are already live.",
@@ -1243,8 +1242,7 @@
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          baseItems,
-          expandedItems,
+          items,
           deleteIds,
         }),
       });

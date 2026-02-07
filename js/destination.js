@@ -2,6 +2,7 @@
   const apiBase =
     (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
   const apiBaseUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
+  const apiByIdUrl = apiBase ? `${apiBase}/api/destinations/` : "/api/destinations/";
   const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
   const apiAdminBulkUrl = apiBase ? `${apiBase}/api/admin/destinations-bulk` : "/api/admin/destinations-bulk";
   const mediaApiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
@@ -87,8 +88,8 @@
   const isoUploadInput = document.getElementById("destIsoUpload");
   const isoUploadButton = document.getElementById("destIsoUploadBtn");
   const isoUploadStatus = document.getElementById("destIsoUploadStatus");
-  const addButtons = document.querySelectorAll(".dest-page-add");
 
+  let currentDestination = null;
   let currentBase = null;
   let currentExpanded = null;
   let currentId = "";
@@ -1952,8 +1953,7 @@
     };
 
     const payload = {
-      baseItems: [base],
-      expandedItems: [expanded],
+      items: [{ ...base, ...expanded, id: currentId }],
       deleteIds: [],
     };
     showDebugPanel(payload, null, "save");
@@ -1968,9 +1968,9 @@
       return;
     }
     isDirty = false;
-    currentBase = base;
-    currentExpanded = expanded;
-    updateDraftCache(base, expanded);
+    currentBase = payload.items[0];
+    currentExpanded = payload.items[0];
+    updateDraftCache(payload.items[0], payload.items[0]);
     setEditMode(false);
   }
 
