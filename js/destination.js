@@ -141,6 +141,17 @@
       .filter(Boolean);
   }
 
+  function formatDestinationName(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "this destination";
+    if (raw === raw.toUpperCase()) {
+      return raw
+        .toLowerCase()
+        .replace(/\b([a-z])/g, (m, c) => c.toUpperCase());
+    }
+    return raw;
+  }
+
   function normalizeImageUrl(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -1320,7 +1331,7 @@
 
     if (mediaStatusEl) {
       mediaStatusEl.textContent = subset.length
-        ? `Latest trip clips from ${dest?.name || "this destination"}.`
+        ? `Latest trip clips from ${formatDestinationName(dest?.name)}.`
         : dest?.mediaStatus ||
           "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
     }
@@ -1640,7 +1651,7 @@
           mediaGrid.appendChild(createDestinationMediaCard(item, dest));
         });
         if (mediaStatusEl) {
-          mediaStatusEl.textContent = `Latest trip clips from ${dest?.name || "this destination"}.`;
+          mediaStatusEl.textContent = `Latest trip clips from ${formatDestinationName(dest?.name)}.`;
         }
       }
     } catch (error) {
@@ -1688,7 +1699,7 @@
     setText(resortDetailsEl, item.resortDetails || (item.resort && item.resort.description) || "Resort details loading.");
 
     setText(vibeTextEl, item.vibe || (item.whyItWorks && item.whyItWorks.vibe) || "The vibe details are loading.");
-    setText(mediaStatusEl, item.mediaStatus || `Latest trip clips from ${item.name || "this destination"}.`);
+    setText(mediaStatusEl, item.mediaStatus || `Latest trip clips from ${formatDestinationName(item.name)}.`);
 
     setList(bulletsEl, item.bullets || []);
     setList(diveSitesEl, item.diveSites || []);
