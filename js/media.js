@@ -883,6 +883,17 @@
       .replace(/[^a-z0-9]+/g, "");
   }
 
+  function formatLocationLabel(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (raw === raw.toUpperCase()) {
+      return raw
+        .toLowerCase()
+        .replace(/\b([a-z])/g, (m, c) => c.toUpperCase());
+    }
+    return raw;
+  }
+
   function formatTagLabel(tag) {
     return tag
       .replace(/[-_]+/g, " ")
@@ -1027,7 +1038,7 @@
       const key = normalizeKey(dest.id || dest.name);
       if (!key) return;
       if (!map.has(key)) {
-        map.set(key, String(dest.name).trim());
+        map.set(key, formatLocationLabel(dest.name));
       }
     });
     locationNameById = new Map(map);
