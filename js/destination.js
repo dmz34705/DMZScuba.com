@@ -1334,7 +1334,13 @@
     if (!mediaGrid || !mediaDots) return;
     mediaDots.innerHTML = "";
     const cardsPerPage = window.matchMedia("(max-width: 980px)").matches ? 1 : 3;
-    if (total <= cardsPerPage) {
+    const getBlocks = () =>
+      [...mediaGrid.children].filter((el) =>
+        el.classList.contains("media-card") || el.classList.contains("media-stack")
+      );
+    const blockCount = getBlocks().length;
+
+    if (blockCount <= cardsPerPage) {
       mediaGrid.classList.remove("is-scroll");
       mediaDots.hidden = true;
       if (mediaPrev) mediaPrev.hidden = true;
@@ -1347,17 +1353,13 @@
       return;
     }
 
-    const getBlocks = () =>
-      [...mediaGrid.children].filter((el) =>
-        el.classList.contains("media-card") || el.classList.contains("media-stack")
-      );
-    const pageCount = Math.ceil(total / cardsPerPage);
+    const pageCount = Math.ceil(blockCount / cardsPerPage);
     mediaGrid.classList.add("is-scroll");
     mediaDots.hidden = false;
     if (mediaPrev) mediaPrev.hidden = false;
     if (mediaNext) mediaNext.hidden = false;
 
-    const getPageIndex = () => {
+    const getClosestBlockIndex = () => {
       const blocks = getBlocks();
       if (!blocks.length) return 0;
       const left = mediaGrid.scrollLeft;
@@ -1370,26 +1372,46 @@
           closest = index;
         }
       });
-      return Math.round(closest / cardsPerPage);
+      return closest;
     };
 
-    const setActiveDot = (index) => {
+    const getPageIndex = () => {
+      const closest = getClosestBlockIndex();
+      return Math.floor(closest / cardsPerPage);
+    };
+
+    const setActiveDot = (pageIndex) => {
       mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
-        dot.classList.toggle("is-active", i === index);
+        dot.classList.toggle("is-active", i === pageIndex);
       });
-      if (mediaPrev) mediaPrev.disabled = index === 0;
-      if (mediaNext) mediaNext.disabled = index === pageCount - 1;
     };
 
-    const scrollToPage = (index) => {
+    const updateArrowState = () => {
+      const left = mediaGrid.scrollLeft;
+      const maxLeft = Math.max(0, mediaGrid.scrollWidth - mediaGrid.clientWidth);
+      const atStart = left <= 2;
+      const atEnd = left >= maxLeft - 2;
+      if (mediaPrev) mediaPrev.disabled = atStart;
+      if (mediaNext) mediaNext.disabled = atEnd;
+    };
+
+    const refreshControls = () => {
+      setActiveDot(Math.min(pageCount - 1, Math.max(0, getPageIndex())));
+      updateArrowState();
+    };
+
+    const scrollToBlock = (blockIndex) => {
       const blocks = getBlocks();
-      const targetIndex = Math.min(blocks.length - 1, Math.max(0, index * cardsPerPage));
+      const targetIndex = Math.min(blocks.length - 1, Math.max(0, blockIndex));
       const target = blocks[targetIndex];
       if (!target) return;
-      // Scroll within the media grid only; avoid moving the page on mobile.
-      const targetLeft = target.offsetLeft;
-      mediaGrid.scrollTo({ left: targetLeft, behavior: "smooth" });
-      setActiveDot(index);
+      mediaGrid.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+      requestAnimationFrame(refreshControls);
+    };
+
+    const scrollToPage = (pageIndex) => {
+      const blockIndex = Math.max(0, pageIndex * cardsPerPage);
+      scrollToBlock(blockIndex);
     };
 
     const stopAutoScroll = () => {
@@ -1406,20 +1428,19 @@
       dot.className = "media-dot";
       dot.setAttribute(
         "aria-label",
-        `Show clips ${i * cardsPerPage + 1} to ${Math.min(total, (i + 1) * cardsPerPage)}`
+        `Show clips ${i * cardsPerPage + 1} to ${Math.min(blockCount, (i + 1) * cardsPerPage)}`
       );
       dot.addEventListener("click", () => scrollToPage(i));
       mediaDots.appendChild(dot);
     }
 
-    setActiveDot(0);
+    refreshControls();
 
     if (mediaScrollHandler) {
       mediaGrid.removeEventListener("scroll", mediaScrollHandler);
     }
     mediaScrollHandler = () => {
-      const index = getPageIndex();
-      setActiveDot(Math.min(pageCount - 1, Math.max(0, index)));
+      refreshControls();
     };
     mediaGrid.addEventListener("scroll", mediaScrollHandler, { passive: true });
     mediaGrid.addEventListener("pointerdown", stopAutoScroll, { passive: true });
@@ -1431,7 +1452,7 @@
     }
     mediaResizeHandler = () => {
       mediaGrid.scrollTo({ left: 0 });
-      setActiveDot(0);
+      refreshControls();
       scheduleMediaHeightSync();
     };
     window.addEventListener("resize", mediaResizeHandler);
@@ -1439,17 +1460,15 @@
     if (mediaPrev) {
       mediaPrev.onclick = () => {
         stopAutoScroll();
-        const index = getPageIndex();
-        const nextIndex = Math.max(0, index - 1);
-        scrollToPage(nextIndex);
+        const index = getClosestBlockIndex();
+        scrollToBlock(index - 1);
       };
     }
     if (mediaNext) {
       mediaNext.onclick = () => {
         stopAutoScroll();
-        const index = getPageIndex();
-        const nextIndex = Math.min(pageCount - 1, index + 1);
-        scrollToPage(nextIndex);
+        const index = getClosestBlockIndex();
+        scrollToBlock(index + 1);
       };
     }
 
@@ -1460,16 +1479,16 @@
     mediaUserInteracted = false;
     mediaAutoScrollTimer = setInterval(() => {
       if (mediaUserInteracted) return;
-      const index = getPageIndex();
+      const index = getClosestBlockIndex();
       let nextIndex = index + mediaAutoDirection;
-      if (nextIndex >= pageCount) {
+      if (nextIndex >= blockCount) {
         mediaAutoDirection = -1;
-        nextIndex = pageCount - 2 >= 0 ? pageCount - 2 : 0;
+        nextIndex = blockCount - 2 >= 0 ? blockCount - 2 : 0;
       } else if (nextIndex < 0) {
         mediaAutoDirection = 1;
-        nextIndex = 1 < pageCount ? 1 : 0;
+        nextIndex = 1 < blockCount ? 1 : 0;
       }
-      scrollToPage(nextIndex);
+      scrollToBlock(nextIndex);
     }, 15000);
   }
 
