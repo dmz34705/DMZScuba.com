@@ -27,6 +27,12 @@
   const emptyState = adminPanel.querySelector(".dest-admin-empty");
   const formEl = document.getElementById("destAdminForm");
   const validationEl = document.getElementById("destAdminValidation");
+  const previewTitleEl = document.getElementById("destTitle");
+  const previewSubEl = document.getElementById("destSub");
+  const previewIsoTitleEl = document.getElementById("isoTitle");
+  const previewIsoDescEl = document.getElementById("isoDesc");
+  const previewBulletsEl = document.getElementById("destBullets");
+  const previewAddBulletBtn = document.getElementById("travelAddBullet");
 
   const fieldId = document.getElementById("destFieldId");
   const fieldName = document.getElementById("destFieldName");
@@ -132,6 +138,71 @@
     return (Array.isArray(list) ? list : []).map((x) => String(x || "").trim()).filter(Boolean).join("\n");
   }
 
+  function readPreviewBullets() {
+    if (!previewBulletsEl) return [];
+    return [...previewBulletsEl.querySelectorAll("li")]
+      .map((li) => {
+        const clone = li.cloneNode(true);
+        clone.querySelectorAll(".travel-inline-delete").forEach((btn) => btn.remove());
+        return String(clone.textContent || "").trim();
+      })
+      .filter(Boolean);
+  }
+
+  function bindPreviewBulletDeleteButtons() {
+    if (!previewBulletsEl) return;
+    previewBulletsEl.querySelectorAll(".travel-inline-delete").forEach((btn) => btn.remove());
+    if (!isEditMode()) return;
+    [...previewBulletsEl.querySelectorAll("li")].forEach((li) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "travel-inline-delete";
+      btn.textContent = "Remove";
+      btn.addEventListener("click", () => {
+        li.remove();
+      });
+      li.appendChild(btn);
+    });
+  }
+
+  function renderPreviewBullets(list) {
+    if (!previewBulletsEl) return;
+    previewBulletsEl.innerHTML = "";
+    (Array.isArray(list) ? list : []).forEach((line) => {
+      const text = String(line || "").trim();
+      if (!text) return;
+      const li = document.createElement("li");
+      li.textContent = text;
+      previewBulletsEl.appendChild(li);
+    });
+    bindPreviewBulletDeleteButtons();
+  }
+
+  function syncPreviewFromItem(item) {
+    if (!item) return;
+    if (previewTitleEl) previewTitleEl.textContent = item.name || "Destination";
+    if (previewSubEl) previewSubEl.textContent = item.subtitle || "";
+    if (previewIsoTitleEl) previewIsoTitleEl.textContent = item.isoTitle || "Destination Overview";
+    if (previewIsoDescEl) previewIsoDescEl.textContent = item.isoDesc || "Select a destination to load the resort view.";
+    renderPreviewBullets(item.bullets || []);
+  }
+
+  function setInlineEditable(active) {
+    const editables = [previewTitleEl, previewSubEl, previewIsoTitleEl, previewIsoDescEl];
+    editables.forEach((el) => {
+      if (!el) return;
+      if (active) el.setAttribute("contenteditable", "true");
+      else el.removeAttribute("contenteditable");
+    });
+    if (previewBulletsEl) {
+      [...previewBulletsEl.querySelectorAll("li")].forEach((li) => {
+        if (active) li.setAttribute("contenteditable", "true");
+        else li.removeAttribute("contenteditable");
+      });
+    }
+    bindPreviewBulletDeleteButtons();
+  }
+
   function renderBulletsEditor(list) {
     if (!bulletsEditor) return;
     const items = Array.isArray(list) ? list : [];
@@ -205,6 +276,7 @@
 
   function toggleEditMode(next) {
     document.body.classList.toggle("dest-edit-mode", Boolean(next));
+    setInlineEditable(Boolean(next));
     toggleButtons.forEach((btn) => {
       btn.setAttribute("aria-pressed", next ? "true" : "false");
       btn.textContent = next ? "Close Editor" : "Edit Destinations";
@@ -256,25 +328,28 @@
     const pretty = JSON.stringify(item, null, 2);
     fieldBaseJson.value = pretty;
     fieldExpandedJson.value = pretty;
+    syncPreviewFromItem(item);
   }
 
   function collectForm() {
     const existing = getSelected() || {};
     const id = normalizeId(fieldId.value);
+    const inlineBullets = readPreviewBullets();
+    const useInline = isEditMode();
     return {
       ...existing,
       id,
-      name: fieldName.value.trim(),
-      subtitle: fieldSubtitle.value.trim(),
+      name: useInline && previewTitleEl ? previewTitleEl.textContent.trim() : fieldName.value.trim(),
+      subtitle: useInline && previewSubEl ? previewSubEl.textContent.trim() : fieldSubtitle.value.trim(),
       tags: fieldTags.value.split(",").map((tag) => tag.trim()).filter(Boolean),
       lat: Number(fieldLat.value || 0),
       lon: Number(fieldLon.value || 0),
       heroImage: normalizeImageUrl(fieldHeroImage.value),
       isoImage: normalizeImageUrl(fieldIsoImage.value),
-      isoTitle: fieldIsoTitle.value.trim(),
-      isoDesc: fieldIsoDesc.value.trim(),
+      isoTitle: useInline && previewIsoTitleEl ? previewIsoTitleEl.textContent.trim() : fieldIsoTitle.value.trim(),
+      isoDesc: useInline && previewIsoDescEl ? previewIsoDescEl.textContent.trim() : fieldIsoDesc.value.trim(),
       summary: fieldSummary.value.trim(),
-      bullets: readBulletsEditor(),
+      bullets: useInline ? inlineBullets : readBulletsEditor(),
       experience: fieldExperience ? fieldExperience.value.trim() : "",
       logistics: fieldLogistics ? fieldLogistics.value.trim() : "",
       narrative: fieldNarrative.value.trim(),
@@ -704,6 +779,15 @@
   if (bulletsAddButton) {
     bulletsAddButton.addEventListener("click", () => {
       addBulletRow("");
+    });
+  }
+  if (previewAddBulletBtn) {
+    previewAddBulletBtn.addEventListener("click", () => {
+      const li = document.createElement("li");
+      li.textContent = "New bullet";
+      if (isEditMode()) li.setAttribute("contenteditable", "true");
+      if (previewBulletsEl) previewBulletsEl.appendChild(li);
+      bindPreviewBulletDeleteButtons();
     });
   }
 
