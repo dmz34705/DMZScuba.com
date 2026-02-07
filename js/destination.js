@@ -1211,6 +1211,14 @@
       }
     });
 
+    // Safety fallback: if advanced block rendering yields no DOM nodes,
+    // render direct cards so media never disappears on destination pages.
+    if (!mediaGrid.children.length && subset.length) {
+      subset.forEach((item) => {
+        mediaGrid.appendChild(createDestinationMediaCard(item, dest));
+      });
+    }
+
     if (mediaStatusEl) {
       mediaStatusEl.textContent = subset.length
         ? `Latest trip clips from ${dest?.name || "this destination"}.`
@@ -1509,6 +1517,14 @@
       const ordered = prioritizeVerticalMedia(matches, orientationMap);
       if (requestId !== mediaRequestId) return;
       renderDestinationMedia(ordered, dest, orientationMap);
+      if (!mediaGrid.children.length && ordered.length) {
+        ordered.slice(0, 6).forEach((item) => {
+          mediaGrid.appendChild(createDestinationMediaCard(item, dest));
+        });
+        if (mediaStatusEl) {
+          mediaStatusEl.textContent = `Latest trip clips from ${dest?.name || "this destination"}.`;
+        }
+      }
     } catch (error) {
       console.error("Failed to load destination media:", error);
       if (requestId !== mediaRequestId) return;
