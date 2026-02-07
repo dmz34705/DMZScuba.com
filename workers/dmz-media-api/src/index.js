@@ -221,93 +221,6 @@ function parseJsonSafe(value, fallback) {
   }
 }
 
-function normalizeDestinationRow(row) {
-  const data = parseJsonSafe(row && row.data, null);
-  if (!data || typeof data !== "object") return null;
-  if (!data.id && row && row.id) {
-    data.id = row.id;
-  }
-  return data;
-}
-
-function mergeDestinationRecords(base, extra) {
-  if (!base && !extra) return null;
-  if (!base) return { ...(extra || {}) };
-  if (!extra) return { ...(base || {}) };
-
-  const merged = { ...base, ...extra };
-  const mergeArray = (first, second) => {
-    if (!Array.isArray(first) && !Array.isArray(second)) return null;
-    const seen = new Set();
-    const next = [];
-    [...(first || []), ...(second || [])].forEach((item) => {
-      if (item == null) return;
-      const key =
-        typeof item === "string" || typeof item === "number" || typeof item === "boolean"
-          ? String(item).trim()
-          : JSON.stringify(item);
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      next.push(item);
-    });
-    return next;
-  };
-
-  ["tags", "bullets", "diveSites", "nonDiving", "logisticsTips", "perfectFor", "howItWorks"].forEach(
-    (key) => {
-      const mergedArray = mergeArray(base[key], extra[key]);
-      if (mergedArray) merged[key] = mergedArray;
-    }
-  );
-
-  if (base.resort || extra.resort) {
-    merged.resort = { ...(base.resort || {}), ...(extra.resort || {}) };
-  }
-  if (base.conditions || extra.conditions) {
-    merged.conditions = { ...(base.conditions || {}), ...(extra.conditions || {}) };
-  }
-  if (base.whyItWorks || extra.whyItWorks) {
-    merged.whyItWorks = { ...(base.whyItWorks || {}), ...(extra.whyItWorks || {}) };
-  }
-  return merged;
-}
-
-async function ensureDestinationsTable(env) {
-  await env.DB.prepare(
-    `CREATE TABLE IF NOT EXISTS destinations (
-      id TEXT PRIMARY KEY,
-      base_json TEXT NOT NULL,
-      expanded_json TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )`
-  ).run();
-  try {
-    await env.DB.prepare("ALTER TABLE destinations ADD COLUMN data_json TEXT").run();
-  } catch (error) {
-    // Column already exists.
-  }
-}
-
-async function fetchDestinationRows(env, table) {
-  const { results } = await env.DB.prepare(`SELECT * FROM ${table} ORDER BY updated_at DESC, rowid ASC`).all();
-  return results || [];
-}
-
-function normalizeUnifiedDestination(row) {
-  const direct = parseJsonSafe(row && row.data_json, null);
-  if (direct && typeof direct === "object") {
-    if (!direct.id && row && row.id) direct.id = row.id;
-    return direct;
-  }
-  const base = parseJsonSafe(row && row.base_json, null);
-  const expanded = parseJsonSafe(row && row.expanded_json, null);
-  const merged = mergeDestinationRecords(base, expanded);
-  if (!merged || typeof merged !== "object") return null;
-  if (!merged.id && row && row.id) merged.id = row.id;
-  return merged;
-}
-
 function hasNonEmptyText(value) {
   return typeof value === "string" && value.trim() !== "";
 }
@@ -338,264 +251,6 @@ function destinationWriteGuardReason(existingItem, nextItem) {
   }
 
   return "";
-}
-
-function pickTimestamp(baseRow, expRow, field, fallback) {
-  const baseValue = baseRow && baseRow[field] ? baseRow[field] : "";
-  const expValue = expRow && expRow[field] ? expRow[field] : "";
-  if (baseValue && expValue) {
-    return baseValue < expValue ? baseValue : expValue;
-  }
-  return baseValue || expValue || fallback;
-}
-
-async function backfillDestinations(env) {
-  await ensureDestinationsTable(env);
-  const existingRows = await env.DB.prepare(
-    "SELECT id, base_json, expanded_json, data_json, created_at, updated_at FROM destinations"
-  ).all();
-  const existing = existingRows.results || [];
-  if (existing.length) {
-    const update = env.DB.prepare("UPDATE destinations SET data_json = ? WHERE id = ?");
-    for (const row of existing) {
-      const current = normalizeUnifiedDestination(row);
-      if (!current || !current.id) continue;
-      await update.bind(JSON.stringify(current), row.id).run();
-    }
-    return;
-  }
-
-  const baseRows = await env.DB.prepare(
-    "SELECT id, data, created_at, updated_at FROM destinations_base"
-  ).all();
-  const expandedRows = await env.DB.prepare(
-    "SELECT id, data, created_at, updated_at FROM destinations_expanded"
-  ).all();
-
-  const baseMap = new Map((baseRows.results || []).map((row) => [row.id, row]));
-  const expandedMap = new Map((expandedRows.results || []).map((row) => [row.id, row]));
-  const ids = new Set([...baseMap.keys(), ...expandedMap.keys()]);
-  if (!ids.size) return;
-
-  const now = new Date().toISOString();
-  const insert = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  );
-
-  for (const id of ids) {
-    const baseRow = baseMap.get(id);
-    const expRow = expandedMap.get(id);
-    const baseData = normalizeDestinationRow(baseRow);
-    const expandedData = normalizeDestinationRow(expRow);
-    const unified = mergeDestinationRecords(baseData, expandedData) || { id };
-    if (!unified.id) unified.id = id;
-    const unifiedJson = JSON.stringify(unified);
-    const createdAt = pickTimestamp(baseRow, expRow, "created_at", now);
-    const updatedAt = [baseRow?.updated_at, expRow?.updated_at].filter(Boolean).sort().pop() || now;
-    await insert.bind(id, unifiedJson, unifiedJson, unifiedJson, createdAt, updatedAt).run();
-  }
-}
-
-async function handleGetDestinations(env) {
-  await backfillDestinations(env);
-  const unifiedRows = await env.DB.prepare(
-    "SELECT * FROM destinations ORDER BY updated_at DESC, rowid ASC"
-  ).all();
-  const unifiedItems = (unifiedRows.results || [])
-    .map((row) => normalizeUnifiedDestination(row))
-    .filter(Boolean);
-  if (unifiedItems.length) {
-    return jsonResponse(
-      { items: unifiedItems },
-      200,
-      {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        "CDN-Cache-Control": "no-store",
-        "Cloudflare-CDN-Cache-Control": "no-store",
-      }
-    );
-  }
-  const rows = await fetchDestinationRows(env, "destinations_base");
-  const items = rows.map(normalizeDestinationRow).filter(Boolean);
-  return jsonResponse(
-    { items },
-    200,
-    {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "CDN-Cache-Control": "no-store",
-      "Cloudflare-CDN-Cache-Control": "no-store",
-    }
-  );
-}
-
-async function handleGetDestinationsExpanded(env) {
-  await backfillDestinations(env);
-  const unifiedRows = await env.DB.prepare(
-    "SELECT * FROM destinations ORDER BY updated_at DESC, rowid ASC"
-  ).all();
-  const unifiedItems = (unifiedRows.results || [])
-    .map((row) => normalizeUnifiedDestination(row))
-    .filter(Boolean);
-  if (unifiedItems.length) {
-    return jsonResponse(
-      { items: unifiedItems },
-      200,
-      {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        "CDN-Cache-Control": "no-store",
-        "Cloudflare-CDN-Cache-Control": "no-store",
-      }
-    );
-  }
-  const rows = await fetchDestinationRows(env, "destinations_expanded");
-  const items = rows.map(normalizeDestinationRow).filter(Boolean);
-  return jsonResponse(
-    { items },
-    200,
-    {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "CDN-Cache-Control": "no-store",
-      "Cloudflare-CDN-Cache-Control": "no-store",
-    }
-  );
-}
-
-async function handleGetDestinationById(env, id) {
-  if (!id) return jsonResponse({ ok: false, error: "Missing id." }, 400);
-  await backfillDestinations(env);
-  const unifiedRow = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
-  if (unifiedRow) {
-    const item = normalizeUnifiedDestination(unifiedRow);
-    if (item) {
-      return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
-    }
-  }
-  const baseRow = await env.DB.prepare("SELECT * FROM destinations_base WHERE id = ?").bind(id).first();
-  const expRow = await env.DB.prepare("SELECT * FROM destinations_expanded WHERE id = ?").bind(id).first();
-  const base = normalizeDestinationRow(baseRow);
-  const expanded = normalizeDestinationRow(expRow);
-  const item = mergeDestinationRecords(base, expanded);
-  if (!item) return jsonResponse({ ok: false, error: "Not found." }, 404);
-  if (!item.id) item.id = id;
-  return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
-}
-
-async function handleUpsertDestinationById(request, env, id) {
-  const authed = await requireAuth(request, env);
-  if (!authed && !isTrustedDestinationDevWrite(request)) {
-    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
-  }
-  if (!id) return jsonResponse({ ok: false, error: "Missing id." }, 400);
-
-  const body = await request.json().catch(() => ({}));
-  const directItem = body && typeof body.item === "object" ? body.item : null;
-  const nextItem = directItem || {};
-  nextItem.id = id;
-
-  await ensureDestinationsTable(env);
-  const now = new Date().toISOString();
-  const existing = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
-  const existingItem = normalizeUnifiedDestination(existing);
-  const safeguardReason = destinationWriteGuardReason(existingItem, nextItem);
-  if (safeguardReason) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: "Write blocked to prevent accidental destination data loss.",
-        details: safeguardReason,
-      },
-      422
-    );
-  }
-  const createdAt = (existing && existing.created_at) || now;
-  const payload = JSON.stringify(nextItem);
-
-  await env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  )
-    .bind(id, payload, payload, payload, createdAt, now)
-    .run();
-  await env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations_base (id, data, created_at, updated_at)
-     VALUES (?, ?, ?, ?)`
-  )
-    .bind(id, payload, createdAt, now)
-    .run();
-  await env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations_expanded (id, data, created_at, updated_at)
-     VALUES (?, ?, ?, ?)`
-  )
-    .bind(id, payload, createdAt, now)
-    .run();
-  const row = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
-  const savedItem = normalizeUnifiedDestination(row) || nextItem;
-  return jsonResponse({ ok: true, item: savedItem }, 200, { "Cache-Control": "no-store" });
-}
-
-async function handleDestinationsBulkUpsert(request, env) {
-  const authed = await requireAuth(request, env);
-  if (!authed && !isTrustedDestinationDevWrite(request)) {
-    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
-  }
-  const body = await request.json().catch(() => ({}));
-  const items = Array.isArray(body.items) ? body.items : [];
-  const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
-  if (!items.length && !deleteIds.length) {
-    return jsonResponse({ ok: false, error: "No items provided. Expected payload: { items, deleteIds }." }, 400);
-  }
-  const now = new Date().toISOString();
-
-  await ensureDestinationsTable(env);
-
-  const unifiedExisting = await env.DB.prepare("SELECT id, created_at FROM destinations").all();
-  const createdMap = new Map((unifiedExisting.results || []).map((row) => [row.id, row.created_at]));
-
-  if (deleteIds.length) {
-    const delBase = env.DB.prepare("DELETE FROM destinations_base WHERE id = ?");
-    const delExpanded = env.DB.prepare("DELETE FROM destinations_expanded WHERE id = ?");
-    const delUnified = env.DB.prepare("DELETE FROM destinations WHERE id = ?");
-    for (const id of deleteIds) {
-      await delBase.bind(id).run();
-      await delExpanded.bind(id).run();
-      await delUnified.bind(id).run();
-    }
-  }
-
-  const ids = new Set();
-  items.forEach((item) => {
-    if (item && item.id) ids.add(item.id);
-  });
-
-  const unifiedStmt = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  );
-  const baseStmt = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations_base (id, data, created_at, updated_at)
-     VALUES (?, ?, ?, ?)`
-  );
-  const expandedStmt = env.DB.prepare(
-    `INSERT OR REPLACE INTO destinations_expanded (id, data, created_at, updated_at)
-     VALUES (?, ?, ?, ?)`
-  );
-
-  for (const id of ids) {
-    const existing = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
-    const directItem = items.find((item) => item && item.id === id) || { id };
-    const nextItem = { ...directItem };
-    if (!nextItem.id) nextItem.id = id;
-    const createdAt = createdMap.get(id) || (existing && existing.created_at) || now;
-    const payload = JSON.stringify(nextItem);
-    await unifiedStmt
-      .bind(id, payload, payload, payload, createdAt, now)
-      .run();
-    await baseStmt.bind(id, payload, createdAt, now).run();
-    await expandedStmt.bind(id, payload, createdAt, now).run();
-  }
-
-  return jsonResponse({ ok: true, count: ids.size }, 200);
 }
 
 async function ensureDestinationsV2Table(env) {
@@ -631,16 +286,12 @@ async function seedDestinationsV2IfNeeded(env) {
   );
 
   const unifiedRows = await env.DB.prepare(
-    "SELECT id, data_json, base_json, expanded_json, created_at, updated_at FROM destinations"
+    "SELECT id, data_json, created_at, updated_at FROM destinations"
   ).all();
   const unified = unifiedRows.results || [];
   for (const row of unified) {
     const direct = parseJsonSafe(row && row.data_json, null);
-    const fallback = mergeDestinationRecords(
-      parseJsonSafe(row && row.base_json, null),
-      parseJsonSafe(row && row.expanded_json, null)
-    );
-    const item = normalizeDestinationV2(direct || fallback, row && row.id);
+    const item = normalizeDestinationV2(direct, row && row.id);
     if (!item) continue;
     const createdAt = (row && row.created_at) || now;
     const updatedAt = (row && row.updated_at) || now;
@@ -1161,29 +812,17 @@ export default {
       response = await handleBulkUpsert(request, env);
     } else if (pathname === "/api/admin/stream-date-sync" && request.method === "POST") {
       response = await handleStreamDateSync(request, env);
-    } else if (pathname === "/api/destinations" && request.method === "GET") {
-      response = await handleGetDestinations(env);
-    } else if (pathname === "/api/destinations-expanded" && request.method === "GET") {
-      response = await handleGetDestinationsExpanded(env);
     } else if (pathname === "/api/v2/destinations" && request.method === "GET") {
       response = await handleGetDestinationsV2(env);
-    } else if (pathname.startsWith("/api/destinations/") && request.method === "GET") {
-      const id = pathname.split("/").pop();
-      response = await handleGetDestinationById(env, id);
     } else if (pathname.startsWith("/api/v2/destinations/") && request.method === "GET") {
       const id = pathname.split("/").pop();
       response = await handleGetDestinationByIdV2(env, id);
-    } else if (pathname.startsWith("/api/admin/destinations/") && request.method === "PUT") {
-      const id = pathname.split("/").pop();
-      response = await handleUpsertDestinationById(request, env, id);
     } else if (pathname.startsWith("/api/admin/v2/destinations/") && request.method === "PUT") {
       const id = pathname.split("/").pop();
       response = await handlePutDestinationByIdV2(request, env, id);
     } else if (pathname.startsWith("/api/admin/v2/destinations/") && request.method === "DELETE") {
       const id = pathname.split("/").pop();
       response = await handleDeleteDestinationByIdV2(request, env, id);
-    } else if (pathname === "/api/admin/destinations-bulk" && request.method === "PUT") {
-      response = await handleDestinationsBulkUpsert(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {
       const id = pathname.split("/").pop();
       if (request.method === "PUT") {

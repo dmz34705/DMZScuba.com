@@ -3,7 +3,7 @@
   const apiBase =
     (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
   const apiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
-  const destinationsApiUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
+  const destinationsApiUrl = apiBase ? `${apiBase}/api/v2/destinations` : "/api/v2/destinations";
   const mediaGrid = document.getElementById("mediaGrid");
   const photoGrid = document.getElementById("photoGrid");
   const mediaSection = mediaGrid ? mediaGrid.closest(".section.media-wide") : null;
@@ -1310,10 +1310,6 @@
     if (destApiRes && destApiRes.ok) {
       const apiJson = await destApiRes.json();
       destinations = Array.isArray(apiJson.items) ? apiJson.items : [];
-    }
-    if (!destinations.length) {
-      const destRes = await fetch("/assets/data/destinations.json", { cache: "no-store" });
-      destinations = destRes.ok ? await destRes.json() : [];
     }
     return { data, destinations };
   }
