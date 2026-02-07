@@ -1705,7 +1705,8 @@
   }
 
   function canWriteWithoutLogin() {
-    return String(window.location.hostname || "").toLowerCase().endsWith(".pages.dev");
+    const host = String(window.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1";
   }
 
   async function apiFetch(url, options = {}) {

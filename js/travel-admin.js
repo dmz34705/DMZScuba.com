@@ -88,7 +88,8 @@
   }
 
   function canWriteWithoutLogin() {
-    return String(window.location.hostname || "").toLowerCase().endsWith(".pages.dev");
+    const host = String(window.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1";
   }
 
   function isAuthed() {
@@ -735,13 +736,8 @@
       setToken("");
       toggleEditMode(false);
       syncAuthUi();
-      if (canWriteWithoutLogin()) {
-        setStatus("Dev access active", "ready");
-        showValidation("Logged out. Dev-domain write access remains available.");
-      } else {
-        setStatus("Signed out", "neutral");
-        showValidation("Logged out.");
-      }
+      setStatus("Signed out", "neutral");
+      showValidation("Logged out.");
     });
   });
 
