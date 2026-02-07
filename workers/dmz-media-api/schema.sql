@@ -44,3 +44,10 @@ CREATE TABLE IF NOT EXISTS destinations (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS destinations_v2 (
+  id TEXT PRIMARY KEY,
+  data_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

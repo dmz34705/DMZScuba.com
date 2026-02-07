@@ -1,80 +1,49 @@
 (() => {
-  const configuredApiBase =
-    (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
-  const apiBase = configuredApiBase;
-  const apiBaseUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
-  const apiByIdUrl = apiBase ? `${apiBase}/api/destinations/` : "/api/destinations/";
-  const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
-  const apiAdminBulkUrl = apiBase ? `${apiBase}/api/admin/destinations-bulk` : "/api/admin/destinations-bulk";
-  const apiAdminByIdUrl = apiBase ? `${apiBase}/api/admin/destinations/` : "/api/admin/destinations/";
-  const mediaApiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
-  const mediaDataUrl = "/assets/data/media.json";
+  const apiRoot = (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
+  const apiByIdUrl = apiRoot ? `${apiRoot}/api/v2/destinations/` : "/api/v2/destinations/";
+  const apiAdminByIdUrl = apiRoot ? `${apiRoot}/api/admin/v2/destinations/` : "/api/admin/v2/destinations/";
   const tokenStorageKey = "dmzMediaToken";
-  const draftStorageKey = "dmzDestinationsDraft";
+
   const nameEl = document.getElementById("destName");
   const subtitleEl = document.getElementById("destSubtitle");
-  const bulletsEl = document.getElementById("destBullets");
+  const heroWhyEl = document.getElementById("destHeroWhy");
+  const heroBadgesEl = document.getElementById("destHeroBadges");
+
+  const narrativeEl = document.getElementById("destNarrative");
+  const summaryEl = document.getElementById("destSummary");
+  const experienceEl = document.getElementById("experienceText");
+  const seasonalityEl = document.getElementById("seasonalityText");
+  const logisticsEl = document.getElementById("logisticsText");
+
   const isoTitleEl = document.getElementById("isoTitle");
   const isoDescEl = document.getElementById("isoDesc");
   const isoBox = document.getElementById("isoBox");
   const isoImg = document.getElementById("isoImage");
   const isoLabel = document.getElementById("isoLabel");
-  const narrativeEl = document.getElementById("destNarrative");
-  const summaryEl = document.getElementById("destSummary");
+
+  const dayToDayEl = document.getElementById("dayToDayText");
   const resortNameEl = document.getElementById("resortName");
   const resortDescEl = document.getElementById("resortDesc");
-  const diveSitesEl = document.getElementById("diveSitesList");
-  const conditionsEl = document.getElementById("conditionsList");
-  const seasonalityEl = document.getElementById("seasonalityText");
-  const logisticsEl = document.getElementById("logisticsText");
-  const experienceEl = document.getElementById("experienceText");
-  const nonDivingEl = document.getElementById("nonDivingList");
-  const heroEl = document.querySelector(".destination-hero");
-  const heroRoot = document.documentElement;
-  const dayToDayEl = document.getElementById("dayToDayText");
   const resortDetailsEl = document.getElementById("resortDetailsText");
   const logisticsDetailsEl = document.getElementById("logisticsDetailsText");
-  const logisticsTipsEl = document.getElementById("logisticsTipsList");
-  const travelLogisticsSection = logisticsDetailsEl
-    ? logisticsDetailsEl.closest(".destination-flow")
-    : null;
-  const diveSiteHighlightsEl = document.getElementById("diveSiteHighlights");
-  const dayToDayTitleEl = document.getElementById("dayToDayTitle");
-  const resortNotesTitleEl = document.getElementById("resortNotesTitle");
-  const travelLogisticsTitleEl = document.getElementById("travelLogisticsTitle");
-  const diveHighlightsTitleEl = document.getElementById("diveHighlightsTitle");
-  const overviewTitleEl = document.getElementById("overviewTitle");
-  const tripSummaryTitleEl = document.getElementById("tripSummaryTitle");
-  const seasonalityTitleEl = document.getElementById("seasonalityTitle");
-  const overviewLogisticsTitleEl = document.getElementById("overviewLogisticsTitle");
-  const experienceTitleEl = document.getElementById("experienceTitle");
-  const resortOpsTitleEl = document.getElementById("resortOpsTitle");
-  const conditionsTitleEl = document.getElementById("conditionsTitle");
-  const diveSitesTitleEl = document.getElementById("diveSitesTitle");
-  const nonDivingTitleEl = document.getElementById("nonDivingTitle");
-  const tripSnapshotTitleEl = document.getElementById("tripSnapshotTitle");
-  const heroWhyEl = document.getElementById("destHeroWhy");
-  const heroBadgesEl = document.getElementById("destHeroBadges");
-  const interestToggle = document.getElementById("destInterestToggle");
-  const interestForm = document.getElementById("destInterestForm");
-  const interestLocationInput = document.getElementById("destInterestLocation");
-  const interestIdInput = document.getElementById("destInterestId");
-  const errorPanel = document.getElementById("destErrorPanel");
-  const errorMessageEl = document.getElementById("destErrorMessage");
-  const retryButton = document.getElementById("destRetryButton");
+
   const vibeTextEl = document.getElementById("destVibeText");
+  const mediaStatusEl = document.getElementById("destMediaStatus");
+
+  const bulletsEl = document.getElementById("destBullets");
+  const diveSitesEl = document.getElementById("diveSitesList");
+  const nonDivingEl = document.getElementById("nonDivingList");
+  const conditionsEl = document.getElementById("conditionsList");
+  const logisticsTipsEl = document.getElementById("logisticsTipsList");
   const perfectForEl = document.getElementById("destPerfectFor");
   const howItWorksEl = document.getElementById("destHowItWorks");
-  const mediaStatusEl = document.getElementById("destMediaStatus");
-  const mediaGrid = document.getElementById("destMediaGrid");
-  const mediaLink = document.getElementById("destMediaLink");
-  const mediaDots = document.getElementById("destMediaDots");
-  const mediaPrev = document.getElementById("destMediaPrev");
-  const mediaNext = document.getElementById("destMediaNext");
-  const diveNowLinks = document.querySelectorAll(".dive-now-link");
-  const metaDescriptionEl = document.querySelector('meta[name="description"]');
-  const adminPanel = document.getElementById("destPageAdminPanel");
+  const highlightsEl = document.getElementById("diveSiteHighlights");
+
+  const heroInput = document.getElementById("destEditHeroImage");
+  const isoInput = document.getElementById("destEditIsoImage");
+
   const adminFab = document.querySelector(".dest-page-admin-fab");
+  const adminPanel = document.getElementById("destPageAdminPanel");
   const adminClose = document.querySelector(".dest-page-admin-close");
   const adminStatus = document.getElementById("destPageAdminStatus");
   const loginButton = document.querySelector(".dest-page-login-button");
@@ -82,314 +51,50 @@
   const saveButton = document.querySelector(".dest-page-save");
   const cancelButton = document.querySelector(".dest-page-cancel");
   const logoutButton = document.querySelector(".dest-page-logout");
-  const heroInput = document.getElementById("destEditHeroImage");
-  const isoInput = document.getElementById("destEditIsoImage");
-  const heroUploadInput = document.getElementById("destHeroUpload");
-  const heroUploadButton = document.getElementById("destHeroUploadBtn");
-  const heroUploadStatus = document.getElementById("destHeroUploadStatus");
-  const isoUploadInput = document.getElementById("destIsoUpload");
-  const isoUploadButton = document.getElementById("destIsoUploadBtn");
-  const isoUploadStatus = document.getElementById("destIsoUploadStatus");
   const addButtons = document.querySelectorAll(".dest-page-add");
 
-  let currentDestination = null;
-  let currentBase = null;
-  let currentExpanded = null;
+  const errorPanel = document.getElementById("destErrorPanel");
+  const errorMessageEl = document.getElementById("destErrorMessage");
+  const retryButton = document.getElementById("destRetryButton");
+
+  const heroRoot = document.documentElement;
+  const diveNowLinks = document.querySelectorAll(".dive-now-link");
+  const mediaLink = document.getElementById("destMediaLink");
+
   let currentId = "";
+  let currentItem = null;
   let isDirty = false;
-  let mediaRequestId = 0;
-  let mediaScrollHandler = null;
-  let mediaResizeHandler = null;
-  let mediaAutoScrollTimer = null;
-  let mediaAutoDirection = 1;
-  let mediaUserInteracted = false;
-  let mediaHeightSyncTimer = null;
-  const isDev =
-    ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
-    window.location.hostname.endsWith(".local");
 
-  function isEditing() {
-    return document.body.classList.contains("dest-page-editing");
+  function setText(el, value) {
+    if (el) el.textContent = String(value || "");
   }
 
-  function truncateText(text, maxLength) {
-    if (!text) return "";
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength - 1).trim()}…`;
-  }
-
-  function normalizeKey(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "");
-  }
-
-  function matchesLocationKey(locationKey, targetKey) {
-    if (!locationKey || !targetKey) return false;
-    return locationKey === targetKey || locationKey.includes(targetKey) || targetKey.includes(locationKey);
-  }
-
-  function resolveUrl(url) {
-    if (!url) return "";
-    const normalized = url.replace(/\\/g, "/");
-    if (normalized.startsWith("assets/")) {
-      return `/${normalized}`;
-    }
-    if (normalized.startsWith("./assets/")) {
-      return `/${normalized.slice(2)}`;
-    }
-    if (/^(?:[a-z]+:)?\/\//i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
-      return url;
-    }
-    if (url.startsWith("/")) return url;
-    try {
-      return new URL(url, window.location.href).href;
-    } catch (error) {
-      return url;
-    }
-  }
-
-  function isImageUrl(url) {
-    return /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/i.test(url);
-  }
-
-  function isVideoUrl(url) {
-    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
-  }
-
-  function getStreamIdFromUrl(url) {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url, window.location.href);
-      const host = parsed.hostname;
-      if (host.includes("videodelivery.net") || host.includes("cloudflarestream.com") || host.includes("iframe.videodelivery.net")) {
-        const parts = parsed.pathname.split("/").filter(Boolean);
-        if (parts[0]) return parts[0];
-      }
-    } catch (error) {
-      return "";
-    }
-    return "";
-  }
-
-  function buildStreamThumb(id) {
-    if (!id) return "";
-    return `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s`;
-  }
-
-  function getYouTubeId(url) {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url, window.location.href);
-      if (parsed.hostname.includes("youtu.be")) {
-        return parsed.pathname.replace("/", "");
-      }
-      if (parsed.hostname.includes("youtube.com")) {
-        if (parsed.searchParams.get("v")) {
-          return parsed.searchParams.get("v") || "";
-        }
-        const parts = parsed.pathname.split("/").filter(Boolean);
-        const embedIndex = parts.indexOf("embed");
-        if (embedIndex !== -1 && parts[embedIndex + 1]) {
-          return parts[embedIndex + 1];
-        }
-      }
-    } catch (error) {
-      return "";
-    }
-    return "";
-  }
-
-  function buildYouTubeThumb(id) {
-    if (!id) return "";
-    return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
-  }
-
-  function ensureMediaModal() {
-    let modal = document.querySelector(".media-video-modal");
-    if (modal) return modal;
-    modal = document.createElement("div");
-    modal.className = "media-video-modal";
-    modal.setAttribute("aria-hidden", "true");
-    modal.innerHTML = `
-      <div class="media-video-modal-card" role="dialog" aria-modal="true">
-        <button class="media-video-close" type="button" aria-label="Close video">x</button>
-        <div class="media-video-frame" role="presentation"></div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const close = () => {
-      modal.setAttribute("aria-hidden", "true");
-      const frame = modal.querySelector(".media-video-frame");
-      if (frame) frame.innerHTML = "";
-    };
-
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) close();
+  function setList(el, items = [], ordered = false) {
+    if (!el) return;
+    el.innerHTML = "";
+    (Array.isArray(items) ? items : []).forEach((entry) => {
+      const text = typeof entry === "string" ? entry.trim() : "";
+      if (!text) return;
+      const li = document.createElement("li");
+      li.textContent = text;
+      el.appendChild(li);
     });
-
-    const closeBtn = modal.querySelector(".media-video-close");
-    if (closeBtn) closeBtn.addEventListener("click", close);
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
-        close();
-      }
-    });
-
-    return modal;
+    if (ordered) el.setAttribute("data-ordered", "true");
   }
 
-  function openYoutubeModal(id, title) {
-    const modal = ensureMediaModal();
-    const frame = modal.querySelector(".media-video-frame");
-    if (!frame) return;
-    frame.innerHTML = "";
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-    iframe.title = title || "YouTube video";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-    iframe.allowFullscreen = true;
-    frame.appendChild(iframe);
-    modal.setAttribute("aria-hidden", "false");
+  function readText(el) {
+    return el ? String(el.textContent || "").trim() : "";
   }
 
-  function openStreamModal(id, title) {
-    const modal = ensureMediaModal();
-    const frame = modal.querySelector(".media-video-frame");
-    if (!frame) return;
-    frame.innerHTML = "";
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://iframe.videodelivery.net/${id}?autoplay=true`;
-    iframe.title = title || "Cloudflare Stream video";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-    frame.appendChild(iframe);
-    modal.setAttribute("aria-hidden", "false");
-  }
-
-  function openVideoModal(url, title) {
-    const modal = ensureMediaModal();
-    const frame = modal.querySelector(".media-video-frame");
-    if (!frame) return;
-    frame.innerHTML = "";
-    const video = document.createElement("video");
-    video.src = url;
-    video.controls = true;
-    video.autoplay = true;
-    video.title = title || "Video";
-    frame.appendChild(video);
-    modal.setAttribute("aria-hidden", "false");
-  }
-
-  function addPlayOverlay(target) {
-    if (!target || target.querySelector(".media-thumb-play")) return;
-    const overlay = document.createElement("span");
-    overlay.className = "media-thumb-play";
-    overlay.setAttribute("aria-hidden", "true");
-    target.appendChild(overlay);
-  }
-
-  function applyThumbAspect(thumb, width, height) {
-    if (!thumb || !width || !height) return;
-    thumb.style.setProperty("--media-ratio", `${width} / ${height}`);
-    const ratio = width / height;
-    if (ratio >= 1.1) {
-      thumb.classList.add("is-horizontal");
-    } else {
-      thumb.classList.remove("is-horizontal");
-    }
-  }
-
-  function syncMediaCardHeights() {
-    if (!mediaGrid) return;
-    const primaryCards = [...mediaGrid.querySelectorAll(".media-card:not(.is-compact)")];
-    const fallbackCards = [...mediaGrid.querySelectorAll(".media-card")];
-    const cards = primaryCards.length ? primaryCards : fallbackCards;
-    if (!cards.length) return;
-    const heights = cards.map((card) => card.getBoundingClientRect().height).filter((h) => h > 0);
-    if (!heights.length) return;
-    const maxHeight = Math.max(...heights);
-    mediaGrid.style.setProperty("--media-card-height", `${Math.round(maxHeight)}px`);
-  }
-
-  function scheduleMediaHeightSync() {
-    if (mediaHeightSyncTimer) clearTimeout(mediaHeightSyncTimer);
-    mediaHeightSyncTimer = setTimeout(() => {
-      syncMediaCardHeights();
-      mediaHeightSyncTimer = null;
-    }, 80);
-  }
-
-  function renderMeta(metaItems, location, target) {
-    const items = Array.isArray(metaItems) ? [...metaItems] : [];
-    if (location && !items.some((entry) => String(entry || "").toLowerCase() === location.toLowerCase())) {
-      items.push(location);
-    }
-    if (items.length === 0) return;
-    items.forEach((item, index) => {
-      if (index > 0) {
-        const sep = document.createElement("span");
-        sep.textContent = "/";
-        target.appendChild(sep);
-      }
-      const span = document.createElement("span");
-      span.textContent = item;
-      target.appendChild(span);
-    });
-  }
-
-  function getItemKey(item, index) {
-    return item && item.id ? item.id : `idx-${index}`;
-  }
-
-  function debugLog(...args) {
-    if (!isDev) return;
-    console.log(...args);
-  }
-
-  function setMetaDescription(text) {
-    if (!metaDescriptionEl) return;
-    metaDescriptionEl.setAttribute("content", text);
-  }
-
-  function showErrorPanel(message) {
-    if (errorMessageEl) {
-      errorMessageEl.textContent = message || "Try refreshing or pick another destination.";
-    }
-    if (errorPanel) {
-      errorPanel.hidden = false;
-    }
-  }
-
-  function hideErrorPanel() {
-    if (errorPanel) {
-      errorPanel.hidden = true;
-    }
-  }
-
-  async function readResponseTextSafe(response) {
-    if (!response) return "";
-    try {
-      return await response.text();
-    } catch (error) {
-      return "";
-    }
-  }
-
-  function getToken() {
-    return window.sessionStorage.getItem(tokenStorageKey) || "";
-  }
-
-  function isDevPagesOrigin() {
-    const host = String(window.location.hostname || "").toLowerCase();
-    return host.endsWith(".pages.dev");
-  }
-
-  function canEditWithoutLogin() {
-    return isDevPagesOrigin();
+  function readList(el) {
+    if (!el) return [];
+    return [...el.querySelectorAll("li")]
+      .map((li) => {
+        const clone = li.cloneNode(true);
+        clone.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
+        return String(clone.textContent || "").trim();
+      })
+      .filter(Boolean);
   }
 
   function normalizeImageUrl(value) {
@@ -400,6 +105,161 @@
     return raw;
   }
 
+  function setHeroImage(url) {
+    const finalUrl = normalizeImageUrl(url);
+    if (!heroRoot) return;
+    if (!finalUrl) {
+      heroRoot.style.removeProperty("--destination-hero-image");
+      return;
+    }
+    heroRoot.style.setProperty("--destination-hero-image", `url("${finalUrl}")`);
+  }
+
+  function renderIso(item) {
+    if (!isoBox || !isoImg || !isoLabel) return;
+    const url = normalizeImageUrl(item && item.isoImage);
+    if (!url) {
+      isoImg.removeAttribute("src");
+      isoImg.alt = "";
+      isoBox.classList.remove("is-loaded");
+      isoLabel.textContent = "Image coming soon.";
+      return;
+    }
+    isoImg.src = url;
+    isoImg.alt = `Isometric view of ${item.name || "destination"}`;
+    isoBox.classList.add("is-loaded");
+    isoLabel.textContent = " ";
+  }
+
+  function renderBadges(tags) {
+    if (!heroBadgesEl) return;
+    heroBadgesEl.innerHTML = "";
+    (Array.isArray(tags) ? tags : []).forEach((tag) => {
+      const value = String(tag || "").trim();
+      if (!value) return;
+      const span = document.createElement("span");
+      span.className = "hero-badge";
+      span.textContent = value;
+      heroBadgesEl.appendChild(span);
+    });
+  }
+
+  function renderHighlights(items) {
+    if (!highlightsEl) return;
+    highlightsEl.innerHTML = "";
+    (Array.isArray(items) ? items : []).forEach((entry) => {
+      if (!entry || typeof entry !== "object") return;
+      const name = String(entry.name || entry.title || "").trim();
+      const details = String(entry.details || entry.description || "").trim();
+      if (!name && !details) return;
+      const card = document.createElement("article");
+      card.className = "site-highlight-card";
+      const h3 = document.createElement("h3");
+      h3.textContent = name || "Dive Site";
+      const p = document.createElement("p");
+      p.textContent = details;
+      card.append(h3, p);
+      highlightsEl.appendChild(card);
+    });
+  }
+
+  function renderConditions(conditions) {
+    const rows = [];
+    if (conditions && typeof conditions === "object") {
+      if (conditions.visibility) rows.push(`Visibility: ${conditions.visibility}`);
+      if (conditions.temperature) rows.push(`Temperature: ${conditions.temperature}`);
+      if (conditions.currents) rows.push(`Currents: ${conditions.currents}`);
+    }
+    setList(conditionsEl, rows);
+  }
+
+  function parseConditionsFromList() {
+    const lines = readList(conditionsEl);
+    const next = {};
+    lines.forEach((line) => {
+      const [label, ...rest] = String(line || "").split(":");
+      const key = String(label || "").trim().toLowerCase();
+      const value = rest.join(":").trim();
+      if (!value) return;
+      if (key.includes("visibility")) next.visibility = value;
+      if (key.includes("temperature")) next.temperature = value;
+      if (key.includes("current")) next.currents = value;
+    });
+    return next;
+  }
+
+  function render(item) {
+    if (!item) return;
+
+    setText(nameEl, item.name || "Destination");
+    setText(subtitleEl, item.subtitle || "Destination details are loading.");
+    setText(heroWhyEl, item.heroWhy || item.summary || "Summary loading.");
+    renderBadges(item.tags || []);
+
+    setText(narrativeEl, item.narrative || "Destination details are loading.");
+    setText(summaryEl, item.summary || "Summary loading.");
+    setText(experienceEl, item.experience || "Experience loading.");
+    setText(seasonalityEl, item.seasonality || "Seasonality loading.");
+    setText(logisticsEl, item.logistics || item.logisticsDetails || "Logistics loading.");
+
+    setText(isoTitleEl, item.isoTitle || "Resort View (Isometric)");
+    setText(isoDescEl, item.isoDesc || "Select a destination to load the resort view.");
+    renderIso(item);
+    setHeroImage(item.heroImage || "");
+
+    setText(dayToDayEl, item.dayToDay || "Day-to-day details are loading.");
+    setText(resortNameEl, (item.resort && item.resort.name) || "Resort name loading.");
+    setText(resortDescEl, (item.resort && item.resort.description) || "Resort details loading.");
+    setText(resortDetailsEl, item.resortDetails || (item.resort && item.resort.description) || "Resort details loading.");
+    setText(logisticsDetailsEl, item.logisticsDetails || item.logistics || "Logistics details loading.");
+
+    setText(vibeTextEl, item.vibe || (item.whyItWorks && item.whyItWorks.vibe) || "The vibe details are loading.");
+    setText(mediaStatusEl, item.mediaStatus || `Latest trip clips from ${item.name || "this destination"}.`);
+
+    setList(bulletsEl, item.bullets || []);
+    setList(diveSitesEl, item.diveSites || []);
+    setList(nonDivingEl, item.nonDiving || []);
+    setList(logisticsTipsEl, item.logisticsTips || []);
+    setList(perfectForEl, item.perfectFor || item.tags || []);
+    setList(howItWorksEl, item.howItWorks || []);
+    renderHighlights(item.diveSiteHighlights || []);
+    renderConditions(item.conditions || {});
+
+    if (heroInput) heroInput.value = item.heroImage || "";
+    if (isoInput) isoInput.value = item.isoImage || "";
+
+    const detailUrl = `../travel/destination.html?id=${encodeURIComponent(item.id || "")}`;
+    diveNowLinks.forEach((link) => {
+      if (!link) return;
+      const base = "../contact/index.html#dive-now";
+      link.href = item.id ? `${base}&destination=${encodeURIComponent(item.id)}` : base;
+    });
+    if (mediaLink) {
+      mediaLink.href = item.id ? `../media/index.html?location=${encodeURIComponent(item.id)}` : "../media/index.html";
+    }
+
+    document.title = `DMZ Scuba | ${item.name || "Destination"}`;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) {
+      desc.setAttribute("content", `${item.summary || item.subtitle || "Explore this destination with DMZ Scuba."}`);
+    }
+
+    isDirty = false;
+  }
+
+  function showError(message) {
+    if (errorPanel) errorPanel.hidden = false;
+    setText(errorMessageEl, message || "We could not load this destination.");
+  }
+
+  function hideError() {
+    if (errorPanel) errorPanel.hidden = true;
+  }
+
+  function getToken() {
+    return window.sessionStorage.getItem(tokenStorageKey) || "";
+  }
+
   function setToken(token) {
     if (!token) {
       window.sessionStorage.removeItem(tokenStorageKey);
@@ -408,512 +268,87 @@
     window.sessionStorage.setItem(tokenStorageKey, token);
   }
 
-  function updateDraftCache(base, expanded) {
-    try {
-      const raw = window.localStorage.getItem(draftStorageKey);
-      if (!raw) return;
-      const now = Date.now();
-      const draft = JSON.parse(raw);
-      if (!draft || typeof draft !== "object") return;
-
-      const upsert = (items, item) => {
-        if (!Array.isArray(items) || !item || !item.id) return items;
-        const next = [...items];
-        const index = next.findIndex((entry) => entry && entry.id === item.id);
-        if (index >= 0) {
-          next[index] = item;
-          return next;
-        }
-        next.push(item);
-        return next;
-      };
-
-      const nextDraft = { ...draft };
-      if (Array.isArray(draft.baseItems)) {
-        nextDraft.baseItems = upsert(draft.baseItems, base);
-      }
-      if (Array.isArray(draft.expandedItems)) {
-        nextDraft.expandedItems = upsert(draft.expandedItems, expanded);
-      }
-      if (Array.isArray(draft.dirtyIds) && base?.id) {
-        nextDraft.dirtyIds = draft.dirtyIds.filter((id) => id && id !== base.id);
-      }
-      nextDraft.updatedAt = now;
-      window.localStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
-    } catch (error) {
-      console.warn("Destination draft sync failed.", error);
-    }
+  function canWriteWithoutLogin() {
+    return String(window.location.hostname || "").toLowerCase().endsWith(".pages.dev");
   }
 
-  async function apiFetch(path, options = {}) {
+  async function apiFetch(url, options = {}) {
     const headers = options.headers ? { ...options.headers } : {};
     const token = getToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    return fetch(path, { ...options, headers });
-  }
-
-  async function requestImagesDirectUpload(variant) {
-    if (!getToken()) {
-      return new Promise((resolve) => {
-        buildLoginModal(() => resolve(requestImagesDirectUpload(variant)));
-      });
-    }
-    const resp = await apiFetch(`${apiBase || ""}/api/admin/images-direct-upload`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ variant }),
-    });
-    if (!resp.ok) {
-      throw new Error("Images direct upload failed.");
-    }
-    return resp.json();
-  }
-
-  async function uploadImageFile(file, statusEl, variant) {
-    if (!file) return null;
-    if (statusEl) statusEl.textContent = "Requesting upload...";
-    const data = await requestImagesDirectUpload(variant);
-    const uploadURL = data?.uploadURL;
-    const deliveryUrl = data?.deliveryUrl || "";
-    if (!uploadURL) throw new Error("Missing upload URL.");
-
-    if (statusEl) statusEl.textContent = "Uploading...";
-    await new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", uploadURL, true);
-      xhr.upload.addEventListener("progress", (event) => {
-        if (!statusEl || !event.lengthComputable) return;
-        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
-        statusEl.textContent = `Uploading... ${percent}%`;
-      });
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error("Upload failed"));
-        }
-      };
-      xhr.onerror = () => reject(new Error("Upload failed"));
-      xhr.send(formData);
-    });
-
-    if (statusEl) {
-      statusEl.textContent = deliveryUrl ? "Upload complete." : "Upload complete. Add URL manually.";
-    }
-    return deliveryUrl;
-  }
-
-  function isCloudflareImageUrl(value) {
-    if (!value) return false;
-    return String(value).includes("imagedelivery.net/");
-  }
-
-  async function deleteImageByUrl(url) {
-    if (!url || !isCloudflareImageUrl(url)) return;
-    try {
-      await apiFetch(`${apiBase || ""}/api/admin/images-delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-    } catch (error) {
-      // ignore delete failures
-    }
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
   }
 
   function updateAuthState() {
-    const authed = Boolean(getToken());
-    document.body.classList.toggle("dest-page-authenticated", authed);
-    if (adminStatus) {
-      adminStatus.textContent = authed ? "Signed in" : "Signed out";
+    const authed = Boolean(getToken()) || canWriteWithoutLogin();
+    if (adminStatus) adminStatus.textContent = authed ? "Ready" : "Signed out";
+    if (logoutButton) logoutButton.style.display = getToken() ? "inline-flex" : "none";
+    if (editToggle) {
+      const editing = document.body.classList.contains("dest-page-editing");
+      editToggle.textContent = editing ? "Close Editor" : "Edit Page";
     }
-    updateEditButtonLabels();
-  }
-
-  function updateEditButtonLabels() {
-    const authed = Boolean(getToken());
-    const editing = document.body.classList.contains("dest-page-editing");
-    const label = !authed ? "DMZ Login" : editing ? "Close Editor" : "Edit Page";
-    if (editToggle) editToggle.textContent = label;
-    if (logoutButton) logoutButton.style.display = authed ? "inline-flex" : "none";
   }
 
   function buildLoginModal(onSuccess) {
     if (document.querySelector(".media-auth-modal")) return;
     const overlay = document.createElement("div");
     overlay.className = "media-edit-modal media-auth-modal";
-    const card = document.createElement("div");
-    card.className = "media-edit-modal-card";
-
-    const heading = document.createElement("h3");
-    heading.textContent = "DMZ Admin";
-    const hint = document.createElement("p");
-    hint.className = "media-edit-modal-hint";
-    hint.textContent = "Sign in to edit destination content.";
-
-    const formEl = document.createElement("form");
-    formEl.className = "media-edit-form";
-
-    const userLabel = document.createElement("label");
-    userLabel.textContent = "Username";
-    const userInput = document.createElement("input");
-    userInput.type = "text";
-    userInput.autocomplete = "username";
-
-    const passLabel = document.createElement("label");
-    passLabel.textContent = "Password";
-    const passInput = document.createElement("input");
-    passInput.type = "password";
-    passInput.autocomplete = "current-password";
-
-    const error = document.createElement("p");
-    error.className = "media-edit-modal-hint";
-    error.style.color = "rgba(226, 27, 35, 0.85)";
-
-    const actions = document.createElement("div");
-    actions.className = "media-edit-modal-actions";
-    const cancelBtn = document.createElement("button");
-    cancelBtn.type = "button";
-    cancelBtn.className = "media-edit-cancel";
-    cancelBtn.textContent = "Cancel";
-    const saveBtn = document.createElement("button");
-    saveBtn.type = "submit";
-    saveBtn.className = "media-edit-save";
-    saveBtn.textContent = "Sign In";
-    actions.appendChild(cancelBtn);
-    actions.appendChild(saveBtn);
-
-    formEl.appendChild(userLabel);
-    formEl.appendChild(userInput);
-    formEl.appendChild(passLabel);
-    formEl.appendChild(passInput);
-    formEl.appendChild(error);
-    formEl.appendChild(actions);
-
-    card.appendChild(heading);
-    card.appendChild(hint);
-    card.appendChild(formEl);
-    overlay.appendChild(card);
+    overlay.innerHTML = `
+      <div class="media-edit-modal-card">
+        <h3>DMZ Admin</h3>
+        <p class="media-edit-modal-hint">Sign in to edit destination content.</p>
+        <form class="media-edit-form">
+          <label>Username<input type="text" autocomplete="username" required /></label>
+          <label>Password<input type="password" autocomplete="current-password" required /></label>
+          <p class="media-edit-modal-hint" data-error style="color: rgba(226, 27, 35, 0.85)"></p>
+          <div class="media-edit-modal-actions">
+            <button type="button" class="media-edit-cancel">Cancel</button>
+            <button type="submit" class="media-edit-save">Sign In</button>
+          </div>
+        </form>
+      </div>`;
     document.body.appendChild(overlay);
 
-    function close() {
-      overlay.remove();
-    }
+    const form = overlay.querySelector("form");
+    const inputs = form ? form.querySelectorAll("input") : [];
+    const errorEl = overlay.querySelector("[data-error]");
+    const cancelBtn = overlay.querySelector(".media-edit-cancel");
 
-    cancelBtn.addEventListener("click", close);
+    const close = () => overlay.remove();
+    if (cancelBtn) cancelBtn.addEventListener("click", close);
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) close();
     });
 
-    formEl.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      error.textContent = "";
-      try {
-        const resp = await apiFetch(`${apiBase || ""}/api/admin/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
-        });
-        if (!resp.ok) {
-          error.textContent = "Login failed. Check credentials.";
-          return;
-        }
-        const data = await resp.json();
-        if (!data.token) {
-          error.textContent = "Login failed. Try again.";
-          return;
-        }
-        setToken(data.token);
-        updateAuthState();
-        close();
-        if (typeof onSuccess === "function") onSuccess();
-      } catch (err) {
-        console.error("Destination login failed.", err);
-        error.textContent = "Login failed. Check the console for details.";
-      }
-    });
-  }
-
-  function mergeDestination(base, extra) {
-    if (!base) return extra || base;
-    if (!extra) return base;
-
-    const merged = { ...base, ...extra };
-
-    const mergeArray = (primary, addon) => {
-      if (!Array.isArray(primary) && !Array.isArray(addon)) return null;
-      const seen = new Set();
-      const result = [];
-      [...(primary || []), ...(addon || [])].forEach((item) => {
-        if (!item || seen.has(item)) return;
-        seen.add(item);
-        result.push(item);
-      });
-      return result;
-    };
-
-    const mergedTags = mergeArray(base.tags, extra.tags);
-    if (mergedTags) merged.tags = mergedTags;
-
-    const mergedBullets = mergeArray(base.bullets, extra.bullets);
-    if (mergedBullets) merged.bullets = mergedBullets;
-
-    const mergedDiveSites = mergeArray(base.diveSites, extra.diveSites);
-    if (mergedDiveSites) merged.diveSites = mergedDiveSites;
-
-    const mergedNonDiving = mergeArray(base.nonDiving, extra.nonDiving);
-    if (mergedNonDiving) merged.nonDiving = mergedNonDiving;
-
-    if (base.resort || extra.resort) {
-      merged.resort = { ...(base.resort || {}), ...(extra.resort || {}) };
-    }
-
-    if (base.conditions || extra.conditions) {
-      merged.conditions = { ...(base.conditions || {}), ...(extra.conditions || {}) };
-    }
-
-    return merged;
-  }
-
-  function setText(el, text) {
-    if (!el) return;
-    el.textContent = text;
-  }
-
-  function sanitizeRichText(html) {
-    if (!html) return "";
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = html;
-    const allowedTags = new Set([
-      "P",
-      "BR",
-      "UL",
-      "OL",
-      "LI",
-      "A",
-      "DIV",
-      "H1",
-      "H2",
-      "H3",
-      "H4",
-      "H5",
-      "H6",
-    ]);
-
-    const walk = (node) => {
-      const children = [...node.childNodes];
-      children.forEach((child) => {
-        if (child.nodeType === Node.TEXT_NODE) {
-          const text = child.textContent || "";
-          if (text.includes("\n")) {
-            const parts = text.split("\n");
-            const frag = document.createDocumentFragment();
-            parts.forEach((part, index) => {
-              if (part) frag.appendChild(document.createTextNode(part));
-              if (index < parts.length - 1) frag.appendChild(document.createElement("br"));
-            });
-            child.replaceWith(frag);
-          }
-          return;
-        }
-        if (child.nodeType === Node.ELEMENT_NODE) {
-          const tag = child.tagName;
-          if (tag === "DIV" || /^H[1-6]$/.test(tag)) {
-            const p = document.createElement("p");
-            while (child.firstChild) p.appendChild(child.firstChild);
-            child.replaceWith(p);
-            walk(p);
-            return;
-          }
-          if (!allowedTags.has(tag)) {
-            const text = document.createTextNode(child.textContent || "");
-            child.replaceWith(text);
-            return;
-          }
-          if (tag === "A") {
-            const href = child.getAttribute("href") || "";
-            const safeHref =
-              href.startsWith("http://") || href.startsWith("https://") ? href : "";
-            child.setAttribute("href", safeHref);
-            child.setAttribute("rel", "noopener");
-            child.setAttribute("target", "_blank");
-          }
-          // Strip inline styles/classes/ids to prevent font overrides.
-          [...child.attributes].forEach((attr) => {
-            const name = attr.name.toLowerCase();
-            if (tag === "A" && ["href", "rel", "target"].includes(name)) return;
-            child.removeAttribute(attr.name);
+    if (form) {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (errorEl) errorEl.textContent = "";
+        const user = inputs[0] ? inputs[0].value.trim() : "";
+        const pass = inputs[1] ? inputs[1].value : "";
+        try {
+          const resp = await fetch(`${apiRoot}/api/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user, pass }),
           });
-          walk(child);
+          if (!resp.ok) {
+            if (errorEl) errorEl.textContent = "Login failed.";
+            return;
+          }
+          const json = await resp.json().catch(() => ({}));
+          if (!json.token) {
+            if (errorEl) errorEl.textContent = "Login failed.";
+            return;
+          }
+          setToken(json.token);
+          updateAuthState();
+          close();
+          if (typeof onSuccess === "function") onSuccess();
+        } catch (error) {
+          if (errorEl) errorEl.textContent = "Login request failed.";
         }
       });
-    };
-
-    walk(wrapper);
-    return wrapper.innerHTML.trim();
-  }
-
-  function readRichText(el) {
-    if (!el) return "";
-    const html = sanitizeRichText(el.innerHTML);
-    if (html) return html;
-    const text = (el.innerText || el.textContent || "").trim();
-    if (!text) return "";
-    return sanitizeRichText(text.replace(/\n/g, "<br>"));
-  }
-
-  function setRichText(el, html) {
-    if (!el) return;
-    const safe = sanitizeRichText(html);
-    if (!safe) {
-      el.textContent = "";
-      return;
-    }
-    el.innerHTML = safe;
-  }
-
-  function showDebugPanel(payload, response, stage = "save") {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has("debug")) return;
-    let panel = document.getElementById("destDebugPanel");
-    if (!panel) {
-      panel = document.createElement("div");
-      panel.id = "destDebugPanel";
-      panel.style.cssText =
-        "position:fixed;bottom:16px;right:16px;max-width:420px;max-height:60vh;overflow:auto;" +
-        "background:#0b0b0b;color:#f5f5f5;padding:12px 14px;border-radius:10px;z-index:9999;" +
-        "font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;" +
-        "box-shadow:0 12px 30px rgba(0,0,0,0.3)";
-      document.body.appendChild(panel);
-    }
-    const statusLine = response
-      ? `status: ${response.status}`
-      : stage === "load"
-        ? "status: loaded"
-        : "status: pending";
-    const itemPayload = payload?.items?.[0] || null;
-    const safePayload = {
-      logistics:
-        (itemPayload && (itemPayload.logisticsDetails || itemPayload.logistics)) ||
-        payload?.baseItems?.[0]?.logistics ||
-        "",
-      logisticsDetails:
-        (itemPayload && itemPayload.logisticsDetails) ||
-        payload?.expandedItems?.[0]?.logisticsDetails ||
-        "",
-      logisticsTips:
-        (itemPayload && itemPayload.logisticsTips) ||
-        payload?.expandedItems?.[0]?.logisticsTips ||
-        [],
-    };
-    panel.innerHTML =
-      `<div><strong>Destination Debug</strong></div>` +
-      `<div>stage: ${stage}</div>` +
-      `<div>${statusLine}</div>` +
-      `<pre style="white-space:pre-wrap;margin:8px 0 0;">${JSON.stringify(safePayload, null, 2)}</pre>`;
-  }
-
-  function cleanListText(text) {
-    return String(text || "")
-      .replace(/🗑️?/g, "")
-      .trim();
-  }
-
-  function renderBullets(bullets) {
-    if (!bulletsEl) return;
-    bulletsEl.innerHTML = "";
-    (bullets || []).forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = cleanListText(item);
-      addDeleteButton(li);
-      bulletsEl.appendChild(li);
-    });
-  }
-
-  function renderList(el, items) {
-    if (!el) return;
-    el.innerHTML = "";
-    (items || []).forEach((item) => {
-      const li = document.createElement("li");
-      li.textContent = cleanListText(item);
-      addDeleteButton(li);
-      el.appendChild(li);
-    });
-  }
-
-  function renderConditions(conditions) {
-    if (!conditionsEl) return;
-    conditionsEl.innerHTML = "";
-    if (!conditions) return;
-
-    const entries = [
-      ["Visibility", conditions.visibility],
-      ["Temperature", conditions.temperature],
-      ["Currents", conditions.currents],
-    ];
-
-    entries.forEach(([label, value]) => {
-      if (!value) return;
-      const li = document.createElement("li");
-      li.textContent = cleanListText(`${label}: ${value}`);
-      addDeleteButton(li);
-      conditionsEl.appendChild(li);
-    });
-  }
-
-  function renderHighlights(items) {
-    if (!diveSiteHighlightsEl) return;
-    diveSiteHighlightsEl.innerHTML = "";
-    (items || []).forEach((item) => {
-      const card = document.createElement("article");
-      card.className = "site-highlight-card";
-
-      const title = document.createElement("h3");
-      title.textContent = item?.name || item?.title || "Dive Site";
-
-      const desc = document.createElement("p");
-      desc.textContent = item?.details || item?.description || "";
-
-      card.append(title, desc);
-      diveSiteHighlightsEl.appendChild(card);
-    });
-  }
-
-  function renderIso(dest) {
-    if (!isoBox || !isoImg || !isoLabel) return;
-
-    if (dest.isoImage) {
-      isoImg.src = dest.isoImage;
-      isoImg.alt = `Isometric view of ${dest.name}`;
-      isoBox.classList.add("is-loaded");
-      isoLabel.textContent = " ";
-    } else {
-      isoImg.removeAttribute("src");
-      isoImg.alt = "";
-      isoBox.classList.remove("is-loaded");
-      isoLabel.textContent = "Image coming soon.";
-    }
-  }
-
-  function setHeroImage(url) {
-    if (!heroRoot) return;
-    if (url) {
-      heroRoot.style.setProperty("--destination-hero-image", `url("${url}")`);
-      return;
-    }
-    heroRoot.style.removeProperty("--destination-hero-image");
-  }
-
-  function setEditable(el, active) {
-    if (!el) return;
-    if (active) {
-      el.setAttribute("contenteditable", "true");
-    } else {
-      el.removeAttribute("contenteditable");
     }
   }
 
@@ -921,1053 +356,59 @@
     isDirty = true;
   }
 
-  function bindEditableListeners() {
-    const editableEls = [
-      nameEl,
-      subtitleEl,
-      isoTitleEl,
-      isoDescEl,
-      narrativeEl,
-      summaryEl,
-      resortNameEl,
-      resortDescEl,
-      seasonalityEl,
-      logisticsEl,
-      experienceEl,
-      dayToDayEl,
-      resortDetailsEl,
-      logisticsDetailsEl,
-      dayToDayTitleEl,
-      resortNotesTitleEl,
-      travelLogisticsTitleEl,
-      diveHighlightsTitleEl,
-      overviewTitleEl,
-      tripSummaryTitleEl,
-      seasonalityTitleEl,
-      overviewLogisticsTitleEl,
-      experienceTitleEl,
-      resortOpsTitleEl,
-      conditionsTitleEl,
-      diveSitesTitleEl,
-      nonDivingTitleEl,
-      tripSnapshotTitleEl,
-      mediaStatusEl,
-      heroWhyEl,
-      vibeTextEl,
-    ];
-    editableEls.forEach((el) => {
-      if (!el) return;
-      el.addEventListener("input", markDirty);
+  function setListEditable(listEl, active) {
+    if (!listEl) return;
+    [...listEl.querySelectorAll("li")].forEach((li) => {
+      if (active) li.setAttribute("contenteditable", "true");
+      else li.removeAttribute("contenteditable");
     });
   }
 
-  function setListEditable(el, active) {
-    if (!el) return;
-    [...el.querySelectorAll("li")].forEach((li) => {
-      if (active) {
-        li.setAttribute("contenteditable", "true");
-        li.addEventListener("input", markDirty);
-      } else {
-        li.removeAttribute("contenteditable");
-      }
-    });
-  }
-
-  function addDeleteButton(li, force = false) {
-    if (!li || li.querySelector(".dest-page-delete")) return;
-    if (!force && !isEditing()) return;
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dest-page-delete";
-    btn.setAttribute("aria-label", "Delete item");
-    btn.innerHTML = "&#128465;";
-    li.appendChild(btn);
-  }
-
-  function syncDeleteButtons(active) {
-    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
+  function bindListDeleteButtons() {
+    document.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
+    if (!document.body.classList.contains("dest-page-editing")) return;
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl];
     lists.forEach((list) => {
       if (!list) return;
-      if (active) {
-        list.querySelectorAll("li").forEach((li) => addDeleteButton(li, true));
-      } else {
-        list.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
-      }
-    });
-  }
-
-  function bindDeleteHandlers() {
-    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
-    lists.forEach((list) => {
-      if (!list) return;
-      list.addEventListener("click", (event) => {
-        const button = event.target.closest(".dest-page-delete");
-        if (!button) return;
-        const li = button.closest("li");
-        if (!li) return;
-        const ok = window.confirm("Delete this item?");
-        if (!ok) return;
-        li.remove();
-        markDirty();
+      [...list.querySelectorAll("li")].forEach((li) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "dest-page-delete";
+        btn.textContent = "Remove";
+        btn.addEventListener("click", () => {
+          li.remove();
+          markDirty();
+        });
+        li.appendChild(btn);
       });
-    });
-  }
-
-  function setHighlightsEditable(active) {
-    if (!diveSiteHighlightsEl) return;
-    diveSiteHighlightsEl.querySelectorAll(".site-highlight-card").forEach((card) => {
-      const title = card.querySelector("h3");
-      const desc = card.querySelector("p");
-      if (active) {
-        if (title) title.setAttribute("contenteditable", "true");
-        if (desc) desc.setAttribute("contenteditable", "true");
-        if (title) title.addEventListener("input", markDirty);
-        if (desc) desc.addEventListener("input", markDirty);
-      } else {
-        if (title) title.removeAttribute("contenteditable");
-        if (desc) desc.removeAttribute("contenteditable");
-      }
     });
   }
 
   function setEditMode(active) {
-    document.body.classList.toggle("dest-page-editing", active);
-    if (editToggle) editToggle.setAttribute("aria-pressed", active ? "true" : "false");
-    updateEditButtonLabels();
-
-    const editableEls = [
-      nameEl,
-      subtitleEl,
-      isoTitleEl,
-      isoDescEl,
-      narrativeEl,
-      summaryEl,
-      resortNameEl,
-      resortDescEl,
-      seasonalityEl,
-      logisticsEl,
-      experienceEl,
-      dayToDayEl,
-      resortDetailsEl,
-      logisticsDetailsEl,
-      dayToDayTitleEl,
-      resortNotesTitleEl,
-      travelLogisticsTitleEl,
-      diveHighlightsTitleEl,
-      overviewTitleEl,
-      tripSummaryTitleEl,
-      seasonalityTitleEl,
-      overviewLogisticsTitleEl,
-      experienceTitleEl,
-      resortOpsTitleEl,
-      conditionsTitleEl,
-      diveSitesTitleEl,
-      nonDivingTitleEl,
-      tripSnapshotTitleEl,
-      mediaStatusEl,
-      heroWhyEl,
-      vibeTextEl,
+    document.body.classList.toggle("dest-page-editing", Boolean(active));
+    const editables = [
+      nameEl, subtitleEl, heroWhyEl,
+      narrativeEl, summaryEl, experienceEl, seasonalityEl, logisticsEl,
+      isoTitleEl, isoDescEl,
+      dayToDayEl, resortNameEl, resortDescEl, resortDetailsEl, logisticsDetailsEl,
+      vibeTextEl, mediaStatusEl,
     ];
-
-    editableEls.forEach((el) => setEditable(el, active));
-    setListEditable(bulletsEl, active);
-    setListEditable(diveSitesEl, active);
-    setListEditable(nonDivingEl, active);
-    setListEditable(logisticsTipsEl, active);
-    setListEditable(conditionsEl, active);
-    setListEditable(perfectForEl, active);
-    setListEditable(howItWorksEl, active);
-    setHighlightsEditable(active);
-    syncDeleteButtons(active);
-
-    if (heroInput) {
-      heroInput.disabled = !active;
-    }
-    if (isoInput) {
-      isoInput.disabled = !active;
-    }
-  }
-
-  function setDiveNowLinks(dest) {
-    if (!diveNowLinks.length) return;
-
-    const params = new URLSearchParams();
-    params.set("interest", "travel");
-
-    if (dest?.heroTitle || dest?.name) {
-      params.set("location", dest.heroTitle || dest.name);
-    }
-    if (dest?.id) {
-      params.set("destination", dest.id);
-    }
-
-    const href = `../contact/index.html?${params.toString()}#dive-now`;
-    diveNowLinks.forEach((link) => {
-      link.setAttribute("href", href);
-    });
-  }
-
-  function renderHeroBadges(items) {
-    if (!heroBadgesEl) return;
-    heroBadgesEl.innerHTML = "";
-    (items || []).forEach((item) => {
-      if (!item) return;
-      const badge = document.createElement("span");
-      badge.className = "hero-badge";
-      badge.textContent = item;
-      heroBadgesEl.appendChild(badge);
-    });
-  }
-
-  function renderVibe(dest) {
-    if (!vibeTextEl) return;
-    const vibe =
-      dest?.vibe ||
-      dest?.whyItWorks?.vibe ||
-      dest?.summary ||
-      "A relaxed dive rhythm with enough drama to keep every drop cinematic.";
-    setRichText(vibeTextEl, vibe);
-  }
-
-  function renderPerfectFor(items, fallback = []) {
-    if (!perfectForEl) return;
-    perfectForEl.innerHTML = "";
-    const list = items?.length ? items : fallback?.length ? fallback : ["Trip fit details coming soon."];
-    (list || []).forEach((item) => {
-      if (!item) return;
-      const li = document.createElement("li");
-      li.textContent = item;
-      perfectForEl.appendChild(li);
-    });
-  }
-
-  function renderHowItWorks(items) {
-    if (!howItWorksEl) return;
-    howItWorksEl.innerHTML = "";
-    (items || []).forEach((item) => {
-      if (!item) return;
-      const li = document.createElement("li");
-      li.textContent = item;
-      howItWorksEl.appendChild(li);
-    });
-  }
-
-  function setMediaLink(dest) {
-    if (!mediaLink) return;
-    if (!dest) {
-      mediaLink.href = "../media/index.html";
-      return;
-    }
-    const param = dest.id || dest.name || "";
-    mediaLink.href = param
-      ? `../media/index.html?location=${encodeURIComponent(param)}`
-      : "../media/index.html";
-  }
-
-  function buildDestinationKeys(dest) {
-    const keys = new Set();
-    [dest?.id, dest?.name, dest?.heroTitle, dest?.subtitle].forEach((value) => {
-      const key = normalizeKey(value);
-      if (key) keys.add(key);
-    });
-    return [...keys];
-  }
-
-  function filterDestinationMedia(items, dest) {
-    const keys = buildDestinationKeys(dest);
-    if (!keys.length) return [];
-    return (items || []).filter((item) => {
-      if (!item) return false;
-      const locationKey = normalizeKey(item.location);
-      const tagKeys = Array.isArray(item.tags) ? item.tags.map(normalizeKey) : [];
-      return keys.some(
-        (key) =>
-          matchesLocationKey(locationKey, key) ||
-          tagKeys.some((tag) => matchesLocationKey(tag, key))
-      );
-    });
-  }
-
-  function createDestinationMediaCard(item, dest, compact = false) {
-    const card = document.createElement("article");
-    card.className = compact ? "media-card is-compact" : "media-card";
-
-    const mediaUrl = resolveUrl(item.url || "");
-    const youtubeId = getYouTubeId(mediaUrl);
-    const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
-    const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
-    const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
-
-    const thumb = document.createElement("button");
-    thumb.type = "button";
-    thumb.className = "media-thumb media-link";
-    thumb.setAttribute("aria-label", item.title || "Open trip clip");
-
-    if (thumbUrl && isImageUrl(thumbUrl)) {
-      const img = document.createElement("img");
-      img.className = "media-thumb-img";
-      img.src = thumbUrl;
-      img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.addEventListener("load", () => {
-        applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
-        scheduleMediaHeightSync();
-      });
-      thumb.appendChild(img);
-      thumb.classList.add("has-thumb");
-    } else {
-      const faux = document.createElement("div");
-      faux.className = "media-thumb-faux";
-      faux.textContent = item.title || "Trip clip";
-      thumb.appendChild(faux);
-      applyThumbAspect(thumb, 16, 9);
-    }
-
-    if (isVideo) addPlayOverlay(thumb);
-    if (youtubeId) thumb.classList.add("is-youtube");
-    if (isVideo) thumb.classList.add("is-video");
-
-    thumb.addEventListener("click", () => {
-      if (youtubeId) {
-        openYoutubeModal(youtubeId, item.title);
-        return;
-      }
-      if (streamId) {
-        openStreamModal(streamId, item.title);
-        return;
-      }
-      if (mediaUrl && isVideoUrl(mediaUrl)) {
-        openVideoModal(mediaUrl, item.title);
-        return;
-      }
-      if (mediaUrl) {
-        window.open(mediaUrl, "_blank", "noopener");
-      }
+    editables.forEach((el) => {
+      if (!el) return;
+      if (active) el.setAttribute("contenteditable", "true");
+      else el.removeAttribute("contenteditable");
     });
 
-    const badge = document.createElement("span");
-    badge.className = "media-badge";
-    badge.textContent = item.badge || (item.type ? item.type.toUpperCase() : "MEDIA");
-
-    const body = document.createElement("div");
-    body.className = "media-body";
-
-    const badgeRow = document.createElement("div");
-    badgeRow.className = "media-badge-row";
-    badgeRow.appendChild(badge);
-
-    const title = document.createElement("h3");
-    title.textContent = item.title || "Trip Clip";
-
-    const description = document.createElement("p");
-    description.textContent =
-      item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
-    if (!item.description) {
-      description.classList.add("media-desc-empty");
-    }
-
-    const meta = document.createElement("div");
-    meta.className = "media-meta";
-    renderMeta(item.meta, item.location, meta);
-
-    body.appendChild(badgeRow);
-    body.appendChild(title);
-    body.appendChild(description);
-    if ((item.meta && item.meta.length) || item.location) {
-      body.appendChild(meta);
-    }
-
-    card.appendChild(thumb);
-    card.appendChild(body);
-    return card;
-  }
-
-  function buildMediaBlocks(items, orientationMap) {
-    const blocks = [];
-    for (let i = 0; i < items.length; i += 1) {
-      const item = items[i];
-      const key = getItemKey(item, i);
-      const orientation = orientationMap.get(key) || "unknown";
-      if (orientation === "horizontal" && i + 1 < items.length) {
-        const next = items[i + 1];
-        const nextKey = getItemKey(next, i + 1);
-        const nextOrientation = orientationMap.get(nextKey) || "unknown";
-        if (nextOrientation === "horizontal") {
-          blocks.push({ type: "stack", items: [item, next] });
-          i += 1;
-          continue;
-        }
-      }
-      blocks.push({ type: "single", item });
-    }
-    return blocks;
-  }
-
-  function renderDestinationMedia(items, dest, orientationMap) {
-    if (!mediaGrid) return;
-    mediaGrid.innerHTML = "";
-    const subset = (items || []).slice(0, 6);
-    const map = orientationMap || new Map();
-    const blocks = buildMediaBlocks(subset, map);
-
-    blocks.forEach((block) => {
-      if (block.type === "stack") {
-        const stack = document.createElement("div");
-        stack.className = "media-stack";
-        block.items.forEach((item) => {
-          stack.appendChild(createDestinationMediaCard(item, dest, true));
-        });
-        mediaGrid.appendChild(stack);
-      } else {
-        mediaGrid.appendChild(createDestinationMediaCard(block.item, dest));
-      }
+    [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl].forEach((list) => {
+      setListEditable(list, active);
     });
 
-    if (mediaStatusEl) {
-      mediaStatusEl.textContent = subset.length
-        ? `Latest trip clips from ${dest?.name || "this destination"}.`
-        : dest?.mediaStatus ||
-          "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
-    }
-
-    initMediaCarousel(blocks.length);
-    requestAnimationFrame(() => {
-      syncMediaCardHeights();
+    addButtons.forEach((btn) => {
+      btn.style.display = active ? "inline-flex" : "none";
     });
-  }
 
-  function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
-    let thumbUrl = resolveUrl(item.thumbUrl || "");
-    if (!thumbUrl) {
-      if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
-      else if (streamId) thumbUrl = buildStreamThumb(streamId);
-      else if (item.type === "photo" && isImageUrl(mediaUrl)) thumbUrl = mediaUrl;
-    }
-    return thumbUrl;
-  }
-
-  async function getImageAspect(url) {
-    if (!url) return null;
-    return new Promise((resolve) => {
-      const img = new Image();
-      let done = false;
-      const finish = (result) => {
-        if (done) return;
-        done = true;
-        resolve(result);
-      };
-      const timer = setTimeout(() => finish(null), 1200);
-      img.onload = () => {
-        clearTimeout(timer);
-        finish({ width: img.naturalWidth, height: img.naturalHeight });
-      };
-      img.onerror = () => {
-        clearTimeout(timer);
-        finish(null);
-      };
-      img.src = url;
-    });
-  }
-
-  function hasVerticalHint(item) {
-    const fields = [
-      ...(item.meta || []),
-      ...(item.tags || []),
-      item.badge,
-      item.title,
-      item.description,
-    ];
-    return fields.some((value) => /vertical|portrait/i.test(String(value || "")));
-  }
-
-  function hasHorizontalHint(item) {
-    const fields = [
-      ...(item.meta || []),
-      ...(item.tags || []),
-      item.badge,
-      item.title,
-      item.description,
-    ];
-    return fields.some((value) => /horizontal|landscape/i.test(String(value || "")));
-  }
-
-  async function getMediaOrientations(items) {
-    const list = Array.isArray(items) ? items : [];
-    const entries = await Promise.all(
-      list.map(async (item, index) => {
-        const key = getItemKey(item, index);
-        if (!item) return [key, "unknown"];
-        if (hasVerticalHint(item)) return [key, "vertical"];
-        if (hasHorizontalHint(item)) return [key, "horizontal"];
-        const mediaUrl = resolveUrl(item.url || "");
-        const youtubeId = getYouTubeId(mediaUrl);
-        const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
-        const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
-        const aspect = await getImageAspect(thumbUrl);
-        if (!aspect || !aspect.width || !aspect.height) return [key, "unknown"];
-        const ratio = aspect.height / aspect.width;
-        if (ratio >= 1.15) return [key, "vertical"];
-        if (ratio <= 0.85) return [key, "horizontal"];
-        return [key, "square"];
-      })
-    );
-    return new Map(entries);
-  }
-
-  function prioritizeVerticalMedia(items, orientationMap) {
-    const list = Array.isArray(items) ? [...items] : [];
-    const entries = list.map((item, index) => {
-      const key = getItemKey(item, index);
-      const orientation = orientationMap.get(key) || "unknown";
-      return { item, index, isVertical: orientation === "vertical" };
-    });
-    return entries
-      .sort((a, b) => {
-        if (a.isVertical !== b.isVertical) return a.isVertical ? -1 : 1;
-        return a.index - b.index;
-      })
-      .map((entry) => entry.item);
-  }
-
-  function initMediaCarousel(total) {
-    if (!mediaGrid || !mediaDots) return;
-    mediaDots.innerHTML = "";
-    const cardsPerPage = window.matchMedia("(max-width: 980px)").matches ? 1 : 3;
-    if (total <= cardsPerPage) {
-      mediaGrid.classList.remove("is-scroll");
-      mediaDots.hidden = true;
-      if (mediaPrev) mediaPrev.hidden = true;
-      if (mediaNext) mediaNext.hidden = true;
-      if (mediaAutoScrollTimer) {
-        clearInterval(mediaAutoScrollTimer);
-        mediaAutoScrollTimer = null;
-      }
-      mediaUserInteracted = false;
-      return;
-    }
-
-    const getBlocks = () =>
-      [...mediaGrid.children].filter((el) =>
-        el.classList.contains("media-card") || el.classList.contains("media-stack")
-      );
-    const pageCount = Math.ceil(total / cardsPerPage);
-    mediaGrid.classList.add("is-scroll");
-    mediaDots.hidden = false;
-    if (mediaPrev) mediaPrev.hidden = false;
-    if (mediaNext) mediaNext.hidden = false;
-
-    const getPageIndex = () => {
-      const blocks = getBlocks();
-      if (!blocks.length) return 0;
-      const left = mediaGrid.scrollLeft;
-      let closest = 0;
-      let minDelta = Infinity;
-      blocks.forEach((block, index) => {
-        const delta = Math.abs(block.offsetLeft - left);
-        if (delta < minDelta) {
-          minDelta = delta;
-          closest = index;
-        }
-      });
-      return Math.round(closest / cardsPerPage);
-    };
-
-    const setActiveDot = (index) => {
-      mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
-        dot.classList.toggle("is-active", i === index);
-      });
-      if (mediaPrev) mediaPrev.disabled = index === 0;
-      if (mediaNext) mediaNext.disabled = index === pageCount - 1;
-    };
-
-    const scrollToPage = (index) => {
-      const blocks = getBlocks();
-      const targetIndex = Math.min(blocks.length - 1, Math.max(0, index * cardsPerPage));
-      const target = blocks[targetIndex];
-      if (!target) return;
-      // Scroll within the media grid only; avoid moving the page on mobile.
-      const targetLeft = target.offsetLeft;
-      mediaGrid.scrollTo({ left: targetLeft, behavior: "smooth" });
-      setActiveDot(index);
-    };
-
-    const stopAutoScroll = () => {
-      mediaUserInteracted = true;
-      if (mediaAutoScrollTimer) {
-        clearInterval(mediaAutoScrollTimer);
-        mediaAutoScrollTimer = null;
-      }
-    };
-
-    for (let i = 0; i < pageCount; i += 1) {
-      const dot = document.createElement("button");
-      dot.type = "button";
-      dot.className = "media-dot";
-      dot.setAttribute(
-        "aria-label",
-        `Show clips ${i * cardsPerPage + 1} to ${Math.min(total, (i + 1) * cardsPerPage)}`
-      );
-      dot.addEventListener("click", () => scrollToPage(i));
-      mediaDots.appendChild(dot);
-    }
-
-    setActiveDot(0);
-
-    if (mediaScrollHandler) {
-      mediaGrid.removeEventListener("scroll", mediaScrollHandler);
-    }
-    mediaScrollHandler = () => {
-      const index = getPageIndex();
-      setActiveDot(Math.min(pageCount - 1, Math.max(0, index)));
-    };
-    mediaGrid.addEventListener("scroll", mediaScrollHandler, { passive: true });
-    mediaGrid.addEventListener("pointerdown", stopAutoScroll, { passive: true });
-    mediaGrid.addEventListener("wheel", stopAutoScroll, { passive: true });
-    mediaGrid.addEventListener("touchstart", stopAutoScroll, { passive: true });
-
-    if (mediaResizeHandler) {
-      window.removeEventListener("resize", mediaResizeHandler);
-    }
-    mediaResizeHandler = () => {
-      mediaGrid.scrollTo({ left: 0 });
-      setActiveDot(0);
-      scheduleMediaHeightSync();
-    };
-    window.addEventListener("resize", mediaResizeHandler);
-
-    if (mediaPrev) {
-      mediaPrev.onclick = () => {
-        stopAutoScroll();
-        const index = getPageIndex();
-        const nextIndex = Math.max(0, index - 1);
-        scrollToPage(nextIndex);
-      };
-    }
-    if (mediaNext) {
-      mediaNext.onclick = () => {
-        stopAutoScroll();
-        const index = getPageIndex();
-        const nextIndex = Math.min(pageCount - 1, index + 1);
-        scrollToPage(nextIndex);
-      };
-    }
-
-    if (mediaAutoScrollTimer) {
-      clearInterval(mediaAutoScrollTimer);
-    }
-    mediaAutoDirection = 1;
-    mediaUserInteracted = false;
-    mediaAutoScrollTimer = setInterval(() => {
-      if (mediaUserInteracted) return;
-      const index = getPageIndex();
-      let nextIndex = index + mediaAutoDirection;
-      if (nextIndex >= pageCount) {
-        mediaAutoDirection = -1;
-        nextIndex = pageCount - 2 >= 0 ? pageCount - 2 : 0;
-      } else if (nextIndex < 0) {
-        mediaAutoDirection = 1;
-        nextIndex = 1 < pageCount ? 1 : 0;
-      }
-      scrollToPage(nextIndex);
-    }, 15000);
-  }
-
-  async function fetchMediaData() {
-    const cacheBuster = isDev ? `?v=${Date.now()}` : "";
-    const safeFetch = async (url, options, label) => {
-      try {
-        const res = await fetch(url, options);
-        debugLog(`[Destination Media] ${label}:`, url, res.status);
-        return res;
-      } catch (error) {
-        debugLog(`[Destination Media] ${label} failed:`, url, error);
-        return null;
-      }
-    };
-
-    const apiRes = await safeFetch(mediaApiUrl, { cache: "no-store" }, "API");
-    if (apiRes && apiRes.ok) return apiRes.json();
-
-    const fileRes = await safeFetch(`${mediaDataUrl}${cacheBuster}`, { cache: "no-store" }, "JSON");
-    if (!fileRes || !fileRes.ok) {
-      throw new Error("Failed to load media data.");
-    }
-    return fileRes.json();
-  }
-
-  async function loadDestinationMedia(dest) {
-    setMediaLink(dest);
-    if (!mediaGrid) return;
-    const requestId = ++mediaRequestId;
-    mediaGrid.innerHTML = "";
-    if (mediaStatusEl) mediaStatusEl.textContent = "Loading trip clips...";
-
-    try {
-      const data = await fetchMediaData();
-      if (requestId !== mediaRequestId) return;
-      const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
-      const matches = filterDestinationMedia(items, dest);
-      const orientationMap = await getMediaOrientations(matches);
-      const ordered = prioritizeVerticalMedia(matches, orientationMap);
-      if (requestId !== mediaRequestId) return;
-      renderDestinationMedia(ordered, dest, orientationMap);
-    } catch (error) {
-      console.error("Failed to load destination media:", error);
-      if (requestId !== mediaRequestId) return;
-      if (mediaStatusEl) {
-        mediaStatusEl.textContent =
-          dest?.mediaStatus || "Trip clips unavailable right now. Check back soon.";
-      }
-    }
-  }
-
-  function clearDestinationMedia(message) {
-    if (mediaGrid) mediaGrid.innerHTML = "";
-    if (mediaStatusEl) {
-      mediaStatusEl.textContent =
-        message ||
-        "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
-    }
-    setMediaLink(null);
-  }
-
-  function renderDestination(dest) {
-    if (!dest) {
-      setText(nameEl, "Destination Not Found");
-      setText(subtitleEl, "Return to the travel page to pick a destination.");
-      setRichText(heroWhyEl, "We could not load this destination.");
-      renderHeroBadges([]);
-      renderBullets([]);
-      renderList(diveSitesEl, []);
-      renderList(nonDivingEl, []);
-      renderConditions(null);
-      setRichText(narrativeEl, "We could not find that destination.");
-      setRichText(summaryEl, "Summary unavailable.");
-      setText(resortNameEl, "Resort name unavailable.");
-      setText(resortDescEl, "Resort details unavailable.");
-      setRichText(seasonalityEl, "Seasonality unavailable.");
-      setRichText(logisticsEl, "Logistics unavailable.");
-      setRichText(experienceEl, "Experience info unavailable.");
-      setRichText(dayToDayEl, "Day-to-day details unavailable.");
-      setRichText(resortDetailsEl, "Resort details unavailable.");
-      setRichText(logisticsDetailsEl, "Logistics details unavailable.");
-      renderList(logisticsTipsEl, []);
-      renderHighlights([]);
-      setText(dayToDayTitleEl, "Day-to-Day Diving");
-      setText(resortNotesTitleEl, "Resort Notes");
-      setText(travelLogisticsTitleEl, "Travel Logistics");
-      setText(diveHighlightsTitleEl, "Dive Site Highlights");
-      setText(overviewTitleEl, "Overview");
-      setText(tripSummaryTitleEl, "Trip Summary");
-      setText(seasonalityTitleEl, "Seasonality");
-      setText(overviewLogisticsTitleEl, "Logistics");
-      setText(experienceTitleEl, "Experience");
-      setText(resortOpsTitleEl, "Resort and Dive Ops");
-      setText(conditionsTitleEl, "Conditions");
-      setText(diveSitesTitleEl, "Dive Sites");
-      setText(nonDivingTitleEl, "Non-Diving");
-      setText(tripSnapshotTitleEl, "Trip Snapshot");
-      if (isoTitleEl) isoTitleEl.textContent = "Resort View (Isometric)";
-      if (isoDescEl) isoDescEl.textContent = "Select a destination to load the resort view.";
-      if (isoLabel) isoLabel.textContent = "Image coming soon.";
-      setHeroImage(null);
-      setDiveNowLinks(null);
-      setMetaDescription("Explore a DMZ Scuba destination and plan a dive trip on your terms.");
-      setRichText(vibeTextEl, "Trip vibe unavailable.");
-      renderPerfectFor([], []);
-      renderHowItWorks([]);
-      clearDestinationMedia("Trip clips coming soon.");
-      return;
-    }
-
-    const displayName = dest.heroTitle || dest.name || "Destination";
-    setText(nameEl, displayName);
-    setText(subtitleEl, dest.subtitle || "Explore this destination with DMZ Scuba.");
-    setRichText(heroWhyEl, dest.heroWhy || dest.summary || "Plan a dive trip that matches your goals.");
-    renderHeroBadges(dest.heroHighlights || dest.highlights || dest.tags || []);
-    renderBullets(dest.bullets);
-    renderList(diveSitesEl, dest.diveSites);
-    renderList(nonDivingEl, dest.nonDiving);
-    renderConditions(dest.conditions);
-    setRichText(narrativeEl, dest.narrative || "Explore this destination with DMZ Scuba.");
-    setRichText(summaryEl, dest.summary || "Trip summary coming soon.");
-    setText(resortNameEl, dest.resort?.name || "Resort details");
-    setText(resortDescEl, dest.resort?.description || "Resort details coming soon.");
-    setRichText(seasonalityEl, dest.seasonality || "Seasonality details coming soon.");
-    setRichText(logisticsEl, dest.logisticsDetails || dest.logistics || "Logistics details coming soon.");
-    setRichText(experienceEl, dest.experience || "Experience details coming soon.");
-    setRichText(dayToDayEl, dest.dayToDay || "Day-to-day details coming soon.");
-    setRichText(resortDetailsEl, dest.resortDetails || dest.resort?.description || "Resort details coming soon.");
-    setRichText(logisticsDetailsEl, dest.logisticsDetails || "Logistics details coming soon.");
-    renderList(logisticsTipsEl, dest.logisticsTips);
-    if (travelLogisticsSection) {
-      travelLogisticsSection.hidden = true;
-    }
-    renderHighlights(dest.diveSiteHighlights);
-    setText(dayToDayTitleEl, dest.dayToDayTitle || "Day-to-Day Diving");
-    setText(resortNotesTitleEl, dest.resortNotesTitle || "Resort Notes");
-    setText(travelLogisticsTitleEl, dest.travelLogisticsTitle || "Travel Logistics");
-    setText(diveHighlightsTitleEl, dest.diveHighlightsTitle || "Dive Site Highlights");
-    setText(overviewTitleEl, dest.overviewTitle || "Overview");
-    setText(tripSummaryTitleEl, dest.tripSummaryTitle || "Trip Summary");
-    setText(seasonalityTitleEl, dest.seasonalityTitle || "Seasonality");
-    setText(overviewLogisticsTitleEl, dest.overviewLogisticsTitle || "Logistics");
-    setText(experienceTitleEl, dest.experienceTitle || "Experience");
-    setText(resortOpsTitleEl, dest.resortOpsTitle || "Resort and Dive Ops");
-    setText(conditionsTitleEl, dest.conditionsTitle || "Conditions");
-    setText(diveSitesTitleEl, dest.diveSitesTitle || "Dive Sites");
-    setText(nonDivingTitleEl, dest.nonDivingTitle || "Non-Diving");
-    setText(tripSnapshotTitleEl, dest.tripSnapshotTitle || "Trip Snapshot");
-    if (isoTitleEl) isoTitleEl.textContent = dest.isoTitle || "Resort View (Isometric)";
-    if (isoDescEl) isoDescEl.textContent = dest.isoDesc || "Resort details coming soon.";
-    renderIso(dest);
-    setHeroImage(dest.heroImage);
-    setDiveNowLinks(dest);
-    renderVibe(dest);
-    renderPerfectFor(dest.perfectFor, dest.tags);
-    renderHowItWorks(
-      dest.howItWorks || [
-        "Reserve your spot with a deposit.",
-        "We help with flights, packing, and timing.",
-        "DMZ handles dive logistics and schedules.",
-        "You show up and dive."
-      ],
-    );
-    loadDestinationMedia(dest);
-
-    if (interestLocationInput) interestLocationInput.value = displayName || "";
-    if (interestIdInput) interestIdInput.value = dest.id || "";
-    if (interestForm && displayName) {
-      interestForm.dataset.subject = `Travel interest: ${displayName}`;
-    }
-
-    if (displayName) {
-      document.title = `DMZ Scuba | ${displayName}`;
-    }
-
-    if (displayName) {
-      const base = `Explore ${displayName} with DMZ Scuba.`;
-      const details = dest.summary || dest.subtitle || dest.narrative || "";
-      const combined = `${base} ${details}`.trim();
-      setMetaDescription(truncateText(combined, 150));
-    }
-
-    if (document.body.classList.contains("dest-page-editing")) {
-      setListEditable(bulletsEl, true);
-      setListEditable(diveSitesEl, true);
-      setListEditable(nonDivingEl, true);
-      setListEditable(logisticsTipsEl, true);
-      setListEditable(conditionsEl, true);
-      setHighlightsEditable(true);
-    }
-
-    showDebugPanel(
-      {
-        baseItems: [{ logistics: dest.logistics || "" }],
-        expandedItems: [
-          {
-            logisticsDetails: dest.logisticsDetails || "",
-            logisticsTips: dest.logisticsTips || [],
-          },
-        ],
-      },
-      null,
-      "load"
-    );
-  }
-
-  async function loadDestination() {
-    const params = new URLSearchParams(window.location.search);
-    const id = (params.get("id") || params.get("destination") || "").trim().toLowerCase();
-    currentId = id;
-    hideErrorPanel();
-    debugLog("[Destination] resolved id:", id);
-
-    if (!id) {
-      showErrorPanel("Pick a destination to see the full trip details.");
-      renderDestination(null);
-      return;
-    }
-
-    try {
-      const byIdRes = await fetch(`${apiByIdUrl}${encodeURIComponent(id)}?t=${Date.now()}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-store" },
-      }).catch(() => null);
-      if (!byIdRes || !byIdRes.ok) {
-        const status = byIdRes ? byIdRes.status : "network";
-        const body = await readResponseTextSafe(byIdRes);
-        const snippet = String(body || "").slice(0, 180);
-        showErrorPanel(
-          `Destination API load failed (id=${id}, status=${status}). URL: ${apiByIdUrl}${id} ${snippet}`
-        );
-        renderDestination(null);
-        return;
-      }
-      const byIdJson = await byIdRes.json().catch(() => ({}));
-      const item = byIdJson && byIdJson.item ? byIdJson.item : null;
-      if (!item || !item.id) {
-        showErrorPanel(`Destination API returned no item for id=${id}.`);
-        renderDestination(null);
-        return;
-      }
-      currentBase = item;
-      currentExpanded = item;
-      if (heroInput) heroInput.value = item.heroImage || "";
-      if (isoInput) isoInput.value = item.isoImage || "";
-      renderDestination(item);
-    } catch (err) {
-      console.error("Failed to load destination:", err);
-      showErrorPanel("We couldn't load this destination. Try refreshing or pick another destination.");
-      renderDestination(null);
-    }
-  }
-
-  function readList(el) {
-    if (!el) return [];
-    return [...el.querySelectorAll("li")]
-      .map((li) => {
-        const clone = li.cloneNode(true);
-        clone.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
-        return cleanListText(clone.textContent);
-      })
-      .filter(Boolean);
-  }
-
-  function readConditions() {
-    const entries = readList(conditionsEl);
-    const parsed = {};
-    entries.forEach((line) => {
-      const [label, ...rest] = line.split(":");
-      const value = rest.join(":").trim();
-      if (!label || !value) return;
-      const key = label.trim().toLowerCase();
-      if (key.includes("visibility")) parsed.visibility = value;
-      if (key.includes("temperature")) parsed.temperature = value;
-      if (key.includes("current")) parsed.currents = value;
-    });
-    return parsed;
-  }
-
-  function readHighlights() {
-    if (!diveSiteHighlightsEl) return [];
-    return [...diveSiteHighlightsEl.querySelectorAll(".site-highlight-card")].map((card) => {
-      const title = card.querySelector("h3");
-      const desc = card.querySelector("p");
-      return {
-        name: title ? title.textContent.trim() : "",
-        details: desc ? desc.textContent.trim() : "",
-      };
-    }).filter((item) => item.name || item.details);
-  }
-
-  async function saveDestination() {
-    if (!currentId) return;
-    if (!getToken() && !canEditWithoutLogin()) {
-      buildLoginModal(() => saveDestination());
-      return;
-    }
-    if (!currentBase || !currentBase.id || currentBase.id !== currentId) {
-      window.alert("Save blocked: destination data did not load from API. Refresh and try again.");
-      return;
-    }
-    const logisticsValue = readRichText(logisticsEl);
-    const finalLogisticsDetails = logisticsValue || "";
-    const base = {
-      ...(currentBase || {}),
-      id: currentId,
-      name: nameEl ? nameEl.textContent.trim() : "",
-      subtitle: subtitleEl ? subtitleEl.textContent.trim() : "",
-      heroImage: normalizeImageUrl(heroInput ? heroInput.value.trim() : currentBase?.heroImage || ""),
-      isoImage: normalizeImageUrl(isoInput ? isoInput.value.trim() : currentBase?.isoImage || ""),
-      isoTitle: isoTitleEl ? isoTitleEl.textContent.trim() : "",
-      isoDesc: isoDescEl ? isoDescEl.textContent.trim() : "",
-      summary: readRichText(summaryEl),
-      bullets: readList(bulletsEl),
-      diveSites: readList(diveSitesEl),
-      nonDiving: readList(nonDivingEl),
-      seasonality: readRichText(seasonalityEl),
-      logistics: logisticsValue || currentBase?.logistics || "",
-      experience: readRichText(experienceEl),
-      resort: {
-        ...(currentBase?.resort || {}),
-        name: resortNameEl ? resortNameEl.textContent.trim() : "",
-        description: resortDescEl ? resortDescEl.textContent.trim() : "",
-      },
-      conditions: {
-        ...(currentBase?.conditions || {}),
-        ...readConditions(),
-      },
-    };
-
-    const expanded = {
-      ...(currentExpanded || {}),
-      id: currentId,
-      narrative: readRichText(narrativeEl),
-      dayToDay: readRichText(dayToDayEl),
-      resortDetails: readRichText(resortDetailsEl),
-      logisticsDetails: finalLogisticsDetails,
-      logisticsTips: readList(logisticsTipsEl),
-      bullets: readList(bulletsEl),
-      diveSites: readList(diveSitesEl),
-      nonDiving: readList(nonDivingEl),
-      diveSiteHighlights: readHighlights(),
-      dayToDayTitle: dayToDayTitleEl ? dayToDayTitleEl.textContent.trim() : "",
-      resortNotesTitle: resortNotesTitleEl ? resortNotesTitleEl.textContent.trim() : "",
-      travelLogisticsTitle: travelLogisticsTitleEl ? travelLogisticsTitleEl.textContent.trim() : "",
-      diveHighlightsTitle: diveHighlightsTitleEl ? diveHighlightsTitleEl.textContent.trim() : "",
-      overviewTitle: overviewTitleEl ? overviewTitleEl.textContent.trim() : "",
-      tripSummaryTitle: tripSummaryTitleEl ? tripSummaryTitleEl.textContent.trim() : "",
-      seasonalityTitle: seasonalityTitleEl ? seasonalityTitleEl.textContent.trim() : "",
-      overviewLogisticsTitle: overviewLogisticsTitleEl ? overviewLogisticsTitleEl.textContent.trim() : "",
-      experienceTitle: experienceTitleEl ? experienceTitleEl.textContent.trim() : "",
-      resortOpsTitle: resortOpsTitleEl ? resortOpsTitleEl.textContent.trim() : "",
-      conditionsTitle: conditionsTitleEl ? conditionsTitleEl.textContent.trim() : "",
-      diveSitesTitle: diveSitesTitleEl ? diveSitesTitleEl.textContent.trim() : "",
-      nonDivingTitle: nonDivingTitleEl ? nonDivingTitleEl.textContent.trim() : "",
-      tripSnapshotTitle: tripSnapshotTitleEl ? tripSnapshotTitleEl.textContent.trim() : "",
-      mediaStatus: mediaStatusEl ? mediaStatusEl.textContent.trim() : "",
-      heroWhy: readRichText(heroWhyEl),
-      vibe: readRichText(vibeTextEl),
-      perfectFor: readList(perfectForEl),
-      howItWorks: readList(howItWorksEl),
-    };
-
-    const payload = {
-      items: [{ ...base, ...expanded, id: currentId }],
-      deleteIds: [],
-    };
-    if (adminStatus) adminStatus.textContent = "Saving...";
-    showDebugPanel(payload, null, "save");
-    const resp = await apiFetch(`${apiAdminByIdUrl}${encodeURIComponent(currentId)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ item: payload.items[0] }),
-    });
-    showDebugPanel(payload, resp, "save");
-    if (!resp.ok) {
-      let message = "Check your login or API.";
-      const errorJson = await resp.json().catch(() => null);
-      if (errorJson && typeof errorJson === "object") {
-        message = errorJson.details || errorJson.error || message;
-      }
-      if (adminStatus) adminStatus.textContent = `Save failed (${resp.status})`;
-      window.alert(`Save failed (${resp.status}). ${message}`);
-      return;
-    }
-    const saveResult = await resp.json().catch(() => ({}));
-    if (!saveResult || saveResult.ok !== true) {
-      window.alert("Save failed: API did not confirm write.");
-      return;
-    }
-    const savedItem = payload.items[0];
-    isDirty = false;
-    currentBase = savedItem;
-    currentExpanded = savedItem;
-    updateDraftCache(savedItem, savedItem);
-    if (adminStatus) adminStatus.textContent = "Saved";
-    setEditMode(false);
+    bindListDeleteButtons();
+    updateAuthState();
   }
 
   function addListItem(targetId) {
@@ -1976,103 +417,177 @@
     const li = document.createElement("li");
     li.textContent = "New item";
     li.setAttribute("contenteditable", "true");
-    addDeleteButton(li, true);
     list.appendChild(li);
-    li.focus();
+    bindListDeleteButtons();
     markDirty();
   }
 
+  async function saveDestination() {
+    if (!currentItem || !currentId) return;
+    if (!getToken() && !canWriteWithoutLogin()) {
+      buildLoginModal(() => saveDestination());
+      return;
+    }
+
+    const conditions = parseConditionsFromList();
+    const next = {
+      ...currentItem,
+      id: currentId,
+      name: readText(nameEl),
+      subtitle: readText(subtitleEl),
+      heroWhy: readText(heroWhyEl),
+      narrative: readText(narrativeEl),
+      summary: readText(summaryEl),
+      experience: readText(experienceEl),
+      seasonality: readText(seasonalityEl),
+      logistics: readText(logisticsEl),
+      heroImage: normalizeImageUrl(heroInput ? heroInput.value : currentItem.heroImage),
+      isoImage: normalizeImageUrl(isoInput ? isoInput.value : currentItem.isoImage),
+      isoTitle: readText(isoTitleEl),
+      isoDesc: readText(isoDescEl),
+      dayToDay: readText(dayToDayEl),
+      resort: {
+        ...(currentItem.resort || {}),
+        name: readText(resortNameEl),
+        description: readText(resortDescEl),
+      },
+      resortDetails: readText(resortDetailsEl),
+      logisticsDetails: readText(logisticsDetailsEl),
+      vibe: readText(vibeTextEl),
+      mediaStatus: readText(mediaStatusEl),
+      bullets: readList(bulletsEl),
+      diveSites: readList(diveSitesEl),
+      nonDiving: readList(nonDivingEl),
+      logisticsTips: readList(logisticsTipsEl),
+      perfectFor: readList(perfectForEl),
+      howItWorks: readList(howItWorksEl),
+      tags: readList(perfectForEl),
+      conditions,
+      lat: Number(currentItem.lat || 0),
+      lon: Number(currentItem.lon || 0),
+    };
+
+    if (adminStatus) adminStatus.textContent = "Saving...";
+    const putResp = await apiFetch(`${apiAdminByIdUrl}${encodeURIComponent(currentId)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item: next }),
+    });
+
+    if (!putResp.ok) {
+      const err = await putResp.json().catch(() => ({}));
+      if (adminStatus) adminStatus.textContent = `Save failed (${putResp.status})`;
+      window.alert(`Save failed (${putResp.status}). ${err.details || err.error || "Unknown error"}`);
+      return;
+    }
+
+    const verifyResp = await fetch(`${apiByIdUrl}${encodeURIComponent(currentId)}?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-store" },
+    }).catch(() => null);
+    if (!verifyResp || !verifyResp.ok) {
+      if (adminStatus) adminStatus.textContent = "Saved, verify failed";
+      window.alert("Saved, but verify read failed. Refresh and check content.");
+      return;
+    }
+
+    const verifyJson = await verifyResp.json().catch(() => ({}));
+    if (!verifyJson || !verifyJson.item || verifyJson.item.id !== currentId) {
+      if (adminStatus) adminStatus.textContent = "Saved, verify failed";
+      window.alert("Saved, but verify payload was invalid.");
+      return;
+    }
+
+    currentItem = verifyJson.item;
+    render(currentItem);
+    if (adminStatus) adminStatus.textContent = "Saved";
+    setEditMode(false);
+  }
+
+  async function loadDestination() {
+    const params = new URLSearchParams(window.location.search);
+    currentId = String(params.get("id") || params.get("destination") || "").trim().toLowerCase();
+
+    if (!currentId) {
+      showError("Pick a destination to see full trip details.");
+      return;
+    }
+
+    hideError();
+    const resp = await fetch(`${apiByIdUrl}${encodeURIComponent(currentId)}?t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-store" },
+    }).catch(() => null);
+
+    if (!resp || !resp.ok) {
+      const status = resp ? resp.status : "network";
+      showError(`Destination API load failed (id=${currentId}, status=${status}). URL: ${apiByIdUrl}${currentId}`);
+      return;
+    }
+
+    const json = await resp.json().catch(() => ({}));
+    const item = json && json.item ? json.item : null;
+    if (!item || !item.id) {
+      showError(`Destination API returned no item for id=${currentId}.`);
+      return;
+    }
+
+    currentItem = item;
+    render(item);
+  }
+
   function setupAdminControls() {
-    if (!adminPanel) return;
     updateAuthState();
-    bindEditableListeners();
-    bindDeleteHandlers();
+    setEditMode(false);
 
-    const setPanelOpen = (next) => {
-      document.body.classList.toggle("dest-page-admin-open", next);
-      if (adminFab) adminFab.setAttribute("aria-expanded", next ? "true" : "false");
-    };
-
-    const toggleEditMode = () => {
-      if (!getToken() && !canEditWithoutLogin()) {
-        buildLoginModal(() => {
-          updateAuthState();
-          setPanelOpen(true);
-          toggleEditMode();
-        });
-        return;
-      }
-      const next = !document.body.classList.contains("dest-page-editing");
-      setEditMode(next);
-    };
-
-    if (loginButton) {
-      loginButton.addEventListener("click", () => {
-        buildLoginModal(() => {
-          updateAuthState();
-          setPanelOpen(true);
-        });
+    if (adminFab) {
+      adminFab.addEventListener("click", () => {
+        document.body.classList.add("dest-page-admin-open");
+      });
+    }
+    if (adminClose) {
+      adminClose.addEventListener("click", () => {
+        document.body.classList.remove("dest-page-admin-open");
       });
     }
 
     if (editToggle) {
-      editToggle.addEventListener("click", toggleEditMode);
-    }
-
-    if (adminFab) {
-      adminFab.addEventListener("click", () => setPanelOpen(true));
-    }
-
-    if (adminClose) {
-      adminClose.addEventListener("click", () => setPanelOpen(false));
-    }
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") setPanelOpen(false);
-    });
-
-    if (adminPanel) {
-      adminPanel.addEventListener("click", (event) => {
-        const target = event.target;
-        if (target && target.closest(".dest-page-admin-card")) return;
-        setPanelOpen(false);
+      editToggle.addEventListener("click", () => {
+        if (!getToken() && !canWriteWithoutLogin()) {
+          buildLoginModal(() => setEditMode(true));
+          return;
+        }
+        const next = !document.body.classList.contains("dest-page-editing");
+        setEditMode(next);
       });
     }
 
-    if (saveButton) {
-      saveButton.addEventListener("click", saveDestination);
-    }
-
+    if (saveButton) saveButton.addEventListener("click", saveDestination);
     if (cancelButton) {
       cancelButton.addEventListener("click", () => {
-        if (isDirty && !window.confirm("Discard edits and reload this destination?")) return;
+        if (isDirty && !window.confirm("Discard changes and reload?")) return;
         window.location.reload();
       });
     }
-
     if (logoutButton) {
       logoutButton.addEventListener("click", () => {
         setToken("");
         updateAuthState();
-        setEditMode(false);
-        setPanelOpen(false);
       });
+    }
+    if (loginButton) {
+      loginButton.addEventListener("click", () => buildLoginModal(updateAuthState));
     }
 
     if (heroInput) {
       heroInput.addEventListener("input", () => {
-        setHeroImage(normalizeImageUrl(heroInput.value.trim()));
+        setHeroImage(heroInput.value);
         markDirty();
       });
     }
     if (isoInput) {
       isoInput.addEventListener("input", () => {
-        renderIso({
-          ...(currentBase || {}),
-          ...(currentExpanded || {}),
-          isoImage: normalizeImageUrl(isoInput.value.trim()),
-          name: nameEl?.textContent || "",
-        });
+        renderIso({ ...(currentItem || {}), isoImage: isoInput.value, name: readText(nameEl) });
         markDirty();
       });
     }
@@ -2084,93 +599,20 @@
       });
     });
 
-    if (heroUploadButton && heroUploadInput) {
-      heroUploadButton.addEventListener("click", () => {
-        heroUploadInput.click();
-      });
-      heroUploadInput.addEventListener("change", async () => {
-        const file = heroUploadInput.files ? heroUploadInput.files[0] : null;
-        if (!file) return;
-        const previousUrl = heroInput ? heroInput.value.trim() : "";
-        try {
-          const url = await uploadImageFile(file, heroUploadStatus, "travelhero");
-          if (url && heroInput) {
-            const normalized = normalizeImageUrl(url);
-            heroInput.value = normalized;
-            setHeroImage(normalized);
-            markDirty();
-          }
-          if (previousUrl && previousUrl !== url) {
-            deleteImageByUrl(previousUrl);
-          }
-        } catch (error) {
-          if (heroUploadStatus) heroUploadStatus.textContent = "Upload failed.";
-        } finally {
-          heroUploadInput.value = "";
-        }
-      });
-    }
-
-    if (isoUploadButton && isoUploadInput) {
-      isoUploadButton.addEventListener("click", () => {
-        isoUploadInput.click();
-      });
-      isoUploadInput.addEventListener("change", async () => {
-        const file = isoUploadInput.files ? isoUploadInput.files[0] : null;
-        if (!file) return;
-        const previousUrl = isoInput ? isoInput.value.trim() : "";
-        try {
-          const url = await uploadImageFile(file, isoUploadStatus, "traveliso");
-          if (url && isoInput) {
-            const normalized = normalizeImageUrl(url);
-            isoInput.value = normalized;
-            renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: normalized, name: nameEl?.textContent || "" });
-            markDirty();
-          }
-          if (previousUrl && previousUrl !== url) {
-            deleteImageByUrl(previousUrl);
-          }
-        } catch (error) {
-          if (isoUploadStatus) isoUploadStatus.textContent = "Upload failed.";
-        } finally {
-          isoUploadInput.value = "";
-        }
-      });
-    }
-  }
-
-  function setupPageControls() {
-    if (retryButton) {
-      retryButton.addEventListener("click", () => loadDestination());
-    }
-
-    const toggleInterestForm = () => {
-      if (!interestForm) return;
-      const nextOpen = interestForm.hasAttribute("hidden");
-      interestForm.toggleAttribute("hidden", !nextOpen);
-      if (interestToggle) {
-        interestToggle.setAttribute("aria-expanded", nextOpen ? "true" : "false");
-      }
-      if (nextOpen) {
-        interestForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-    };
-
-    document.querySelectorAll(".dest-interest-toggle").forEach((button) => {
-      button.addEventListener("click", () => toggleInterestForm());
+    const trackDirty = [
+      nameEl, subtitleEl, heroWhyEl, narrativeEl, summaryEl, experienceEl, seasonalityEl,
+      logisticsEl, isoTitleEl, isoDescEl, dayToDayEl, resortNameEl, resortDescEl,
+      resortDetailsEl, logisticsDetailsEl, vibeTextEl, mediaStatusEl,
+      bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl,
+    ];
+    trackDirty.forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", markDirty);
     });
 
-    if (interestForm) {
-      interestForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (window.DMZForms && typeof window.DMZForms.submit === "function") {
-          window.DMZForms.submit(interestForm, { requireEmail: true });
-        }
-      });
-    }
+    if (retryButton) retryButton.addEventListener("click", () => loadDestination());
   }
 
-  loadDestination();
   setupAdminControls();
-  setupPageControls();
+  loadDestination();
 })();

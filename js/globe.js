@@ -49,11 +49,12 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }));
   }
 
-  async function loadDestinationsFromJson(url) {
+  async function loadDestinationsFromApi(url) {
     const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to load destinations JSON");
+    if (!res.ok) throw new Error("Failed to load destinations API");
     const json = await res.json();
-    return normalizeDestinations(json);
+    const items = Array.isArray(json?.items) ? json.items : [];
+    return normalizeDestinations(items);
   }
 
   let destinations = [];
@@ -61,22 +62,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   async function initDestinations() {
     try {
-      const admin = window.DMZDestinations;
-      if (admin && typeof admin.ready === "function") {
-        await admin.ready();
-        destinations = admin.getBaseItems() || [];
-        destinationsById = new Map(destinations.map((d) => [d.id, d]));
-        renderDestinationList();
-        if (typeof admin.subscribe === "function") {
-          admin.subscribe((next) => {
-            destinations = Array.isArray(next) ? next : [];
-            destinationsById = new Map(destinations.map((d) => [d.id, d]));
-            renderDestinationList();
-          });
-        }
-        return;
-      }
-      const data = await loadDestinationsFromJson("/assets/data/destinations.json");
+      const data = await loadDestinationsFromApi("/api/v2/destinations");
       destinations = data;
       destinationsById = new Map(destinations.map((d) => [d.id, d]));
       renderDestinationList();

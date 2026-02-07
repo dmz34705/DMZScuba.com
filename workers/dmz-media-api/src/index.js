@@ -598,6 +598,118 @@ async function handleDestinationsBulkUpsert(request, env) {
   return jsonResponse({ ok: true, count: ids.size }, 200);
 }
 
+async function ensureDestinationsV2Table(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS destinations_v2 (
+      id TEXT PRIMARY KEY,
+      data_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+}
+
+function normalizeDestinationV2(item, id = "") {
+  if (!item || typeof item !== "object") return null;
+  const next = { ...item };
+  const normalizedId = String(next.id || id || "").trim().toLowerCase();
+  if (!normalizedId) return null;
+  next.id = normalizedId;
+  return next;
+}
+
+async function seedDestinationsV2IfNeeded(env) {
+  await ensureDestinationsV2Table(env);
+  const countRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM destinations_v2").first();
+  const count = Number((countRow && countRow.count) || 0);
+  if (count > 0) return;
+
+  const now = new Date().toISOString();
+  const insert = env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_v2 (id, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  );
+
+  const unifiedRows = await env.DB.prepare(
+    "SELECT id, data_json, base_json, expanded_json, created_at, updated_at FROM destinations"
+  ).all();
+  const unified = unifiedRows.results || [];
+  for (const row of unified) {
+    const direct = parseJsonSafe(row && row.data_json, null);
+    const fallback = mergeDestinationRecords(
+      parseJsonSafe(row && row.base_json, null),
+      parseJsonSafe(row && row.expanded_json, null)
+    );
+    const item = normalizeDestinationV2(direct || fallback, row && row.id);
+    if (!item) continue;
+    const createdAt = (row && row.created_at) || now;
+    const updatedAt = (row && row.updated_at) || now;
+    await insert.bind(item.id, JSON.stringify(item), createdAt, updatedAt).run();
+  }
+}
+
+async function listDestinationsV2(env) {
+  await seedDestinationsV2IfNeeded(env);
+  const rows = await env.DB.prepare("SELECT id, data_json FROM destinations_v2 ORDER BY id ASC").all();
+  return (rows.results || [])
+    .map((row) => normalizeDestinationV2(parseJsonSafe(row && row.data_json, null), row && row.id))
+    .filter(Boolean);
+}
+
+async function getDestinationByIdV2(env, id) {
+  const normalizedId = String(id || "").trim().toLowerCase();
+  if (!normalizedId) return null;
+  await seedDestinationsV2IfNeeded(env);
+  const row = await env.DB.prepare("SELECT id, data_json FROM destinations_v2 WHERE id = ?").bind(normalizedId).first();
+  if (!row) return null;
+  return normalizeDestinationV2(parseJsonSafe(row && row.data_json, null), normalizedId);
+}
+
+async function handleGetDestinationsV2(env) {
+  const items = await listDestinationsV2(env);
+  return jsonResponse(
+    { items },
+    200,
+    {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Cloudflare-CDN-Cache-Control": "no-store",
+    }
+  );
+}
+
+async function handleGetDestinationByIdV2(env, id) {
+  const item = await getDestinationByIdV2(env, id);
+  if (!item) return jsonResponse({ ok: false, error: "Not found." }, 404);
+  return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handlePutDestinationByIdV2(request, env, id) {
+  const authed = await requireAuth(request, env);
+  if (!authed && !isTrustedDestinationDevWrite(request)) {
+    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  }
+  const normalizedId = String(id || "").trim().toLowerCase();
+  if (!normalizedId) return jsonResponse({ ok: false, error: "Missing id." }, 400);
+
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.item === "object" ? body.item : null;
+  const item = normalizeDestinationV2(incoming, normalizedId);
+  if (!item) return jsonResponse({ ok: false, error: "Invalid item payload." }, 400);
+
+  await ensureDestinationsV2Table(env);
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT created_at FROM destinations_v2 WHERE id = ?").bind(normalizedId).first();
+  const createdAt = (existing && existing.created_at) || now;
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_v2 (id, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  )
+    .bind(normalizedId, JSON.stringify(item), createdAt, now)
+    .run();
+  return jsonResponse({ ok: true, item, updatedAt: now }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleGetMedia(env) {
   await ensureSortOrderColumn(env);
   const { results } = await env.DB.prepare(
@@ -1039,12 +1151,20 @@ export default {
       response = await handleGetDestinations(env);
     } else if (pathname === "/api/destinations-expanded" && request.method === "GET") {
       response = await handleGetDestinationsExpanded(env);
+    } else if (pathname === "/api/v2/destinations" && request.method === "GET") {
+      response = await handleGetDestinationsV2(env);
     } else if (pathname.startsWith("/api/destinations/") && request.method === "GET") {
       const id = pathname.split("/").pop();
       response = await handleGetDestinationById(env, id);
+    } else if (pathname.startsWith("/api/v2/destinations/") && request.method === "GET") {
+      const id = pathname.split("/").pop();
+      response = await handleGetDestinationByIdV2(env, id);
     } else if (pathname.startsWith("/api/admin/destinations/") && request.method === "PUT") {
       const id = pathname.split("/").pop();
       response = await handleUpsertDestinationById(request, env, id);
+    } else if (pathname.startsWith("/api/admin/v2/destinations/") && request.method === "PUT") {
+      const id = pathname.split("/").pop();
+      response = await handlePutDestinationByIdV2(request, env, id);
     } else if (pathname === "/api/admin/destinations-bulk" && request.method === "PUT") {
       response = await handleDestinationsBulkUpsert(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {
