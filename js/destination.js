@@ -42,6 +42,7 @@
   const perfectForEl = document.getElementById("destPerfectFor");
   const howItWorksEl = document.getElementById("destHowItWorks");
   const highlightsEl = document.getElementById("diveSiteHighlights");
+  const diveSiteHighlightsEl = highlightsEl;
 
   const heroInput = document.getElementById("destEditHeroImage");
   const isoInput = document.getElementById("destEditIsoImage");
