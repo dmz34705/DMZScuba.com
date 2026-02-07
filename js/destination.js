@@ -767,10 +767,20 @@
       : stage === "load"
         ? "status: loaded"
         : "status: pending";
+    const itemPayload = payload?.items?.[0] || null;
     const safePayload = {
-      logistics: payload?.baseItems?.[0]?.logistics || "",
-      logisticsDetails: payload?.expandedItems?.[0]?.logisticsDetails || "",
-      logisticsTips: payload?.expandedItems?.[0]?.logisticsTips || [],
+      logistics:
+        (itemPayload && (itemPayload.logisticsDetails || itemPayload.logistics)) ||
+        payload?.baseItems?.[0]?.logistics ||
+        "",
+      logisticsDetails:
+        (itemPayload && itemPayload.logisticsDetails) ||
+        payload?.expandedItems?.[0]?.logisticsDetails ||
+        "",
+      logisticsTips:
+        (itemPayload && itemPayload.logisticsTips) ||
+        payload?.expandedItems?.[0]?.logisticsTips ||
+        [],
     };
     panel.innerHTML =
       `<div><strong>Destination Debug</strong></div>` +
