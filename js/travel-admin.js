@@ -401,10 +401,6 @@
         listEl.appendChild(opt);
       });
 
-    if (!selectedId && view.length) {
-      selectedId = view[0].id;
-    }
-
     const active = getSelected();
     setFormVisible(Boolean(active));
     if (active) fillForm(active);
@@ -424,7 +420,7 @@
     items = Array.isArray(json.items) ? json.items : [];
     if (selectId) selectedId = selectId;
     if (!items.some((item) => item && item.id === selectedId)) {
-      selectedId = items.length ? items[0].id : "";
+      selectedId = "";
     }
     renderList(searchInput ? searchInput.value : "");
     setStatus(isAuthed() ? "Ready" : "Signed out", isAuthed() ? "ready" : "neutral");
