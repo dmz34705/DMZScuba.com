@@ -503,10 +503,34 @@ body.dest-admin-open .dest-admin-panel {
 }
 
 .dest-admin-status {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   font-size: 12px;
   font-weight: 700;
   color: rgba(234, 242, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(10, 18, 30, 0.6);
+}
+
+.dest-admin-status.is-ready {
+  border-color: rgba(85, 185, 255, 0.45);
+}
+
+.dest-admin-status.is-saving {
+  border-color: rgba(255, 214, 153, 0.5);
+  color: rgba(255, 234, 194, 0.95);
+}
+
+.dest-admin-status.is-saved {
+  border-color: rgba(120, 220, 160, 0.55);
+  color: rgba(194, 255, 215, 0.95);
+}
+
+.dest-admin-status.is-error {
+  border-color: rgba(255, 122, 122, 0.6);
+  color: rgba(255, 196, 196, 0.95);
 }
 
 .dest-admin-note {
@@ -541,6 +565,7 @@ body.dest-admin-open .dest-admin-panel {
 .dest-admin-actions {
   display: grid;
   gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .dest-admin-panel .dest-admin-actions .btn,
@@ -572,6 +597,10 @@ body.dest-admin-open .dest-admin-panel {
   border-color: rgba(85, 185, 255, 0.55);
   background: rgba(12, 22, 36, 0.85);
   color: rgba(234, 242, 255, 0.95);
+}
+
+.dest-admin-publish {
+  grid-column: 1 / -1;
 }
 
 .dest-admin-panel .dest-admin-actions .btn.secondary {
@@ -697,6 +726,14 @@ body.dest-edit-mode .travel-inline-add {
   font-weight: 700;
   padding: 3px 8px;
   cursor: pointer;
+}
+
+body.dest-edit-mode #destination [contenteditable="true"] {
+  outline: 1px dashed rgba(85, 185, 255, 0.58);
+  outline-offset: 2px;
+  border-radius: 6px;
+  background: rgba(80, 165, 220, 0.08);
+  box-shadow: inset 0 0 0 999px rgba(80, 165, 220, 0.03);
 }
 
 .dest-admin-item {

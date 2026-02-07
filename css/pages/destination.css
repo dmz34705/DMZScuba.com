@@ -1004,10 +1004,35 @@ body.dest-page-admin-open .dest-page-admin-panel {
 }
 
 .dest-page-admin-status {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 700;
   color: rgba(234, 242, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(10, 18, 30, 0.6);
+}
+
+.dest-page-admin-status.is-ready {
+  border-color: rgba(85, 185, 255, 0.45);
+}
+
+.dest-page-admin-status.is-saving {
+  border-color: rgba(255, 214, 153, 0.5);
+  color: rgba(255, 234, 194, 0.95);
+}
+
+.dest-page-admin-status.is-saved {
+  border-color: rgba(120, 220, 160, 0.55);
+  color: rgba(194, 255, 215, 0.95);
+}
+
+.dest-page-admin-status.is-error {
+  border-color: rgba(255, 122, 122, 0.6);
+  color: rgba(255, 196, 196, 0.95);
 }
 
 .dest-page-admin-note {
@@ -1048,6 +1073,7 @@ body.dest-page-admin-open .dest-page-admin-panel {
 .dest-page-admin-actions {
   display: grid;
   gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .dest-page-admin-actions button {
@@ -1061,6 +1087,21 @@ body.dest-page-admin-open .dest-page-admin-panel {
   padding: 7px 12px;
   cursor: pointer;
   transition: opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.dest-page-save {
+  border-color: rgba(85, 185, 255, 0.55) !important;
+  background: rgba(12, 22, 36, 0.85) !important;
+  color: rgba(234, 242, 255, 0.95) !important;
+}
+
+.dest-page-cancel {
+  color: rgba(234, 242, 255, 0.82) !important;
+}
+
+.dest-page-logout {
+  border-color: rgba(255, 140, 140, 0.45) !important;
+  color: rgba(255, 208, 208, 0.9) !important;
 }
 
 .dest-page-admin-actions button:hover {
@@ -1178,9 +1219,11 @@ body.dest-page-editing .dest-page-add {
 }
 
 body.dest-page-editing [contenteditable="true"] {
-  outline: 1px dashed rgba(85, 185, 255, 0.5);
-  outline-offset: 3px;
+  outline: 1px dashed rgba(85, 185, 255, 0.6);
+  outline-offset: 2px;
   border-radius: 6px;
+  background: rgba(80, 165, 220, 0.08);
+  box-shadow: inset 0 0 0 999px rgba(80, 165, 220, 0.03);
 }
 
 body.dest-page-editing .content-steps li {

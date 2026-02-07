@@ -281,12 +281,19 @@
 
   function updateAuthState() {
     const authed = Boolean(getToken()) || canWriteWithoutLogin();
-    if (adminStatus) adminStatus.textContent = authed ? "Ready" : "Signed out";
+    setAdminStatus(authed ? "Ready" : "Signed out", authed ? "ready" : "neutral");
     if (logoutButton) logoutButton.style.display = getToken() ? "inline-flex" : "none";
     if (editToggle) {
       const editing = document.body.classList.contains("dest-page-editing");
       editToggle.textContent = editing ? "Close Editor" : "Edit Page";
     }
+  }
+
+  function setAdminStatus(text, tone = "neutral") {
+    if (!adminStatus) return;
+    adminStatus.textContent = text;
+    adminStatus.classList.remove("is-neutral", "is-ready", "is-saving", "is-saved", "is-error");
+    adminStatus.classList.add(`is-${tone}`);
   }
 
   function buildLoginModal(onSuccess) {
@@ -376,6 +383,8 @@
         btn.className = "dest-page-delete";
         btn.textContent = "Remove";
         btn.addEventListener("click", () => {
+          const text = String(li.textContent || "").trim();
+          if (text && !window.confirm("Remove this item?")) return;
           li.remove();
           markDirty();
         });
@@ -467,7 +476,7 @@
       lon: Number(currentItem.lon || 0),
     };
 
-    if (adminStatus) adminStatus.textContent = "Saving...";
+    setAdminStatus("Saving...", "saving");
     const putResp = await apiFetch(`${apiAdminByIdUrl}${encodeURIComponent(currentId)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -476,7 +485,7 @@
 
     if (!putResp.ok) {
       const err = await putResp.json().catch(() => ({}));
-      if (adminStatus) adminStatus.textContent = `Save failed (${putResp.status})`;
+      setAdminStatus(`Save failed (${putResp.status})`, "error");
       window.alert(`Save failed (${putResp.status}). ${err.details || err.error || "Unknown error"}`);
       return;
     }
@@ -486,21 +495,21 @@
       headers: { "Cache-Control": "no-store" },
     }).catch(() => null);
     if (!verifyResp || !verifyResp.ok) {
-      if (adminStatus) adminStatus.textContent = "Saved, verify failed";
+      setAdminStatus("Saved, verify failed", "error");
       window.alert("Saved, but verify read failed. Refresh and check content.");
       return;
     }
 
     const verifyJson = await verifyResp.json().catch(() => ({}));
     if (!verifyJson || !verifyJson.item || verifyJson.item.id !== currentId) {
-      if (adminStatus) adminStatus.textContent = "Saved, verify failed";
+      setAdminStatus("Saved, verify failed", "error");
       window.alert("Saved, but verify payload was invalid.");
       return;
     }
 
     currentItem = verifyJson.item;
     render(currentItem);
-    if (adminStatus) adminStatus.textContent = "Saved";
+    setAdminStatus("Saved", "saved");
     setEditMode(false);
   }
 

@@ -105,8 +105,12 @@
     return fetch(url, { ...options, headers });
   }
 
-  function setStatus(text) {
+  function setStatus(text, tone = "neutral") {
     if (adminStatus) adminStatus.textContent = text;
+    if (adminStatus) {
+      adminStatus.classList.remove("is-neutral", "is-ready", "is-saving", "is-saved", "is-error");
+      adminStatus.classList.add(`is-${tone}`);
+    }
   }
 
   function isEditMode() {
@@ -159,6 +163,8 @@
       btn.className = "travel-inline-delete";
       btn.textContent = "Remove";
       btn.addEventListener("click", () => {
+        const value = String(li.textContent || "").trim();
+        if (value && !window.confirm("Remove this bullet?")) return;
         li.remove();
       });
       li.appendChild(btn);
@@ -400,7 +406,7 @@
       headers: { "Cache-Control": "no-store" },
     }).catch(() => null);
     if (!resp || !resp.ok) {
-      setStatus("Load failed");
+      setStatus("Load failed", "error");
       showValidation("Failed to load destinations from API.", true);
       return;
     }
@@ -411,7 +417,7 @@
       selectedId = items.length ? items[0].id : "";
     }
     renderList(searchInput ? searchInput.value : "");
-    setStatus(isAuthed() ? "Ready" : "Signed out");
+    setStatus(isAuthed() ? "Ready" : "Signed out", isAuthed() ? "ready" : "neutral");
     notifySubscribers();
   }
 
@@ -427,7 +433,7 @@
       return;
     }
 
-    setStatus("Saving...");
+    setStatus("Saving...", "saving");
     showValidation("");
     const resp = await apiFetch(`${adminByIdUrl}${encodeURIComponent(item.id)}`, {
       method: "PUT",
@@ -437,12 +443,12 @@
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      setStatus(`Save failed (${resp.status})`);
+      setStatus(`Save failed (${resp.status})`, "error");
       showValidation(err.details || err.error || "Save failed.", true);
       return;
     }
 
-    setStatus("Saved");
+    setStatus("Saved", "saved");
     showValidation("Saved.");
     await loadItems(item.id);
     window.dispatchEvent(new CustomEvent("dmz:destinations-updated", { detail: { id: item.id } }));
@@ -457,18 +463,18 @@
     }
     if (!window.confirm(`Delete destination ${active.name || active.id}?`)) return;
 
-    setStatus("Deleting...");
+    setStatus("Deleting...", "saving");
     const resp = await apiFetch(`${adminByIdUrl}${encodeURIComponent(active.id)}`, {
       method: "DELETE",
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      setStatus(`Delete failed (${resp.status})`);
+      setStatus(`Delete failed (${resp.status})`, "error");
       showValidation(err.details || err.error || "Delete failed.", true);
       return;
     }
 
-    setStatus("Deleted");
+    setStatus("Deleted", "saved");
     showValidation("Destination deleted.");
     selectedId = "";
     await loadItems();
@@ -506,7 +512,7 @@
     renderList(searchInput ? searchInput.value : "");
     setFormVisible(true);
     showValidation("New draft created. Click Publish to save.");
-    setStatus("Draft");
+    setStatus("Draft", "neutral");
     notifySubscribers();
   }
 
@@ -680,7 +686,7 @@
           setToken(json.token);
           syncAuthUi();
           close();
-          setStatus("Ready");
+          setStatus("Ready", "ready");
           if (typeof onSuccess === "function") onSuccess();
         } catch (error) {
           if (errorEl) errorEl.textContent = "Login request failed.";
@@ -850,7 +856,7 @@
     selectId,
   };
 
-  setStatus(isAuthed() ? "Ready" : "Signed out");
+  setStatus(isAuthed() ? "Ready" : "Signed out", isAuthed() ? "ready" : "neutral");
   syncAuthUi();
   setActiveTab("core");
   toggleEditMode(false);
