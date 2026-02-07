@@ -26,6 +26,8 @@
   const resortDescEl = document.getElementById("resortDesc");
   const resortDetailsEl = document.getElementById("resortDetailsText");
   const logisticsDetailsEl = document.getElementById("logisticsDetailsText");
+  const logisticsTipsEl = document.getElementById("logisticsTipsList");
+  const travelLogisticsTitleEl = document.getElementById("travelLogisticsTitle");
 
   const vibeTextEl = document.getElementById("destVibeText");
   const mediaStatusEl = document.getElementById("destMediaStatus");
@@ -38,7 +40,6 @@
   const diveSitesEl = document.getElementById("diveSitesList");
   const nonDivingEl = document.getElementById("nonDivingList");
   const conditionsEl = document.getElementById("conditionsList");
-  const logisticsTipsEl = document.getElementById("logisticsTipsList");
   const perfectForEl = document.getElementById("destPerfectFor");
   const howItWorksEl = document.getElementById("destHowItWorks");
   const highlightsEl = document.getElementById("diveSiteHighlights");
@@ -1651,7 +1652,6 @@
     setText(resortNameEl, (item.resort && item.resort.name) || "Resort name loading.");
     setText(resortDescEl, (item.resort && item.resort.description) || "Resort details loading.");
     setText(resortDetailsEl, item.resortDetails || (item.resort && item.resort.description) || "Resort details loading.");
-    setText(logisticsDetailsEl, item.logisticsDetails || item.logistics || "Logistics details loading.");
 
     setText(vibeTextEl, item.vibe || (item.whyItWorks && item.whyItWorks.vibe) || "The vibe details are loading.");
     setText(mediaStatusEl, item.mediaStatus || `Latest trip clips from ${item.name || "this destination"}.`);
@@ -1659,7 +1659,6 @@
     setList(bulletsEl, item.bullets || []);
     setList(diveSitesEl, item.diveSites || []);
     setList(nonDivingEl, item.nonDiving || []);
-    setList(logisticsTipsEl, item.logisticsTips || []);
     setList(perfectForEl, item.perfectFor || item.tags || []);
     setList(howItWorksEl, item.howItWorks || []);
     renderHighlights(item.diveSiteHighlights || []);
@@ -1816,7 +1815,7 @@
   function bindListDeleteButtons() {
     document.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
     if (!document.body.classList.contains("dest-page-editing")) return;
-    const lists = [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl];
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, perfectForEl, howItWorksEl];
     lists.forEach((list) => {
       if (!list) return;
       [...list.querySelectorAll("li")].forEach((li) => {
@@ -1841,7 +1840,7 @@
       nameEl, subtitleEl, heroWhyEl,
       narrativeEl, summaryEl, experienceEl, seasonalityEl, logisticsEl,
       isoTitleEl, isoDescEl,
-      dayToDayEl, resortNameEl, resortDescEl, resortDetailsEl, logisticsDetailsEl,
+      dayToDayEl, resortNameEl, resortDescEl, resortDetailsEl,
       vibeTextEl, mediaStatusEl,
     ];
     editables.forEach((el) => {
@@ -1850,7 +1849,7 @@
       else el.removeAttribute("contenteditable");
     });
 
-    [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl].forEach((list) => {
+    [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, perfectForEl, howItWorksEl].forEach((list) => {
       setListEditable(list, active);
     });
 
@@ -1903,13 +1902,11 @@
         description: readText(resortDescEl),
       },
       resortDetails: readText(resortDetailsEl),
-      logisticsDetails: readText(logisticsDetailsEl),
       vibe: readText(vibeTextEl),
       mediaStatus: readText(mediaStatusEl),
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
-      logisticsTips: readList(logisticsTipsEl),
       perfectFor: readList(perfectForEl),
       howItWorks: readList(howItWorksEl),
       tags: readList(perfectForEl),
@@ -2065,8 +2062,8 @@
     const trackDirty = [
       nameEl, subtitleEl, heroWhyEl, narrativeEl, summaryEl, experienceEl, seasonalityEl,
       logisticsEl, isoTitleEl, isoDescEl, dayToDayEl, resortNameEl, resortDescEl,
-      resortDetailsEl, logisticsDetailsEl, vibeTextEl, mediaStatusEl,
-      bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, logisticsTipsEl, perfectForEl, howItWorksEl,
+      resortDetailsEl, vibeTextEl, mediaStatusEl,
+      bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, perfectForEl, howItWorksEl,
     ];
     trackDirty.forEach((el) => {
       if (!el) return;
