@@ -74,6 +74,10 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }
   }
 
+  window.addEventListener("dmz:destinations-updated", () => {
+    initDestinations();
+  });
+
   function renderDestinationList() {
     const listEl = document.getElementById("destinationList");
     if (!listEl) return;

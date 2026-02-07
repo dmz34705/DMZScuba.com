@@ -710,6 +710,20 @@ async function handlePutDestinationByIdV2(request, env, id) {
   return jsonResponse({ ok: true, item, updatedAt: now }, 200, { "Cache-Control": "no-store" });
 }
 
+async function handleDeleteDestinationByIdV2(request, env, id) {
+  const authed = await requireAuth(request, env);
+  if (!authed && !isTrustedDestinationDevWrite(request)) {
+    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  }
+  const normalizedId = String(id || "").trim().toLowerCase();
+  if (!normalizedId) return jsonResponse({ ok: false, error: "Missing id." }, 400);
+  await ensureDestinationsV2Table(env);
+  const existing = await env.DB.prepare("SELECT id FROM destinations_v2 WHERE id = ?").bind(normalizedId).first();
+  if (!existing) return jsonResponse({ ok: false, error: "Not found." }, 404);
+  await env.DB.prepare("DELETE FROM destinations_v2 WHERE id = ?").bind(normalizedId).run();
+  return jsonResponse({ ok: true, id: normalizedId }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleGetMedia(env) {
   await ensureSortOrderColumn(env);
   const { results } = await env.DB.prepare(
@@ -1165,6 +1179,9 @@ export default {
     } else if (pathname.startsWith("/api/admin/v2/destinations/") && request.method === "PUT") {
       const id = pathname.split("/").pop();
       response = await handlePutDestinationByIdV2(request, env, id);
+    } else if (pathname.startsWith("/api/admin/v2/destinations/") && request.method === "DELETE") {
+      const id = pathname.split("/").pop();
+      response = await handleDeleteDestinationByIdV2(request, env, id);
     } else if (pathname === "/api/admin/destinations-bulk" && request.method === "PUT") {
       response = await handleDestinationsBulkUpsert(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {

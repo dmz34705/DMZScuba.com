@@ -543,6 +543,9 @@
     if (adminFab) {
       adminFab.addEventListener("click", () => {
         document.body.classList.add("dest-page-admin-open");
+        if (getToken() || canWriteWithoutLogin()) {
+          setEditMode(true);
+        }
       });
     }
     if (adminClose) {
