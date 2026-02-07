@@ -925,7 +925,7 @@
 
   function setCardSize(value) {
     if (!mediaGrid) return;
-    const size = Math.max(200, Number(value) || 260);
+    const size = Math.max(260, Number(value) || 260);
     mediaGrid.style.setProperty("--media-card-min", `${size}px`);
     mediaGrid.style.setProperty("--media-card-max", `${size}px`);
     if (cardSizeValue) {
