@@ -40,10 +40,16 @@
   const fieldIsoDesc = document.getElementById("destFieldIsoDesc");
   const fieldSummary = document.getElementById("destFieldSummary");
   const fieldBullets = document.getElementById("destFieldBullets");
+  const bulletsEditor = document.getElementById("destBulletsEditor");
+  const bulletsAddButton = document.getElementById("destBulletsAdd");
+  const fieldExperience = document.getElementById("destFieldExperience");
+  const fieldLogistics = document.getElementById("destFieldLogistics");
   const fieldNarrative = document.getElementById("destFieldNarrative");
   const fieldDayToDay = document.getElementById("destFieldDayToDay");
   const fieldResortDetails = document.getElementById("destFieldResortDetails");
   const fieldLogisticsDetails = document.getElementById("destFieldLogisticsDetails");
+  const fieldDiveSites = document.getElementById("destFieldDiveSites");
+  const fieldNonDiving = document.getElementById("destFieldNonDiving");
   const fieldBaseJson = document.getElementById("destFieldBaseJson");
   const fieldExpandedJson = document.getElementById("destFieldExpandedJson");
   const applyJsonButton = document.getElementById("destApplyJson");
@@ -126,6 +132,49 @@
     return (Array.isArray(list) ? list : []).map((x) => String(x || "").trim()).filter(Boolean).join("\n");
   }
 
+  function renderBulletsEditor(list) {
+    if (!bulletsEditor) return;
+    const items = Array.isArray(list) ? list : [];
+    bulletsEditor.innerHTML = "";
+    const values = items.length ? items : [""];
+    values.forEach((value) => addBulletRow(value));
+    if (fieldBullets) fieldBullets.value = listToLines(items);
+  }
+
+  function addBulletRow(value = "") {
+    if (!bulletsEditor) return;
+    const row = document.createElement("div");
+    row.className = "dest-admin-list-row";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = String(value || "");
+    input.placeholder = "Bullet point";
+    input.addEventListener("input", () => {
+      if (fieldBullets) fieldBullets.value = listToLines(readBulletsEditor());
+    });
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn secondary";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => {
+      row.remove();
+      if (!bulletsEditor.querySelector(".dest-admin-list-row")) addBulletRow("");
+      if (fieldBullets) fieldBullets.value = listToLines(readBulletsEditor());
+    });
+
+    row.append(input, removeBtn);
+    bulletsEditor.appendChild(row);
+  }
+
+  function readBulletsEditor() {
+    if (!bulletsEditor) return linesToList(fieldBullets ? fieldBullets.value : "");
+    return [...bulletsEditor.querySelectorAll("input")]
+      .map((input) => String(input.value || "").trim())
+      .filter(Boolean);
+  }
+
   function normalizeImageUrl(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -194,11 +243,15 @@
     fieldIsoTitle.value = item.isoTitle || "";
     fieldIsoDesc.value = item.isoDesc || "";
     fieldSummary.value = item.summary || "";
-    fieldBullets.value = listToLines(item.bullets);
+    renderBulletsEditor(item.bullets);
+    if (fieldExperience) fieldExperience.value = item.experience || "";
+    if (fieldLogistics) fieldLogistics.value = item.logistics || "";
     fieldNarrative.value = item.narrative || "";
     fieldDayToDay.value = item.dayToDay || "";
     fieldResortDetails.value = item.resortDetails || "";
     fieldLogisticsDetails.value = item.logisticsDetails || "";
+    if (fieldDiveSites) fieldDiveSites.value = listToLines(item.diveSites);
+    if (fieldNonDiving) fieldNonDiving.value = listToLines(item.nonDiving);
 
     const pretty = JSON.stringify(item, null, 2);
     fieldBaseJson.value = pretty;
@@ -221,15 +274,15 @@
       isoTitle: fieldIsoTitle.value.trim(),
       isoDesc: fieldIsoDesc.value.trim(),
       summary: fieldSummary.value.trim(),
-      bullets: linesToList(fieldBullets.value),
+      bullets: readBulletsEditor(),
+      experience: fieldExperience ? fieldExperience.value.trim() : "",
+      logistics: fieldLogistics ? fieldLogistics.value.trim() : "",
       narrative: fieldNarrative.value.trim(),
       dayToDay: fieldDayToDay.value.trim(),
       resortDetails: fieldResortDetails.value.trim(),
       logisticsDetails: fieldLogisticsDetails.value.trim(),
-      logistics: existing.logistics || "",
-      experience: existing.experience || "",
-      nonDiving: Array.isArray(existing.nonDiving) ? existing.nonDiving : [],
-      diveSites: Array.isArray(existing.diveSites) ? existing.diveSites : [],
+      nonDiving: fieldNonDiving ? linesToList(fieldNonDiving.value) : (Array.isArray(existing.nonDiving) ? existing.nonDiving : []),
+      diveSites: fieldDiveSites ? linesToList(fieldDiveSites.value) : (Array.isArray(existing.diveSites) ? existing.diveSites : []),
       conditions: existing.conditions && typeof existing.conditions === "object" ? existing.conditions : {},
       resort: existing.resort && typeof existing.resort === "object" ? existing.resort : {},
     };
@@ -362,6 +415,8 @@
       isoDesc: "Resort details",
       summary: "",
       bullets: [],
+      experience: "",
+      logistics: "",
       narrative: "",
       dayToDay: "",
       resortDetails: "",
@@ -646,6 +701,11 @@
   if (deleteButton) deleteButton.addEventListener("click", deleteSelected);
   if (applyJsonButton) applyJsonButton.addEventListener("click", applyJson);
   if (formatJsonButton) formatJsonButton.addEventListener("click", formatJson);
+  if (bulletsAddButton) {
+    bulletsAddButton.addEventListener("click", () => {
+      addBulletRow("");
+    });
+  }
 
   if (heroUploadButton && heroUploadInput) {
     heroUploadButton.addEventListener("click", () => heroUploadInput.click());
