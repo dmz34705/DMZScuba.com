@@ -105,7 +105,12 @@
   }
 
   function readText(el) {
-    return el ? String(el.textContent || "").trim() : "";
+    if (!el) return "";
+    const raw = typeof el.innerText === "string" ? el.innerText : String(el.textContent || "");
+    return raw
+      .replace(/\r\n?/g, "\n")
+      .replace(/\u00a0/g, " ")
+      .trim();
   }
 
   function readList(el) {

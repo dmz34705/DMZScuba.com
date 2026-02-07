@@ -116,6 +116,24 @@ body {
   font-size: 12px;
 }
 
+/* Preserve pasted line breaks from admin-edited destination copy. */
+#destSubtitle,
+#destHeroWhy,
+#destNarrative,
+#destSummary,
+#experienceText,
+#seasonalityText,
+#logisticsText,
+#isoDesc,
+#dayToDayText,
+#resortDesc,
+#resortDetailsText,
+#logisticsDetailsText,
+#destVibeText,
+#destMediaStatus {
+  white-space: pre-line;
+}
+
 .destination-error .error-card {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
