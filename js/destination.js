@@ -380,6 +380,52 @@
     target.appendChild(overlay);
   }
 
+  function mountInlineEmbed(target, options) {
+    if (!target || !options || !options.src) return;
+    if (target.dataset.videoLoaded === "true") return;
+    target.dataset.videoLoaded = "true";
+    target.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.className = "media-thumb-embed";
+    iframe.src = options.src;
+    iframe.title = options.title || "Video";
+    iframe.allow =
+      options.allow ||
+      "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    iframe.loading = "lazy";
+    target.appendChild(iframe);
+    scheduleMediaHeightSync();
+  }
+
+  function mountInlineVideo(target, src, title) {
+    if (!target || !src) return;
+    if (target.dataset.videoLoaded === "true") return;
+    target.dataset.videoLoaded = "true";
+    target.innerHTML = "";
+    const video = document.createElement("video");
+    video.className = "media-thumb-video";
+    video.controls = true;
+    video.preload = "auto";
+    video.playsInline = true;
+    video.autoplay = true;
+    video.title = title || "Video";
+    const source = document.createElement("source");
+    source.src = src;
+    source.type = "video/mp4";
+    video.appendChild(source);
+    video.addEventListener("loadedmetadata", () => {
+      applyThumbAspect(target, video.videoWidth, video.videoHeight);
+      scheduleMediaHeightSync();
+    });
+    target.appendChild(video);
+    video.load();
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {});
+    }
+  }
+
   function applyThumbAspect(thumb, width, height) {
     if (!thumb || !width || !height) return;
     thumb.style.setProperty("--media-ratio", `${width} / ${height}`);
@@ -1122,15 +1168,23 @@
 
     thumb.addEventListener("click", () => {
       if (youtubeId) {
-        openYoutubeModal(youtubeId, item.title);
+        mountInlineEmbed(thumb, {
+          src: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`,
+          title: item.title || "YouTube video",
+          allow:
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
+        });
         return;
       }
       if (streamId) {
-        openStreamModal(streamId, item.title);
+        mountInlineEmbed(thumb, {
+          src: `https://iframe.videodelivery.net/${streamId}?autoplay=true`,
+          title: item.title || "Cloudflare Stream video",
+        });
         return;
       }
       if (mediaUrl && isVideoUrl(mediaUrl)) {
-        openVideoModal(mediaUrl, item.title);
+        mountInlineVideo(thumb, mediaUrl, item.title || "Video");
         return;
       }
       if (mediaUrl) {
