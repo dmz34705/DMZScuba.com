@@ -382,6 +382,23 @@
     return window.sessionStorage.getItem(tokenStorageKey) || "";
   }
 
+  function isDevPagesOrigin() {
+    const host = String(window.location.hostname || "").toLowerCase();
+    return host.endsWith(".pages.dev");
+  }
+
+  function canEditWithoutLogin() {
+    return isDevPagesOrigin();
+  }
+
+  function normalizeImageUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("//")) return `https:${raw}`;
+    if (raw.startsWith("imagedelivery.net/")) return `https://${raw}`;
+    return raw;
+  }
+
   function setToken(token) {
     if (!token) {
       window.sessionStorage.removeItem(tokenStorageKey);
@@ -1846,7 +1863,7 @@
 
   async function saveDestination() {
     if (!currentId) return;
-    if (!getToken()) {
+    if (!getToken() && !canEditWithoutLogin()) {
       buildLoginModal(() => saveDestination());
       return;
     }
@@ -1861,8 +1878,8 @@
       id: currentId,
       name: nameEl ? nameEl.textContent.trim() : "",
       subtitle: subtitleEl ? subtitleEl.textContent.trim() : "",
-      heroImage: heroInput ? heroInput.value.trim() : currentBase?.heroImage || "",
-      isoImage: isoInput ? isoInput.value.trim() : currentBase?.isoImage || "",
+      heroImage: normalizeImageUrl(heroInput ? heroInput.value.trim() : currentBase?.heroImage || ""),
+      isoImage: normalizeImageUrl(isoInput ? isoInput.value.trim() : currentBase?.isoImage || ""),
       isoTitle: isoTitleEl ? isoTitleEl.textContent.trim() : "",
       isoDesc: isoDescEl ? isoDescEl.textContent.trim() : "",
       summary: readRichText(summaryEl),
@@ -1920,6 +1937,7 @@
       items: [{ ...base, ...expanded, id: currentId }],
       deleteIds: [],
     };
+    if (adminStatus) adminStatus.textContent = "Saving...";
     showDebugPanel(payload, null, "save");
     const resp = await apiFetch(`${apiAdminByIdUrl}${encodeURIComponent(currentId)}`, {
       method: "PUT",
@@ -1933,6 +1951,7 @@
       if (errorJson && typeof errorJson === "object") {
         message = errorJson.details || errorJson.error || message;
       }
+      if (adminStatus) adminStatus.textContent = `Save failed (${resp.status})`;
       window.alert(`Save failed (${resp.status}). ${message}`);
       return;
     }
@@ -1946,6 +1965,7 @@
     currentBase = savedItem;
     currentExpanded = savedItem;
     updateDraftCache(savedItem, savedItem);
+    if (adminStatus) adminStatus.textContent = "Saved";
     setEditMode(false);
   }
 
@@ -1973,7 +1993,7 @@
     };
 
     const toggleEditMode = () => {
-      if (!getToken()) {
+      if (!getToken() && !canEditWithoutLogin()) {
         buildLoginModal(() => {
           updateAuthState();
           setPanelOpen(true);
@@ -2040,13 +2060,18 @@
 
     if (heroInput) {
       heroInput.addEventListener("input", () => {
-        setHeroImage(heroInput.value.trim());
+        setHeroImage(normalizeImageUrl(heroInput.value.trim()));
         markDirty();
       });
     }
     if (isoInput) {
       isoInput.addEventListener("input", () => {
-        renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: isoInput.value.trim(), name: nameEl?.textContent || "" });
+        renderIso({
+          ...(currentBase || {}),
+          ...(currentExpanded || {}),
+          isoImage: normalizeImageUrl(isoInput.value.trim()),
+          name: nameEl?.textContent || "",
+        });
         markDirty();
       });
     }
@@ -2069,8 +2094,9 @@
         try {
           const url = await uploadImageFile(file, heroUploadStatus, "travelhero");
           if (url && heroInput) {
-            heroInput.value = url;
-            setHeroImage(url);
+            const normalized = normalizeImageUrl(url);
+            heroInput.value = normalized;
+            setHeroImage(normalized);
             markDirty();
           }
           if (previousUrl && previousUrl !== url) {
@@ -2095,8 +2121,9 @@
         try {
           const url = await uploadImageFile(file, isoUploadStatus, "traveliso");
           if (url && isoInput) {
-            isoInput.value = url;
-            renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: url, name: nameEl?.textContent || "" });
+            const normalized = normalizeImageUrl(url);
+            isoInput.value = normalized;
+            renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: normalized, name: nameEl?.textContent || "" });
             markDirty();
           }
           if (previousUrl && previousUrl !== url) {
