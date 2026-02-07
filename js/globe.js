@@ -49,6 +49,17 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }));
   }
 
+  function formatDestinationName(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "Destination";
+    if (raw === raw.toUpperCase()) {
+      return raw
+        .toLowerCase()
+        .replace(/\b([a-z])/g, (m, c) => c.toUpperCase());
+    }
+    return raw;
+  }
+
   async function loadDestinationsFromApi(url) {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load destinations API");
@@ -106,11 +117,11 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       const item = document.createElement("a");
       item.className = "destination-item";
       item.href = `./destination.html?id=${encodeURIComponent(dest.id)}`;
-      item.setAttribute("aria-label", `View details for ${dest.name}`);
+      item.setAttribute("aria-label", `View details for ${formatDestinationName(dest.name)}`);
 
       const title = document.createElement("div");
       title.className = "destination-item-title";
-      title.textContent = dest.name || "Destination";
+      title.textContent = formatDestinationName(dest.name);
 
       const sub = document.createElement("div");
       sub.className = "destination-item-sub";
@@ -580,7 +591,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         const s = Math.max(0.85, Math.min(1.25, 1.05 + p.z * 0.35));
         const sink = 2.0 * s;
 
-        const label = d.name.split(",")[0];
+        const label = formatDestinationName(d.name).split(",")[0];
         const lx = p.x + 12;
         const ly = p.y - 20 * s + sink;
 
@@ -725,7 +736,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       // hit target
       pinHit.push({
         id: d.id,
-        name: d.name,
+        name: formatDestinationName(d.name),
         x: p.x,
         y: p.y - 20 * s + sink,
         r: 16 * s,
@@ -1197,7 +1208,7 @@ function handlePinTapMobile(x, y) {
       const isoLink = document.getElementById("isoLink");
       const detailsLink = document.getElementById("seeDetails");
 
-    if (titleEl) titleEl.textContent = dest.name;
+    if (titleEl) titleEl.textContent = formatDestinationName(dest.name);
     if (subEl) subEl.textContent = dest.subtitle || "";
     if (isoTitle) isoTitle.textContent = dest.isoTitle || "Resort View (Isometric)";
     if (isoDesc) {
@@ -1217,14 +1228,14 @@ function handlePinTapMobile(x, y) {
       if (isoImg) {
         if (dest.isoImage) {
           isoImg.src = dest.isoImage;
-          isoImg.alt = `Isometric view of ${dest.name}`;
+          isoImg.alt = `Isometric view of ${formatDestinationName(dest.name)}`;
           iso.classList.add("is-loaded");
           if (isoLabel) isoLabel.textContent = "Select a destination to preview.";
         } else {
           isoImg.removeAttribute("src");
           isoImg.alt = "";
           iso.classList.remove("is-loaded");
-          if (isoLabel) isoLabel.textContent = `${dest.name} photos coming soon.`;
+          if (isoLabel) isoLabel.textContent = `${formatDestinationName(dest.name)} photos coming soon.`;
         }
       }
 
