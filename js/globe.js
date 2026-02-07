@@ -59,18 +59,32 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   let destinations = [];
   let destinationsById = new Map();
+  let adminUnsubscribe = null;
+
+  function applyDestinationState(nextItems) {
+    destinations = normalizeDestinations(nextItems || []);
+    destinationsById = new Map(destinations.map((d) => [d.id, d]));
+    renderDestinationList();
+  }
 
   async function initDestinations() {
     try {
+      const admin = window.DMZDestinations;
+      if (admin && typeof admin.getBaseItems === "function") {
+        const adminItems = admin.getBaseItems() || [];
+        applyDestinationState(adminItems);
+        if (!adminUnsubscribe && typeof admin.subscribe === "function") {
+          adminUnsubscribe = admin.subscribe((next) => {
+            applyDestinationState(next);
+          });
+        }
+        return;
+      }
       const data = await loadDestinationsFromApi("/api/v2/destinations");
-      destinations = data;
-      destinationsById = new Map(destinations.map((d) => [d.id, d]));
-      renderDestinationList();
+      applyDestinationState(data);
     } catch (err) {
       console.error("Failed to load destinations:", err);
-      destinations = [];
-      destinationsById = new Map();
-      renderDestinationList();
+      applyDestinationState([]);
     }
   }
 

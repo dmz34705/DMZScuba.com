@@ -82,6 +82,10 @@
     return Boolean(getToken()) || canWriteWithoutLogin();
   }
 
+  function syncAuthUi() {
+    document.body.classList.toggle("dest-authenticated", isAuthed());
+  }
+
   async function apiFetch(url, options = {}) {
     const headers = options.headers ? { ...options.headers } : {};
     const token = getToken();
@@ -540,6 +544,7 @@
             return;
           }
           setToken(json.token);
+          syncAuthUi();
           close();
           setStatus("Ready");
           if (typeof onSuccess === "function") onSuccess();
@@ -698,6 +703,7 @@
   };
 
   setStatus(isAuthed() ? "Ready" : "Signed out");
+  syncAuthUi();
   setActiveTab("core");
   toggleEditMode(false);
   toggleAdminOpen(false);

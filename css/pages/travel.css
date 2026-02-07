@@ -1083,8 +1083,8 @@ body.dest-authenticated .travel-login-button{
 }
 
 body.dest-admin-open .dest-admin-fab{
-  opacity: 0;
-  pointer-events: none;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 body.dest-authenticated .dest-admin-fab{
