@@ -449,12 +449,16 @@
   function setPinPosition(id, lat, lon) {
     const idx = items.findIndex((item) => item && item.id === id);
     if (idx < 0) return;
-    items[idx] = { ...items[idx], lat: Number(lat), lon: Number(lon) };
-    if (selectedId === id) {
-      fieldLat.value = Number(lat);
-      fieldLon.value = Number(lon);
-      showValidation(`Pin moved: ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}. Click Publish to save.`);
+    if (selectedId !== id) {
+      selectedId = id;
+      renderList(searchInput ? searchInput.value : "");
+      if (listEl) listEl.value = id;
+      setFormVisible(Boolean(getSelected()));
     }
+    items[idx] = { ...items[idx], lat: Number(lat), lon: Number(lon) };
+    fieldLat.value = Number(lat);
+    fieldLon.value = Number(lon);
+    showValidation(`Pin moved: ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}. Click Publish to save.`);
     notifySubscribers();
   }
 
