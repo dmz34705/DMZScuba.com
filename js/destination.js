@@ -2002,25 +2002,11 @@
       window.alert("Save failed: API did not confirm write.");
       return;
     }
-    const verifyRes = await fetch(`${apiByIdUrl}${encodeURIComponent(currentId)}`, { cache: "no-store" }).catch(
-      () => null
-    );
-    if (!verifyRes || !verifyRes.ok) {
-      const status = verifyRes ? verifyRes.status : "network";
-      window.alert(`Save verification failed (${status}).`);
-      return;
-    }
-    const verifyJson = await verifyRes.json().catch(() => ({}));
-    const verifiedItem = verifyJson && verifyJson.item ? verifyJson.item : null;
-    if (!verifiedItem || !verifiedItem.id) {
-      window.alert("Save verification failed: no item returned.");
-      return;
-    }
     isDirty = false;
-    currentBase = verifiedItem;
-    currentExpanded = verifiedItem;
-    updateDraftCache(verifiedItem, verifiedItem);
-    renderDestination(verifiedItem);
+    currentBase = payload.items[0];
+    currentExpanded = payload.items[0];
+    updateDraftCache(payload.items[0], payload.items[0]);
+    renderDestination(payload.items[0]);
     setEditMode(false);
   }
 
