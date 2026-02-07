@@ -307,6 +307,7 @@ body {
   border: 0;
   display: block;
   background: #000;
+  border-radius: inherit;
 }
 
 .destination-media-grid .media-card:not(.is-compact) .media-thumb-img{
