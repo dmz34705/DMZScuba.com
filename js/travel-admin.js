@@ -96,14 +96,14 @@
   }
 
   function syncAuthUi() {
-    const token = getToken();
+    const token = Boolean(getToken());
     const authed = isAuthed();
     document.body.classList.toggle("dest-authenticated", authed);
     loginButtons.forEach((btn) => {
       btn.style.display = token ? "none" : "";
     });
     logoutButtons.forEach((btn) => {
-      btn.style.display = token ? "" : "none";
+      btn.style.display = authed ? "" : "none";
     });
   }
 
