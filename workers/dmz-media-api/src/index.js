@@ -26,6 +26,8 @@ function getAllowedOrigin(request, env) {
   const isCloudflareDevOrigin =
     hostname.endsWith(".pages.dev") || hostname.endsWith(".trycloudflare.com");
   if (isCloudflareDevOrigin) return origin;
+  const isDmzDomain = hostname === "dmzscuba.com" || hostname.endsWith(".dmzscuba.com");
+  if (isDmzDomain) return origin;
   const allowList = String(env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
   if (!allowList.length) return "*";
   if (allowList.includes("*")) return "*";
