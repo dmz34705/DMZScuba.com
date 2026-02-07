@@ -15,6 +15,7 @@
   const adminClose = document.querySelector(".dest-admin-close");
   const adminStatus = document.getElementById("destAdminStatus");
   const loginButtons = document.querySelectorAll(".dest-admin-login");
+  const logoutButtons = document.querySelectorAll(".dest-admin-logout");
   const toggleButtons = document.querySelectorAll(".dest-admin-toggle");
   const addButton = document.querySelector(".dest-admin-add");
   const publishButton = document.querySelector(".dest-admin-publish");
@@ -95,7 +96,15 @@
   }
 
   function syncAuthUi() {
-    document.body.classList.toggle("dest-authenticated", isAuthed());
+    const token = getToken();
+    const authed = isAuthed();
+    document.body.classList.toggle("dest-authenticated", authed);
+    loginButtons.forEach((btn) => {
+      btn.style.display = token ? "none" : "";
+    });
+    logoutButtons.forEach((btn) => {
+      btn.style.display = token ? "" : "none";
+    });
   }
 
   async function apiFetch(url, options = {}) {
@@ -718,6 +727,21 @@
         toggleAdminOpen(true);
         toggleEditMode(true);
       });
+    });
+  });
+
+  logoutButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setToken("");
+      toggleEditMode(false);
+      syncAuthUi();
+      if (canWriteWithoutLogin()) {
+        setStatus("Dev access active", "ready");
+        showValidation("Logged out. Dev-domain write access remains available.");
+      } else {
+        setStatus("Signed out", "neutral");
+        showValidation("Logged out.");
+      }
     });
   });
 
