@@ -5,6 +5,7 @@
   const apiByIdUrl = apiBase ? `${apiBase}/api/destinations/` : "/api/destinations/";
   const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
   const apiAdminBulkUrl = apiBase ? `${apiBase}/api/admin/destinations-bulk` : "/api/admin/destinations-bulk";
+  const apiAdminByIdUrl = apiBase ? `${apiBase}/api/admin/destinations/` : "/api/admin/destinations/";
   const mediaApiUrl = apiBase ? `${apiBase}/api/media` : "/api/media";
   const mediaDataUrl = "/assets/data/media.json";
   const tokenStorageKey = "dmzMediaToken";
@@ -1763,6 +1764,22 @@
     }
 
     try {
+      const byIdRes = await fetch(`${apiByIdUrl}${encodeURIComponent(id)}`, { cache: "no-store" }).catch(
+        () => null
+      );
+      if (byIdRes && byIdRes.ok) {
+        const byIdJson = await byIdRes.json().catch(() => ({}));
+        const item = byIdJson && byIdJson.item ? byIdJson.item : null;
+        if (item && item.id) {
+          currentBase = item;
+          currentExpanded = item;
+          if (heroInput) heroInput.value = item.heroImage || "";
+          if (isoInput) isoInput.value = item.isoImage || "";
+          renderDestination(item);
+          return;
+        }
+      }
+
       let baseData = [];
       let expandedData = [];
       let baseJson = null;
@@ -1968,10 +1985,10 @@
       deleteIds: [],
     };
     showDebugPanel(payload, null, "save");
-    const resp = await apiFetch(apiAdminBulkUrl, {
+    const resp = await apiFetch(`${apiAdminByIdUrl}${encodeURIComponent(currentId)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ item: payload.items[0] }),
     });
     showDebugPanel(payload, resp, "save");
     if (!resp.ok) {

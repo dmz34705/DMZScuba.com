@@ -444,6 +444,44 @@ async function handleGetDestinationById(env, id) {
   return jsonResponse({ item }, 200, { "Cache-Control": "no-store" });
 }
 
+async function handleUpsertDestinationById(request, env, id) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  if (!id) return jsonResponse({ ok: false, error: "Missing id." }, 400);
+
+  const body = await request.json().catch(() => ({}));
+  const directItem = body && typeof body.item === "object" ? body.item : null;
+  const nextItem = directItem || {};
+  nextItem.id = id;
+
+  await ensureDestinationsTable(env);
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT created_at FROM destinations WHERE id = ?").bind(id).first();
+  const createdAt = (existing && existing.created_at) || now;
+  const payload = JSON.stringify(nextItem);
+
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations (id, base_json, expanded_json, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  )
+    .bind(id, payload, payload, payload, createdAt, now)
+    .run();
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_base (id, data, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  )
+    .bind(id, payload, createdAt, now)
+    .run();
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO destinations_expanded (id, data, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  )
+    .bind(id, payload, createdAt, now)
+    .run();
+
+  return jsonResponse({ ok: true, item: nextItem }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleDestinationsBulkUpsert(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
@@ -950,6 +988,9 @@ export default {
     } else if (pathname.startsWith("/api/destinations/") && request.method === "GET") {
       const id = pathname.split("/").pop();
       response = await handleGetDestinationById(env, id);
+    } else if (pathname.startsWith("/api/admin/destinations/") && request.method === "PUT") {
+      const id = pathname.split("/").pop();
+      response = await handleUpsertDestinationById(request, env, id);
     } else if (pathname === "/api/admin/destinations-bulk" && request.method === "PUT") {
       response = await handleDestinationsBulkUpsert(request, env);
     } else if (pathname.startsWith("/api/admin/media/")) {
