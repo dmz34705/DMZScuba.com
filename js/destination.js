@@ -611,7 +611,7 @@
   }
 
   function mergeDestination(base, extra) {
-    if (!base) return base;
+    if (!base) return extra || base;
     if (!extra) return base;
 
     const merged = { ...base, ...extra };
@@ -1965,7 +1965,9 @@
     });
     showDebugPanel(payload, resp, "save");
     if (!resp.ok) {
-      window.alert("Save failed. Check your login or API.");
+      const errorText = await resp.text().catch(() => "");
+      const message = errorText || "Check your login or API.";
+      window.alert(`Save failed (${resp.status}). ${message}`);
       return;
     }
     isDirty = false;
