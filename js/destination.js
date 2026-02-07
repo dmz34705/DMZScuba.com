@@ -87,6 +87,10 @@
     if (el) el.textContent = String(value || "");
   }
 
+  function isEditing() {
+    return document.body.classList.contains("dest-page-editing");
+  }
+
   function setList(el, items = [], ordered = false) {
     if (!el) return;
     el.innerHTML = "";
