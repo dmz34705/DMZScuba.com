@@ -57,6 +57,11 @@ async function requireAuth(request, env) {
   return !!row;
 }
 
+function isTrustedDestinationDevWrite(request) {
+  const origin = String(request.headers.get("Origin") || "").trim().toLowerCase();
+  return origin === "https://dmzscuba-com.pages.dev";
+}
+
 async function ensureSortOrderColumn(env) {
   try {
     await env.DB.prepare("ALTER TABLE media_items ADD COLUMN sort_order INTEGER").run();
@@ -446,7 +451,9 @@ async function handleGetDestinationById(env, id) {
 
 async function handleUpsertDestinationById(request, env, id) {
   const authed = await requireAuth(request, env);
-  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  if (!authed && !isTrustedDestinationDevWrite(request)) {
+    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  }
   if (!id) return jsonResponse({ ok: false, error: "Missing id." }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -485,7 +492,9 @@ async function handleUpsertDestinationById(request, env, id) {
 
 async function handleDestinationsBulkUpsert(request, env) {
   const authed = await requireAuth(request, env);
-  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  if (!authed && !isTrustedDestinationDevWrite(request)) {
+    return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  }
   const body = await request.json().catch(() => ({}));
   const items = Array.isArray(body.items) ? body.items : [];
   const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
