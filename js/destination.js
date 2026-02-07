@@ -1768,6 +1768,7 @@
 
   function updateAuthState() {
     const authed = Boolean(getToken()) || canWriteWithoutLogin();
+    document.body.classList.toggle("dest-page-authenticated", authed);
     setAdminStatus(authed ? "Ready" : "Signed out", authed ? "ready" : "neutral");
     if (logoutButton) logoutButton.style.display = getToken() ? "inline-flex" : "none";
     if (editToggle) {
