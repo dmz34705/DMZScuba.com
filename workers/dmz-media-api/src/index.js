@@ -308,6 +308,99 @@ function normalizeUnifiedDestination(row) {
   return merged;
 }
 
+function hasNonEmptyText(value) {
+  return typeof value === "string" && value.trim() !== "";
+}
+
+function hasNonEmptyList(value) {
+  return Array.isArray(value) && value.some((entry) => {
+    if (typeof entry === "string") return entry.trim() !== "";
+    if (entry && typeof entry === "object") return Object.values(entry).some((v) => hasNonEmptyText(v));
+    return false;
+  });
+}
+
+function destinationContentScore(item) {
+  if (!item || typeof item !== "object") return 0;
+  let score = 0;
+
+  const textFields = [
+    "name",
+    "subtitle",
+    "summary",
+    "narrative",
+    "heroImage",
+    "isoImage",
+    "isoTitle",
+    "isoDesc",
+    "seasonality",
+    "logistics",
+    "logisticsDetails",
+    "experience",
+    "dayToDay",
+    "resortDetails",
+    "heroWhy",
+    "vibe",
+  ];
+  textFields.forEach((field) => {
+    if (hasNonEmptyText(item[field])) score += 1;
+  });
+
+  const listFields = [
+    "bullets",
+    "diveSites",
+    "nonDiving",
+    "logisticsTips",
+    "diveSiteHighlights",
+    "perfectFor",
+    "howItWorks",
+    "tags",
+  ];
+  listFields.forEach((field) => {
+    if (hasNonEmptyList(item[field])) score += 1;
+  });
+
+  if (item.resort && typeof item.resort === "object") {
+    if (hasNonEmptyText(item.resort.name)) score += 1;
+    if (hasNonEmptyText(item.resort.description)) score += 1;
+  }
+  if (item.conditions && typeof item.conditions === "object") {
+    if (hasNonEmptyText(item.conditions.visibility)) score += 1;
+    if (hasNonEmptyText(item.conditions.temperature)) score += 1;
+    if (hasNonEmptyText(item.conditions.currents)) score += 1;
+  }
+
+  return score;
+}
+
+function destinationWriteGuardReason(existingItem, nextItem) {
+  if (!existingItem || typeof existingItem !== "object") return "";
+  if (!nextItem || typeof nextItem !== "object") return "Payload item is missing or invalid.";
+
+  const nextName = String(nextItem.name || "").trim().toLowerCase();
+  const placeholderName = nextName === "destination" || nextName === "destination not found";
+  const hasMedia = hasNonEmptyText(nextItem.heroImage) || hasNonEmptyText(nextItem.isoImage);
+  const hasCopy =
+    hasNonEmptyText(nextItem.summary) ||
+    hasNonEmptyText(nextItem.narrative) ||
+    hasNonEmptyList(nextItem.bullets) ||
+    hasNonEmptyList(nextItem.diveSites);
+
+  if (placeholderName && !hasMedia && !hasCopy) {
+    return "Payload looks like fallback placeholder content, not a real destination.";
+  }
+
+  const existingScore = destinationContentScore(existingItem);
+  const nextScore = destinationContentScore(nextItem);
+  const scoreDrop = existingScore - nextScore;
+
+  if (existingScore >= 10 && nextScore <= 3 && scoreDrop >= 7) {
+    return `Payload is too sparse for existing destination content (existing score ${existingScore}, next score ${nextScore}).`;
+  }
+
+  return "";
+}
+
 function pickTimestamp(baseRow, expRow, field, fallback) {
   const baseValue = baseRow && baseRow[field] ? baseRow[field] : "";
   const expValue = expRow && expRow[field] ? expRow[field] : "";
@@ -463,7 +556,19 @@ async function handleUpsertDestinationById(request, env, id) {
 
   await ensureDestinationsTable(env);
   const now = new Date().toISOString();
-  const existing = await env.DB.prepare("SELECT created_at FROM destinations WHERE id = ?").bind(id).first();
+  const existing = await env.DB.prepare("SELECT * FROM destinations WHERE id = ?").bind(id).first();
+  const existingItem = normalizeUnifiedDestination(existing);
+  const safeguardReason = destinationWriteGuardReason(existingItem, nextItem);
+  if (safeguardReason) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: "Write blocked to prevent accidental destination data loss.",
+        details: safeguardReason,
+      },
+      422
+    );
+  }
   const createdAt = (existing && existing.created_at) || now;
   const payload = JSON.stringify(nextItem);
 

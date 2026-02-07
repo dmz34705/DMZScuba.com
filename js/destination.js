@@ -1850,6 +1850,10 @@
       buildLoginModal(() => saveDestination());
       return;
     }
+    if (!currentBase || !currentBase.id || currentBase.id !== currentId) {
+      window.alert("Save blocked: destination data did not load from API. Refresh and try again.");
+      return;
+    }
     const logisticsValue = readRichText(logisticsEl);
     const finalLogisticsDetails = logisticsValue || "";
     const base = {
