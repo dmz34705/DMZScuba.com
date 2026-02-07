@@ -10,6 +10,12 @@ function jsonResponse(data, status = 200, headers = {}) {
 
 function getAllowedOrigin(request, env) {
   const origin = request.headers.get("Origin") || "*";
+  let hostname = "";
+  try {
+    hostname = new URL(origin).hostname || "";
+  } catch (error) {
+    hostname = "";
+  }
   const isLocalDevOrigin =
     origin.startsWith("http://localhost:") ||
     origin.startsWith("https://localhost:") ||
@@ -17,6 +23,9 @@ function getAllowedOrigin(request, env) {
     origin.startsWith("https://127.0.0.1:") ||
     origin.includes(".local");
   if (isLocalDevOrigin) return origin;
+  const isCloudflareDevOrigin =
+    hostname.endsWith(".pages.dev") || hostname.endsWith(".trycloudflare.com");
+  if (isCloudflareDevOrigin) return origin;
   const allowList = String(env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean);
   if (!allowList.length) return "*";
   if (allowList.includes("*")) return "*";
