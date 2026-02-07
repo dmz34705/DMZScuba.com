@@ -554,7 +554,10 @@
     if (editToggle) {
       editToggle.addEventListener("click", () => {
         if (!getToken() && !canWriteWithoutLogin()) {
-          buildLoginModal(() => setEditMode(true));
+          buildLoginModal(() => {
+            document.body.classList.add("dest-page-admin-open");
+            setEditMode(true);
+          });
           return;
         }
         const next = !document.body.classList.contains("dest-page-editing");
@@ -576,7 +579,13 @@
       });
     }
     if (loginButton) {
-      loginButton.addEventListener("click", () => buildLoginModal(updateAuthState));
+      loginButton.addEventListener("click", () => {
+        buildLoginModal(() => {
+          document.body.classList.add("dest-page-admin-open");
+          setEditMode(true);
+          updateAuthState();
+        });
+      });
     }
 
     if (heroInput) {
