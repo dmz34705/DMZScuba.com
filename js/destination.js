@@ -71,6 +71,15 @@
   let currentItem = null;
   let isDirty = false;
   let mediaRequestId = 0;
+  let mediaScrollHandler = null;
+  let mediaResizeHandler = null;
+  let mediaAutoScrollTimer = null;
+  let mediaAutoDirection = 1;
+  let mediaUserInteracted = false;
+  let mediaHeightSyncTimer = null;
+  const isDev =
+    ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
+    window.location.hostname.endsWith(".local");
 
   function setText(el, value) {
     if (el) el.textContent = String(value || "");
@@ -224,11 +233,31 @@
   }
 
   function isImageUrl(url) {
-    return /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/i.test(String(url || ""));
+    return /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/i.test(url);
   }
 
   function isVideoUrl(url) {
-    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(String(url || ""));
+    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
+  }
+
+  function getStreamIdFromUrl(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname;
+      if (host.includes("videodelivery.net") || host.includes("cloudflarestream.com") || host.includes("iframe.videodelivery.net")) {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts[0]) return parts[0];
+      }
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function buildStreamThumb(id) {
+    if (!id) return "";
+    return `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s`;
   }
 
   function getYouTubeId(url) {
@@ -239,28 +268,14 @@
         return parsed.pathname.replace("/", "");
       }
       if (parsed.hostname.includes("youtube.com")) {
-        if (parsed.searchParams.get("v")) return parsed.searchParams.get("v") || "";
+        if (parsed.searchParams.get("v")) {
+          return parsed.searchParams.get("v") || "";
+        }
         const parts = parsed.pathname.split("/").filter(Boolean);
-        const idx = parts.indexOf("embed");
-        if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
-      }
-    } catch (error) {
-      return "";
-    }
-    return "";
-  }
-
-  function getStreamIdFromUrl(url) {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url, window.location.href);
-      if (
-        parsed.hostname.includes("videodelivery.net") ||
-        parsed.hostname.includes("cloudflarestream.com") ||
-        parsed.hostname.includes("iframe.videodelivery.net")
-      ) {
-        const parts = parsed.pathname.split("/").filter(Boolean);
-        if (parts[0]) return parts[0];
+        const embedIndex = parts.indexOf("embed");
+        if (embedIndex !== -1 && parts[embedIndex + 1]) {
+          return parts[embedIndex + 1];
+        }
       }
     } catch (error) {
       return "";
@@ -269,21 +284,770 @@
   }
 
   function buildYouTubeThumb(id) {
-    return id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : "";
+    if (!id) return "";
+    return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
   }
 
-  function buildStreamThumb(id) {
-    return id ? `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s` : "";
+  function ensureMediaModal() {
+    let modal = document.querySelector(".media-video-modal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.className = "media-video-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="media-video-modal-card" role="dialog" aria-modal="true">
+        <button class="media-video-close" type="button" aria-label="Close video">x</button>
+        <div class="media-video-frame" role="presentation"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => {
+      modal.setAttribute("aria-hidden", "true");
+      const frame = modal.querySelector(".media-video-frame");
+      if (frame) frame.innerHTML = "";
+    };
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) close();
+    });
+
+    const closeBtn = modal.querySelector(".media-video-close");
+    if (closeBtn) closeBtn.addEventListener("click", close);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.getAttribute("aria-hidden") === "false") {
+        close();
+      }
+    });
+
+    return modal;
   }
 
-  function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
-    let thumbUrl = resolveUrl(item.thumbUrl || "");
-    if (!thumbUrl) {
-      if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
-      else if (streamId) thumbUrl = buildStreamThumb(streamId);
-      else if (item.type === "photo" && isImageUrl(mediaUrl)) thumbUrl = mediaUrl;
+  function openYoutubeModal(id, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+    iframe.title = title || "YouTube video";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    frame.appendChild(iframe);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function openStreamModal(id, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://iframe.videodelivery.net/${id}?autoplay=true`;
+    iframe.title = title || "Cloudflare Stream video";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    frame.appendChild(iframe);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function openVideoModal(url, title) {
+    const modal = ensureMediaModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.autoplay = true;
+    video.title = title || "Video";
+    frame.appendChild(video);
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function addPlayOverlay(target) {
+    if (!target || target.querySelector(".media-thumb-play")) return;
+    const overlay = document.createElement("span");
+    overlay.className = "media-thumb-play";
+    overlay.setAttribute("aria-hidden", "true");
+    target.appendChild(overlay);
+  }
+
+  function applyThumbAspect(thumb, width, height) {
+    if (!thumb || !width || !height) return;
+    thumb.style.setProperty("--media-ratio", `${width} / ${height}`);
+    const ratio = width / height;
+    if (ratio >= 1.1) {
+      thumb.classList.add("is-horizontal");
+    } else {
+      thumb.classList.remove("is-horizontal");
     }
-    return thumbUrl;
+  }
+
+  function syncMediaCardHeights() {
+    if (!mediaGrid) return;
+    const primaryCards = [...mediaGrid.querySelectorAll(".media-card:not(.is-compact)")];
+    const fallbackCards = [...mediaGrid.querySelectorAll(".media-card")];
+    const cards = primaryCards.length ? primaryCards : fallbackCards;
+    if (!cards.length) return;
+    const heights = cards.map((card) => card.getBoundingClientRect().height).filter((h) => h > 0);
+    if (!heights.length) return;
+    const maxHeight = Math.max(...heights);
+    mediaGrid.style.setProperty("--media-card-height", `${Math.round(maxHeight)}px`);
+  }
+
+  function scheduleMediaHeightSync() {
+    if (mediaHeightSyncTimer) clearTimeout(mediaHeightSyncTimer);
+    mediaHeightSyncTimer = setTimeout(() => {
+      syncMediaCardHeights();
+      mediaHeightSyncTimer = null;
+    }, 80);
+  }
+
+  function renderMeta(metaItems, location, target) {
+    const items = Array.isArray(metaItems) ? [...metaItems] : [];
+    if (location && !items.some((entry) => String(entry || "").toLowerCase() === location.toLowerCase())) {
+      items.push(location);
+    }
+    if (items.length === 0) return;
+    items.forEach((item, index) => {
+      if (index > 0) {
+        const sep = document.createElement("span");
+        sep.textContent = "/";
+        target.appendChild(sep);
+      }
+      const span = document.createElement("span");
+      span.textContent = item;
+      target.appendChild(span);
+    });
+  }
+
+  function getItemKey(item, index) {
+    return item && item.id ? item.id : `idx-${index}`;
+  }
+
+  function debugLog(...args) {
+    if (!isDev) return;
+    console.log(...args);
+  }
+
+  function setMetaDescription(text) {
+    if (!metaDescriptionEl) return;
+    metaDescriptionEl.setAttribute("content", text);
+  }
+
+  function showErrorPanel(message) {
+    if (errorMessageEl) {
+      errorMessageEl.textContent = message || "Try refreshing or pick another destination.";
+    }
+    if (errorPanel) {
+      errorPanel.hidden = false;
+    }
+  }
+
+  function hideErrorPanel() {
+    if (errorPanel) {
+      errorPanel.hidden = true;
+    }
+  }
+
+  function getToken() {
+    return window.sessionStorage.getItem(tokenStorageKey) || "";
+  }
+
+  function setToken(token) {
+    if (!token) {
+      window.sessionStorage.removeItem(tokenStorageKey);
+      return;
+    }
+    window.sessionStorage.setItem(tokenStorageKey, token);
+  }
+
+  async function apiFetch(path, options = {}) {
+    const headers = options.headers ? { ...options.headers } : {};
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return fetch(path, { ...options, headers });
+  }
+
+  async function requestImagesDirectUpload(variant) {
+    if (!getToken()) {
+      return new Promise((resolve) => {
+        buildLoginModal(() => resolve(requestImagesDirectUpload(variant)));
+      });
+    }
+    const resp = await apiFetch(`${apiBase || ""}/api/admin/images-direct-upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variant }),
+    });
+    if (!resp.ok) {
+      throw new Error("Images direct upload failed.");
+    }
+    return resp.json();
+  }
+
+  async function uploadImageFile(file, statusEl, variant) {
+    if (!file) return null;
+    if (statusEl) statusEl.textContent = "Requesting upload...";
+    const data = await requestImagesDirectUpload(variant);
+    const uploadURL = data?.uploadURL;
+    const deliveryUrl = data?.deliveryUrl || "";
+    if (!uploadURL) throw new Error("Missing upload URL.");
+
+    if (statusEl) statusEl.textContent = "Uploading...";
+    await new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadURL, true);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!statusEl || !event.lengthComputable) return;
+        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+        statusEl.textContent = `Uploading... ${percent}%`;
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error("Upload failed"));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.send(formData);
+    });
+
+    if (statusEl) {
+      statusEl.textContent = deliveryUrl ? "Upload complete." : "Upload complete. Add URL manually.";
+    }
+    return deliveryUrl;
+  }
+
+  function isCloudflareImageUrl(value) {
+    if (!value) return false;
+    return String(value).includes("imagedelivery.net/");
+  }
+
+  async function deleteImageByUrl(url) {
+    if (!url || !isCloudflareImageUrl(url)) return;
+    try {
+      await apiFetch(`${apiBase || ""}/api/admin/images-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+    } catch (error) {
+      // ignore delete failures
+    }
+  }
+
+  function updateAuthState() {
+    const authed = Boolean(getToken());
+    document.body.classList.toggle("dest-page-authenticated", authed);
+    if (adminStatus) {
+      adminStatus.textContent = authed ? "Signed in" : "Signed out";
+    }
+    updateEditButtonLabels();
+  }
+
+  function updateEditButtonLabels() {
+    const authed = Boolean(getToken());
+    const editing = document.body.classList.contains("dest-page-editing");
+    const label = !authed ? "DMZ Login" : editing ? "Close Editor" : "Edit Page";
+    if (editToggle) editToggle.textContent = label;
+    if (logoutButton) logoutButton.style.display = authed ? "inline-flex" : "none";
+  }
+
+  function buildLoginModal(onSuccess) {
+    if (document.querySelector(".media-auth-modal")) return;
+    const overlay = document.createElement("div");
+    overlay.className = "media-edit-modal media-auth-modal";
+    const card = document.createElement("div");
+    card.className = "media-edit-modal-card";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "DMZ Admin";
+    const hint = document.createElement("p");
+    hint.className = "media-edit-modal-hint";
+    hint.textContent = "Sign in to edit destination content.";
+
+    const formEl = document.createElement("form");
+    formEl.className = "media-edit-form";
+
+    const userLabel = document.createElement("label");
+    userLabel.textContent = "Username";
+    const userInput = document.createElement("input");
+    userInput.type = "text";
+    userInput.autocomplete = "username";
+
+    const passLabel = document.createElement("label");
+    passLabel.textContent = "Password";
+    const passInput = document.createElement("input");
+    passInput.type = "password";
+    passInput.autocomplete = "current-password";
+
+    const error = document.createElement("p");
+    error.className = "media-edit-modal-hint";
+    error.style.color = "rgba(226, 27, 35, 0.85)";
+
+    const actions = document.createElement("div");
+    actions.className = "media-edit-modal-actions";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "media-edit-cancel";
+    cancelBtn.textContent = "Cancel";
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "media-edit-save";
+    saveBtn.textContent = "Sign In";
+    actions.appendChild(cancelBtn);
+    actions.appendChild(saveBtn);
+
+    formEl.appendChild(userLabel);
+    formEl.appendChild(userInput);
+    formEl.appendChild(passLabel);
+    formEl.appendChild(passInput);
+    formEl.appendChild(error);
+    formEl.appendChild(actions);
+
+    card.appendChild(heading);
+    card.appendChild(hint);
+    card.appendChild(formEl);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    function close() {
+      overlay.remove();
+    }
+
+    cancelBtn.addEventListener("click", close);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close();
+    });
+
+    formEl.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+      try {
+        const resp = await apiFetch(`${apiBase || ""}/api/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
+        });
+        if (!resp.ok) {
+          error.textContent = "Login failed. Check credentials.";
+          return;
+        }
+        const data = await resp.json();
+        if (!data.token) {
+          error.textContent = "Login failed. Try again.";
+          return;
+        }
+        setToken(data.token);
+        updateAuthState();
+        close();
+        if (typeof onSuccess === "function") onSuccess();
+      } catch (err) {
+        console.error("Destination login failed.", err);
+        error.textContent = "Login failed. Check the console for details.";
+      }
+    });
+  }
+
+  function mergeDestination(base, extra) {
+    if (!base) return base;
+    if (!extra) return base;
+
+    const merged = { ...base, ...extra };
+
+    const mergeArray = (primary, addon) => {
+      if (!Array.isArray(primary) && !Array.isArray(addon)) return null;
+      const seen = new Set();
+      const result = [];
+      [...(primary || []), ...(addon || [])].forEach((item) => {
+        if (!item || seen.has(item)) return;
+        seen.add(item);
+        result.push(item);
+      });
+      return result;
+    };
+
+    const mergedTags = mergeArray(base.tags, extra.tags);
+    if (mergedTags) merged.tags = mergedTags;
+
+    const mergedBullets = mergeArray(base.bullets, extra.bullets);
+    if (mergedBullets) merged.bullets = mergedBullets;
+
+    const mergedDiveSites = mergeArray(base.diveSites, extra.diveSites);
+    if (mergedDiveSites) merged.diveSites = mergedDiveSites;
+
+    const mergedNonDiving = mergeArray(base.nonDiving, extra.nonDiving);
+    if (mergedNonDiving) merged.nonDiving = mergedNonDiving;
+
+    if (base.resort || extra.resort) {
+      merged.resort = { ...(base.resort || {}), ...(extra.resort || {}) };
+    }
+
+    if (base.conditions || extra.conditions) {
+      merged.conditions = { ...(base.conditions || {}), ...(extra.conditions || {}) };
+    }
+
+    return merged;
+  }
+
+  function setText(el, text) {
+    if (!el) return;
+    el.textContent = text;
+  }
+
+  function cleanListText(text) {
+    return String(text || "")
+      .replace(/🗑️?/g, "")
+      .trim();
+  }
+
+  function renderBullets(bullets) {
+    if (!bulletsEl) return;
+    bulletsEl.innerHTML = "";
+    (bullets || []).forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = cleanListText(item);
+      addDeleteButton(li);
+      bulletsEl.appendChild(li);
+    });
+  }
+
+  function renderList(el, items) {
+    if (!el) return;
+    el.innerHTML = "";
+    (items || []).forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = cleanListText(item);
+      addDeleteButton(li);
+      el.appendChild(li);
+    });
+  }
+
+  function renderConditions(conditions) {
+    if (!conditionsEl) return;
+    conditionsEl.innerHTML = "";
+    if (!conditions) return;
+
+    const entries = [
+      ["Visibility", conditions.visibility],
+      ["Temperature", conditions.temperature],
+      ["Currents", conditions.currents],
+    ];
+
+    entries.forEach(([label, value]) => {
+      if (!value) return;
+      const li = document.createElement("li");
+      li.textContent = cleanListText(`${label}: ${value}`);
+      addDeleteButton(li);
+      conditionsEl.appendChild(li);
+    });
+  }
+
+  function renderHighlights(items) {
+    if (!diveSiteHighlightsEl) return;
+    diveSiteHighlightsEl.innerHTML = "";
+    (items || []).forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "site-highlight-card";
+
+      const title = document.createElement("h3");
+      title.textContent = item?.name || item?.title || "Dive Site";
+
+      const desc = document.createElement("p");
+      desc.textContent = item?.details || item?.description || "";
+
+      card.append(title, desc);
+      diveSiteHighlightsEl.appendChild(card);
+    });
+  }
+
+  function renderIso(dest) {
+    if (!isoBox || !isoImg || !isoLabel) return;
+
+    if (dest.isoImage) {
+      isoImg.src = dest.isoImage;
+      isoImg.alt = `Isometric view of ${dest.name}`;
+      isoBox.classList.add("is-loaded");
+      isoLabel.textContent = " ";
+    } else {
+      isoImg.removeAttribute("src");
+      isoImg.alt = "";
+      isoBox.classList.remove("is-loaded");
+      isoLabel.textContent = "Image coming soon.";
+    }
+  }
+
+  function setHeroImage(url) {
+    if (!heroRoot) return;
+    if (url) {
+      heroRoot.style.setProperty("--destination-hero-image", `url("${url}")`);
+      return;
+    }
+    heroRoot.style.removeProperty("--destination-hero-image");
+  }
+
+  function setEditable(el, active) {
+    if (!el) return;
+    if (active) {
+      el.setAttribute("contenteditable", "true");
+    } else {
+      el.removeAttribute("contenteditable");
+    }
+  }
+
+  function markDirty() {
+    isDirty = true;
+  }
+
+  function bindEditableListeners() {
+    const editableEls = [
+      nameEl,
+      subtitleEl,
+      isoTitleEl,
+      isoDescEl,
+      narrativeEl,
+      summaryEl,
+      resortNameEl,
+      resortDescEl,
+      seasonalityEl,
+      logisticsEl,
+      experienceEl,
+      dayToDayEl,
+      resortDetailsEl,
+      logisticsDetailsEl,
+      dayToDayTitleEl,
+      resortNotesTitleEl,
+      travelLogisticsTitleEl,
+      diveHighlightsTitleEl,
+      overviewTitleEl,
+      tripSummaryTitleEl,
+      seasonalityTitleEl,
+      overviewLogisticsTitleEl,
+      experienceTitleEl,
+      resortOpsTitleEl,
+      conditionsTitleEl,
+      diveSitesTitleEl,
+      nonDivingTitleEl,
+      tripSnapshotTitleEl,
+      mediaStatusEl,
+      heroWhyEl,
+      vibeTextEl,
+    ];
+    editableEls.forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", markDirty);
+    });
+  }
+
+  function setListEditable(el, active) {
+    if (!el) return;
+    [...el.querySelectorAll("li")].forEach((li) => {
+      if (active) {
+        li.setAttribute("contenteditable", "true");
+        li.addEventListener("input", markDirty);
+      } else {
+        li.removeAttribute("contenteditable");
+      }
+    });
+  }
+
+  function addDeleteButton(li, force = false) {
+    if (!li || li.querySelector(".dest-page-delete")) return;
+    if (!force && !isEditing()) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dest-page-delete";
+    btn.setAttribute("aria-label", "Delete item");
+    btn.innerHTML = "&#128465;";
+    li.appendChild(btn);
+  }
+
+  function syncDeleteButtons(active) {
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
+    lists.forEach((list) => {
+      if (!list) return;
+      if (active) {
+        list.querySelectorAll("li").forEach((li) => addDeleteButton(li, true));
+      } else {
+        list.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
+      }
+    });
+  }
+
+  function bindDeleteHandlers() {
+    const lists = [bulletsEl, diveSitesEl, nonDivingEl, logisticsTipsEl, conditionsEl];
+    lists.forEach((list) => {
+      if (!list) return;
+      list.addEventListener("click", (event) => {
+        const button = event.target.closest(".dest-page-delete");
+        if (!button) return;
+        const li = button.closest("li");
+        if (!li) return;
+        const ok = window.confirm("Delete this item?");
+        if (!ok) return;
+        li.remove();
+        markDirty();
+      });
+    });
+  }
+
+  function setHighlightsEditable(active) {
+    if (!diveSiteHighlightsEl) return;
+    diveSiteHighlightsEl.querySelectorAll(".site-highlight-card").forEach((card) => {
+      const title = card.querySelector("h3");
+      const desc = card.querySelector("p");
+      if (active) {
+        if (title) title.setAttribute("contenteditable", "true");
+        if (desc) desc.setAttribute("contenteditable", "true");
+        if (title) title.addEventListener("input", markDirty);
+        if (desc) desc.addEventListener("input", markDirty);
+      } else {
+        if (title) title.removeAttribute("contenteditable");
+        if (desc) desc.removeAttribute("contenteditable");
+      }
+    });
+  }
+
+  function setEditMode(active) {
+    document.body.classList.toggle("dest-page-editing", active);
+    if (editToggle) editToggle.setAttribute("aria-pressed", active ? "true" : "false");
+    updateEditButtonLabels();
+
+    const editableEls = [
+      nameEl,
+      subtitleEl,
+      isoTitleEl,
+      isoDescEl,
+      narrativeEl,
+      summaryEl,
+      resortNameEl,
+      resortDescEl,
+      seasonalityEl,
+      logisticsEl,
+      experienceEl,
+      dayToDayEl,
+      resortDetailsEl,
+      logisticsDetailsEl,
+      dayToDayTitleEl,
+      resortNotesTitleEl,
+      travelLogisticsTitleEl,
+      diveHighlightsTitleEl,
+      overviewTitleEl,
+      tripSummaryTitleEl,
+      seasonalityTitleEl,
+      overviewLogisticsTitleEl,
+      experienceTitleEl,
+      resortOpsTitleEl,
+      conditionsTitleEl,
+      diveSitesTitleEl,
+      nonDivingTitleEl,
+      tripSnapshotTitleEl,
+      mediaStatusEl,
+      heroWhyEl,
+      vibeTextEl,
+    ];
+
+    editableEls.forEach((el) => setEditable(el, active));
+    setListEditable(bulletsEl, active);
+    setListEditable(diveSitesEl, active);
+    setListEditable(nonDivingEl, active);
+    setListEditable(logisticsTipsEl, active);
+    setListEditable(conditionsEl, active);
+    setListEditable(perfectForEl, active);
+    setListEditable(howItWorksEl, active);
+    setHighlightsEditable(active);
+    syncDeleteButtons(active);
+
+    if (heroInput) {
+      heroInput.disabled = !active;
+    }
+    if (isoInput) {
+      isoInput.disabled = !active;
+    }
+  }
+
+  function setDiveNowLinks(dest) {
+    if (!diveNowLinks.length) return;
+
+    const params = new URLSearchParams();
+    params.set("interest", "travel");
+
+    if (dest?.heroTitle || dest?.name) {
+      params.set("location", dest.heroTitle || dest.name);
+    }
+    if (dest?.id) {
+      params.set("destination", dest.id);
+    }
+
+    const href = `../contact/index.html?${params.toString()}#dive-now`;
+    diveNowLinks.forEach((link) => {
+      link.setAttribute("href", href);
+    });
+  }
+
+  function renderHeroBadges(items) {
+    if (!heroBadgesEl) return;
+    heroBadgesEl.innerHTML = "";
+    (items || []).forEach((item) => {
+      if (!item) return;
+      const badge = document.createElement("span");
+      badge.className = "hero-badge";
+      badge.textContent = item;
+      heroBadgesEl.appendChild(badge);
+    });
+  }
+
+  function renderVibe(dest) {
+    if (!vibeTextEl) return;
+    const vibe =
+      dest?.vibe ||
+      dest?.whyItWorks?.vibe ||
+      dest?.summary ||
+      "A relaxed dive rhythm with enough drama to keep every drop cinematic.";
+    vibeTextEl.textContent = vibe;
+  }
+
+  function renderPerfectFor(items, fallback = []) {
+    if (!perfectForEl) return;
+    perfectForEl.innerHTML = "";
+    const list = items?.length ? items : fallback?.length ? fallback : ["Trip fit details coming soon."];
+    (list || []).forEach((item) => {
+      if (!item) return;
+      const li = document.createElement("li");
+      li.textContent = item;
+      perfectForEl.appendChild(li);
+    });
+  }
+
+  function renderHowItWorks(items) {
+    if (!howItWorksEl) return;
+    howItWorksEl.innerHTML = "";
+    (items || []).forEach((item) => {
+      if (!item) return;
+      const li = document.createElement("li");
+      li.textContent = item;
+      howItWorksEl.appendChild(li);
+    });
+  }
+
+  function setMediaLink(dest) {
+    if (!mediaLink) return;
+    if (!dest) {
+      mediaLink.href = "../media/index.html";
+      return;
+    }
+    const param = dest.id || dest.name || "";
+    mediaLink.href = param
+      ? `../media/index.html?location=${encodeURIComponent(param)}`
+      : "../media/index.html";
   }
 
   function buildDestinationKeys(dest) {
@@ -310,99 +1074,448 @@
     });
   }
 
-  function createMediaCard(item, dest) {
+  function createDestinationMediaCard(item, dest, compact = false) {
     const card = document.createElement("article");
-    card.className = "media-card";
+    card.className = compact ? "media-card is-compact" : "media-card";
 
     const mediaUrl = resolveUrl(item.url || "");
     const youtubeId = getYouTubeId(mediaUrl);
     const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+    const isVideo = item.type === "video" || Boolean(youtubeId || streamId || isVideoUrl(mediaUrl));
     const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
 
     const thumb = document.createElement("button");
     thumb.type = "button";
     thumb.className = "media-thumb media-link";
-    thumb.setAttribute("aria-label", item.title || "Open trip media");
-    thumb.addEventListener("click", () => {
-      if (mediaUrl) window.open(mediaUrl, "_blank", "noopener");
-    });
+    thumb.setAttribute("aria-label", item.title || "Open trip clip");
 
     if (thumbUrl && isImageUrl(thumbUrl)) {
       const img = document.createElement("img");
       img.className = "media-thumb-img";
       img.src = thumbUrl;
-      img.alt = item.title ? `${item.title} thumbnail` : "Trip media thumbnail";
+      img.alt = item.title ? `${item.title} thumbnail` : "Trip clip thumbnail";
       img.loading = "lazy";
       img.decoding = "async";
+      img.addEventListener("load", () => {
+        applyThumbAspect(thumb, img.naturalWidth, img.naturalHeight);
+        scheduleMediaHeightSync();
+      });
       thumb.appendChild(img);
       thumb.classList.add("has-thumb");
     } else {
       const faux = document.createElement("div");
       faux.className = "media-thumb-faux";
-      faux.textContent = item.title || "Trip media";
+      faux.textContent = item.title || "Trip clip";
       thumb.appendChild(faux);
+      applyThumbAspect(thumb, 16, 9);
     }
+
+    if (isVideo) addPlayOverlay(thumb);
+    if (youtubeId) thumb.classList.add("is-youtube");
+    if (isVideo) thumb.classList.add("is-video");
+
+    thumb.addEventListener("click", () => {
+      if (youtubeId) {
+        openYoutubeModal(youtubeId, item.title);
+        return;
+      }
+      if (streamId) {
+        openStreamModal(streamId, item.title);
+        return;
+      }
+      if (mediaUrl && isVideoUrl(mediaUrl)) {
+        openVideoModal(mediaUrl, item.title);
+        return;
+      }
+      if (mediaUrl) {
+        window.open(mediaUrl, "_blank", "noopener");
+      }
+    });
+
+    const badge = document.createElement("span");
+    badge.className = "media-badge";
+    badge.textContent = item.badge || (item.type ? item.type.toUpperCase() : "MEDIA");
 
     const body = document.createElement("div");
     body.className = "media-body";
-    const h3 = document.createElement("h3");
-    h3.textContent = item.title || "Trip Media";
-    const p = document.createElement("p");
-    p.textContent = item.description || `Media from ${dest?.name || "this destination"}.`;
-    body.append(h3, p);
 
-    card.append(thumb, body);
+    const badgeRow = document.createElement("div");
+    badgeRow.className = "media-badge-row";
+    badgeRow.appendChild(badge);
+
+    const title = document.createElement("h3");
+    title.textContent = item.title || "Trip Clip";
+
+    const description = document.createElement("p");
+    description.textContent =
+      item.description || `Watch a clip from ${dest?.name || "this destination"}.`;
+    if (!item.description) {
+      description.classList.add("media-desc-empty");
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "media-meta";
+    renderMeta(item.meta, item.location, meta);
+
+    body.appendChild(badgeRow);
+    body.appendChild(title);
+    body.appendChild(description);
+    if ((item.meta && item.meta.length) || item.location) {
+      body.appendChild(meta);
+    }
+
+    card.appendChild(thumb);
+    card.appendChild(body);
     return card;
   }
 
+  function buildMediaBlocks(items, orientationMap) {
+    const blocks = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      const key = getItemKey(item, i);
+      const orientation = orientationMap.get(key) || "unknown";
+      if (orientation === "horizontal" && i + 1 < items.length) {
+        const next = items[i + 1];
+        const nextKey = getItemKey(next, i + 1);
+        const nextOrientation = orientationMap.get(nextKey) || "unknown";
+        if (nextOrientation === "horizontal") {
+          blocks.push({ type: "stack", items: [item, next] });
+          i += 1;
+          continue;
+        }
+      }
+      blocks.push({ type: "single", item });
+    }
+    return blocks;
+  }
+
+  function renderDestinationMedia(items, dest, orientationMap) {
+    if (!mediaGrid) return;
+    mediaGrid.innerHTML = "";
+    const subset = (items || []).slice(0, 6);
+    const map = orientationMap || new Map();
+    const blocks = buildMediaBlocks(subset, map);
+
+    blocks.forEach((block) => {
+      if (block.type === "stack") {
+        const stack = document.createElement("div");
+        stack.className = "media-stack";
+        block.items.forEach((item) => {
+          stack.appendChild(createDestinationMediaCard(item, dest, true));
+        });
+        mediaGrid.appendChild(stack);
+      } else {
+        mediaGrid.appendChild(createDestinationMediaCard(block.item, dest));
+      }
+    });
+
+    if (mediaStatusEl) {
+      mediaStatusEl.textContent = subset.length
+        ? `Latest trip clips from ${dest?.name || "this destination"}.`
+        : dest?.mediaStatus ||
+          "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
+    }
+
+    initMediaCarousel(blocks.length);
+    requestAnimationFrame(() => {
+      syncMediaCardHeights();
+    });
+  }
+
+  function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
+    let thumbUrl = resolveUrl(item.thumbUrl || "");
+    if (!thumbUrl) {
+      if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
+      else if (streamId) thumbUrl = buildStreamThumb(streamId);
+      else if (item.type === "photo" && isImageUrl(mediaUrl)) thumbUrl = mediaUrl;
+    }
+    return thumbUrl;
+  }
+
+  async function getImageAspect(url) {
+    if (!url) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      let done = false;
+      const finish = (result) => {
+        if (done) return;
+        done = true;
+        resolve(result);
+      };
+      const timer = setTimeout(() => finish(null), 1200);
+      img.onload = () => {
+        clearTimeout(timer);
+        finish({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        finish(null);
+      };
+      img.src = url;
+    });
+  }
+
+  function hasVerticalHint(item) {
+    const fields = [
+      ...(item.meta || []),
+      ...(item.tags || []),
+      item.badge,
+      item.title,
+      item.description,
+    ];
+    return fields.some((value) => /vertical|portrait/i.test(String(value || "")));
+  }
+
+  function hasHorizontalHint(item) {
+    const fields = [
+      ...(item.meta || []),
+      ...(item.tags || []),
+      item.badge,
+      item.title,
+      item.description,
+    ];
+    return fields.some((value) => /horizontal|landscape/i.test(String(value || "")));
+  }
+
+  async function getMediaOrientations(items) {
+    const list = Array.isArray(items) ? items : [];
+    const entries = await Promise.all(
+      list.map(async (item, index) => {
+        const key = getItemKey(item, index);
+        if (!item) return [key, "unknown"];
+        if (hasVerticalHint(item)) return [key, "vertical"];
+        if (hasHorizontalHint(item)) return [key, "horizontal"];
+        const mediaUrl = resolveUrl(item.url || "");
+        const youtubeId = getYouTubeId(mediaUrl);
+        const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+        const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
+        const aspect = await getImageAspect(thumbUrl);
+        if (!aspect || !aspect.width || !aspect.height) return [key, "unknown"];
+        const ratio = aspect.height / aspect.width;
+        if (ratio >= 1.15) return [key, "vertical"];
+        if (ratio <= 0.85) return [key, "horizontal"];
+        return [key, "square"];
+      })
+    );
+    return new Map(entries);
+  }
+
+  function prioritizeVerticalMedia(items, orientationMap) {
+    const list = Array.isArray(items) ? [...items] : [];
+    const entries = list.map((item, index) => {
+      const key = getItemKey(item, index);
+      const orientation = orientationMap.get(key) || "unknown";
+      return { item, index, isVertical: orientation === "vertical" };
+    });
+    return entries
+      .sort((a, b) => {
+        if (a.isVertical !== b.isVertical) return a.isVertical ? -1 : 1;
+        return a.index - b.index;
+      })
+      .map((entry) => entry.item);
+  }
+
+  function initMediaCarousel(total) {
+    if (!mediaGrid || !mediaDots) return;
+    mediaDots.innerHTML = "";
+    const cardsPerPage = window.matchMedia("(max-width: 980px)").matches ? 1 : 3;
+    if (total <= cardsPerPage) {
+      mediaGrid.classList.remove("is-scroll");
+      mediaDots.hidden = true;
+      if (mediaPrev) mediaPrev.hidden = true;
+      if (mediaNext) mediaNext.hidden = true;
+      if (mediaAutoScrollTimer) {
+        clearInterval(mediaAutoScrollTimer);
+        mediaAutoScrollTimer = null;
+      }
+      mediaUserInteracted = false;
+      return;
+    }
+
+    const getBlocks = () =>
+      [...mediaGrid.children].filter((el) =>
+        el.classList.contains("media-card") || el.classList.contains("media-stack")
+      );
+    const pageCount = Math.ceil(total / cardsPerPage);
+    mediaGrid.classList.add("is-scroll");
+    mediaDots.hidden = false;
+    if (mediaPrev) mediaPrev.hidden = false;
+    if (mediaNext) mediaNext.hidden = false;
+
+    const getPageIndex = () => {
+      const blocks = getBlocks();
+      if (!blocks.length) return 0;
+      const left = mediaGrid.scrollLeft;
+      let closest = 0;
+      let minDelta = Infinity;
+      blocks.forEach((block, index) => {
+        const delta = Math.abs(block.offsetLeft - left);
+        if (delta < minDelta) {
+          minDelta = delta;
+          closest = index;
+        }
+      });
+      return Math.round(closest / cardsPerPage);
+    };
+
+    const setActiveDot = (index) => {
+      mediaDots.querySelectorAll(".media-dot").forEach((dot, i) => {
+        dot.classList.toggle("is-active", i === index);
+      });
+      if (mediaPrev) mediaPrev.disabled = index === 0;
+      if (mediaNext) mediaNext.disabled = index === pageCount - 1;
+    };
+
+    const scrollToPage = (index) => {
+      const blocks = getBlocks();
+      const targetIndex = Math.min(blocks.length - 1, Math.max(0, index * cardsPerPage));
+      const target = blocks[targetIndex];
+      if (!target) return;
+      // Scroll within the media grid only; avoid moving the page on mobile.
+      const targetLeft = target.offsetLeft;
+      mediaGrid.scrollTo({ left: targetLeft, behavior: "smooth" });
+      setActiveDot(index);
+    };
+
+    const stopAutoScroll = () => {
+      mediaUserInteracted = true;
+      if (mediaAutoScrollTimer) {
+        clearInterval(mediaAutoScrollTimer);
+        mediaAutoScrollTimer = null;
+      }
+    };
+
+    for (let i = 0; i < pageCount; i += 1) {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "media-dot";
+      dot.setAttribute(
+        "aria-label",
+        `Show clips ${i * cardsPerPage + 1} to ${Math.min(total, (i + 1) * cardsPerPage)}`
+      );
+      dot.addEventListener("click", () => scrollToPage(i));
+      mediaDots.appendChild(dot);
+    }
+
+    setActiveDot(0);
+
+    if (mediaScrollHandler) {
+      mediaGrid.removeEventListener("scroll", mediaScrollHandler);
+    }
+    mediaScrollHandler = () => {
+      const index = getPageIndex();
+      setActiveDot(Math.min(pageCount - 1, Math.max(0, index)));
+    };
+    mediaGrid.addEventListener("scroll", mediaScrollHandler, { passive: true });
+    mediaGrid.addEventListener("pointerdown", stopAutoScroll, { passive: true });
+    mediaGrid.addEventListener("wheel", stopAutoScroll, { passive: true });
+    mediaGrid.addEventListener("touchstart", stopAutoScroll, { passive: true });
+
+    if (mediaResizeHandler) {
+      window.removeEventListener("resize", mediaResizeHandler);
+    }
+    mediaResizeHandler = () => {
+      mediaGrid.scrollTo({ left: 0 });
+      setActiveDot(0);
+      scheduleMediaHeightSync();
+    };
+    window.addEventListener("resize", mediaResizeHandler);
+
+    if (mediaPrev) {
+      mediaPrev.onclick = () => {
+        stopAutoScroll();
+        const index = getPageIndex();
+        const nextIndex = Math.max(0, index - 1);
+        scrollToPage(nextIndex);
+      };
+    }
+    if (mediaNext) {
+      mediaNext.onclick = () => {
+        stopAutoScroll();
+        const index = getPageIndex();
+        const nextIndex = Math.min(pageCount - 1, index + 1);
+        scrollToPage(nextIndex);
+      };
+    }
+
+    if (mediaAutoScrollTimer) {
+      clearInterval(mediaAutoScrollTimer);
+    }
+    mediaAutoDirection = 1;
+    mediaUserInteracted = false;
+    mediaAutoScrollTimer = setInterval(() => {
+      if (mediaUserInteracted) return;
+      const index = getPageIndex();
+      let nextIndex = index + mediaAutoDirection;
+      if (nextIndex >= pageCount) {
+        mediaAutoDirection = -1;
+        nextIndex = pageCount - 2 >= 0 ? pageCount - 2 : 0;
+      } else if (nextIndex < 0) {
+        mediaAutoDirection = 1;
+        nextIndex = 1 < pageCount ? 1 : 0;
+      }
+      scrollToPage(nextIndex);
+    }, 15000);
+  }
+
   async function fetchMediaData() {
-    const apiResp = await fetch(mediaApiUrl, { cache: "no-store" }).catch(() => null);
-    if (apiResp && apiResp.ok) {
-      return apiResp.json();
+    const cacheBuster = isDev ? `?v=${Date.now()}` : "";
+    const safeFetch = async (url, options, label) => {
+      try {
+        const res = await fetch(url, options);
+        debugLog(`[Destination Media] ${label}:`, url, res.status);
+        return res;
+      } catch (error) {
+        debugLog(`[Destination Media] ${label} failed:`, url, error);
+        return null;
+      }
+    };
+
+    const apiRes = await safeFetch(mediaApiUrl, { cache: "no-store" }, "API");
+    if (apiRes && apiRes.ok) return apiRes.json();
+
+    const fileRes = await safeFetch(`${mediaDataUrl}${cacheBuster}`, { cache: "no-store" }, "JSON");
+    if (!fileRes || !fileRes.ok) {
+      throw new Error("Failed to load media data.");
     }
-    const fileResp = await fetch(`${mediaDataUrl}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
-    if (fileResp && fileResp.ok) {
-      return fileResp.json();
-    }
-    throw new Error("Failed to load media data.");
+    return fileRes.json();
   }
 
   async function loadDestinationMedia(dest) {
+    setMediaLink(dest);
     if (!mediaGrid) return;
     const requestId = ++mediaRequestId;
     mediaGrid.innerHTML = "";
     if (mediaStatusEl) mediaStatusEl.textContent = "Loading trip clips...";
-    if (mediaDots) mediaDots.hidden = true;
-    if (mediaPrev) mediaPrev.hidden = true;
-    if (mediaNext) mediaNext.hidden = true;
 
     try {
       const data = await fetchMediaData();
       if (requestId !== mediaRequestId) return;
-      const mediaItems = Array.isArray(data.mediaItems) ? data.mediaItems : [];
-      const photoItems = Array.isArray(data.photoItems) ? data.photoItems : [];
-      const allItems = [...mediaItems, ...photoItems];
-      const matches = filterDestinationMedia(allItems, dest).slice(0, 12);
-      if (!matches.length) {
-        if (mediaStatusEl) {
-          mediaStatusEl.textContent =
-            dest?.mediaStatus || "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
-        }
-        return;
-      }
-      matches.forEach((item) => {
-        mediaGrid.appendChild(createMediaCard(item, dest));
-      });
-      if (mediaStatusEl) {
-        mediaStatusEl.textContent = `Latest trip clips from ${dest?.name || "this destination"}.`;
-      }
+      const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
+      const matches = filterDestinationMedia(items, dest);
+      const orientationMap = await getMediaOrientations(matches);
+      const ordered = prioritizeVerticalMedia(matches, orientationMap);
+      if (requestId !== mediaRequestId) return;
+      renderDestinationMedia(ordered, dest, orientationMap);
     } catch (error) {
+      console.error("Failed to load destination media:", error);
       if (requestId !== mediaRequestId) return;
       if (mediaStatusEl) {
         mediaStatusEl.textContent =
           dest?.mediaStatus || "Trip clips unavailable right now. Check back soon.";
       }
     }
+  }
+
+  function clearDestinationMedia(message) {
+    if (mediaGrid) mediaGrid.innerHTML = "";
+    if (mediaStatusEl) {
+      mediaStatusEl.textContent =
+        message ||
+        "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
+    }
+    setMediaLink(null);
   }
 
   function render(item) {
