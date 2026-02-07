@@ -253,7 +253,11 @@
 
   function matchesLocationKey(locationKey, targetKey) {
     if (!locationKey || !targetKey) return false;
-    return locationKey === targetKey || locationKey.includes(targetKey) || targetKey.includes(locationKey);
+    return (
+      locationKey === targetKey ||
+      locationKey.startsWith(targetKey) ||
+      targetKey.startsWith(locationKey)
+    );
   }
 
   function resolveUrl(url) {
@@ -1170,11 +1174,9 @@
       if (!item) return false;
       const locationKey = normalizeKey(item.location);
       const tagKeys = Array.isArray(item.tags) ? item.tags.map(normalizeKey) : [];
-      return keys.some(
-        (key) =>
-          matchesLocationKey(locationKey, key) ||
-          tagKeys.some((tag) => matchesLocationKey(tag, key))
-      );
+      const locationMatch = keys.some((key) => matchesLocationKey(locationKey, key));
+      const tagMatch = tagKeys.some((tag) => keys.includes(tag));
+      return locationMatch || tagMatch;
     });
   }
 
