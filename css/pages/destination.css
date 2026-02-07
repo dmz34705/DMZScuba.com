@@ -787,6 +787,20 @@ body {
   color: var(--muted);
 }
 
+.dest-highlight-delete {
+  display: none;
+  margin-top: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 140, 140, 0.45);
+  background: rgba(24, 8, 12, 0.75);
+  color: rgba(255, 208, 208, 0.95);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
 .media-edit-modal{
   position: fixed;
   inset: 0;
@@ -1132,6 +1146,10 @@ body.dest-page-admin-open .dest-page-admin-panel {
   color: rgba(255, 208, 208, 0.9) !important;
 }
 
+.dest-page-add-highlight {
+  display: none;
+}
+
 .dest-page-admin-actions button:hover {
   opacity: 0.9;
   border-color: rgba(85, 185, 255, 0.4);
@@ -1243,6 +1261,14 @@ body.dest-page-admin-open .dest-page-admin-panel {
 }
 
 body.dest-page-editing .dest-page-add {
+  display: inline-flex;
+}
+
+body.dest-page-editing .dest-page-add-highlight {
+  display: inline-flex;
+}
+
+body.dest-page-editing .dest-highlight-delete {
   display: inline-flex;
 }
 

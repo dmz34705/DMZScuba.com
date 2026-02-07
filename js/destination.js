@@ -57,6 +57,7 @@
   const saveButton = document.querySelector(".dest-page-save");
   const cancelButton = document.querySelector(".dest-page-cancel");
   const logoutButton = document.querySelector(".dest-page-logout");
+  const addHighlightButton = document.getElementById("destPageAddHighlight");
   const addButtons = document.querySelectorAll(".dest-page-add");
 
   const errorPanel = document.getElementById("destErrorPanel");
@@ -121,6 +122,21 @@
         const clone = li.cloneNode(true);
         clone.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
         return String(clone.textContent || "").trim();
+      })
+      .filter(Boolean);
+  }
+
+  function readHighlights() {
+    if (!diveSiteHighlightsEl) return [];
+    return [...diveSiteHighlightsEl.querySelectorAll(".site-highlight-card")]
+      .map((card) => {
+        const title = String(card.querySelector("h3")?.textContent || "").trim();
+        const details = String(card.querySelector("p")?.textContent || "").trim();
+        if (!title && !details) return null;
+        return {
+          name: title || "Dive Site",
+          details,
+        };
       })
       .filter(Boolean);
   }
@@ -962,14 +978,32 @@
     diveSiteHighlightsEl.querySelectorAll(".site-highlight-card").forEach((card) => {
       const title = card.querySelector("h3");
       const desc = card.querySelector("p");
+      const existingDelete = card.querySelector(".dest-highlight-delete");
       if (active) {
-        if (title) title.setAttribute("contenteditable", "true");
-        if (desc) desc.setAttribute("contenteditable", "true");
-        if (title) title.addEventListener("input", markDirty);
-        if (desc) desc.addEventListener("input", markDirty);
+        if (title) {
+          title.setAttribute("contenteditable", "true");
+          title.addEventListener("input", markDirty);
+        }
+        if (desc) {
+          desc.setAttribute("contenteditable", "true");
+          desc.addEventListener("input", markDirty);
+        }
+        if (!existingDelete) {
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "dest-highlight-delete";
+          removeBtn.textContent = "Remove Card";
+          removeBtn.addEventListener("click", () => {
+            if (!window.confirm("Remove this highlight card?")) return;
+            card.remove();
+            markDirty();
+          });
+          card.appendChild(removeBtn);
+        }
       } else {
         if (title) title.removeAttribute("contenteditable");
         if (desc) desc.removeAttribute("contenteditable");
+        if (existingDelete) existingDelete.remove();
       }
     });
   }
@@ -1812,6 +1846,41 @@
     });
   }
 
+  function setHighlightsEditable(active) {
+    if (!diveSiteHighlightsEl) return;
+    diveSiteHighlightsEl.querySelectorAll(".site-highlight-card").forEach((card) => {
+      const title = card.querySelector("h3");
+      const desc = card.querySelector("p");
+      const existingDelete = card.querySelector(".dest-highlight-delete");
+      if (active) {
+        if (title) {
+          title.setAttribute("contenteditable", "true");
+          title.addEventListener("input", markDirty);
+        }
+        if (desc) {
+          desc.setAttribute("contenteditable", "true");
+          desc.addEventListener("input", markDirty);
+        }
+        if (!existingDelete) {
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "dest-highlight-delete";
+          removeBtn.textContent = "Remove Card";
+          removeBtn.addEventListener("click", () => {
+            if (!window.confirm("Remove this highlight card?")) return;
+            card.remove();
+            markDirty();
+          });
+          card.appendChild(removeBtn);
+        }
+      } else {
+        if (title) title.removeAttribute("contenteditable");
+        if (desc) desc.removeAttribute("contenteditable");
+        if (existingDelete) existingDelete.remove();
+      }
+    });
+  }
+
   function bindListDeleteButtons() {
     document.querySelectorAll(".dest-page-delete").forEach((btn) => btn.remove());
     if (!document.body.classList.contains("dest-page-editing")) return;
@@ -1852,10 +1921,14 @@
     [bulletsEl, diveSitesEl, nonDivingEl, conditionsEl, perfectForEl, howItWorksEl].forEach((list) => {
       setListEditable(list, active);
     });
+    setHighlightsEditable(active);
 
     addButtons.forEach((btn) => {
       btn.style.display = active ? "inline-flex" : "none";
     });
+    if (addHighlightButton) {
+      addHighlightButton.style.display = active ? "inline-flex" : "none";
+    }
 
     bindListDeleteButtons();
     updateAuthState();
@@ -1907,6 +1980,7 @@
       bullets: readList(bulletsEl),
       diveSites: readList(diveSitesEl),
       nonDiving: readList(nonDivingEl),
+      diveSiteHighlights: readHighlights(),
       perfectFor: readList(perfectForEl),
       howItWorks: readList(howItWorksEl),
       tags: readList(perfectForEl),
@@ -2058,6 +2132,23 @@
         if (target) addListItem(target);
       });
     });
+
+    if (addHighlightButton) {
+      addHighlightButton.addEventListener("click", () => {
+        if (!document.body.classList.contains("dest-page-editing")) return;
+        if (!diveSiteHighlightsEl) return;
+        const card = document.createElement("article");
+        card.className = "site-highlight-card";
+        const title = document.createElement("h3");
+        title.textContent = "New Dive Site";
+        const desc = document.createElement("p");
+        desc.textContent = "Add highlight summary.";
+        card.append(title, desc);
+        diveSiteHighlightsEl.appendChild(card);
+        setHighlightsEditable(true);
+        markDirty();
+      });
+    }
 
     const trackDirty = [
       nameEl, subtitleEl, heroWhyEl, narrativeEl, summaryEl, experienceEl, seasonalityEl,
