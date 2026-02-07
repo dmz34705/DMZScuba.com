@@ -4,6 +4,8 @@
   const byIdUrl = apiRoot ? `${apiRoot}/api/v2/destinations/` : "/api/v2/destinations/";
   const adminByIdUrl = apiRoot ? `${apiRoot}/api/admin/v2/destinations/` : "/api/admin/v2/destinations/";
   const loginUrl = apiRoot ? `${apiRoot}/api/admin/login` : "/api/admin/login";
+  const imagesDirectUploadUrl = apiRoot ? `${apiRoot}/api/admin/images-direct-upload` : "/api/admin/images-direct-upload";
+  const imagesDeleteUrl = apiRoot ? `${apiRoot}/api/admin/images-delete` : "/api/admin/images-delete";
   const tokenStorageKey = "dmzMediaToken";
 
   const adminPanel = document.getElementById("destAdminPanel");
@@ -46,9 +48,16 @@
   const fieldExpandedJson = document.getElementById("destFieldExpandedJson");
   const applyJsonButton = document.getElementById("destApplyJson");
   const formatJsonButton = document.getElementById("destFormatJson");
+  const heroUploadInput = document.getElementById("destHeroUpload");
+  const heroUploadButton = document.getElementById("destHeroUploadBtn");
+  const heroUploadStatus = document.getElementById("destHeroUploadStatus");
+  const isoUploadInput = document.getElementById("destIsoUpload");
+  const isoUploadButton = document.getElementById("destIsoUploadBtn");
+  const isoUploadStatus = document.getElementById("destIsoUploadStatus");
 
   const tabs = adminPanel.querySelectorAll(".dest-admin-tab");
   const panels = adminPanel.querySelectorAll(".dest-admin-tab-panel");
+  const subscribers = new Set();
 
   let items = [];
   let selectedId = "";
@@ -82,6 +91,10 @@
 
   function setStatus(text) {
     if (adminStatus) adminStatus.textContent = text;
+  }
+
+  function isEditMode() {
+    return document.body.classList.contains("dest-edit-mode");
   }
 
   function showValidation(message, isError = false) {
@@ -121,6 +134,17 @@
     return items.find((item) => item && item.id === selectedId) || null;
   }
 
+  function notifySubscribers() {
+    const snapshot = items.map((item) => ({ ...item }));
+    subscribers.forEach((cb) => {
+      try {
+        cb(snapshot);
+      } catch (error) {
+        // ignore subscriber errors
+      }
+    });
+  }
+
   function toggleAdminOpen(next) {
     document.body.classList.toggle("dest-admin-open", Boolean(next));
     if (adminFab) adminFab.setAttribute("aria-expanded", next ? "true" : "false");
@@ -132,6 +156,9 @@
       btn.setAttribute("aria-pressed", next ? "true" : "false");
       btn.textContent = next ? "Close Editor" : "Edit Destinations";
     });
+    if (next) {
+      showValidation("Edit mode enabled. Drag pins on the globe to move locations, then click Publish.");
+    }
   }
 
   function setFormVisible(visible) {
@@ -253,6 +280,7 @@
     }
     renderList(searchInput ? searchInput.value : "");
     setStatus(isAuthed() ? "Ready" : "Signed out");
+    notifySubscribers();
   }
 
   async function saveSelected() {
@@ -345,6 +373,94 @@
     setFormVisible(true);
     showValidation("New draft created. Click Publish to save.");
     setStatus("Draft");
+    notifySubscribers();
+  }
+
+  async function requestImagesDirectUpload(variant) {
+    if (!getToken()) {
+      return new Promise((resolve) => {
+        buildLoginModal(() => resolve(requestImagesDirectUpload(variant)));
+      });
+    }
+    const resp = await apiFetch(imagesDirectUploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variant }),
+    });
+    if (!resp.ok) {
+      throw new Error("Images direct upload failed.");
+    }
+    return resp.json();
+  }
+
+  async function uploadImageFile(file, statusEl, variant) {
+    if (!file) return "";
+    if (statusEl) statusEl.textContent = "Requesting upload...";
+    const data = await requestImagesDirectUpload(variant);
+    const uploadURL = data?.uploadURL;
+    const deliveryUrl = normalizeImageUrl(data?.deliveryUrl || "");
+    if (!uploadURL) throw new Error("Missing upload URL.");
+
+    if (statusEl) statusEl.textContent = "Uploading...";
+    await new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadURL, true);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!statusEl || !event.lengthComputable) return;
+        const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+        statusEl.textContent = `Uploading... ${percent}%`;
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("Upload failed"));
+      };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.send(formData);
+    });
+
+    if (statusEl) statusEl.textContent = deliveryUrl ? "Upload complete." : "Upload complete. Add URL manually.";
+    return deliveryUrl;
+  }
+
+  function isCloudflareImageUrl(value) {
+    return String(value || "").includes("imagedelivery.net/");
+  }
+
+  async function deleteImageByUrl(url) {
+    if (!url || !isCloudflareImageUrl(url)) return;
+    if (!getToken()) return;
+    try {
+      await apiFetch(imagesDeleteUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+    } catch (error) {
+      // ignore delete errors
+    }
+  }
+
+  function setPinPosition(id, lat, lon) {
+    const idx = items.findIndex((item) => item && item.id === id);
+    if (idx < 0) return;
+    items[idx] = { ...items[idx], lat: Number(lat), lon: Number(lon) };
+    if (selectedId === id) {
+      fieldLat.value = Number(lat);
+      fieldLon.value = Number(lon);
+      showValidation(`Pin moved: ${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}. Click Publish to save.`);
+    }
+    notifySubscribers();
+  }
+
+  function selectId(id) {
+    const nextId = String(id || "").trim().toLowerCase();
+    if (!nextId) return;
+    selectedId = nextId;
+    renderList(searchInput ? searchInput.value : "");
+    if (listEl) listEl.value = nextId;
+    setFormVisible(Boolean(getSelected()));
   }
 
   function applyJson() {
@@ -469,7 +585,7 @@
         });
         return;
       }
-      const next = !document.body.classList.contains("dest-edit-mode");
+      const next = !isEditMode();
       toggleEditMode(next);
       toggleAdminOpen(true);
     });
@@ -521,6 +637,65 @@
   if (deleteButton) deleteButton.addEventListener("click", deleteSelected);
   if (applyJsonButton) applyJsonButton.addEventListener("click", applyJson);
   if (formatJsonButton) formatJsonButton.addEventListener("click", formatJson);
+
+  if (heroUploadButton && heroUploadInput) {
+    heroUploadButton.addEventListener("click", () => heroUploadInput.click());
+    heroUploadInput.addEventListener("change", async () => {
+      const file = heroUploadInput.files ? heroUploadInput.files[0] : null;
+      if (!file) return;
+      const previous = normalizeImageUrl(fieldHeroImage.value);
+      try {
+        const url = await uploadImageFile(file, heroUploadStatus, "travelhero");
+        if (url) fieldHeroImage.value = url;
+        showValidation("Hero image uploaded. Click Publish to save.");
+      } catch (error) {
+        if (heroUploadStatus) heroUploadStatus.textContent = "Upload failed.";
+        showValidation("Hero image upload failed.", true);
+      } finally {
+        heroUploadInput.value = "";
+      }
+      const nextUrl = normalizeImageUrl(fieldHeroImage.value);
+      if (previous && previous !== nextUrl) {
+        deleteImageByUrl(previous);
+      }
+    });
+  }
+
+  if (isoUploadButton && isoUploadInput) {
+    isoUploadButton.addEventListener("click", () => isoUploadInput.click());
+    isoUploadInput.addEventListener("change", async () => {
+      const file = isoUploadInput.files ? isoUploadInput.files[0] : null;
+      if (!file) return;
+      const previous = normalizeImageUrl(fieldIsoImage.value);
+      try {
+        const url = await uploadImageFile(file, isoUploadStatus, "traveliso");
+        if (url) fieldIsoImage.value = url;
+        showValidation("Isometric image uploaded. Click Publish to save.");
+      } catch (error) {
+        if (isoUploadStatus) isoUploadStatus.textContent = "Upload failed.";
+        showValidation("Isometric image upload failed.", true);
+      } finally {
+        isoUploadInput.value = "";
+      }
+      const nextUrl = normalizeImageUrl(fieldIsoImage.value);
+      if (previous && previous !== nextUrl) {
+        deleteImageByUrl(previous);
+      }
+    });
+  }
+
+  window.DMZDestinations = {
+    ready: async () => true,
+    getBaseItems: () => items.map((item) => ({ ...item })),
+    subscribe: (cb) => {
+      if (typeof cb !== "function") return () => {};
+      subscribers.add(cb);
+      return () => subscribers.delete(cb);
+    },
+    isEditMode,
+    setPinPosition,
+    selectId,
+  };
 
   setStatus(isAuthed() ? "Ready" : "Signed out");
   setActiveTab("core");
