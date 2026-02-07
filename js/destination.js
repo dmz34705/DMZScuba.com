@@ -1928,8 +1928,11 @@
     });
     showDebugPanel(payload, resp, "save");
     if (!resp.ok) {
-      const errorText = await resp.text().catch(() => "");
-      const message = errorText || "Check your login or API.";
+      let message = "Check your login or API.";
+      const errorJson = await resp.json().catch(() => null);
+      if (errorJson && typeof errorJson === "object") {
+        message = errorJson.details || errorJson.error || message;
+      }
       window.alert(`Save failed (${resp.status}). ${message}`);
       return;
     }
@@ -2035,8 +2038,18 @@
       });
     }
 
-    if (heroInput) heroInput.addEventListener("input", markDirty);
-    if (isoInput) isoInput.addEventListener("input", markDirty);
+    if (heroInput) {
+      heroInput.addEventListener("input", () => {
+        setHeroImage(heroInput.value.trim());
+        markDirty();
+      });
+    }
+    if (isoInput) {
+      isoInput.addEventListener("input", () => {
+        renderIso({ ...(currentBase || {}), ...(currentExpanded || {}), isoImage: isoInput.value.trim(), name: nameEl?.textContent || "" });
+        markDirty();
+      });
+    }
 
     addButtons.forEach((btn) => {
       btn.addEventListener("click", () => {

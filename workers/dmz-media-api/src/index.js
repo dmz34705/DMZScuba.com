@@ -320,59 +320,6 @@ function hasNonEmptyList(value) {
   });
 }
 
-function destinationContentScore(item) {
-  if (!item || typeof item !== "object") return 0;
-  let score = 0;
-
-  const textFields = [
-    "name",
-    "subtitle",
-    "summary",
-    "narrative",
-    "heroImage",
-    "isoImage",
-    "isoTitle",
-    "isoDesc",
-    "seasonality",
-    "logistics",
-    "logisticsDetails",
-    "experience",
-    "dayToDay",
-    "resortDetails",
-    "heroWhy",
-    "vibe",
-  ];
-  textFields.forEach((field) => {
-    if (hasNonEmptyText(item[field])) score += 1;
-  });
-
-  const listFields = [
-    "bullets",
-    "diveSites",
-    "nonDiving",
-    "logisticsTips",
-    "diveSiteHighlights",
-    "perfectFor",
-    "howItWorks",
-    "tags",
-  ];
-  listFields.forEach((field) => {
-    if (hasNonEmptyList(item[field])) score += 1;
-  });
-
-  if (item.resort && typeof item.resort === "object") {
-    if (hasNonEmptyText(item.resort.name)) score += 1;
-    if (hasNonEmptyText(item.resort.description)) score += 1;
-  }
-  if (item.conditions && typeof item.conditions === "object") {
-    if (hasNonEmptyText(item.conditions.visibility)) score += 1;
-    if (hasNonEmptyText(item.conditions.temperature)) score += 1;
-    if (hasNonEmptyText(item.conditions.currents)) score += 1;
-  }
-
-  return score;
-}
-
 function destinationWriteGuardReason(existingItem, nextItem) {
   if (!existingItem || typeof existingItem !== "object") return "";
   if (!nextItem || typeof nextItem !== "object") return "Payload item is missing or invalid.";
@@ -388,14 +335,6 @@ function destinationWriteGuardReason(existingItem, nextItem) {
 
   if (placeholderName && !hasMedia && !hasCopy) {
     return "Payload looks like fallback placeholder content, not a real destination.";
-  }
-
-  const existingScore = destinationContentScore(existingItem);
-  const nextScore = destinationContentScore(nextItem);
-  const scoreDrop = existingScore - nextScore;
-
-  if (existingScore >= 10 && nextScore <= 3 && scoreDrop >= 7) {
-    return `Payload is too sparse for existing destination content (existing score ${existingScore}, next score ${nextScore}).`;
   }
 
   return "";
