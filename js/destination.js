@@ -88,6 +88,7 @@
   const isoUploadInput = document.getElementById("destIsoUpload");
   const isoUploadButton = document.getElementById("destIsoUploadBtn");
   const isoUploadStatus = document.getElementById("destIsoUploadStatus");
+  const addButtons = document.querySelectorAll(".dest-page-add");
 
   let currentDestination = null;
   let currentBase = null;
