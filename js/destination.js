@@ -29,6 +29,10 @@
 
   const vibeTextEl = document.getElementById("destVibeText");
   const mediaStatusEl = document.getElementById("destMediaStatus");
+  const mediaGrid = document.getElementById("destMediaGrid");
+  const mediaDots = document.getElementById("destMediaDots");
+  const mediaPrev = document.getElementById("destMediaPrev");
+  const mediaNext = document.getElementById("destMediaNext");
 
   const bulletsEl = document.getElementById("destBullets");
   const diveSitesEl = document.getElementById("diveSitesList");
@@ -60,10 +64,13 @@
   const heroRoot = document.documentElement;
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const mediaLink = document.getElementById("destMediaLink");
+  const mediaApiUrl = apiRoot ? `${apiRoot}/api/media` : "/api/media";
+  const mediaDataUrl = "/assets/data/media.json";
 
   let currentId = "";
   let currentItem = null;
   let isDirty = false;
+  let mediaRequestId = 0;
 
   function setText(el, value) {
     if (el) el.textContent = String(value || "");
@@ -188,6 +195,216 @@
     return next;
   }
 
+  function normalizeKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function matchesLocationKey(locationKey, targetKey) {
+    if (!locationKey || !targetKey) return false;
+    return locationKey === targetKey || locationKey.includes(targetKey) || targetKey.includes(locationKey);
+  }
+
+  function resolveUrl(url) {
+    if (!url) return "";
+    const normalized = String(url).replace(/\\/g, "/");
+    if (normalized.startsWith("assets/")) return `/${normalized}`;
+    if (normalized.startsWith("./assets/")) return `/${normalized.slice(2)}`;
+    if (/^(?:[a-z]+:)?\/\//i.test(normalized) || normalized.startsWith("data:") || normalized.startsWith("blob:")) {
+      return normalized;
+    }
+    if (normalized.startsWith("/")) return normalized;
+    try {
+      return new URL(normalized, window.location.href).href;
+    } catch (error) {
+      return normalized;
+    }
+  }
+
+  function isImageUrl(url) {
+    return /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/i.test(String(url || ""));
+  }
+
+  function isVideoUrl(url) {
+    return /\.(mp4|webm|ogg)(\?.*)?$/i.test(String(url || ""));
+  }
+
+  function getYouTubeId(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (parsed.hostname.includes("youtu.be")) {
+        return parsed.pathname.replace("/", "");
+      }
+      if (parsed.hostname.includes("youtube.com")) {
+        if (parsed.searchParams.get("v")) return parsed.searchParams.get("v") || "";
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        const idx = parts.indexOf("embed");
+        if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+      }
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function getStreamIdFromUrl(url) {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (
+        parsed.hostname.includes("videodelivery.net") ||
+        parsed.hostname.includes("cloudflarestream.com") ||
+        parsed.hostname.includes("iframe.videodelivery.net")
+      ) {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts[0]) return parts[0];
+      }
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function buildYouTubeThumb(id) {
+    return id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : "";
+  }
+
+  function buildStreamThumb(id) {
+    return id ? `https://videodelivery.net/${id}/thumbnails/thumbnail.jpg?time=1s` : "";
+  }
+
+  function getMediaThumbUrl(item, mediaUrl, youtubeId, streamId) {
+    let thumbUrl = resolveUrl(item.thumbUrl || "");
+    if (!thumbUrl) {
+      if (youtubeId) thumbUrl = buildYouTubeThumb(youtubeId);
+      else if (streamId) thumbUrl = buildStreamThumb(streamId);
+      else if (item.type === "photo" && isImageUrl(mediaUrl)) thumbUrl = mediaUrl;
+    }
+    return thumbUrl;
+  }
+
+  function buildDestinationKeys(dest) {
+    const keys = new Set();
+    [dest?.id, dest?.name, dest?.heroTitle, dest?.subtitle].forEach((value) => {
+      const key = normalizeKey(value);
+      if (key) keys.add(key);
+    });
+    return [...keys];
+  }
+
+  function filterDestinationMedia(items, dest) {
+    const keys = buildDestinationKeys(dest);
+    if (!keys.length) return [];
+    return (items || []).filter((item) => {
+      if (!item) return false;
+      const locationKey = normalizeKey(item.location);
+      const tagKeys = Array.isArray(item.tags) ? item.tags.map(normalizeKey) : [];
+      return keys.some(
+        (key) =>
+          matchesLocationKey(locationKey, key) ||
+          tagKeys.some((tag) => matchesLocationKey(tag, key))
+      );
+    });
+  }
+
+  function createMediaCard(item, dest) {
+    const card = document.createElement("article");
+    card.className = "media-card";
+
+    const mediaUrl = resolveUrl(item.url || "");
+    const youtubeId = getYouTubeId(mediaUrl);
+    const streamId = item.streamId || getStreamIdFromUrl(mediaUrl);
+    const thumbUrl = getMediaThumbUrl(item, mediaUrl, youtubeId, streamId);
+
+    const thumb = document.createElement("button");
+    thumb.type = "button";
+    thumb.className = "media-thumb media-link";
+    thumb.setAttribute("aria-label", item.title || "Open trip media");
+    thumb.addEventListener("click", () => {
+      if (mediaUrl) window.open(mediaUrl, "_blank", "noopener");
+    });
+
+    if (thumbUrl && isImageUrl(thumbUrl)) {
+      const img = document.createElement("img");
+      img.className = "media-thumb-img";
+      img.src = thumbUrl;
+      img.alt = item.title ? `${item.title} thumbnail` : "Trip media thumbnail";
+      img.loading = "lazy";
+      img.decoding = "async";
+      thumb.appendChild(img);
+      thumb.classList.add("has-thumb");
+    } else {
+      const faux = document.createElement("div");
+      faux.className = "media-thumb-faux";
+      faux.textContent = item.title || "Trip media";
+      thumb.appendChild(faux);
+    }
+
+    const body = document.createElement("div");
+    body.className = "media-body";
+    const h3 = document.createElement("h3");
+    h3.textContent = item.title || "Trip Media";
+    const p = document.createElement("p");
+    p.textContent = item.description || `Media from ${dest?.name || "this destination"}.`;
+    body.append(h3, p);
+
+    card.append(thumb, body);
+    return card;
+  }
+
+  async function fetchMediaData() {
+    const apiResp = await fetch(mediaApiUrl, { cache: "no-store" }).catch(() => null);
+    if (apiResp && apiResp.ok) {
+      return apiResp.json();
+    }
+    const fileResp = await fetch(`${mediaDataUrl}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+    if (fileResp && fileResp.ok) {
+      return fileResp.json();
+    }
+    throw new Error("Failed to load media data.");
+  }
+
+  async function loadDestinationMedia(dest) {
+    if (!mediaGrid) return;
+    const requestId = ++mediaRequestId;
+    mediaGrid.innerHTML = "";
+    if (mediaStatusEl) mediaStatusEl.textContent = "Loading trip clips...";
+    if (mediaDots) mediaDots.hidden = true;
+    if (mediaPrev) mediaPrev.hidden = true;
+    if (mediaNext) mediaNext.hidden = true;
+
+    try {
+      const data = await fetchMediaData();
+      if (requestId !== mediaRequestId) return;
+      const mediaItems = Array.isArray(data.mediaItems) ? data.mediaItems : [];
+      const photoItems = Array.isArray(data.photoItems) ? data.photoItems : [];
+      const allItems = [...mediaItems, ...photoItems];
+      const matches = filterDestinationMedia(allItems, dest).slice(0, 12);
+      if (!matches.length) {
+        if (mediaStatusEl) {
+          mediaStatusEl.textContent =
+            dest?.mediaStatus || "Trip clips coming soon. Follow DMZ or join the interest list to get first access.";
+        }
+        return;
+      }
+      matches.forEach((item) => {
+        mediaGrid.appendChild(createMediaCard(item, dest));
+      });
+      if (mediaStatusEl) {
+        mediaStatusEl.textContent = `Latest trip clips from ${dest?.name || "this destination"}.`;
+      }
+    } catch (error) {
+      if (requestId !== mediaRequestId) return;
+      if (mediaStatusEl) {
+        mediaStatusEl.textContent =
+          dest?.mediaStatus || "Trip clips unavailable right now. Check back soon.";
+      }
+    }
+  }
+
   function render(item) {
     if (!item) return;
 
@@ -237,6 +454,7 @@
     if (mediaLink) {
       mediaLink.href = item.id ? `../media/index.html?location=${encodeURIComponent(item.id)}` : "../media/index.html";
     }
+    loadDestinationMedia(item);
 
     document.title = `DMZ Scuba | ${item.name || "Destination"}`;
     const desc = document.querySelector('meta[name="description"]');
