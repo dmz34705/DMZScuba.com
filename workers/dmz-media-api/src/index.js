@@ -432,6 +432,9 @@ async function handleDestinationsBulkUpsert(request, env) {
   const body = await request.json().catch(() => ({}));
   const items = Array.isArray(body.items) ? body.items : [];
   const deleteIds = Array.isArray(body.deleteIds) ? body.deleteIds.filter(Boolean) : [];
+  if (!items.length && !deleteIds.length) {
+    return jsonResponse({ ok: false, error: "No items provided. Expected payload: { items, deleteIds }." }, 400);
+  }
   const now = new Date().toISOString();
 
   await ensureDestinationsTable(env);
