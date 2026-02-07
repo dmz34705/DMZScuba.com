@@ -1934,12 +1934,11 @@
       window.alert("Save failed: API did not confirm write.");
       return;
     }
-    const savedItem = saveResult.item && saveResult.item.id ? saveResult.item : payload.items[0];
+    const savedItem = payload.items[0];
     isDirty = false;
     currentBase = savedItem;
     currentExpanded = savedItem;
     updateDraftCache(savedItem, savedItem);
-    renderDestination(savedItem);
     setEditMode(false);
   }
 
