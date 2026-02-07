@@ -369,6 +369,15 @@
     }
   }
 
+  async function readResponseTextSafe(response) {
+    if (!response) return "";
+    try {
+      return await response.text();
+    } catch (error) {
+      return "";
+    }
+  }
+
   function getToken() {
     return window.sessionStorage.getItem(tokenStorageKey) || "";
   }
@@ -1769,14 +1778,19 @@
         headers: { "Cache-Control": "no-store" },
       }).catch(() => null);
       if (!byIdRes || !byIdRes.ok) {
-        showErrorPanel("Destination API load failed. Check API routing or login.");
+        const status = byIdRes ? byIdRes.status : "network";
+        const body = await readResponseTextSafe(byIdRes);
+        const snippet = String(body || "").slice(0, 180);
+        showErrorPanel(
+          `Destination API load failed (id=${id}, status=${status}). URL: ${apiByIdUrl}${id} ${snippet}`
+        );
         renderDestination(null);
         return;
       }
       const byIdJson = await byIdRes.json().catch(() => ({}));
       const item = byIdJson && byIdJson.item ? byIdJson.item : null;
       if (!item || !item.id) {
-        showErrorPanel("Destination API returned no item.");
+        showErrorPanel(`Destination API returned no item for id=${id}.`);
         renderDestination(null);
         return;
       }
