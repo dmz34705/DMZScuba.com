@@ -1,6 +1,8 @@
 (() => {
-  const apiBase =
+  const configuredApiBase =
     (document.body && (document.body.dataset.adminApi || document.body.dataset.mediaApi)) || "";
+  const isPagesDevHost = String(window.location.hostname || "").toLowerCase().endsWith(".pages.dev");
+  const apiBase = configuredApiBase || (isPagesDevHost ? "https://dmz-media-api.zacharylisowski55.workers.dev" : "");
   const apiBaseUrl = apiBase ? `${apiBase}/api/destinations` : "/api/destinations";
   const apiByIdUrl = apiBase ? `${apiBase}/api/destinations/` : "/api/destinations/";
   const apiExpandedUrl = apiBase ? `${apiBase}/api/destinations-expanded` : "/api/destinations-expanded";
