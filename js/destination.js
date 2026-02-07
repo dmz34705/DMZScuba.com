@@ -54,6 +54,7 @@
   const adminStatus = document.getElementById("destPageAdminStatus");
   const loginButton = document.querySelector(".dest-page-login-button");
   const editToggle = document.querySelector(".dest-page-edit-toggle");
+  const importButton = document.getElementById("destPageImport");
   const saveButton = document.querySelector(".dest-page-save");
   const cancelButton = document.querySelector(".dest-page-cancel");
   const logoutButton = document.querySelector(".dest-page-logout");
@@ -1845,6 +1846,124 @@
     }
   }
 
+  function normalizeImportedDestination(rawItem) {
+    const imported = rawItem && typeof rawItem === "object" ? rawItem : {};
+    const base = currentItem && typeof currentItem === "object" ? currentItem : {};
+    const next = {
+      ...base,
+      ...imported,
+      id: currentId || imported.id || base.id || "",
+      lat: Number(imported.lat ?? base.lat ?? 0),
+      lon: Number(imported.lon ?? base.lon ?? 0),
+      tags: Array.isArray(imported.tags) ? imported.tags : (Array.isArray(base.tags) ? base.tags : []),
+      bullets: Array.isArray(imported.bullets) ? imported.bullets : (Array.isArray(base.bullets) ? base.bullets : []),
+      diveSites: Array.isArray(imported.diveSites) ? imported.diveSites : (Array.isArray(base.diveSites) ? base.diveSites : []),
+      nonDiving: Array.isArray(imported.nonDiving) ? imported.nonDiving : (Array.isArray(base.nonDiving) ? base.nonDiving : []),
+      perfectFor: Array.isArray(imported.perfectFor)
+        ? imported.perfectFor
+        : (Array.isArray(base.perfectFor) ? base.perfectFor : []),
+      howItWorks: Array.isArray(imported.howItWorks)
+        ? imported.howItWorks
+        : (Array.isArray(base.howItWorks) ? base.howItWorks : []),
+      diveSiteHighlights: Array.isArray(imported.diveSiteHighlights)
+        ? imported.diveSiteHighlights
+        : (Array.isArray(base.diveSiteHighlights) ? base.diveSiteHighlights : []),
+      logisticsTips: Array.isArray(imported.logisticsTips)
+        ? imported.logisticsTips
+        : (Array.isArray(base.logisticsTips) ? base.logisticsTips : []),
+      resort: {
+        ...(base.resort || {}),
+        ...(imported.resort || {}),
+      },
+      conditions:
+        imported.conditions && typeof imported.conditions === "object"
+          ? imported.conditions
+          : (base.conditions && typeof base.conditions === "object" ? base.conditions : {}),
+    };
+    return next;
+  }
+
+  function applyImportedDestination(payload) {
+    if (!payload || typeof payload !== "object") {
+      throw new Error("Import JSON must be an object.");
+    }
+    const candidate = payload.item && typeof payload.item === "object" ? payload.item : payload;
+    const imported = normalizeImportedDestination(candidate);
+    currentItem = imported;
+    render(imported);
+    setEditMode(true);
+    markDirty();
+    setAdminStatus("Imported (unsaved)", "ready");
+  }
+
+  function buildImportModal(onApply) {
+    if (document.querySelector(".media-import-modal")) return;
+    const overlay = document.createElement("div");
+    overlay.className = "media-edit-modal media-import-modal";
+    overlay.innerHTML = `
+      <div class="media-edit-modal-card">
+        <h3>Import Destination JSON</h3>
+        <p class="media-edit-modal-hint">Paste JSON or load a file, then apply and save.</p>
+        <form class="media-edit-form">
+          <label>JSON
+            <textarea rows="12" placeholder='Paste {"item": {...}} or {...}' required></textarea>
+          </label>
+          <input type="file" accept=".json,application/json" />
+          <p class="media-edit-modal-hint" data-error style="color: rgba(226, 27, 35, 0.85)"></p>
+          <div class="media-edit-modal-actions">
+            <button type="button" class="media-edit-cancel">Cancel</button>
+            <button type="submit" class="media-edit-save">Apply Import</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const form = overlay.querySelector("form");
+    const textarea = overlay.querySelector("textarea");
+    const fileInput = overlay.querySelector('input[type="file"]');
+    const errorEl = overlay.querySelector("[data-error]");
+    const cancelBtn = overlay.querySelector(".media-edit-cancel");
+
+    const close = () => overlay.remove();
+    if (cancelBtn) cancelBtn.addEventListener("click", close);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) close();
+    });
+
+    if (fileInput && textarea) {
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          textarea.value = text;
+          if (errorEl) errorEl.textContent = "";
+        } catch (error) {
+          if (errorEl) errorEl.textContent = "Could not read selected file.";
+        }
+      });
+    }
+
+    if (form && textarea) {
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (errorEl) errorEl.textContent = "";
+        const raw = textarea.value.trim();
+        if (!raw) {
+          if (errorEl) errorEl.textContent = "Paste JSON first.";
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          if (typeof onApply === "function") onApply(parsed);
+          close();
+        } catch (error) {
+          if (errorEl) errorEl.textContent = "Invalid JSON format.";
+        }
+      });
+    }
+  }
+
   function markDirty() {
     isDirty = true;
   }
@@ -2098,6 +2217,21 @@
         }
         const next = !document.body.classList.contains("dest-page-editing");
         setEditMode(next);
+      });
+    }
+
+    if (importButton) {
+      importButton.addEventListener("click", () => {
+        if (!getToken() && !canWriteWithoutLogin()) {
+          buildLoginModal(() => {
+            document.body.classList.add("dest-page-admin-open");
+            setEditMode(true);
+            buildImportModal(applyImportedDestination);
+          });
+          return;
+        }
+        setEditMode(true);
+        buildImportModal(applyImportedDestination);
       });
     }
 
