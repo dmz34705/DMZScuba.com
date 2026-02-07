@@ -65,6 +65,7 @@
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
   const mediaLink = document.getElementById("destMediaLink");
   const mediaApiUrl = apiRoot ? `${apiRoot}/api/media` : "/api/media";
+  const mediaWorkerFallbackUrl = "https://dmz-media-api.zacharylisowski55.workers.dev/api/media";
   const mediaDataUrl = "/assets/data/media.json";
 
   let currentId = "";
@@ -1471,9 +1472,17 @@
         return null;
       }
     };
-
-    const apiRes = await safeFetch(mediaApiUrl, { cache: "no-store" }, "API");
-    if (apiRes && apiRes.ok) return apiRes.json();
+    const candidateApiUrls = [...new Set([mediaApiUrl, "/api/media", mediaWorkerFallbackUrl])];
+    for (const url of candidateApiUrls) {
+      const apiRes = await safeFetch(url, { cache: "no-store" }, "API");
+      if (!apiRes || !apiRes.ok) continue;
+      const json = await apiRes.json().catch(() => ({}));
+      const mediaItems = Array.isArray(json.mediaItems) ? json.mediaItems : [];
+      const photoItems = Array.isArray(json.photoItems) ? json.photoItems : [];
+      if (mediaItems.length || photoItems.length) {
+        return json;
+      }
+    }
 
     const fileRes = await safeFetch(`${mediaDataUrl}${cacheBuster}`, { cache: "no-store" }, "JSON");
     if (!fileRes || !fileRes.ok) {
@@ -1492,7 +1501,9 @@
     try {
       const data = await fetchMediaData();
       if (requestId !== mediaRequestId) return;
-      const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
+      const mediaItems = Array.isArray(data.mediaItems) ? data.mediaItems : [];
+      const photoItems = Array.isArray(data.photoItems) ? data.photoItems : [];
+      const items = [...mediaItems, ...photoItems];
       const matches = filterDestinationMedia(items, dest);
       const orientationMap = await getMediaOrientations(matches);
       const ordered = prioritizeVerticalMedia(matches, orientationMap);
