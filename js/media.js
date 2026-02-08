@@ -62,8 +62,9 @@
     rafId: null,
     viewportHandler: null,
     activeCardId: "",
-    soundOn: true,
+    soundOn: false,
     soundButtonEl: null,
+    audioUnlocked: false,
   };
 
   function resolveUrl(url) {
@@ -1468,12 +1469,16 @@
 
   function updateReelSoundButton() {
     if (!reelState.soundButtonEl) return;
-    reelState.soundButtonEl.textContent = reelState.soundOn ? "Sound On" : "Sound Off";
+    reelState.soundButtonEl.textContent = reelState.soundOn ? "Mute" : "Enable Sound";
     reelState.soundButtonEl.setAttribute("aria-pressed", reelState.soundOn ? "true" : "false");
   }
 
-  function setReelSound(nextValue) {
+  function setReelSound(nextValue, options = {}) {
+    const userGesture = Boolean(options && options.userGesture);
     reelState.soundOn = Boolean(nextValue);
+    if (reelState.soundOn && userGesture) {
+      reelState.audioUnlocked = true;
+    }
     updateReelSoundButton();
     if (!reelState.feedEl) return;
     reelState.feedEl.querySelectorAll(".media-reel-media video").forEach((video) => {
@@ -1501,8 +1506,8 @@
           const playPromise = video.play();
           if (playPromise && typeof playPromise.catch === "function") {
             playPromise.catch(() => {
-              if (!video.muted) {
-                // Fallback when browser blocks autoplay with audio.
+              if (!video.muted && !reelState.audioUnlocked) {
+                // Fallback when browser blocks autoplay with audio before user gesture.
                 setReelSound(false);
                 video.muted = true;
                 const retry = video.play();
@@ -1554,7 +1559,7 @@
     sound.setAttribute("aria-label", "Toggle reel sound");
     sound.setAttribute("aria-pressed", "true");
     sound.addEventListener("click", () => {
-      setReelSound(!reelState.soundOn);
+      setReelSound(!reelState.soundOn, { userGesture: true });
     });
     reelState.soundButtonEl = sound;
     updateReelSoundButton();
@@ -1571,6 +1576,13 @@
 
     const feed = document.createElement("div");
     feed.className = "media-reel-feed";
+    feed.addEventListener("click", (event) => {
+      if (!reelState.open) return;
+      if (event.target.closest(".media-reel-header")) return;
+      if (!reelState.soundOn) {
+        setReelSound(true, { userGesture: true });
+      }
+    });
     feed.addEventListener(
       "scroll",
       () => {
@@ -1691,7 +1703,8 @@
       reelState.overlayEl.classList.add("is-open");
       reelState.overlayEl.setAttribute("aria-hidden", "false");
     }
-    setReelSound(true);
+    reelState.audioUnlocked = false;
+    setReelSound(false);
     bindReelViewportTracking();
     setBodyScrollLock(true);
     window.requestAnimationFrame(() => {
