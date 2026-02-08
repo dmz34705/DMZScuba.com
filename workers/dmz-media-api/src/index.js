@@ -226,6 +226,20 @@ function buildGenericInterestEmail(name = "", destinationName = "this destinatio
   return { subject, html, text };
 }
 
+function buildTemplateVariables(name = "", destinationName = "") {
+  return {
+    NAME: String(name || "Diver").trim() || "Diver",
+    DESTINATION: String(destinationName || "Cozumel").trim() || "Cozumel",
+    DMZ_DESTINATION_URL: "https://dmzscuba-com.pages.dev/pages/travel/destination?id=cozumel",
+    DRESSEL_URL: "https://www.dresseldivers.com/dive/mexico/cozumel-scuba-diving/",
+    IBEROSTAR_URL: "https://www.iberostar.com/en/hotels/cozumel/iberostar-cozumel",
+    UNITED_URL: "https://vacations.united.com/destinations/mexico/",
+    AMERICAN_URL: "https://www.aavacations.com/en/beach-vacation-packages",
+    DELTA_URL: "https://www.delta.com/us/en/delta-vacations/vacation-inspiration/mexico-vacations/cozumel-vacation-packages",
+    WEBSITE_URL: "https://dmzscuba.com",
+  };
+}
+
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -315,18 +329,48 @@ async function handleContact(request, env) {
     }
 
     // 2) Send branded auto-reply to the user.
-    const destinationName = getFieldValue(fields, "location") || getFieldValue(fields, "destination") || "this destination";
-    const content = isCozumelInterest(fields)
-      ? buildCozumelInterestEmail(name)
-      : buildGenericInterestEmail(name, destinationName);
-    const autoReplyPayload = {
-      from: `${fromName} <${fromEmail}>`,
-      to: [email],
-      subject: content.subject,
-      html: content.html,
-      text: content.text,
-      reply_to: [toEmail],
-    };
+    const destinationName =
+      getFieldValue(fields, "location") || getFieldValue(fields, "destination") || "this destination";
+    const cozumel = isCozumelInterest(fields);
+    const cozumelTemplateId = String(env.RESEND_TEMPLATE_COZUMEL || "").trim();
+    const defaultTemplateId = String(env.RESEND_TEMPLATE_INTEREST_DEFAULT || "").trim();
+
+    let autoReplyPayload = null;
+    if (cozumel && cozumelTemplateId) {
+      autoReplyPayload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [email],
+        subject: "Thank you for your interest in diving Cozumel with DMZ Scuba.",
+        reply_to: [toEmail],
+        template: {
+          id: cozumelTemplateId,
+          variables: buildTemplateVariables(name, destinationName),
+        },
+      };
+    } else if (!cozumel && defaultTemplateId) {
+      autoReplyPayload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [email],
+        subject: `You are on the DMZ Scuba interest list for ${destinationName}.`,
+        reply_to: [toEmail],
+        template: {
+          id: defaultTemplateId,
+          variables: buildTemplateVariables(name, destinationName),
+        },
+      };
+    } else {
+      const content = cozumel
+        ? buildCozumelInterestEmail(name)
+        : buildGenericInterestEmail(name, destinationName);
+      autoReplyPayload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [email],
+        subject: content.subject,
+        html: content.html,
+        text: content.text,
+        reply_to: [toEmail],
+      };
+    }
 
     const autoReplyResp = await fetch("https://api.resend.com/emails", {
       method: "POST",
