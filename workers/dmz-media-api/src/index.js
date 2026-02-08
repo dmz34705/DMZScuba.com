@@ -132,6 +132,12 @@ function isCozumelInterest(fields) {
   return destination.includes("cozumel") || location.includes("cozumel");
 }
 
+function isHaighInterest(fields) {
+  const destination = getFieldValue(fields, "destination").toLowerCase();
+  const location = getFieldValue(fields, "location").toLowerCase();
+  return destination.includes("haigh") || location.includes("haigh");
+}
+
 function buildCozumelInterestEmail(name = "") {
   const safeName = escapeHtml(name || "Diver");
   const subject = "Thank you for your interest in diving Cozumel with DMZ Scuba.";
@@ -332,11 +338,24 @@ async function handleContact(request, env) {
     const destinationName =
       getFieldValue(fields, "location") || getFieldValue(fields, "destination") || "this destination";
     const cozumel = isCozumelInterest(fields);
+    const haigh = isHaighInterest(fields);
+    const haighTemplateId = String(env.RESEND_TEMPLATE_HAIGH || "").trim();
     const cozumelTemplateId = String(env.RESEND_TEMPLATE_COZUMEL || "").trim();
     const defaultTemplateId = String(env.RESEND_TEMPLATE_INTEREST_DEFAULT || "").trim();
 
     let autoReplyPayload = null;
-    if (cozumel && cozumelTemplateId) {
+    if (haigh && haighTemplateId) {
+      autoReplyPayload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [email],
+        subject: "Thank you for your interest in diving Haigh Quarry with DMZ Scuba.",
+        reply_to: [toEmail],
+        template: {
+          id: haighTemplateId,
+          variables: buildTemplateVariables(name, destinationName),
+        },
+      };
+    } else if (cozumel && cozumelTemplateId) {
       autoReplyPayload = {
         from: `${fromName} <${fromEmail}>`,
         to: [email],

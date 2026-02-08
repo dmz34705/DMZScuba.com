@@ -15,6 +15,7 @@ RESEND_FROM_NAME = "DMZ Scuba"
 RESEND_TO = "info@dmzscuba.com"
 # Optional: Resend template IDs for API-driven template sends.
 # Set in dashboard vars/secrets to manage email design in Resend without Worker code edits.
+# RESEND_TEMPLATE_HAIGH = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_COZUMEL = "tmpl_xxxxxxxxxxxxx"
 # RESEND_TEMPLATE_INTEREST_DEFAULT = "tmpl_xxxxxxxxxxxxx"
 # Cloudflare Images (set via dashboard/vars or secrets)
