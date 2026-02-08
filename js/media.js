@@ -60,6 +60,7 @@
     feedEl: null,
     labelEl: null,
     rafId: null,
+    viewportHandler: null,
   };
 
   function resolveUrl(url) {
@@ -1485,6 +1486,41 @@
     window.scrollTo({ top: restoreY, behavior: "auto" });
   }
 
+  function updateReelViewportVars() {
+    const root = document.documentElement;
+    if (!root) return;
+    const vv = window.visualViewport;
+    const visibleHeight = vv && Number.isFinite(vv.height) ? vv.height : window.innerHeight;
+    const uiOffset = vv ? Math.max(0, window.innerHeight - (vv.height + vv.offsetTop)) : 0;
+    root.style.setProperty("--media-reel-vh", `${Math.round(visibleHeight)}px`);
+    root.style.setProperty("--media-reel-browser-offset", `${Math.round(uiOffset)}px`);
+  }
+
+  function bindReelViewportTracking() {
+    if (reelState.viewportHandler) return;
+    const handler = () => updateReelViewportVars();
+    reelState.viewportHandler = handler;
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handler);
+      window.visualViewport.addEventListener("scroll", handler);
+    }
+    window.addEventListener("resize", handler);
+    window.addEventListener("orientationchange", handler);
+    handler();
+  }
+
+  function unbindReelViewportTracking() {
+    const handler = reelState.viewportHandler;
+    if (!handler) return;
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener("resize", handler);
+      window.visualViewport.removeEventListener("scroll", handler);
+    }
+    window.removeEventListener("resize", handler);
+    window.removeEventListener("orientationchange", handler);
+    reelState.viewportHandler = null;
+  }
+
   function syncReelModeItems() {
     if (!reelState.open) return;
     const nextItems = getFilteredMediaItems();
@@ -1523,6 +1559,7 @@
       reelState.overlayEl.classList.add("is-open");
       reelState.overlayEl.setAttribute("aria-hidden", "false");
     }
+    bindReelViewportTracking();
     setBodyScrollLock(true);
     if (reelModeToggle) {
       reelModeToggle.setAttribute("aria-pressed", "true");
@@ -1544,6 +1581,7 @@
       window.cancelAnimationFrame(reelState.rafId);
       reelState.rafId = null;
     }
+    unbindReelViewportTracking();
     setBodyScrollLock(false);
     if (reelModeToggle) {
       reelModeToggle.setAttribute("aria-pressed", "false");

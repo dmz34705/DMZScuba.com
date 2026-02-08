@@ -1222,7 +1222,7 @@ body.media-authenticated .media-admin-fab{
 
 .media-reel-header{
   position: fixed;
-  top: 14px;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
   left: 14px;
   right: 14px;
   z-index: 3;
@@ -1251,15 +1251,15 @@ body.media-authenticated .media-admin-fab{
 }
 
 .media-reel-feed{
-  height: 100vh;
+  height: var(--media-reel-vh, 100dvh);
   overflow-y: auto;
   scroll-snap-type: y mandatory;
 }
 
 .media-reel-card{
   position: relative;
-  height: 100vh;
-  min-height: 100vh;
+  height: var(--media-reel-vh, 100dvh);
+  min-height: var(--media-reel-vh, 100dvh);
   scroll-snap-align: start;
   scroll-snap-stop: always;
   background: #02050b;
@@ -1335,7 +1335,7 @@ body.media-authenticated .media-admin-fab{
   position: absolute;
   left: 16px;
   right: 16px;
-  bottom: 24px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--media-reel-browser-offset, 0px) + 18px);
   z-index: 2;
   display: grid;
   gap: 8px;
