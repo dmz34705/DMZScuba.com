@@ -1425,7 +1425,9 @@
   }
 
   function mountRemoteReelVideo(host, options = {}) {
-    if (!host || host.dataset.mounted === "true") return;
+    if (!host) return;
+    const force = Boolean(options && options.force);
+    if (!force && host.dataset.mounted === "true") return;
     const kind = host.dataset.videoKind || "";
     const videoId = host.dataset.videoId || "";
     if (!kind || !videoId) return;
@@ -1435,7 +1437,7 @@
     host.innerHTML = "";
     const iframe = document.createElement("iframe");
     if (kind === "stream") {
-      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${shouldUnmute ? "false" : "true"}&loop=true&controls=true`;
+      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${shouldUnmute ? "0" : "1"}&loop=true&controls=true`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     } else if (kind === "youtube") {
       iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${shouldUnmute ? "0" : "1"}&playsinline=1&controls=1&rel=0`;
@@ -1448,6 +1450,23 @@
     iframe.allowFullscreen = true;
     host.appendChild(iframe);
     host.dataset.mounted = "true";
+  }
+
+  function applyGestureToActiveReelMedia() {
+    const activeCard = getActiveReelCard();
+    if (!activeCard) return;
+    const localVideo = activeCard.querySelector(".media-reel-media video");
+    if (localVideo) {
+      localVideo.muted = false;
+      const playPromise = localVideo.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+      return;
+    }
+    const remote = activeCard.querySelector(".media-reel-stream, .media-reel-youtube");
+    if (!remote) return;
+    mountRemoteReelVideo(remote, { fromGesture: true, force: true });
   }
 
   function unmountRemoteReelVideo(host) {
@@ -1503,6 +1522,9 @@
     }
     updateReelSoundButton();
     if (!reelState.feedEl) return;
+    if (reelState.soundOn && userGesture) {
+      applyGestureToActiveReelMedia();
+    }
     reelState.feedEl.querySelectorAll(".media-reel-media video").forEach((video) => {
       video.muted = !reelState.soundOn;
     });
