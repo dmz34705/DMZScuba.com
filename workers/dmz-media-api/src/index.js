@@ -131,43 +131,73 @@ function shouldSendInterestAutoReply(body, fields) {
 
 function buildInterestAutoReplyEmail({ name, destinationName }) {
   const safeName = escapeHtml(name || "Diver");
-  const destinationLabel = String(destinationName || "our next travel destination").trim();
+  const destinationLabel = String(destinationName || "Cozumel").trim();
   const safeDestination = escapeHtml(destinationLabel);
-  const subject = `You are on the DMZ Scuba interest list for ${destinationLabel}`;
+  const subject = `Thank you for your interest in diving ${destinationLabel} with DMZ Scuba.`;
+  const buttonBase =
+    "display:inline-block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1;text-decoration:none;";
+  const buttonPrimary = `${buttonBase}background:#e21b23;color:#ffffff;border:1px solid #e21b23;`;
+  const buttonSecondary = `${buttonBase}background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);`;
+  const destinationHref = "https://dmzscuba.com/pages/travel/destination.html?id=cozumel";
+  const contactHref = "https://dmzscuba.com/pages/contact/index.html#dive-now";
+  const travelHref = "https://dmzscuba.com/pages/travel/index.html";
+  const websiteHref = "https://dmzscuba.com";
 
   const html = `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:24px 12px;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      Thank you for your interest in diving ${safeDestination} with DMZ Scuba.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:20px 12px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;">
             <tr>
-              <td style="padding:26px 24px;background:linear-gradient(180deg, rgba(85,185,255,0.18) 0%, rgba(7,19,37,1) 100%);">
-                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#9bd3ff;">DMZ Scuba</p>
-                <h1 style="margin:0;font-size:28px;line-height:1.2;color:#eaf2ff;">You are in.</h1>
-                <p style="margin:10px 0 0 0;font-size:15px;line-height:1.6;color:rgba(234,242,255,0.86);">
-                  ${safeName}, you are now on the interest list for <strong style="color:#ffffff;">${safeDestination}</strong>.
+              <td style="padding:24px;background:linear-gradient(180deg, rgba(85,185,255,0.18) 0%, rgba(7,19,37,1) 100%);border-bottom:1px solid rgba(255,255,255,0.08);">
+                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:#9bd3ff;">DMZ Scuba Travel and Training</p>
+                <h1 style="margin:0;font-size:28px;line-height:1.2;color:#eaf2ff;">Thank you for your interest in diving ${safeDestination} with DMZ Scuba.</h1>
+                <p style="margin:12px 0 0 0;font-size:15px;line-height:1.7;color:rgba(234,242,255,0.88);">
+                  Hi ${safeName}, we have received your inquiry and wanted to provide a clear overview of what to expect.
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:22px 24px;">
-                <p style="margin:0 0 12px 0;font-size:14px;line-height:1.7;color:rgba(234,242,255,0.82);">
-                  We will send you trip dates, pricing, and open spots as soon as they are available.
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:rgba(234,242,255,0.88);">
+                  ${safeDestination} remains one of the most consistent and rewarding dive destinations in the Caribbean, offering warm water, excellent visibility, and a smooth, well-organized dive experience for newer divers and experienced travelers.
                 </p>
-                <p style="margin:0 0 18px 0;font-size:14px;line-height:1.7;color:rgba(234,242,255,0.82);">
-                  If you already have timing, certification level, or group size in mind, reply to this email and we will build the right plan.
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:rgba(234,242,255,0.88);">
+                  Our trips are structured to be straightforward and low-stress from planning through your final dive of the week. Review the resources below at your own pace, then reply when you want details on pricing, availability, or schedule fit.
                 </p>
-                <a href="https://dmzscuba.com/pages/travel/index.html" style="display:inline-block;padding:12px 16px;border-radius:12px;background:#e21b23;color:#ffffff;text-decoration:none;font-weight:700;">
-                  Explore Travel Destinations
-                </a>
+                <p style="margin:0 0 10px 0;font-size:15px;line-height:1.7;color:rgba(234,242,255,0.94);font-weight:700;">
+                  Resources:
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px 0;">
+                  <tr><td style="padding:6px 0;"><a href="${destinationHref}" style="${buttonPrimary}">Destination overview and trip details</a></td></tr>
+                  <tr><td style="padding:6px 0;"><a href="${destinationHref}" style="${buttonSecondary}">Daily diving structure and expectations</a></td></tr>
+                  <tr><td style="padding:6px 0;"><a href="${travelHref}" style="${buttonSecondary}">Travel logistics and planning guidance</a></td></tr>
+                  <tr><td style="padding:6px 0;"><a href="${contactHref}" style="${buttonSecondary}">General inquiry and reservation request</a></td></tr>
+                </table>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:rgba(234,242,255,0.88);">
+                  You have also been added to the DMZ Scuba interest list for this destination, so you will be notified about trip developments, new dates, pricing releases, and availability updates as they are announced.
+                </p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:rgba(234,242,255,0.88);">
+                  There is no commitment or timeline. The goal is to provide clear information so you can decide whether this destination and travel style are the right fit.
+                </p>
+                <p style="margin:0;font-size:15px;line-height:1.75;color:rgba(234,242,255,0.94);">
+                  Warm regards,<br/>
+                  Zachary Lisowski<br/>
+                  Owner | DMZ Scuba LLC<br/>
+                  DMZ Scuba Travel and Training<br/>
+                  [Phone]<br/>
+                  <a href="${websiteHref}" style="color:#9bd3ff;text-decoration:none;">${websiteHref}</a>
+                </p>
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 24px;border-top:1px solid rgba(255,255,255,0.10);font-size:12px;line-height:1.6;color:rgba(234,242,255,0.62);">
-                DMZ Scuba<br/>
-                info@dmzscuba.com
+              <td style="padding:14px 24px;border-top:1px solid rgba(255,255,255,0.10);font-size:12px;line-height:1.6;color:rgba(234,242,255,0.62);">
+                DMZ Scuba | Always Dive
               </td>
             </tr>
           </table>
@@ -178,17 +208,31 @@ function buildInterestAutoReplyEmail({ name, destinationName }) {
 </html>`;
 
   const text = [
+    `Thank you for your interest in diving ${destinationLabel} with DMZ Scuba.`,
+    "",
     `Hi ${name || "Diver"},`,
     "",
-    `You are now on the DMZ Scuba interest list for ${destinationName || "our next travel destination"}.`,
-    "We will send dates, pricing, and open spots as they are available.",
+    "We have received your inquiry and wanted to provide a clear overview of what to expect.",
+    `${destinationLabel} remains one of the most consistent and rewarding dive destinations in the Caribbean, with warm water, strong visibility, and a smooth dive flow.`,
     "",
-    "Reply to this email with your timing, certification level, and group size, and we will build a plan.",
+    "Resources:",
+    `- Destination overview and trip details: ${destinationHref}`,
+    `- Daily diving structure and expectations: ${destinationHref}`,
+    `- Travel logistics and planning guidance: ${travelHref}`,
+    `- General inquiry and reservation request: ${contactHref}`,
     "",
-    "Travel: https://dmzscuba.com/pages/travel/index.html",
+    "You have been added to the DMZ Scuba interest list for this destination.",
+    "You will be notified when dates, pricing, and availability updates are announced.",
+    "There is no commitment required.",
     "",
-    "DMZ Scuba",
-    "info@dmzscuba.com",
+    "Warm regards,",
+    "Zachary Lisowski",
+    "Owner | DMZ Scuba LLC",
+    "DMZ Scuba Travel and Training",
+    "[Phone]",
+    websiteHref,
+    "",
+    "DMZ Scuba | Always Dive",
   ].join("\n");
 
   return { subject, html, text };
