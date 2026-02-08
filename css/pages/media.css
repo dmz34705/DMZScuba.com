@@ -751,6 +751,34 @@ body.media-authenticated .media-admin-fab{
   transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
 }
 
+.filter-reel-mode{
+  border-radius: 12px;
+  border: 1px solid rgba(85,185,255,0.45);
+  background: rgba(12, 22, 36, 0.78);
+  color: rgba(234,242,255,0.92);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  padding: 6px 12px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease, transform 140ms ease;
+}
+
+.filter-reel-mode:hover{
+  opacity: 0.95;
+  border-color: rgba(85,185,255,0.7);
+  background: rgba(20, 34, 52, 0.88);
+  transform: translateY(-1px);
+}
+
+.filter-reel-mode[aria-pressed="true"]{
+  border-color: rgba(120,220,255,0.85);
+  background: rgba(28, 46, 70, 0.92);
+}
+
 .filter-clear-all:hover{
   opacity: 0.9;
   border-color: rgba(255,255,255,0.35);
@@ -1178,6 +1206,181 @@ body.media-authenticated .media-admin-fab{
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
+}
+
+.media-reel-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 230;
+  background: #050912;
+  display: none;
+}
+
+.media-reel-overlay.is-open{
+  display: block;
+}
+
+.media-reel-header{
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.media-reel-label,
+.media-reel-close{
+  pointer-events: auto;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(8, 12, 18, 0.72);
+  color: rgba(234,242,255,0.92);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 8px 12px;
+}
+
+.media-reel-close{
+  cursor: pointer;
+}
+
+.media-reel-feed{
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+}
+
+.media-reel-card{
+  position: relative;
+  height: 100vh;
+  min-height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  background: #02050b;
+}
+
+.media-reel-media{
+  position: absolute;
+  inset: 0;
+}
+
+.media-reel-media img,
+.media-reel-media video{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+
+.media-reel-stream,
+.media-reel-youtube{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: rgba(3, 6, 12, 0.9);
+}
+
+.media-reel-stream img,
+.media-reel-youtube img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.92;
+}
+
+.media-reel-play{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: rgba(6, 10, 18, 0.72);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.6);
+}
+
+.media-reel-play::before{
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-42%, -50%);
+  width: 0;
+  height: 0;
+  border-left: 18px solid rgba(236,246,255,0.95);
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+}
+
+.media-reel-scrim{
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2, 5, 10, 0.20) 0%, rgba(2, 5, 10, 0.12) 38%, rgba(2, 5, 10, 0.85) 100%);
+}
+
+.media-reel-overlay-copy{
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 24px;
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  max-width: min(840px, 100%);
+}
+
+.media-reel-overlay-copy h3{
+  margin: 0;
+  font-size: clamp(22px, 3.2vw, 34px);
+  line-height: 1.15;
+  text-shadow: 0 6px 20px rgba(0,0,0,0.55);
+}
+
+.media-reel-overlay-copy p{
+  margin: 0;
+  color: rgba(236,246,255,0.9);
+  font-size: clamp(13px, 1.7vw, 17px);
+  max-width: 70ch;
+  text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.media-reel-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: rgba(236,246,255,0.76);
+  font-size: 12px;
+  letter-spacing: 0.2px;
+}
+
+.media-reel-empty{
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: rgba(236,246,255,0.75);
+}
+
+@media (max-width: 780px){
+  .media-reel-overlay-copy{
+    left: 12px;
+    right: 12px;
+    bottom: 18px;
+  }
 }
 
 

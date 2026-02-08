@@ -23,6 +23,7 @@
   const locationSelection = locationFilter ? locationFilter.querySelector(".filter-selection") : null;
   const resultsCount = document.getElementById("mediaResultsCount");
   const clearFiltersButton = document.getElementById("mediaClearFilters");
+  const reelModeToggle = document.getElementById("mediaReelModeToggle");
   const emptyState = document.getElementById("mediaEmpty");
   const cardSizeInput = document.getElementById("mediaCardSize");
   const cardSizeValue = document.getElementById("mediaCardSizeValue");
@@ -49,6 +50,16 @@
     mediaItems: [],
     photoItems: [],
     destinations: [],
+  };
+  const reelState = {
+    open: false,
+    bodyScrollY: 0,
+    sourceItems: [],
+    nextSourceIndex: 0,
+    overlayEl: null,
+    feedEl: null,
+    labelEl: null,
+    rafId: null,
   };
 
   function resolveUrl(url) {
@@ -1203,6 +1214,341 @@
     updateResultsCount();
     updateMasonry();
     setupVideoThumbObserver();
+    syncReelModeItems();
+  }
+
+  function getCurrentChipFilter() {
+    const active = document.querySelector(".chip.is-active");
+    return active ? active.getAttribute("data-filter") || "all" : "all";
+  }
+
+  function matchesItemFilter(item, filter) {
+    if (filter === "all") return true;
+    const tags = Array.isArray(item && item.tags) ? item.tags.map((tag) => String(tag).toLowerCase()) : [];
+    return tags.some((tag) => tag.includes(String(filter).toLowerCase()));
+  }
+
+  function matchesItemSelectedTags(item) {
+    if (!selectedTags.size) return true;
+    const tags = Array.isArray(item && item.tags) ? item.tags.map((tag) => normalizeTag(tag)) : [];
+    return [...selectedTags].every((tag) => tags.includes(tag));
+  }
+
+  function matchesItemSelectedLocation(item) {
+    if (!selectedLocationId) return true;
+    const itemLocation = normalizeKey(item && item.location ? item.location : "");
+    const selectedName = locationNameById.get(selectedLocationId) || "";
+    const selectedKey = normalizeKey(selectedName);
+    return matchesLocationKey(itemLocation, selectedKey);
+  }
+
+  function matchesItemSearch(item) {
+    if (!searchQuery) return true;
+    const haystack = buildSearchText(item).toLowerCase();
+    if (!haystack) return false;
+    return searchQuery
+      .split(/\s+/)
+      .filter(Boolean)
+      .every((term) => haystack.includes(term));
+  }
+
+  function getFilteredMediaItems() {
+    const filter = getCurrentChipFilter();
+    const indexLookup = buildIndexLookup(state.mediaItems);
+    const sorted = applySort(state.mediaItems, indexLookup);
+    return sorted.filter((item) => {
+      return (
+        matchesItemFilter(item, filter) &&
+        matchesItemSelectedTags(item) &&
+        matchesItemSelectedLocation(item) &&
+        matchesItemSearch(item)
+      );
+    });
+  }
+
+  function buildReelMedia(item) {
+    const wrap = document.createElement("div");
+    wrap.className = "media-reel-media";
+
+    const mediaUrl = resolveUrl(item && item.url ? item.url : "");
+    const streamId = item && item.streamId ? item.streamId : getStreamIdFromUrl(mediaUrl);
+    const youtubeId = getYouTubeId(mediaUrl);
+    const isVideo = item && item.type === "video";
+    const isLocalVideo = isVideo && isVideoUrl(mediaUrl);
+
+    if (isLocalVideo) {
+      const video = document.createElement("video");
+      video.src = mediaUrl;
+      video.poster = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : "";
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.preload = "metadata";
+      wrap.appendChild(video);
+      return wrap;
+    }
+
+    if (isVideo && streamId) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "media-reel-stream";
+      button.setAttribute("aria-label", "Open video");
+      const thumb = document.createElement("img");
+      thumb.src = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
+      thumb.alt = item && item.title ? `${item.title} thumbnail` : "Video thumbnail";
+      button.appendChild(thumb);
+      const play = document.createElement("span");
+      play.className = "media-reel-play";
+      play.setAttribute("aria-hidden", "true");
+      button.appendChild(play);
+      button.addEventListener("click", () => {
+        openStreamModal(streamId, item && item.title ? item.title : "Cloudflare Stream video");
+      });
+      wrap.appendChild(button);
+      return wrap;
+    }
+
+    if (isVideo && youtubeId) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "media-reel-youtube";
+      button.setAttribute("aria-label", "Open video");
+      const thumb = document.createElement("img");
+      thumb.src = buildYouTubeThumb(youtubeId);
+      thumb.alt = item && item.title ? `${item.title} thumbnail` : "YouTube thumbnail";
+      button.appendChild(thumb);
+      const play = document.createElement("span");
+      play.className = "media-reel-play";
+      play.setAttribute("aria-hidden", "true");
+      button.appendChild(play);
+      button.addEventListener("click", () => {
+        openYoutubeModal(youtubeId, item && item.title ? item.title : "YouTube video");
+      });
+      wrap.appendChild(button);
+      return wrap;
+    }
+
+    const image = document.createElement("img");
+    image.src = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : mediaUrl;
+    image.alt = item && item.title ? item.title : "Media";
+    wrap.appendChild(image);
+    return wrap;
+  }
+
+  function buildReelCard(item) {
+    const card = document.createElement("article");
+    card.className = "media-reel-card";
+    card.setAttribute("data-item-id", item && item.id ? item.id : "");
+
+    const media = buildReelMedia(item || {});
+    const scrim = document.createElement("div");
+    scrim.className = "media-reel-scrim";
+
+    const copy = document.createElement("div");
+    copy.className = "media-reel-overlay-copy";
+
+    const badge = document.createElement("span");
+    badge.className = "media-badge";
+    badge.textContent = item && item.badge ? item.badge : item && item.type ? String(item.type).toUpperCase() : "MEDIA";
+
+    const title = document.createElement("h3");
+    title.textContent = item && item.title ? item.title : "Untitled";
+
+    const description = document.createElement("p");
+    description.textContent = item && item.description ? item.description : " ";
+
+    const meta = document.createElement("div");
+    meta.className = "media-reel-meta";
+    const metaValues = [];
+    if (item && Array.isArray(item.meta)) {
+      item.meta.forEach((entry) => {
+        if (entry) metaValues.push(String(entry));
+      });
+    }
+    if (item && item.location) {
+      metaValues.push(String(item.location));
+    }
+    metaValues.slice(0, 6).forEach((entry) => {
+      const span = document.createElement("span");
+      span.textContent = entry;
+      meta.appendChild(span);
+    });
+
+    copy.appendChild(badge);
+    copy.appendChild(title);
+    copy.appendChild(description);
+    if (meta.childElementCount) {
+      copy.appendChild(meta);
+    }
+
+    card.appendChild(media);
+    card.appendChild(scrim);
+    card.appendChild(copy);
+    return card;
+  }
+
+  function appendReelBatch(count = 8) {
+    if (!reelState.feedEl || !reelState.sourceItems.length) return;
+    const limit = Math.max(1, Number(count) || 1);
+    for (let i = 0; i < limit; i += 1) {
+      const sourceIndex = reelState.nextSourceIndex % reelState.sourceItems.length;
+      const item = reelState.sourceItems[sourceIndex];
+      reelState.nextSourceIndex += 1;
+      reelState.feedEl.appendChild(buildReelCard(item));
+    }
+  }
+
+  function ensureReelOverlay() {
+    if (reelState.overlayEl && reelState.feedEl && reelState.labelEl) {
+      return reelState.overlayEl;
+    }
+    const overlay = document.createElement("div");
+    overlay.className = "media-reel-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+
+    const header = document.createElement("div");
+    header.className = "media-reel-header";
+
+    const label = document.createElement("div");
+    label.className = "media-reel-label";
+    label.textContent = "Reel Mode";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "media-reel-close";
+    close.textContent = "Close";
+    close.setAttribute("aria-label", "Close reel mode");
+    close.addEventListener("click", closeReelMode);
+
+    header.appendChild(label);
+    header.appendChild(close);
+
+    const feed = document.createElement("div");
+    feed.className = "media-reel-feed";
+    feed.addEventListener(
+      "scroll",
+      () => {
+        if (!reelState.open) return;
+        if (reelState.rafId) return;
+        reelState.rafId = window.requestAnimationFrame(() => {
+          reelState.rafId = null;
+          const threshold = feed.scrollHeight - feed.clientHeight * 2;
+          if (feed.scrollTop >= threshold) {
+            appendReelBatch(6);
+          }
+          const videos = feed.querySelectorAll("video");
+          videos.forEach((video) => {
+            const rect = video.getBoundingClientRect();
+            const midpoint = rect.top + rect.height * 0.5;
+            const inFocus = midpoint > 0 && midpoint < window.innerHeight;
+            if (inFocus) {
+              const playPromise = video.play();
+              if (playPromise && typeof playPromise.catch === "function") {
+                playPromise.catch(() => {});
+              }
+            } else {
+              video.pause();
+            }
+          });
+        });
+      },
+      { passive: true }
+    );
+
+    overlay.appendChild(header);
+    overlay.appendChild(feed);
+    document.body.appendChild(overlay);
+
+    reelState.overlayEl = overlay;
+    reelState.feedEl = feed;
+    reelState.labelEl = label;
+    return overlay;
+  }
+
+  function setBodyScrollLock(lock) {
+    if (lock) {
+      reelState.bodyScrollY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${reelState.bodyScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      return;
+    }
+    const restoreY = reelState.bodyScrollY || 0;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    window.scrollTo({ top: restoreY, behavior: "auto" });
+  }
+
+  function syncReelModeItems() {
+    if (!reelState.open) return;
+    const nextItems = getFilteredMediaItems();
+    if (!nextItems.length) {
+      closeReelMode();
+      return;
+    }
+    reelState.sourceItems = nextItems;
+    reelState.nextSourceIndex = 0;
+    if (!reelState.feedEl) return;
+    reelState.feedEl.innerHTML = "";
+    appendReelBatch(8);
+    reelState.feedEl.scrollTop = 0;
+    if (reelState.labelEl) {
+      reelState.labelEl.textContent = `Reel Mode (${nextItems.length})`;
+    }
+  }
+
+  function openReelMode() {
+    if (reelState.open) return;
+    const items = getFilteredMediaItems();
+    if (!items.length) return;
+    ensureReelOverlay();
+    reelState.open = true;
+    reelState.sourceItems = items;
+    reelState.nextSourceIndex = 0;
+    if (reelState.feedEl) {
+      reelState.feedEl.innerHTML = "";
+      appendReelBatch(8);
+      reelState.feedEl.scrollTop = 0;
+    }
+    if (reelState.labelEl) {
+      reelState.labelEl.textContent = `Reel Mode (${items.length})`;
+    }
+    if (reelState.overlayEl) {
+      reelState.overlayEl.classList.add("is-open");
+      reelState.overlayEl.setAttribute("aria-hidden", "false");
+    }
+    setBodyScrollLock(true);
+    if (reelModeToggle) {
+      reelModeToggle.setAttribute("aria-pressed", "true");
+      reelModeToggle.textContent = "Exit Reel Mode";
+    }
+  }
+
+  function closeReelMode() {
+    if (!reelState.open) return;
+    reelState.open = false;
+    if (reelState.overlayEl) {
+      reelState.overlayEl.classList.remove("is-open");
+      reelState.overlayEl.setAttribute("aria-hidden", "true");
+    }
+    if (reelState.feedEl) {
+      reelState.feedEl.querySelectorAll("video").forEach((video) => video.pause());
+    }
+    if (reelState.rafId) {
+      window.cancelAnimationFrame(reelState.rafId);
+      reelState.rafId = null;
+    }
+    setBodyScrollLock(false);
+    if (reelModeToggle) {
+      reelModeToggle.setAttribute("aria-pressed", "false");
+      reelModeToggle.textContent = "Reel Mode";
+    }
   }
 
   function clearAllFilters() {
@@ -1340,6 +1686,16 @@
       });
     }
 
+    if (reelModeToggle) {
+      reelModeToggle.addEventListener("click", () => {
+        if (reelState.open) {
+          closeReelMode();
+        } else {
+          openReelMode();
+        }
+      });
+    }
+
     document.addEventListener("click", (event) => {
       if (tagFilter && !tagFilter.contains(event.target)) {
         setTagPanelOpen(false);
@@ -1356,6 +1712,12 @@
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
+        const openVideoModal = document.querySelector(".media-video-modal[aria-hidden='false']");
+        if (openVideoModal) return;
+        if (reelState.open) {
+          closeReelMode();
+          return;
+        }
         setTagPanelOpen(false);
         if (locationPanel) locationPanel.classList.remove("is-open");
         if (locationToggle) locationToggle.setAttribute("aria-expanded", "false");
