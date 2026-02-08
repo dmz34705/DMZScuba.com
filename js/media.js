@@ -62,6 +62,8 @@
     rafId: null,
     viewportHandler: null,
     activeCardId: "",
+    soundOn: true,
+    soundButtonEl: null,
   };
 
   function resolveUrl(url) {
@@ -1300,7 +1302,7 @@
       const video = document.createElement("video");
       video.src = mediaUrl;
       video.poster = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : "";
-      video.muted = true;
+      video.muted = !reelState.soundOn;
       video.loop = true;
       video.playsInline = true;
       video.preload = "metadata";
@@ -1411,10 +1413,10 @@
     host.innerHTML = "";
     const iframe = document.createElement("iframe");
     if (kind === "stream") {
-      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=true&loop=true`;
+      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${reelState.soundOn ? "false" : "true"}&loop=true`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     } else if (kind === "youtube") {
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0`;
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${reelState.soundOn ? "0" : "1"}&playsinline=1&controls=0&rel=0`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     } else {
       return;
@@ -1464,6 +1466,28 @@
     return activeCard;
   }
 
+  function updateReelSoundButton() {
+    if (!reelState.soundButtonEl) return;
+    reelState.soundButtonEl.textContent = reelState.soundOn ? "Sound On" : "Sound Off";
+    reelState.soundButtonEl.setAttribute("aria-pressed", reelState.soundOn ? "true" : "false");
+  }
+
+  function setReelSound(nextValue) {
+    reelState.soundOn = Boolean(nextValue);
+    updateReelSoundButton();
+    if (!reelState.feedEl) return;
+    reelState.feedEl.querySelectorAll(".media-reel-media video").forEach((video) => {
+      video.muted = !reelState.soundOn;
+    });
+    // Remote embeds need remount to apply muted/autoplay params.
+    reelState.feedEl
+      .querySelectorAll(".media-reel-stream[data-mounted='true'], .media-reel-youtube[data-mounted='true']")
+      .forEach((host) => {
+        unmountRemoteReelVideo(host);
+      });
+    syncReelActivePlayback();
+  }
+
   function syncReelActivePlayback() {
     if (!reelState.open || !reelState.feedEl) return;
     const activeCard = getActiveReelCard();
@@ -1473,9 +1497,20 @@
       const isActive = card === activeCard;
       card.querySelectorAll(".media-reel-media video").forEach((video) => {
         if (isActive) {
+          video.muted = !reelState.soundOn;
           const playPromise = video.play();
           if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {});
+            playPromise.catch(() => {
+              if (!video.muted) {
+                // Fallback when browser blocks autoplay with audio.
+                setReelSound(false);
+                video.muted = true;
+                const retry = video.play();
+                if (retry && typeof retry.catch === "function") {
+                  retry.catch(() => {});
+                }
+              }
+            });
           }
         } else {
           video.pause();
@@ -1513,8 +1548,26 @@
     close.setAttribute("aria-label", "Close reel mode");
     close.addEventListener("click", closeReelMode);
 
+    const sound = document.createElement("button");
+    sound.type = "button";
+    sound.className = "media-reel-close";
+    sound.setAttribute("aria-label", "Toggle reel sound");
+    sound.setAttribute("aria-pressed", "true");
+    sound.addEventListener("click", () => {
+      setReelSound(!reelState.soundOn);
+    });
+    reelState.soundButtonEl = sound;
+    updateReelSoundButton();
+
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
+    actions.style.pointerEvents = "auto";
+    actions.appendChild(sound);
+    actions.appendChild(close);
+
     header.appendChild(label);
-    header.appendChild(close);
+    header.appendChild(actions);
 
     const feed = document.createElement("div");
     feed.className = "media-reel-feed";
@@ -1638,6 +1691,7 @@
       reelState.overlayEl.classList.add("is-open");
       reelState.overlayEl.setAttribute("aria-hidden", "false");
     }
+    setReelSound(true);
     bindReelViewportTracking();
     setBodyScrollLock(true);
     window.requestAnimationFrame(() => {
