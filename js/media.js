@@ -32,6 +32,7 @@
   const sortValue = document.getElementById("mediaSortValue");
   const sortPanel = sortField ? sortField.querySelector(".dropdown-panel") : null;
   const sortOptions = sortField ? sortField.querySelectorAll(".dropdown-option") : null;
+  const singleColumnQuery = window.matchMedia("(max-width: 980px)");
   const storageKey = "dmzMediaDraft";
   const cardSizeStorageKey = "dmzMediaCardSize";
   const selectedTags = new Set();
@@ -309,8 +310,30 @@
     });
   }
 
+  function clearCardRowSpans() {
+    if (!mediaGrid) return;
+    mediaGrid.querySelectorAll(".media-card").forEach((card) => {
+      card.style.removeProperty("grid-row-end");
+    });
+  }
+
+  function resetGridMeasurements() {
+    if (!mediaSection) return;
+    mediaSection.style.removeProperty("--media-grid-width");
+    mediaSection.style.removeProperty("--media-controls-width");
+  }
+
   function updateMasonry() {
     if (!mediaGrid) return;
+    if (singleColumnQuery.matches) {
+      hydrateVideoAspects();
+      updateThumbHeights();
+      clearCardRowSpans();
+      resetGridMeasurements();
+      updateCardSizeVisibility();
+      setupVideoPauseObserver();
+      return;
+    }
     const styles = window.getComputedStyle(mediaGrid);
     const rowHeight = parseFloat(styles.getPropertyValue("grid-auto-rows"));
     const rowGap = parseFloat(styles.getPropertyValue("row-gap")) || 0;
@@ -382,6 +405,12 @@
 
   function setupVideoThumbObserver() {
     if (!mediaGrid || !("IntersectionObserver" in window)) return;
+    if (singleColumnQuery.matches) {
+      if (videoThumbObserver) {
+        videoThumbObserver.disconnect();
+      }
+      return;
+    }
     if (videoThumbObserver) {
       videoThumbObserver.disconnect();
     }
@@ -1513,6 +1542,13 @@
   window.addEventListener("resize", () => {
     queueMasonryUpdate();
   });
+
+  if (singleColumnQuery && typeof singleColumnQuery.addEventListener === "function") {
+    singleColumnQuery.addEventListener("change", () => {
+      queueMasonryUpdate();
+      setupVideoThumbObserver();
+    });
+  }
 
   window.addEventListener("load", () => {
     queueMasonryUpdate();

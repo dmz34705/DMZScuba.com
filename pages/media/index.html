@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="/css/responsive.css">
 </head>
 
-<body id="top">
+<body id="top" class="media-page">
   <div class="media-publish-banner" id="mediaPublishBanner" aria-live="polite"></div>
   <!-- Header / Nav (match your other pages) -->
   <header class="site-header">
@@ -251,19 +251,50 @@
       const closeBtn = document.querySelector(".media-admin-close");
       const panel = document.getElementById("mediaAdminPanel");
       if (!toggle || !panel) return;
+      const mobileQuery = window.matchMedia("(max-width: 780px)");
 
       const setOpen = (next) => {
         document.body.classList.toggle("media-admin-open", next);
         toggle.setAttribute("aria-expanded", next ? "true" : "false");
+        const header = document.querySelector(".site-header");
+        if (header && next) {
+          header.classList.remove("is-hidden");
+        }
+        if (mobileQuery.matches) {
+          document.body.classList.toggle("media-mobile-lock", next);
+        } else {
+          document.body.classList.remove("media-mobile-lock");
+        }
       };
 
-      toggle.addEventListener("click", () => setOpen(true));
+      toggle.addEventListener("click", () => {
+        const isOpen = document.body.classList.contains("media-admin-open");
+        setOpen(!isOpen);
+      });
       if (closeBtn) {
         closeBtn.addEventListener("click", () => setOpen(false));
       }
 
+      document.addEventListener("click", (event) => {
+        if (!document.body.classList.contains("media-admin-open")) return;
+        if (panel.contains(event.target) || toggle.contains(event.target)) return;
+        setOpen(false);
+      });
+
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") setOpen(false);
+      });
+
+      window.addEventListener("resize", () => {
+        if (!document.body.classList.contains("media-admin-open")) {
+          document.body.classList.remove("media-mobile-lock");
+          return;
+        }
+        if (!mobileQuery.matches) {
+          document.body.classList.remove("media-mobile-lock");
+        } else {
+          document.body.classList.add("media-mobile-lock");
+        }
       });
     })();
   </script>

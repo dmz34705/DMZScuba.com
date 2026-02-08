@@ -349,6 +349,16 @@ console.log("main.js loaded");
       let scrollAccum = 0;
       let lastDirection = 0;
       let ticking = false;
+      const shouldKeepHeaderVisible = () => {
+        if (!document.body || !document.body.classList.contains("media-page")) return false;
+        if (document.body.classList.contains("media-admin-open")) return true;
+        if (document.body.classList.contains("media-edit-mode")) return true;
+        if (document.querySelector(".media-edit-modal")) return true;
+        if (document.querySelector(".media-video-modal[aria-hidden='false']")) return true;
+        if (document.querySelector(".filter-panel.is-open")) return true;
+        if (document.querySelector(".media-sort.is-open")) return true;
+        return false;
+      };
 
       const updateHeaderVisibility = () => {
         if (!mobileQuery.matches) {
@@ -363,9 +373,17 @@ console.log("main.js loaded");
         const delta = currentY - lastScrollY;
         const revealThreshold = 240;
         const hideThreshold = 32;
-        const minStartHideY = 64;
         const staticUntilY = 220;
         const minAfterStaticHide = 80;
+
+        if (shouldKeepHeaderVisible()) {
+          header.classList.remove("is-hidden");
+          lastScrollY = currentY;
+          maxScrollY = Math.max(maxScrollY, currentY);
+          scrollAccum = 0;
+          lastDirection = 0;
+          return;
+        }
 
         if (currentY <= 8) {
           header.classList.remove("is-hidden");
