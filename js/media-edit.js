@@ -386,6 +386,7 @@
   function enableInlineEdits(mediaGrid) {
     if (!mediaGrid || !window.DMZMedia) return;
     const items = window.DMZMedia.getMediaItems();
+    const allowInlineTextEdit = isDesktopDragEnabled();
     const cards = mediaGrid.querySelectorAll(".media-card:not(.media-edit-add)");
     cards.forEach((card) => {
       const index = Number(card.getAttribute("data-index"));
@@ -397,8 +398,13 @@
       const meta = card.querySelector(".media-meta");
 
       if (title) {
-        title.setAttribute("contenteditable", "true");
-        title.setAttribute("data-edit-field", "title");
+        if (allowInlineTextEdit) {
+          title.setAttribute("contenteditable", "true");
+          title.setAttribute("data-edit-field", "title");
+        } else {
+          title.removeAttribute("contenteditable");
+          title.removeAttribute("data-edit-field");
+        }
         if (!title.getAttribute("data-edit-bound")) {
           title.addEventListener("input", () => {
             window.DMZMedia.updateMediaItem(index, { title: title.textContent.trim() });
@@ -409,8 +415,13 @@
       }
 
       if (description) {
-        description.setAttribute("contenteditable", "true");
-        description.setAttribute("data-edit-field", "description");
+        if (allowInlineTextEdit) {
+          description.setAttribute("contenteditable", "true");
+          description.setAttribute("data-edit-field", "description");
+        } else {
+          description.removeAttribute("contenteditable");
+          description.removeAttribute("data-edit-field");
+        }
         if (!description.getAttribute("data-edit-bound")) {
           description.addEventListener("input", () => {
             const value = description.textContent.trim();
@@ -475,6 +486,33 @@
       fields.appendChild(tagsLabel);
       fields.appendChild(tagsInput);
       body.appendChild(fields);
+    });
+  }
+
+  function bindMobileCardEditOpen(mediaGrid) {
+    if (!mediaGrid || mediaGrid.dataset.mobileEditTapBound === "true") return;
+    mediaGrid.dataset.mobileEditTapBound = "true";
+
+    mediaGrid.addEventListener("click", (event) => {
+      if (!document.body.classList.contains("media-edit-mode")) return;
+      if (isDesktopDragEnabled()) return;
+      const card = event.target.closest(".media-card:not(.media-edit-add)");
+      if (!card) return;
+      if (
+        event.target.closest(
+          ".media-edit-delete, .media-edit-more, .media-edit-fields, input, textarea, select, button, a"
+        )
+      ) {
+        return;
+      }
+      if (!window.DMZMedia) return;
+      const index = Number(card.getAttribute("data-index"));
+      const items = window.DMZMedia.getMediaItems();
+      const item = items[index];
+      if (!item) return;
+      event.preventDefault();
+      event.stopPropagation();
+      buildAddModal(item, index);
     });
   }
 
@@ -1050,6 +1088,7 @@
     if (!toggle) return;
     if (mediaGrid) {
       bindDragReorder(mediaGrid);
+      bindMobileCardEditOpen(mediaGrid);
     }
     const updateDragAvailability = () => {
       const enabled = document.body.classList.contains("media-edit-mode") && isDesktopDragEnabled();

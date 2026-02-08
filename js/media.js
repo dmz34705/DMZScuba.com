@@ -190,6 +190,32 @@
     modal.setAttribute("aria-hidden", "false");
   }
 
+  function openLocalVideoModal(url, title) {
+    if (!url) return;
+    const modal = ensureYoutubeModal();
+    const frame = modal.querySelector(".media-video-frame");
+    if (!frame) return;
+    frame.innerHTML = "";
+    const video = document.createElement("video");
+    video.className = "media-thumb-video";
+    video.controls = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.src = url;
+    video.title = title || "Video";
+    frame.appendChild(video);
+    modal.setAttribute("aria-hidden", "false");
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {});
+    }
+  }
+
+  function isEditingModeActive() {
+    return Boolean(document.body && document.body.classList.contains("media-edit-mode"));
+  }
+
   function addPlayOverlay(target) {
     if (!target || target.querySelector(".media-thumb-play")) return;
     const overlay = document.createElement("span");
@@ -698,6 +724,11 @@
         link.classList.add("has-thumb", "is-youtube");
         addPlayOverlay(link);
         link.addEventListener("click", () => {
+          if (isEditingModeActive()) return;
+          if (singleColumnQuery.matches) {
+            openYoutubeModal(youtubeId, item.title || "YouTube video");
+            return;
+          }
           mountInlineEmbed(link, {
             src: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`,
             title: item.title || "YouTube video",
@@ -730,6 +761,11 @@
         link.classList.add("is-video");
         addPlayOverlay(link);
         link.addEventListener("click", () => {
+          if (isEditingModeActive()) return;
+          if (singleColumnQuery.matches) {
+            openStreamModal(streamId, item.title || "Cloudflare Stream video");
+            return;
+          }
           mountInlineEmbed(link, {
             src: `https://iframe.videodelivery.net/${streamId}?autoplay=true`,
             title: item.title || "Cloudflare Stream video",
@@ -764,6 +800,11 @@
         link.classList.add("is-video");
         addPlayOverlay(link);
         link.addEventListener("click", () => {
+          if (isEditingModeActive()) return;
+          if (singleColumnQuery.matches) {
+            openLocalVideoModal(mediaUrl, item.title || "Video");
+            return;
+          }
           if (link.dataset.videoLoaded === "true") return;
           link.dataset.videoLoaded = "true";
           link.innerHTML = "";

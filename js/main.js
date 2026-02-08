@@ -371,8 +371,9 @@ console.log("main.js loaded");
 
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
-        const revealThreshold = 240;
-        const hideThreshold = 32;
+        const isMediaPage = Boolean(document.body && document.body.classList.contains("media-page"));
+        const revealThreshold = isMediaPage ? 96 : 240;
+        const hideThreshold = isMediaPage ? 44 : 32;
         const staticUntilY = 220;
         const minAfterStaticHide = 80;
 
