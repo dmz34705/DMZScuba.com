@@ -104,96 +104,6 @@ function formatFields(fields) {
   return lines;
 }
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function getFieldValue(fields, key) {
-  if (!fields || typeof fields !== "object" || !key) return "";
-  const raw = fields[key];
-  if (Array.isArray(raw)) {
-    return String(raw[0] || "").trim();
-  }
-  return String(raw || "").trim();
-}
-
-function shouldSendInterestAutoReply(body, fields) {
-  const directType = String(body.autoReplyType || "").trim().toLowerCase();
-  const fieldType = getFieldValue(fields, "autoReplyType").toLowerCase();
-  if (directType === "interest-list" || fieldType === "interest-list") return true;
-  return false;
-}
-
-function buildInterestAutoReplyEmail({ name, destinationName }) {
-  const safeName = escapeHtml(name || "Diver");
-  const destinationLabel = String(destinationName || "our next travel destination").trim();
-  const safeDestination = escapeHtml(destinationLabel);
-  const subject = `You are on the DMZ Scuba interest list for ${destinationLabel}`;
-
-  const html = `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:24px 12px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;">
-            <tr>
-              <td style="padding:26px 24px;background:linear-gradient(180deg, rgba(85,185,255,0.18) 0%, rgba(7,19,37,1) 100%);">
-                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#9bd3ff;">DMZ Scuba</p>
-                <h1 style="margin:0;font-size:28px;line-height:1.2;color:#eaf2ff;">You are in.</h1>
-                <p style="margin:10px 0 0 0;font-size:15px;line-height:1.6;color:rgba(234,242,255,0.86);">
-                  ${safeName}, you are now on the interest list for <strong style="color:#ffffff;">${safeDestination}</strong>.
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:22px 24px;">
-                <p style="margin:0 0 12px 0;font-size:14px;line-height:1.7;color:rgba(234,242,255,0.82);">
-                  We will send you trip dates, pricing, and open spots as soon as they are available.
-                </p>
-                <p style="margin:0 0 18px 0;font-size:14px;line-height:1.7;color:rgba(234,242,255,0.82);">
-                  If you already have timing, certification level, or group size in mind, reply to this email and we will build the right plan.
-                </p>
-                <a href="https://dmzscuba.com/pages/travel/index.html" style="display:inline-block;padding:12px 16px;border-radius:12px;background:#e21b23;color:#ffffff;text-decoration:none;font-weight:700;">
-                  Explore Travel Destinations
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 24px;border-top:1px solid rgba(255,255,255,0.10);font-size:12px;line-height:1.6;color:rgba(234,242,255,0.62);">
-                DMZ Scuba<br/>
-                info@dmzscuba.com
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-
-  const text = [
-    `Hi ${name || "Diver"},`,
-    "",
-    `You are now on the DMZ Scuba interest list for ${destinationName || "our next travel destination"}.`,
-    "We will send dates, pricing, and open spots as they are available.",
-    "",
-    "Reply to this email with your timing, certification level, and group size, and we will build a plan.",
-    "",
-    "Travel: https://dmzscuba.com/pages/travel/index.html",
-    "",
-    "DMZ Scuba",
-    "info@dmzscuba.com",
-  ].join("\n");
-
-  return { subject, html, text };
-}
-
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -227,7 +137,6 @@ async function handleContact(request, env) {
   const subject = String(body.subject || "").trim() || `${formName} Inquiry`;
   const pageUrl = String(body.pageUrl || "").trim();
   const submittedAt = new Date().toISOString();
-  const wantsInterestAutoReply = shouldSendInterestAutoReply(body, fields);
 
   const message = [
     `Form: ${formName}`,
@@ -250,45 +159,6 @@ async function handleContact(request, env) {
   const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
   const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
   const toEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
-  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
-
-  if (wantsInterestAutoReply) {
-    if (!email || !isValidEmail(email)) {
-      return jsonResponse({ ok: false, error: "Valid email is required." }, 400);
-    }
-    const destinationName =
-      getFieldValue(fields, "location") ||
-      getFieldValue(fields, "destination") ||
-      "our next travel destination";
-    const autoReply = buildInterestAutoReplyEmail({ name, destinationName });
-    const autoReplyPayload = {
-      from: `${fromName} <${fromEmail}>`,
-      to: [email],
-      subject: autoReply.subject,
-      html: autoReply.html,
-      text: autoReply.text,
-      reply_to: [toEmail],
-    };
-
-    const autoReplyResp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(autoReplyPayload),
-    });
-
-    if (!autoReplyResp.ok) {
-      const autoReplyError = await autoReplyResp.text();
-      console.log("Resend auto-reply error", autoReplyResp.status, autoReplyError);
-      return jsonResponse(
-        { ok: false, error: "Email send failed.", details: autoReplyError || null },
-        502
-      );
-    }
-    return jsonResponse({ ok: true, autoReplySent: true });
-  }
 
   const payload = {
     from: `${fromName} <${fromEmail}>`,
@@ -297,6 +167,7 @@ async function handleContact(request, env) {
     text: message,
   };
 
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
   if (email && isValidEmail(email)) {
     payload.reply_to = [email];
   }
@@ -319,7 +190,7 @@ async function handleContact(request, env) {
     );
   }
 
-  return jsonResponse({ ok: true, autoReplySent: false });
+  return jsonResponse({ ok: true });
 }
 
 function normalizeItem(row) {
