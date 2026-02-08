@@ -2,6 +2,24 @@
 
 DMZ Scuba is a static HTML/CSS/JS site deployed on Cloudflare Pages, with a Cloudflare Worker API (`workers/dmz-media-api`) for media, destination content, admin auth, image uploads, and contact form delivery.
 
+## Go-Live Status (February 2026)
+
+The site is in late pre-launch and very close to go-live.
+
+Current production-ready areas:
+- Destination pages are powered by Worker v2 destination APIs and editable via admin tools.
+- Contact, Dive Now, Course Builder, and destination interest-list forms post to `/api/contact`.
+- Resend automation is active for internal lead notifications and user confirmations.
+- Destination-specific interest auto-replies are routed by template ID (Cozumel, Haigh, Key Largo, Mermet, Playa, Roatan, Catalina, default fallback).
+- Media operations are active through Cloudflare Stream + Images + D1.
+
+Final checks before launch:
+- Run end-to-end submit tests on all primary forms from live Pages domain.
+- Verify each destination template route and content in Resend.
+- Verify sender setup and deliverability (SPF, DKIM, DMARC, inbox placement).
+- Complete mobile and cross-browser QA on core pages.
+- Complete final copy/link QA on destination detail pages.
+
 ## Current Architecture
 
 - Frontend: static files in `index.html`, `pages/**`, `css/**`, `js/**`.
@@ -93,6 +111,15 @@ Configured in Cloudflare Worker environment/secrets:
 - `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
 - `RESEND_TO`
+- `RESEND_TEMPLATE_GENERAL_INQUIRY` (optional; fallback HTML is used if unset)
+- `RESEND_TEMPLATE_INTEREST_DEFAULT` (optional)
+- `RESEND_TEMPLATE_COZUMEL` (optional)
+- `RESEND_TEMPLATE_HAIGH` (optional)
+- `RESEND_TEMPLATE_KEY_LARGO` (optional)
+- `RESEND_TEMPLATE_MERMET` (optional)
+- `RESEND_TEMPLATE_PLAYA` (optional)
+- `RESEND_TEMPLATE_ROATAN` (optional)
+- `RESEND_TEMPLATE_CATALINA` (optional)
 - `CF_ACCOUNT_ID`
 - `CF_STREAM_TOKEN`
 - `CF_IMAGES_TOKEN`
@@ -109,5 +136,5 @@ Configured in Cloudflare Worker environment/secrets:
 ## Project-Specific Notes
 
 - Admin auth token is stored in `sessionStorage` key `dmzMediaToken`.
-- Destination and travel admin editors are intended for dev workflow while site is in pre-live state.
+- Destination and travel admin editors are actively used for near-live content operations.
 - `exports/` is a local working folder for manual JSON exports/import prep and is currently untracked.
