@@ -1107,6 +1107,61 @@
     });
   }
 
+  function captureViewportAnchor(mediaGrid) {
+    const snapshot = {
+      index: "",
+      top: 0,
+      scrollY: window.scrollY || window.pageYOffset || 0,
+    };
+    if (!mediaGrid) return snapshot;
+    const cards = [...mediaGrid.querySelectorAll(".media-card:not(.media-edit-add)")];
+    if (!cards.length) return snapshot;
+    const anchorY = Math.max(80, Math.min(window.innerHeight * 0.32, 220));
+    let best = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const distance = Math.abs(rect.top - anchorY);
+      if (distance < bestDistance) {
+        best = card;
+        bestDistance = distance;
+      }
+    });
+    if (!best) return snapshot;
+    snapshot.index = best.getAttribute("data-index") || "";
+    snapshot.top = best.getBoundingClientRect().top;
+    return snapshot;
+  }
+
+  function restoreViewportAnchor(snapshot, mediaGrid) {
+    if (!snapshot) return;
+    const apply = () => {
+      if (!mediaGrid) {
+        window.scrollTo({ top: snapshot.scrollY || 0, behavior: "auto" });
+        return;
+      }
+      if (snapshot.index) {
+        const card = mediaGrid.querySelector(`.media-card[data-index="${snapshot.index}"]`);
+        if (card) {
+          const delta = card.getBoundingClientRect().top - snapshot.top;
+          if (Math.abs(delta) > 1) {
+            window.scrollBy(0, delta);
+          }
+          return;
+        }
+      }
+      window.scrollTo({ top: snapshot.scrollY || 0, behavior: "auto" });
+    };
+
+    apply();
+    requestAnimationFrame(() => {
+      apply();
+      requestAnimationFrame(apply);
+    });
+    setTimeout(apply, 220);
+    setTimeout(apply, 420);
+  }
+
   function setupEditToggle() {
     const mediaGrid = document.getElementById("mediaGrid");
     const toggle = document.querySelector(".media-edit-toggle");
@@ -1196,7 +1251,7 @@
         });
         return;
       }
-      const scrollY = window.scrollY;
+      const anchorSnapshot = captureViewportAnchor(mediaGrid);
       const isActive = document.body.classList.toggle("media-edit-mode");
       toggle.setAttribute("aria-pressed", isActive ? "true" : "false");
       if (isActive) {
@@ -1220,7 +1275,7 @@
           window.DMZMedia.updateMasonry();
         }
       }
-      window.scrollTo({ top: scrollY, behavior: "auto" });
+      restoreViewportAnchor(anchorSnapshot, mediaGrid);
     });
 
     if (exportButton) {
