@@ -287,6 +287,34 @@ async function handleContact(request, env) {
     if (!email || !isValidEmail(email)) {
       return jsonResponse({ ok: false, error: "Valid email is required." }, 400);
     }
+    // 1) Notify DMZ inbox about the new interest-list signup.
+    const notifyPayload = {
+      from: `${fromName} <${fromEmail}>`,
+      to: [toEmail],
+      subject,
+      text: message,
+      reply_to: [email],
+    };
+
+    const notifyResp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(notifyPayload),
+    });
+
+    if (!notifyResp.ok) {
+      const notifyError = await notifyResp.text();
+      console.log("Resend notify error", notifyResp.status, notifyError);
+      return jsonResponse(
+        { ok: false, error: "Email send failed.", details: notifyError || null },
+        502
+      );
+    }
+
+    // 2) Send branded auto-reply to the user.
     const destinationName = getFieldValue(fields, "location") || getFieldValue(fields, "destination") || "this destination";
     const content = isCozumelInterest(fields)
       ? buildCozumelInterestEmail(name)
@@ -317,7 +345,7 @@ async function handleContact(request, env) {
         502
       );
     }
-    return jsonResponse({ ok: true, autoReplySent: true });
+    return jsonResponse({ ok: true, autoReplySent: true, notifySent: true });
   }
 
   const payload = {
