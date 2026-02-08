@@ -15,6 +15,7 @@ RESEND_FROM_NAME = "DMZ Scuba"
 RESEND_TO = "info@dmzscuba.com"
 # Optional: Resend template IDs for API-driven template sends.
 # Set in dashboard vars/secrets to manage email design in Resend without Worker code edits.
+# RESEND_TEMPLATE_GENERAL_INQUIRY = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_CATALINA = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_ROATAN = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_PLAYA = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

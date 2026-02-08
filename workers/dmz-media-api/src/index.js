@@ -277,7 +277,77 @@ function buildTemplateVariables(name = "", destinationName = "") {
     AMERICAN_URL: "https://www.aavacations.com/en/beach-vacation-packages",
     DELTA_URL: "https://www.delta.com/us/en/delta-vacations/vacation-inspiration/mexico-vacations/cozumel-vacation-packages",
     WEBSITE_URL: "https://dmzscuba.com",
+    INSTAGRAM_URL: "https://www.instagram.com/dmzscuba/",
+    YOUTUBE_URL: "https://www.youtube.com/@divemasterzach34705",
   };
+}
+
+function shouldSendGeneralInquiryAutoReply(formName = "") {
+  const value = String(formName || "").trim().toLowerCase();
+  if (!value) return false;
+  return (
+    value.includes("quick contact") ||
+    value.includes("dive now") ||
+    value.includes("course builder") ||
+    value.includes("contact")
+  );
+}
+
+function buildGeneralInquiryConfirmationEmail(name = "") {
+  const safeName = escapeHtml(name || "Diver");
+  const subject = "We received your request - DMZ Scuba";
+  const html = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:18px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;">
+            <tr>
+              <td style="padding:24px;background:linear-gradient(180deg, rgba(85,185,255,0.18) 0%, rgba(7,19,37,1) 100%);border-bottom:1px solid rgba(255,255,255,0.08);text-align:center;">
+                <img src="https://dmzscuba-com.pages.dev/assets/images/logos/dmz-scuba-logo.png" width="96" alt="DMZ Scuba logo" style="display:inline-block;width:96px;height:auto;border:0;outline:none;text-decoration:none;margin:0 0 10px 0;" />
+                <h1 style="margin:0;font-size:28px;line-height:1.2;color:#eaf2ff;">We received your request.</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 24px;color:#dce8f8;">
+                <p style="margin:0 0 12px 0;font-size:15px;line-height:1.75;">Hi ${safeName},</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;">
+                  Thank you for reaching out to DMZ Scuba. Your inquiry has been received, and you should hear back from us shortly with next steps.
+                </p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">
+                  <tr><td style="padding:0 0 8px 0;"><a href="https://dmzscuba.com" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:#e21b23;color:#ffffff;border:1px solid #e21b23;text-decoration:none;text-align:center;">DMZ Scuba website</a></td></tr>
+                  <tr><td style="padding:0 0 8px 0;"><a href="https://www.instagram.com/dmzscuba/" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">Instagram</a></td></tr>
+                  <tr><td style="padding:0;"><a href="https://www.youtube.com/@divemasterzach34705" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">YouTube</a></td></tr>
+                </table>
+                <p style="margin:14px 0 0 0;font-size:15px;line-height:1.75;color:#eaf2ff;">
+                  Warm regards,<br/>Zachary Lisowski<br/>Owner | DMZ Scuba LLC<br/><a href="mailto:info@dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">info@dmzscuba.com</a><br/><a href="https://dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">dmzscuba.com</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+  const text = [
+    `Hi ${name || "Diver"},`,
+    "",
+    "Thank you for reaching out to DMZ Scuba.",
+    "Your inquiry has been received, and you should hear back from us shortly.",
+    "",
+    "DMZ Scuba website: https://dmzscuba.com",
+    "Instagram: https://www.instagram.com/dmzscuba/",
+    "YouTube: https://www.youtube.com/@divemasterzach34705",
+    "",
+    "Warm regards,",
+    "Zachary Lisowski",
+    "Owner | DMZ Scuba LLC",
+    "info@dmzscuba.com",
+    "dmzscuba.com",
+  ].join("\n");
+  return { subject, html, text };
 }
 
 async function handleLogin(request, env) {
@@ -539,7 +609,50 @@ async function handleContact(request, env) {
     );
   }
 
-  return jsonResponse({ ok: true });
+  let generalAutoReplySent = false;
+  if (email && isValidEmail(email) && shouldSendGeneralInquiryAutoReply(formName)) {
+    const generalTemplateId = String(env.RESEND_TEMPLATE_GENERAL_INQUIRY || "").trim();
+    const generalContent = buildGeneralInquiryConfirmationEmail(name);
+    const autoReplyPayload = generalTemplateId
+      ? {
+          from: `${fromName} <${fromEmail}>`,
+          to: [email],
+          subject: generalContent.subject,
+          reply_to: [toEmail],
+          template: {
+            id: generalTemplateId,
+            variables: buildTemplateVariables(name, ""),
+          },
+        }
+      : {
+          from: `${fromName} <${fromEmail}>`,
+          to: [email],
+          subject: generalContent.subject,
+          html: generalContent.html,
+          text: generalContent.text,
+          reply_to: [toEmail],
+        };
+
+    const autoReplyResp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(autoReplyPayload),
+    });
+    if (!autoReplyResp.ok) {
+      const autoReplyError = await autoReplyResp.text();
+      console.log("Resend general auto-reply error", autoReplyResp.status, autoReplyError);
+      return jsonResponse(
+        { ok: false, error: "Email send failed.", details: autoReplyError || null },
+        502
+      );
+    }
+    generalAutoReplySent = true;
+  }
+
+  return jsonResponse({ ok: true, generalAutoReplySent });
 }
 
 function normalizeItem(row) {
