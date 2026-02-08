@@ -14,9 +14,38 @@
   const draftStorageKey = "dmzMediaDraft";
   let isDirty = false;
   let bannerTimer = null;
+  const modalScrollState = {
+    lockCount: 0,
+    scrollY: 0,
+  };
   const dragState = {
     card: null,
   };
+
+  function lockModalScroll() {
+    if (modalScrollState.lockCount === 0) {
+      modalScrollState.scrollY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${modalScrollState.scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+    }
+    modalScrollState.lockCount += 1;
+  }
+
+  function unlockModalScroll() {
+    if (modalScrollState.lockCount <= 0) return;
+    modalScrollState.lockCount -= 1;
+    if (modalScrollState.lockCount > 0) return;
+    const restoreY = modalScrollState.scrollY || 0;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    window.scrollTo({ top: restoreY, behavior: "auto" });
+  }
 
   function getToken() {
     return window.sessionStorage.getItem(tokenStorageKey) || "";
@@ -159,9 +188,11 @@
     card.appendChild(form);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
+    lockModalScroll();
 
     function close() {
       overlay.remove();
+      unlockModalScroll();
     }
 
     cancelBtn.addEventListener("click", close);
@@ -706,9 +737,11 @@
     card.appendChild(form);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
+    lockModalScroll();
 
     function closeModal() {
       overlay.remove();
+      unlockModalScroll();
     }
 
     cancelBtn.addEventListener("click", closeModal);
