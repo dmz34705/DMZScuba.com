@@ -67,6 +67,9 @@
     audioUnlocked: false,
     pendingGestureMount: false,
   };
+  const reelRemoteControllers = new WeakMap();
+  let streamSdkPromise = null;
+  let youtubeApiPromise = null;
 
   function resolveUrl(url) {
     if (!url) return "";
@@ -1320,15 +1323,6 @@
       host.dataset.videoThumb = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
       host.dataset.videoTitle = item && item.title ? item.title : "Cloudflare Stream video";
       setRemotePreview(host);
-      host.addEventListener("click", () => {
-        reelState.audioUnlocked = true;
-        if (!reelState.soundOn) {
-          setReelSound(true, { userGesture: true });
-          return;
-        }
-        unmountRemoteReelVideo(host);
-        mountRemoteReelVideo(host, { fromGesture: true });
-      });
       wrap.appendChild(host);
       return wrap;
     }
@@ -1341,15 +1335,6 @@
       host.dataset.videoThumb = buildYouTubeThumb(youtubeId);
       host.dataset.videoTitle = item && item.title ? item.title : "YouTube video";
       setRemotePreview(host);
-      host.addEventListener("click", () => {
-        reelState.audioUnlocked = true;
-        if (!reelState.soundOn) {
-          setReelSound(true, { userGesture: true });
-          return;
-        }
-        unmountRemoteReelVideo(host);
-        mountRemoteReelVideo(host, { fromGesture: true });
-      });
       wrap.appendChild(host);
       return wrap;
     }
@@ -1424,6 +1409,163 @@
     }
   }
 
+  function loadStreamSdk() {
+    if (window.Stream) return Promise.resolve(window.Stream);
+    if (streamSdkPromise) return streamSdkPromise;
+    streamSdkPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector("script[data-reel-stream-sdk='true']");
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.Stream));
+        existing.addEventListener("error", reject);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://embed.videodelivery.net/embed/sdk.latest.js";
+      script.async = true;
+      script.defer = true;
+      script.dataset.reelStreamSdk = "true";
+      script.addEventListener("load", () => resolve(window.Stream));
+      script.addEventListener("error", reject);
+      document.head.appendChild(script);
+    });
+    return streamSdkPromise;
+  }
+
+  function loadYouTubeApi() {
+    if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if (youtubeApiPromise) return youtubeApiPromise;
+    youtubeApiPromise = new Promise((resolve, reject) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof prev === "function") {
+          try {
+            prev();
+          } catch (error) {
+            // Ignore callback chain errors.
+          }
+        }
+        resolve(window.YT);
+      };
+      const existing = document.querySelector("script[data-reel-youtube-sdk='true']");
+      if (existing) {
+        existing.addEventListener("error", reject);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.async = true;
+      script.defer = true;
+      script.dataset.reelYoutubeSdk = "true";
+      script.addEventListener("error", reject);
+      document.head.appendChild(script);
+    });
+    return youtubeApiPromise;
+  }
+
+  function setRemoteMuted(controller, muted) {
+    if (!controller) return;
+    controller.desiredMuted = Boolean(muted);
+    const player = controller.player;
+    if (!player) return;
+    if (controller.kind === "youtube") {
+      if (muted && typeof player.mute === "function") player.mute();
+      if (!muted && typeof player.unMute === "function") player.unMute();
+      return;
+    }
+    if (controller.kind === "stream") {
+      if (typeof player.muted === "function") {
+        try {
+          player.muted(muted);
+        } catch (error) {}
+      } else if (typeof player.muted !== "undefined") {
+        try {
+          player.muted = muted;
+        } catch (error) {}
+      }
+      if (muted && typeof player.mute === "function") {
+        try {
+          player.mute();
+        } catch (error) {}
+      }
+      if (!muted && typeof player.unmute === "function") {
+        try {
+          player.unmute();
+        } catch (error) {}
+      }
+    }
+  }
+
+  function playRemoteController(controller) {
+    if (!controller || !controller.player) return;
+    if (controller.kind === "youtube" && typeof controller.player.playVideo === "function") {
+      controller.player.playVideo();
+      controller.playing = true;
+      return;
+    }
+    if (controller.kind === "stream" && typeof controller.player.play === "function") {
+      const result = controller.player.play();
+      controller.playing = true;
+      if (result && typeof result.catch === "function") {
+        result.catch(() => {});
+      }
+    }
+  }
+
+  function pauseRemoteController(controller) {
+    if (!controller || !controller.player) return;
+    if (controller.kind === "youtube" && typeof controller.player.pauseVideo === "function") {
+      controller.player.pauseVideo();
+      controller.playing = false;
+      return;
+    }
+    if (controller.kind === "stream" && typeof controller.player.pause === "function") {
+      controller.player.pause();
+      controller.playing = false;
+    }
+  }
+
+  function initRemoteController(host, options = {}) {
+    const controller = reelRemoteControllers.get(host);
+    if (!controller || !controller.iframe) return;
+    if (controller.initialized) return;
+    controller.initialized = true;
+    if (controller.kind === "stream") {
+      loadStreamSdk()
+        .then((streamFactory) => {
+          if (!reelState.open || !controller.host.isConnected) return;
+          if (!streamFactory) return;
+          controller.player = streamFactory(controller.iframe);
+          setRemoteMuted(controller, controller.desiredMuted);
+          if (options.autoplay) {
+            playRemoteController(controller);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+    if (controller.kind === "youtube") {
+      loadYouTubeApi()
+        .then(() => {
+          if (!reelState.open || !controller.host.isConnected) return;
+          if (!window.YT || !window.YT.Player) return;
+          controller.player = new window.YT.Player(controller.iframe, {
+            events: {
+              onReady: () => {
+                setRemoteMuted(controller, controller.desiredMuted);
+                if (options.autoplay) {
+                  playRemoteController(controller);
+                }
+              },
+              onStateChange: (event) => {
+                controller.playing = event && event.data === 1;
+              },
+            },
+          });
+        })
+        .catch(() => {});
+    }
+  }
+
   function mountRemoteReelVideo(host, options = {}) {
     if (!host) return;
     const force = Boolean(options && options.force);
@@ -1440,7 +1582,8 @@
       iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${shouldUnmute ? "0" : "1"}&loop=true&controls=true`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     } else if (kind === "youtube") {
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${shouldUnmute ? "0" : "1"}&playsinline=1&controls=1&rel=0`;
+      const origin = encodeURIComponent(window.location.origin);
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${shouldUnmute ? "0" : "1"}&playsinline=1&controls=1&rel=0&enablejsapi=1&origin=${origin}`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     } else {
       return;
@@ -1450,6 +1593,17 @@
     iframe.allowFullscreen = true;
     host.appendChild(iframe);
     host.dataset.mounted = "true";
+    const controller = {
+      kind,
+      host,
+      iframe,
+      player: null,
+      desiredMuted: !shouldUnmute,
+      initialized: false,
+      playing: false,
+    };
+    reelRemoteControllers.set(host, controller);
+    initRemoteController(host, { autoplay: true });
   }
 
   function applyGestureToActiveReelMedia() {
@@ -1467,10 +1621,21 @@
     const remote = activeCard.querySelector(".media-reel-stream, .media-reel-youtube");
     if (!remote) return;
     mountRemoteReelVideo(remote, { fromGesture: true, force: true });
+    const controller = reelRemoteControllers.get(remote);
+    if (controller) {
+      setRemoteMuted(controller, false);
+      playRemoteController(controller);
+      controller.playing = true;
+    }
   }
 
   function unmountRemoteReelVideo(host) {
     if (!host || host.dataset.mounted !== "true") return;
+    const controller = reelRemoteControllers.get(host);
+    if (controller) {
+      pauseRemoteController(controller);
+      reelRemoteControllers.delete(host);
+    }
     const kind = host.dataset.videoKind || "";
     const title = host.dataset.videoTitle || "Video";
     const thumbUrl = host.dataset.videoThumb || "";
@@ -1572,10 +1737,62 @@
         mountRemoteReelVideo(remote, {
           fromGesture: reelState.pendingGestureMount,
         });
+        const controller = reelRemoteControllers.get(remote);
+        if (controller) {
+          setRemoteMuted(controller, !reelState.soundOn);
+          playRemoteController(controller);
+          controller.playing = true;
+        }
       } else {
+        const controller = reelRemoteControllers.get(remote);
+        if (controller) {
+          pauseRemoteController(controller);
+          controller.playing = false;
+        }
         unmountRemoteReelVideo(remote);
       }
     });
+  }
+
+  function handleActiveReelMediaTap(event) {
+    if (!reelState.open || !reelState.feedEl) return;
+    const mediaWrap = event.target.closest(".media-reel-media");
+    if (!mediaWrap) return;
+    const card = mediaWrap.closest(".media-reel-card");
+    const activeCard = getActiveReelCard();
+    if (!card || !activeCard || card !== activeCard) return;
+    const localVideo = card.querySelector(".media-reel-media video");
+    if (localVideo) {
+      if (localVideo.paused) {
+        localVideo.muted = !reelState.soundOn;
+        const playPromise = localVideo.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {});
+        }
+      } else {
+        localVideo.pause();
+      }
+      return;
+    }
+    const remote = card.querySelector(".media-reel-stream, .media-reel-youtube");
+    if (!remote) return;
+    let controller = reelRemoteControllers.get(remote);
+    if (!controller || remote.dataset.mounted !== "true") {
+      mountRemoteReelVideo(remote, { fromGesture: reelState.soundOn, force: true });
+      controller = reelRemoteControllers.get(remote);
+    }
+    if (!controller) return;
+    if (controller.playing) {
+      pauseRemoteController(controller);
+      controller.playing = false;
+      return;
+    }
+    if (reelState.soundOn) {
+      reelState.audioUnlocked = true;
+      setRemoteMuted(controller, false);
+    }
+    playRemoteController(controller);
+    controller.playing = true;
   }
 
   function ensureReelOverlay() {
@@ -1626,9 +1843,7 @@
     feed.addEventListener("click", (event) => {
       if (!reelState.open) return;
       if (event.target.closest(".media-reel-header")) return;
-      if (!reelState.soundOn) {
-        setReelSound(true, { userGesture: true });
-      }
+      handleActiveReelMediaTap(event);
     });
     feed.addEventListener(
       "scroll",
