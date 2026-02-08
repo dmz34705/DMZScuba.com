@@ -65,6 +65,7 @@
     soundOn: false,
     soundButtonEl: null,
     audioUnlocked: false,
+    pendingGestureMount: false,
   };
 
   function resolveUrl(url) {
@@ -1498,6 +1499,7 @@
     reelState.soundOn = Boolean(nextValue);
     if (reelState.soundOn && userGesture) {
       reelState.audioUnlocked = true;
+      reelState.pendingGestureMount = true;
     }
     updateReelSoundButton();
     if (!reelState.feedEl) return;
@@ -1511,6 +1513,7 @@
         unmountRemoteReelVideo(host);
       });
     syncReelActivePlayback();
+    reelState.pendingGestureMount = false;
   }
 
   function syncReelActivePlayback() {
@@ -1544,7 +1547,9 @@
       const remote = card.querySelector(".media-reel-stream, .media-reel-youtube");
       if (!remote) return;
       if (isActive) {
-        mountRemoteReelVideo(remote);
+        mountRemoteReelVideo(remote, {
+          fromGesture: reelState.pendingGestureMount,
+        });
       } else {
         unmountRemoteReelVideo(remote);
       }
