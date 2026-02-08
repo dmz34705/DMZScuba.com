@@ -68,7 +68,8 @@
     pendingGestureMount: false,
   };
   const reelRemoteControllers = new WeakMap();
-  let streamSdkPromise = null;
+  const reelHlsControllers = new WeakMap();
+  let hlsJsPromise = null;
   let youtubeApiPromise = null;
 
   function resolveUrl(url) {
@@ -1316,14 +1317,17 @@
     }
 
     if (isVideo && streamId) {
-      const host = document.createElement("div");
-      host.className = "media-reel-stream";
-      host.dataset.videoKind = "stream";
-      host.dataset.videoId = streamId;
-      host.dataset.videoThumb = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
-      host.dataset.videoTitle = item && item.title ? item.title : "Cloudflare Stream video";
-      setRemotePreview(host);
-      wrap.appendChild(host);
+      const video = document.createElement("video");
+      video.poster = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
+      video.muted = !reelState.soundOn;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.dataset.reelVideoKind = "stream";
+      video.dataset.streamManifest = `https://videodelivery.net/${streamId}/manifest/video.m3u8`;
+      video.dataset.streamFallback = `https://videodelivery.net/${streamId}/downloads/default.mp4`;
+      setupStreamReelVideo(video);
+      wrap.appendChild(video);
       return wrap;
     }
 
@@ -1409,26 +1413,77 @@
     }
   }
 
-  function loadStreamSdk() {
-    if (window.Stream) return Promise.resolve(window.Stream);
-    if (streamSdkPromise) return streamSdkPromise;
-    streamSdkPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector("script[data-reel-stream-sdk='true']");
+  function loadHlsJs() {
+    if (window.Hls) return Promise.resolve(window.Hls);
+    if (hlsJsPromise) return hlsJsPromise;
+    hlsJsPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector("script[data-reel-hls='true']");
       if (existing) {
-        existing.addEventListener("load", () => resolve(window.Stream));
+        existing.addEventListener("load", () => resolve(window.Hls));
         existing.addEventListener("error", reject);
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://embed.videodelivery.net/embed/sdk.latest.js";
+      script.src = "https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js";
       script.async = true;
       script.defer = true;
-      script.dataset.reelStreamSdk = "true";
-      script.addEventListener("load", () => resolve(window.Stream));
+      script.dataset.reelHls = "true";
+      script.addEventListener("load", () => resolve(window.Hls));
       script.addEventListener("error", reject);
       document.head.appendChild(script);
     });
-    return streamSdkPromise;
+    return hlsJsPromise;
+  }
+
+  function setupStreamReelVideo(video) {
+    if (!video || video.dataset.streamReady === "true") return;
+    const manifestUrl = video.dataset.streamManifest || "";
+    const fallbackUrl = video.dataset.streamFallback || "";
+    if (!manifestUrl) return;
+    video.dataset.streamReady = "true";
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = manifestUrl;
+      return;
+    }
+    loadHlsJs()
+      .then((HlsLib) => {
+        if (!video.isConnected) return;
+        if (HlsLib && typeof HlsLib.isSupported === "function" && HlsLib.isSupported()) {
+          const hls = new HlsLib({ enableWorker: true });
+          hls.loadSource(manifestUrl);
+          hls.attachMedia(video);
+          reelHlsControllers.set(video, hls);
+          return;
+        }
+        if (fallbackUrl) {
+          video.src = fallbackUrl;
+        }
+      })
+      .catch(() => {
+        if (fallbackUrl) {
+          video.src = fallbackUrl;
+        }
+      });
+  }
+
+  function destroyStreamReelVideo(video) {
+    if (!video) return;
+    const hls = reelHlsControllers.get(video);
+    if (hls && typeof hls.destroy === "function") {
+      try {
+        hls.destroy();
+      } catch (error) {
+        // Ignore cleanup errors.
+      }
+    }
+    reelHlsControllers.delete(video);
+  }
+
+  function cleanupReelStreamVideos(root) {
+    if (!root) return;
+    root.querySelectorAll("video[data-reel-video-kind='stream']").forEach((video) => {
+      destroyStreamReelVideo(video);
+    });
   }
 
   function loadYouTubeApi() {
@@ -1467,65 +1522,27 @@
     controller.desiredMuted = Boolean(muted);
     const player = controller.player;
     if (!player) return;
-    if (controller.kind === "youtube") {
-      if (muted && typeof player.mute === "function") player.mute();
-      if (!muted && typeof player.unMute === "function") player.unMute();
-      return;
-    }
-    if (controller.kind === "stream") {
-      if (typeof player.muted === "function") {
-        try {
-          player.muted(muted);
-        } catch (error) {}
-      } else if (typeof player.muted !== "undefined") {
-        try {
-          player.muted = muted;
-        } catch (error) {}
-      }
-      if (muted && typeof player.mute === "function") {
-        try {
-          player.mute();
-        } catch (error) {}
-      }
-      if (!muted && typeof player.unmute === "function") {
-        try {
-          player.unmute();
-        } catch (error) {}
-      }
-    }
+    if (controller.kind !== "youtube") return;
+    if (muted && typeof player.mute === "function") player.mute();
+    if (!muted && typeof player.unMute === "function") player.unMute();
   }
 
   function playRemoteController(controller) {
     if (!controller) return;
     controller.desiredPlaying = true;
     if (!controller.player) return;
-    if (controller.kind === "youtube" && typeof controller.player.playVideo === "function") {
-      controller.player.playVideo();
-      controller.playing = true;
-      return;
-    }
-    if (controller.kind === "stream" && typeof controller.player.play === "function") {
-      const result = controller.player.play();
-      controller.playing = true;
-      if (result && typeof result.catch === "function") {
-        result.catch(() => {});
-      }
-    }
+    if (controller.kind !== "youtube" || typeof controller.player.playVideo !== "function") return;
+    controller.player.playVideo();
+    controller.playing = true;
   }
 
   function pauseRemoteController(controller) {
     if (!controller) return;
     controller.desiredPlaying = false;
     if (!controller.player) return;
-    if (controller.kind === "youtube" && typeof controller.player.pauseVideo === "function") {
-      controller.player.pauseVideo();
-      controller.playing = false;
-      return;
-    }
-    if (controller.kind === "stream" && typeof controller.player.pause === "function") {
-      controller.player.pause();
-      controller.playing = false;
-    }
+    if (controller.kind !== "youtube" || typeof controller.player.pauseVideo !== "function") return;
+    controller.player.pauseVideo();
+    controller.playing = false;
   }
 
   function initRemoteController(host, options = {}) {
@@ -1533,20 +1550,6 @@
     if (!controller || !controller.iframe) return;
     if (controller.initialized) return;
     controller.initialized = true;
-    if (controller.kind === "stream") {
-      loadStreamSdk()
-        .then((streamFactory) => {
-          if (!reelState.open || !controller.host.isConnected) return;
-          if (!streamFactory) return;
-          controller.player = streamFactory(controller.iframe);
-          setRemoteMuted(controller, controller.desiredMuted);
-          if (options.autoplay || controller.desiredPlaying) {
-            playRemoteController(controller);
-          }
-        })
-        .catch(() => {});
-      return;
-    }
     if (controller.kind === "youtube") {
       loadYouTubeApi()
         .then(() => {
@@ -1567,6 +1570,7 @@
           });
         })
         .catch(() => {});
+      return;
     }
   }
 
@@ -1582,10 +1586,7 @@
     const title = host.dataset.videoTitle || "Video";
     host.innerHTML = "";
     const iframe = document.createElement("iframe");
-    if (kind === "stream") {
-      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${shouldUnmute ? "0" : "1"}&loop=true&controls=true`;
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    } else if (kind === "youtube") {
+    if (kind === "youtube") {
       const origin = encodeURIComponent(window.location.origin);
       iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${shouldUnmute ? "0" : "1"}&playsinline=1&controls=1&rel=0&enablejsapi=1&origin=${origin}`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
@@ -1623,7 +1624,7 @@
       }
       return;
     }
-    const remote = activeCard.querySelector(".media-reel-stream, .media-reel-youtube");
+    const remote = activeCard.querySelector(".media-reel-youtube");
     if (!remote) return;
     if (remote.dataset.mounted !== "true") {
       mountRemoteReelVideo(remote, { fromGesture: true, force: false });
@@ -1701,7 +1702,7 @@
       video.muted = !reelState.soundOn;
     });
     reelState.feedEl
-      .querySelectorAll(".media-reel-stream[data-mounted='true'], .media-reel-youtube[data-mounted='true']")
+      .querySelectorAll(".media-reel-youtube[data-mounted='true']")
       .forEach((host) => {
         const controller = reelRemoteControllers.get(host);
         if (controller) {
@@ -1740,7 +1741,7 @@
           video.pause();
         }
       });
-      const remote = card.querySelector(".media-reel-stream, .media-reel-youtube");
+      const remote = card.querySelector(".media-reel-youtube");
       if (!remote) return;
       if (isActive) {
         mountRemoteReelVideo(remote, {
@@ -1783,7 +1784,7 @@
       }
       return;
     }
-    const remote = card.querySelector(".media-reel-stream, .media-reel-youtube");
+    const remote = card.querySelector(".media-reel-youtube");
     if (!remote) return;
     let controller = reelRemoteControllers.get(remote);
     if (!controller || remote.dataset.mounted !== "true") {
@@ -1945,6 +1946,7 @@
     reelState.sourceItems = nextItems;
     reelState.nextSourceIndex = 0;
     if (!reelState.feedEl) return;
+    cleanupReelStreamVideos(reelState.feedEl);
     reelState.feedEl.innerHTML = "";
     appendReelBatch(8);
     reelState.feedEl.scrollTop = 0;
@@ -1963,6 +1965,7 @@
     reelState.sourceItems = items;
     reelState.nextSourceIndex = 0;
     if (reelState.feedEl) {
+      cleanupReelStreamVideos(reelState.feedEl);
       reelState.feedEl.innerHTML = "";
       appendReelBatch(8);
       reelState.feedEl.scrollTop = 0;
@@ -1996,8 +1999,9 @@
     }
     if (reelState.feedEl) {
       reelState.feedEl.querySelectorAll("video").forEach((video) => video.pause());
+      cleanupReelStreamVideos(reelState.feedEl);
       reelState.feedEl
-        .querySelectorAll(".media-reel-stream[data-mounted='true'], .media-reel-youtube[data-mounted='true']")
+        .querySelectorAll(".media-reel-youtube[data-mounted='true']")
         .forEach((host) => unmountRemoteReelVideo(host));
     }
     if (reelState.rafId) {
