@@ -1389,7 +1389,9 @@
       meta.appendChild(span);
     });
 
-    copy.appendChild(badge);
+    if ((item && item.type ? String(item.type).toLowerCase() : "") !== "video") {
+      copy.appendChild(badge);
+    }
     copy.appendChild(title);
     copy.appendChild(description);
     if (meta.childElementCount) {
