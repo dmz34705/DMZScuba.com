@@ -322,7 +322,7 @@
       if (!isDesktopDragEnabled() || !document.body.classList.contains("media-edit-mode")) return;
       const card = event.target.closest(".media-card");
       if (!card || card.classList.contains("media-edit-add")) return;
-      if (event.target.closest("button, input, textarea, select, a, video")) {
+      if (event.target.closest("button, input, textarea, select, a, video, [contenteditable='true']")) {
         event.preventDefault();
         return;
       }
@@ -417,7 +417,6 @@
   function enableInlineEdits(mediaGrid) {
     if (!mediaGrid || !window.DMZMedia) return;
     const items = window.DMZMedia.getMediaItems();
-    const allowInlineTextEdit = isDesktopDragEnabled();
     const cards = mediaGrid.querySelectorAll(".media-card:not(.media-edit-add)");
     cards.forEach((card) => {
       const index = Number(card.getAttribute("data-index"));
@@ -429,13 +428,8 @@
       const meta = card.querySelector(".media-meta");
 
       if (title) {
-        if (allowInlineTextEdit) {
-          title.setAttribute("contenteditable", "true");
-          title.setAttribute("data-edit-field", "title");
-        } else {
-          title.removeAttribute("contenteditable");
-          title.removeAttribute("data-edit-field");
-        }
+        title.setAttribute("contenteditable", "true");
+        title.setAttribute("data-edit-field", "title");
         if (!title.getAttribute("data-edit-bound")) {
           title.addEventListener("input", () => {
             window.DMZMedia.updateMediaItem(index, { title: title.textContent.trim() });
@@ -446,13 +440,8 @@
       }
 
       if (description) {
-        if (allowInlineTextEdit) {
-          description.setAttribute("contenteditable", "true");
-          description.setAttribute("data-edit-field", "description");
-        } else {
-          description.removeAttribute("contenteditable");
-          description.removeAttribute("data-edit-field");
-        }
+        description.setAttribute("contenteditable", "true");
+        description.setAttribute("data-edit-field", "description");
         if (!description.getAttribute("data-edit-bound")) {
           description.addEventListener("input", () => {
             const value = description.textContent.trim();
@@ -531,7 +520,7 @@
       if (!card) return;
       if (
         event.target.closest(
-          ".media-edit-delete, .media-edit-more, .media-edit-fields, input, textarea, select, button, a"
+          ".media-edit-delete, .media-edit-more, .media-edit-fields, [data-edit-field], input, textarea, select, button, a"
         )
       ) {
         return;
