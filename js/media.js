@@ -61,6 +61,7 @@
     labelEl: null,
     rafId: null,
     viewportHandler: null,
+    activeCardId: "",
   };
 
   function resolveUrl(url) {
@@ -1277,6 +1278,24 @@
     const isVideo = item && item.type === "video";
     const isLocalVideo = isVideo && isVideoUrl(mediaUrl);
 
+    const setRemotePreview = (host) => {
+      if (!host) return;
+      const kind = host.dataset.videoKind || "";
+      const title = host.dataset.videoTitle || "Video";
+      const thumbUrl = host.dataset.videoThumb || "";
+      host.innerHTML = "";
+      const thumb = document.createElement("img");
+      thumb.src = thumbUrl;
+      thumb.alt = `${title} thumbnail`;
+      host.appendChild(thumb);
+      const play = document.createElement("span");
+      play.className = "media-reel-play";
+      play.setAttribute("aria-hidden", "true");
+      host.appendChild(play);
+      host.setAttribute("aria-label", kind === "youtube" ? "YouTube video preview" : "Stream video preview");
+      host.dataset.mounted = "false";
+    };
+
     if (isLocalVideo) {
       const video = document.createElement("video");
       video.src = mediaUrl;
@@ -1284,49 +1303,32 @@
       video.muted = true;
       video.loop = true;
       video.playsInline = true;
-      video.autoplay = true;
       video.preload = "metadata";
       wrap.appendChild(video);
       return wrap;
     }
 
     if (isVideo && streamId) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "media-reel-stream";
-      button.setAttribute("aria-label", "Open video");
-      const thumb = document.createElement("img");
-      thumb.src = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
-      thumb.alt = item && item.title ? `${item.title} thumbnail` : "Video thumbnail";
-      button.appendChild(thumb);
-      const play = document.createElement("span");
-      play.className = "media-reel-play";
-      play.setAttribute("aria-hidden", "true");
-      button.appendChild(play);
-      button.addEventListener("click", () => {
-        openStreamModal(streamId, item && item.title ? item.title : "Cloudflare Stream video");
-      });
-      wrap.appendChild(button);
+      const host = document.createElement("div");
+      host.className = "media-reel-stream";
+      host.dataset.videoKind = "stream";
+      host.dataset.videoId = streamId;
+      host.dataset.videoThumb = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
+      host.dataset.videoTitle = item && item.title ? item.title : "Cloudflare Stream video";
+      setRemotePreview(host);
+      wrap.appendChild(host);
       return wrap;
     }
 
     if (isVideo && youtubeId) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "media-reel-youtube";
-      button.setAttribute("aria-label", "Open video");
-      const thumb = document.createElement("img");
-      thumb.src = buildYouTubeThumb(youtubeId);
-      thumb.alt = item && item.title ? `${item.title} thumbnail` : "YouTube thumbnail";
-      button.appendChild(thumb);
-      const play = document.createElement("span");
-      play.className = "media-reel-play";
-      play.setAttribute("aria-hidden", "true");
-      button.appendChild(play);
-      button.addEventListener("click", () => {
-        openYoutubeModal(youtubeId, item && item.title ? item.title : "YouTube video");
-      });
-      wrap.appendChild(button);
+      const host = document.createElement("div");
+      host.className = "media-reel-youtube";
+      host.dataset.videoKind = "youtube";
+      host.dataset.videoId = youtubeId;
+      host.dataset.videoThumb = buildYouTubeThumb(youtubeId);
+      host.dataset.videoTitle = item && item.title ? item.title : "YouTube video";
+      setRemotePreview(host);
+      wrap.appendChild(host);
       return wrap;
     }
 
@@ -1400,6 +1402,95 @@
     }
   }
 
+  function mountRemoteReelVideo(host) {
+    if (!host || host.dataset.mounted === "true") return;
+    const kind = host.dataset.videoKind || "";
+    const videoId = host.dataset.videoId || "";
+    if (!kind || !videoId) return;
+    const title = host.dataset.videoTitle || "Video";
+    host.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    if (kind === "stream") {
+      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=true&loop=true`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    } else if (kind === "youtube") {
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    } else {
+      return;
+    }
+    iframe.title = title;
+    iframe.loading = "eager";
+    iframe.allowFullscreen = true;
+    host.appendChild(iframe);
+    host.dataset.mounted = "true";
+  }
+
+  function unmountRemoteReelVideo(host) {
+    if (!host || host.dataset.mounted !== "true") return;
+    const kind = host.dataset.videoKind || "";
+    const title = host.dataset.videoTitle || "Video";
+    const thumbUrl = host.dataset.videoThumb || "";
+    host.innerHTML = "";
+    const thumb = document.createElement("img");
+    thumb.src = thumbUrl;
+    thumb.alt = `${title} thumbnail`;
+    host.appendChild(thumb);
+    const play = document.createElement("span");
+    play.className = "media-reel-play";
+    play.setAttribute("aria-hidden", "true");
+    host.appendChild(play);
+    host.setAttribute("aria-label", kind === "youtube" ? "YouTube video preview" : "Stream video preview");
+    host.dataset.mounted = "false";
+  }
+
+  function getActiveReelCard() {
+    if (!reelState.feedEl) return null;
+    const cards = [...reelState.feedEl.querySelectorAll(".media-reel-card")];
+    if (!cards.length) return null;
+    const feedRect = reelState.feedEl.getBoundingClientRect();
+    const targetY = feedRect.top + reelState.feedEl.clientHeight * 0.5;
+    let activeCard = cards[0];
+    let bestDistance = Number.POSITIVE_INFINITY;
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const mid = rect.top + rect.height * 0.5;
+      const distance = Math.abs(mid - targetY);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        activeCard = card;
+      }
+    });
+    return activeCard;
+  }
+
+  function syncReelActivePlayback() {
+    if (!reelState.open || !reelState.feedEl) return;
+    const activeCard = getActiveReelCard();
+    if (!activeCard) return;
+    reelState.activeCardId = activeCard.getAttribute("data-item-id") || "";
+    reelState.feedEl.querySelectorAll(".media-reel-card").forEach((card) => {
+      const isActive = card === activeCard;
+      card.querySelectorAll(".media-reel-media video").forEach((video) => {
+        if (isActive) {
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {});
+          }
+        } else {
+          video.pause();
+        }
+      });
+      const remote = card.querySelector(".media-reel-stream, .media-reel-youtube");
+      if (!remote) return;
+      if (isActive) {
+        mountRemoteReelVideo(remote);
+      } else {
+        unmountRemoteReelVideo(remote);
+      }
+    });
+  }
+
   function ensureReelOverlay() {
     if (reelState.overlayEl && reelState.feedEl && reelState.labelEl) {
       return reelState.overlayEl;
@@ -1438,20 +1529,7 @@
           if (feed.scrollTop >= threshold) {
             appendReelBatch(6);
           }
-          const videos = feed.querySelectorAll("video");
-          videos.forEach((video) => {
-            const rect = video.getBoundingClientRect();
-            const midpoint = rect.top + rect.height * 0.5;
-            const inFocus = midpoint > 0 && midpoint < window.innerHeight;
-            if (inFocus) {
-              const playPromise = video.play();
-              if (playPromise && typeof playPromise.catch === "function") {
-                playPromise.catch(() => {});
-              }
-            } else {
-              video.pause();
-            }
-          });
+          syncReelActivePlayback();
         });
       },
       { passive: true }
@@ -1534,6 +1612,7 @@
     reelState.feedEl.innerHTML = "";
     appendReelBatch(8);
     reelState.feedEl.scrollTop = 0;
+    syncReelActivePlayback();
     if (reelState.labelEl) {
       reelState.labelEl.textContent = `Reel Mode (${nextItems.length})`;
     }
@@ -1561,6 +1640,9 @@
     }
     bindReelViewportTracking();
     setBodyScrollLock(true);
+    window.requestAnimationFrame(() => {
+      syncReelActivePlayback();
+    });
     if (reelModeToggle) {
       reelModeToggle.setAttribute("aria-pressed", "true");
       reelModeToggle.textContent = "Exit Reel Mode";
@@ -1576,6 +1658,9 @@
     }
     if (reelState.feedEl) {
       reelState.feedEl.querySelectorAll("video").forEach((video) => video.pause());
+      reelState.feedEl
+        .querySelectorAll(".media-reel-stream[data-mounted='true'], .media-reel-youtube[data-mounted='true']")
+        .forEach((host) => unmountRemoteReelVideo(host));
     }
     if (reelState.rafId) {
       window.cancelAnimationFrame(reelState.rafId);
