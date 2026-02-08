@@ -343,6 +343,10 @@ console.log("main.js loaded");
 
     const header = document.querySelector(".site-header");
     if (header) {
+      if (document.body && document.body.classList.contains("media-page")) {
+        header.classList.remove("is-hidden");
+        return;
+      }
       const mobileQuery = window.matchMedia("(max-width: 780px)");
       let lastScrollY = window.scrollY;
       let maxScrollY = window.scrollY;
