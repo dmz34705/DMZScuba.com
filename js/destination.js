@@ -67,6 +67,10 @@
 
   const heroRoot = document.documentElement;
   const diveNowLinks = document.querySelectorAll(".dive-now-link");
+  const interestToggles = document.querySelectorAll(".dest-interest-toggle");
+  const interestForm = document.getElementById("destInterestForm");
+  const interestLocationInput = document.getElementById("destInterestLocation");
+  const interestIdInput = document.getElementById("destInterestId");
   const mediaLink = document.getElementById("destMediaLink");
   const mediaApiUrl = apiRoot ? `${apiRoot}/api/media` : "/api/media";
   const mediaWorkerFallbackUrl = "https://dmz-media-api.zacharylisowski55.workers.dev/api/media";
@@ -1180,6 +1184,37 @@
     });
   }
 
+  function setupInterestListForm() {
+    if (!interestForm) return;
+
+    const setOpen = (isOpen) => {
+      interestForm.hidden = !isOpen;
+      interestToggles.forEach((button) => {
+        button.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
+      if (isOpen) {
+        const emailInput = interestForm.querySelector("input[name='email']");
+        if (emailInput) emailInput.focus();
+      }
+    };
+
+    interestToggles.forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextOpen = interestForm.hidden;
+        setOpen(nextOpen);
+      });
+    });
+
+    interestForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!window.DMZForms || typeof window.DMZForms.submit !== "function") {
+        window.alert("Form helper is unavailable. Please refresh and try again.");
+        return;
+      }
+      window.DMZForms.submit(interestForm, { requireEmail: true });
+    });
+  }
+
   function createDestinationMediaCard(item, dest, compact = false) {
     const card = document.createElement("article");
     card.className = compact ? "media-card is-compact" : "media-card";
@@ -1721,6 +1756,12 @@
       const base = "../contact/index.html#dive-now";
       link.href = item.id ? `${base}&destination=${encodeURIComponent(item.id)}` : base;
     });
+    if (interestLocationInput) {
+      interestLocationInput.value = item.heroTitle || item.name || "";
+    }
+    if (interestIdInput) {
+      interestIdInput.value = item.id || "";
+    }
     if (mediaLink) {
       mediaLink.href = item.id ? `../media/index.html?location=${encodeURIComponent(item.id)}` : "../media/index.html";
     }
@@ -2313,5 +2354,6 @@
   }
 
   setupAdminControls();
+  setupInterestListForm();
   loadDestination();
 })();
