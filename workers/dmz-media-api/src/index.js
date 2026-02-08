@@ -104,6 +104,128 @@ function formatFields(fields) {
   return lines;
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getFieldValue(fields, key) {
+  if (!fields || typeof fields !== "object") return "";
+  const raw = fields[key];
+  if (Array.isArray(raw)) return String(raw[0] || "").trim();
+  return String(raw || "").trim();
+}
+
+function shouldSendInterestAutoReply(body, fields) {
+  const direct = String(body.autoReplyType || "").trim().toLowerCase();
+  const field = getFieldValue(fields, "autoReplyType").toLowerCase();
+  return direct === "interest-list" || field === "interest-list";
+}
+
+function isCozumelInterest(fields) {
+  const destination = getFieldValue(fields, "destination").toLowerCase();
+  const location = getFieldValue(fields, "location").toLowerCase();
+  return destination.includes("cozumel") || location.includes("cozumel");
+}
+
+function buildCozumelInterestEmail(name = "") {
+  const safeName = escapeHtml(name || "Diver");
+  const subject = "Thank you for your interest in diving Cozumel with DMZ Scuba.";
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DMZ Scuba | Cozumel Interest</title>
+  </head>
+  <body style="margin:0;padding:0;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      Thank you for your interest in diving Cozumel with DMZ Scuba.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:20px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;">
+            <tr>
+              <td style="padding:24px;background:linear-gradient(180deg, rgba(85,185,255,0.18) 0%, rgba(7,19,37,1) 100%);border-bottom:1px solid rgba(255,255,255,0.08);">
+                <p style="margin:0 0 8px 0;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:#9bd3ff;">DMZ Scuba Travel and Training</p>
+                <h1 style="margin:0;font-size:28px;line-height:1.2;color:#eaf2ff;">Thank you for your interest in diving Cozumel with DMZ Scuba.</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 24px;color:#dce8f8;">
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">Hi ${safeName},</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">
+                  We’ve received your inquiry and wanted to provide you with a clear overview of what to expect, along with resources you can explore at your own pace as you consider joining us.
+                  Cozumel remains one of the most consistent and rewarding dive destinations in the Caribbean, offering warm water, excellent visibility, and a smooth, well-organized dive experience that works equally well for newer divers and experienced travelers.
+                </p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">
+                  Our trips are structured to be straightforward and low-stress from the moment you begin planning through your final dive of the week.
+                  Divers typically review the destination overview and travel logistics first to get a sense of the overall experience, daily dive rhythm, and travel flow.
+                  From there, you can decide whether you would like additional details, pricing information, or help aligning the trip with your schedule and experience level.
+                </p>
+                <p style="margin:0 0 10px 0;font-size:15px;line-height:1.7;color:#eef5ff;font-weight:700;">Booking and trip planning resources:</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px 0;">
+                  <tr>
+                    <td style="padding:0;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:10px 10px 8px 10px;">
+                        <tr><td style="padding:0 0 8px 0;"><a href="https://dmzscuba-com.pages.dev/pages/travel/destination?id=cozumel" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:#e21b23;color:#ffffff;border:1px solid #e21b23;text-decoration:none;text-align:center;">DMZ Cozumel destination page</a></td></tr>
+                        <tr><td style="padding:0 0 8px 0;"><a href="https://www.dresseldivers.com/dive/mexico/cozumel-scuba-diving/" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">Dressel Divers Cozumel</a></td></tr>
+                        <tr><td style="padding:0 0 8px 0;"><a href="https://www.iberostar.com/en/hotels/cozumel/iberostar-cozumel" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">Iberostar Waves Cozumel</a></td></tr>
+                        <tr><td style="padding:0 0 8px 0;"><a href="https://vacations.united.com/destinations/mexico/" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">United Vacations (search Cozumel + Iberostar)</a></td></tr>
+                        <tr><td style="padding:0 0 8px 0;"><a href="https://www.aavacations.com/en/beach-vacation-packages" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">American Airlines Vacations (search Cozumel + Iberostar)</a></td></tr>
+                        <tr><td style="padding:0;"><a href="https://www.delta.com/us/en/delta-vacations/vacation-inspiration/mexico-vacations/cozumel-vacation-packages" style="display:block;padding:14px 18px;border-radius:14px;font-weight:700;font-size:14px;line-height:1.2;background:rgba(255,255,255,0.05);color:#eaf2ff;border:1px solid rgba(255,255,255,0.16);text-decoration:none;text-align:center;">Delta Vacations Cozumel packages</a></td></tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 14px 0;padding:12px 14px;border-radius:12px;background:rgba(226,27,35,0.12);border:1px solid rgba(226,27,35,0.42);font-size:13px;line-height:1.6;color:#ffe3e5;font-weight:700;text-transform:uppercase;letter-spacing:0.2px;">Important: Airline vacation packages do not include any diving.</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">These materials are designed to answer most initial questions and allow you to explore independently before deciding how you would like to proceed. When you feel ready, you are welcome to reply directly to this email to discuss availability, trip timing, training considerations prior to travel, or any other planning details.</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">You have also been added to the DMZ Scuba interest list for this destination. This simply ensures you will be notified of any trip developments, new dates, pricing releases, or availability updates as they are announced. There is no commitment required - it is simply the best way to stay informed as plans evolve.</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#dce8f8;">There is no obligation or timeline - the goal is to provide clear information so you can determine whether this destination and travel style are the right fit for you.</p>
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.75;color:#eef5ff;">We appreciate your interest and look forward to the possibility of diving together.</p>
+                <p style="margin:0;font-size:15px;line-height:1.75;color:#eaf2ff;">Warm regards,<br/>Zachary Lisowski<br/>Owner | DMZ Scuba LLC<br/>DMZ Scuba Travel and Training<br/>[Phone]<br/><a href="https://dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">dmzscuba.com</a></p>
+              </td>
+            </tr>
+            <tr><td style="padding:14px 24px;border-top:1px solid rgba(255,255,255,0.10);font-size:12px;line-height:1.6;color:rgba(234,242,255,0.62);">DMZ Scuba | Always Dive</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+  const text = [
+    `Hi ${name || "Diver"},`,
+    "",
+    "Thank you for your interest in diving Cozumel with DMZ Scuba.",
+    "You have been added to the DMZ Scuba interest list for Cozumel.",
+    "",
+    "Resources:",
+    "- DMZ Cozumel destination page: https://dmzscuba-com.pages.dev/pages/travel/destination?id=cozumel",
+    "- Dressel Divers Cozumel: https://www.dresseldivers.com/dive/mexico/cozumel-scuba-diving/",
+    "- Iberostar Waves Cozumel: https://www.iberostar.com/en/hotels/cozumel/iberostar-cozumel",
+    "- United Vacations: https://vacations.united.com/destinations/mexico/",
+    "- American Airlines Vacations: https://www.aavacations.com/en/beach-vacation-packages",
+    "- Delta Vacations Cozumel: https://www.delta.com/us/en/delta-vacations/vacation-inspiration/mexico-vacations/cozumel-vacation-packages",
+    "",
+    "Important: Airline vacation packages do not include any diving.",
+  ].join("\n");
+  return { subject, html, text };
+}
+
+function buildGenericInterestEmail(name = "", destinationName = "this destination") {
+  const safeName = escapeHtml(name || "Diver");
+  const safeDestinationName = escapeHtml(destinationName || "this destination");
+  const subject = `You are on the DMZ Scuba interest list for ${destinationName || "this destination"}.`;
+  const html = `<!doctype html><html><body style="margin:0;padding:20px;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;"><tr><td style="padding:24px;"><h1 style="margin:0 0 10px 0;font-size:24px;color:#eaf2ff;">You are in.</h1><p style="margin:0 0 12px 0;color:#dce8f8;line-height:1.7;">Hi ${safeName}, thank you for joining the interest list for ${safeDestinationName}.</p><p style="margin:0 0 12px 0;color:#dce8f8;line-height:1.7;">We will email updates when dates, pricing, and availability are released.</p><p style="margin:0;color:#eaf2ff;">DMZ Scuba</p></td></tr></table></td></tr></table></body></html>`;
+  const text = `Hi ${name || "Diver"},\n\nThank you for joining the interest list for ${destinationName || "this destination"}.\nWe will email updates when dates, pricing, and availability are released.\n\nDMZ Scuba`;
+  return { subject, html, text };
+}
+
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -159,6 +281,44 @@ async function handleContact(request, env) {
   const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
   const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
   const toEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
+
+  if (shouldSendInterestAutoReply(body, fields)) {
+    if (!email || !isValidEmail(email)) {
+      return jsonResponse({ ok: false, error: "Valid email is required." }, 400);
+    }
+    const destinationName = getFieldValue(fields, "location") || getFieldValue(fields, "destination") || "this destination";
+    const content = isCozumelInterest(fields)
+      ? buildCozumelInterestEmail(name)
+      : buildGenericInterestEmail(name, destinationName);
+    const autoReplyPayload = {
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      subject: content.subject,
+      html: content.html,
+      text: content.text,
+      reply_to: [toEmail],
+    };
+
+    const autoReplyResp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(autoReplyPayload),
+    });
+
+    if (!autoReplyResp.ok) {
+      const autoReplyError = await autoReplyResp.text();
+      console.log("Resend auto-reply error", autoReplyResp.status, autoReplyError);
+      return jsonResponse(
+        { ok: false, error: "Email send failed.", details: autoReplyError || null },
+        502
+      );
+    }
+    return jsonResponse({ ok: true, autoReplySent: true });
+  }
 
   const payload = {
     from: `${fromName} <${fromEmail}>`,
@@ -167,7 +327,6 @@ async function handleContact(request, env) {
     text: message,
   };
 
-  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
   if (email && isValidEmail(email)) {
     payload.reply_to = [email];
   }
