@@ -352,6 +352,7 @@
   function updateMasonry() {
     if (!mediaGrid) return;
     if (singleColumnQuery.matches) {
+      mediaGrid.style.setProperty("grid-auto-rows", "auto");
       hydrateVideoAspects();
       updateThumbHeights();
       clearCardRowSpans();
@@ -360,6 +361,7 @@
       setupVideoPauseObserver();
       return;
     }
+    mediaGrid.style.removeProperty("grid-auto-rows");
     const styles = window.getComputedStyle(mediaGrid);
     const rowHeight = parseFloat(styles.getPropertyValue("grid-auto-rows"));
     const rowGap = parseFloat(styles.getPropertyValue("row-gap")) || 0;
