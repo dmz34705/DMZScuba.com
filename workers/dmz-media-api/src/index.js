@@ -156,6 +156,12 @@ function isPlayaInterest(fields) {
   return destination.includes("playa") || location.includes("playa");
 }
 
+function isRoatanInterest(fields) {
+  const destination = getFieldValue(fields, "destination").toLowerCase();
+  const location = getFieldValue(fields, "location").toLowerCase();
+  return destination.includes("roatan") || location.includes("roatan");
+}
+
 function buildCozumelInterestEmail(name = "") {
   const safeName = escapeHtml(name || "Diver");
   const subject = "Thank you for your interest in diving Cozumel with DMZ Scuba.";
@@ -360,6 +366,8 @@ async function handleContact(request, env) {
     const keyLargo = isKeyLargoInterest(fields);
     const mermet = isMermetInterest(fields);
     const playa = isPlayaInterest(fields);
+    const roatan = isRoatanInterest(fields);
+    const roatanTemplateId = String(env.RESEND_TEMPLATE_ROATAN || "").trim();
     const playaTemplateId = String(env.RESEND_TEMPLATE_PLAYA || "").trim();
     const mermetTemplateId = String(env.RESEND_TEMPLATE_MERMET || "").trim();
     const haighTemplateId = String(env.RESEND_TEMPLATE_HAIGH || "").trim();
@@ -368,7 +376,18 @@ async function handleContact(request, env) {
     const defaultTemplateId = String(env.RESEND_TEMPLATE_INTEREST_DEFAULT || "").trim();
 
     let autoReplyPayload = null;
-    if (playa && playaTemplateId) {
+    if (roatan && roatanTemplateId) {
+      autoReplyPayload = {
+        from: `${fromName} <${fromEmail}>`,
+        to: [email],
+        subject: "Thank you for your interest in diving Roatan with DMZ Scuba.",
+        reply_to: [toEmail],
+        template: {
+          id: roatanTemplateId,
+          variables: buildTemplateVariables(name, destinationName),
+        },
+      };
+    } else if (playa && playaTemplateId) {
       autoReplyPayload = {
         from: `${fromName} <${fromEmail}>`,
         to: [email],
