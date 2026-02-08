@@ -1319,6 +1319,15 @@
       host.dataset.videoThumb = item && item.thumbUrl ? resolveUrl(item.thumbUrl) : buildStreamThumb(streamId);
       host.dataset.videoTitle = item && item.title ? item.title : "Cloudflare Stream video";
       setRemotePreview(host);
+      host.addEventListener("click", () => {
+        reelState.audioUnlocked = true;
+        if (!reelState.soundOn) {
+          setReelSound(true, { userGesture: true });
+          return;
+        }
+        unmountRemoteReelVideo(host);
+        mountRemoteReelVideo(host, { fromGesture: true });
+      });
       wrap.appendChild(host);
       return wrap;
     }
@@ -1331,6 +1340,15 @@
       host.dataset.videoThumb = buildYouTubeThumb(youtubeId);
       host.dataset.videoTitle = item && item.title ? item.title : "YouTube video";
       setRemotePreview(host);
+      host.addEventListener("click", () => {
+        reelState.audioUnlocked = true;
+        if (!reelState.soundOn) {
+          setReelSound(true, { userGesture: true });
+          return;
+        }
+        unmountRemoteReelVideo(host);
+        mountRemoteReelVideo(host, { fromGesture: true });
+      });
       wrap.appendChild(host);
       return wrap;
     }
@@ -1405,19 +1423,21 @@
     }
   }
 
-  function mountRemoteReelVideo(host) {
+  function mountRemoteReelVideo(host, options = {}) {
     if (!host || host.dataset.mounted === "true") return;
     const kind = host.dataset.videoKind || "";
     const videoId = host.dataset.videoId || "";
     if (!kind || !videoId) return;
+    const fromGesture = Boolean(options && options.fromGesture);
+    const shouldUnmute = reelState.soundOn && (reelState.audioUnlocked || fromGesture);
     const title = host.dataset.videoTitle || "Video";
     host.innerHTML = "";
     const iframe = document.createElement("iframe");
     if (kind === "stream") {
-      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${reelState.soundOn ? "false" : "true"}&loop=true`;
+      iframe.src = `https://iframe.videodelivery.net/${videoId}?autoplay=true&muted=${shouldUnmute ? "false" : "true"}&loop=true&controls=true`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     } else if (kind === "youtube") {
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${reelState.soundOn ? "0" : "1"}&playsinline=1&controls=0&rel=0`;
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${shouldUnmute ? "0" : "1"}&playsinline=1&controls=1&rel=0`;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
     } else {
       return;
