@@ -1496,7 +1496,9 @@
   }
 
   function playRemoteController(controller) {
-    if (!controller || !controller.player) return;
+    if (!controller) return;
+    controller.desiredPlaying = true;
+    if (!controller.player) return;
     if (controller.kind === "youtube" && typeof controller.player.playVideo === "function") {
       controller.player.playVideo();
       controller.playing = true;
@@ -1512,7 +1514,9 @@
   }
 
   function pauseRemoteController(controller) {
-    if (!controller || !controller.player) return;
+    if (!controller) return;
+    controller.desiredPlaying = false;
+    if (!controller.player) return;
     if (controller.kind === "youtube" && typeof controller.player.pauseVideo === "function") {
       controller.player.pauseVideo();
       controller.playing = false;
@@ -1536,7 +1540,7 @@
           if (!streamFactory) return;
           controller.player = streamFactory(controller.iframe);
           setRemoteMuted(controller, controller.desiredMuted);
-          if (options.autoplay) {
+          if (options.autoplay || controller.desiredPlaying) {
             playRemoteController(controller);
           }
         })
@@ -1552,7 +1556,7 @@
             events: {
               onReady: () => {
                 setRemoteMuted(controller, controller.desiredMuted);
-                if (options.autoplay) {
+                if (options.autoplay || controller.desiredPlaying) {
                   playRemoteController(controller);
                 }
               },
@@ -1599,6 +1603,7 @@
       iframe,
       player: null,
       desiredMuted: !shouldUnmute,
+      desiredPlaying: true,
       initialized: false,
       playing: false,
     };
@@ -1620,7 +1625,9 @@
     }
     const remote = activeCard.querySelector(".media-reel-stream, .media-reel-youtube");
     if (!remote) return;
-    mountRemoteReelVideo(remote, { fromGesture: true, force: true });
+    if (remote.dataset.mounted !== "true") {
+      mountRemoteReelVideo(remote, { fromGesture: true, force: false });
+    }
     const controller = reelRemoteControllers.get(remote);
     if (controller) {
       setRemoteMuted(controller, false);
@@ -1693,11 +1700,13 @@
     reelState.feedEl.querySelectorAll(".media-reel-media video").forEach((video) => {
       video.muted = !reelState.soundOn;
     });
-    // Remote embeds need remount to apply muted/autoplay params.
     reelState.feedEl
       .querySelectorAll(".media-reel-stream[data-mounted='true'], .media-reel-youtube[data-mounted='true']")
       .forEach((host) => {
-        unmountRemoteReelVideo(host);
+        const controller = reelRemoteControllers.get(host);
+        if (controller) {
+          setRemoteMuted(controller, !reelState.soundOn);
+        }
       });
     syncReelActivePlayback();
     reelState.pendingGestureMount = false;
