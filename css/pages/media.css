@@ -438,55 +438,9 @@ body.media-authenticated .media-edit-logout{
 }
 
 @media (max-width: 780px){
-  .media-page .nav-container{
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .media-page .main-nav{
-    margin-left: 0;
-    width: 100%;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
-  }
-
-  .media-page .main-nav::-webkit-scrollbar{
-    display: none;
-  }
-
   .media-admin-panel{
-    width: 100%;
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 0;
-    padding: 0 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
-    transform: translateY(calc(100% + 16px));
-  }
-
-  body.media-admin-open .media-admin-panel{
-    transform: translateY(0);
-  }
-
-  .media-admin-card{
-    border-radius: 16px 16px 0 0;
-    max-height: min(78vh, 680px);
-  }
-
-  body.media-mobile-lock{
-    overflow: hidden;
-  }
-
-  .media-admin-actions button,
-  .media-admin-actions .back-to-top{
-    min-height: 40px;
-    font-size: 12px;
-    line-height: 1.2;
+    width: min(100%, calc(100% - 24px));
+    right: 12px;
   }
 }
 
@@ -552,19 +506,6 @@ body.media-authenticated .media-edit-logout{
   .media-back-to-top{
     right: 14px;
     bottom: 18px;
-  }
-
-  .media-admin-fab{
-    top: auto;
-    right: 14px;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
-    font-size: 12px;
-    padding: 12px 16px;
-  }
-
-  body.media-admin-open .media-back-to-top{
-    opacity: 0;
-    pointer-events: none;
   }
 }
 
@@ -966,19 +907,10 @@ body.media-authenticated .media-admin-fab{
     width: 100%;
   }
 
-  .media-sort .dropdown-panel,
   .filter-panel{
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    top: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-    width: auto;
-    min-width: 0;
+    left: 18px;
+    right: 18px;
     max-width: none;
-    max-height: min(56vh, 420px);
-    overflow: auto;
-    z-index: 65;
   }
 }
 
@@ -1606,41 +1538,6 @@ body.media-edit-mode .media-body p.media-desc-empty{
 .media-edit-save{
   border-color: rgba(85,185,255,0.6);
   background: rgba(12, 22, 36, 0.9);
-}
-
-@media (max-width: 780px){
-  .media-edit-modal{
-    place-items: end center;
-    padding: 10px 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
-  }
-
-  .media-edit-modal-card{
-    width: 100%;
-    max-height: min(88vh, 900px);
-    border-radius: 16px;
-    padding: 14px;
-  }
-
-  .media-edit-form input,
-  .media-edit-form select,
-  .media-edit-form textarea{
-    min-height: 42px;
-    font-size: 14px;
-  }
-
-  .media-edit-modal-actions{
-    position: sticky;
-    bottom: -2px;
-    background: rgba(7, 12, 20, 0.96);
-    padding-top: 8px;
-  }
-
-  .media-edit-modal-actions .media-edit-cancel,
-  .media-edit-modal-actions .media-edit-save{
-    flex: 1 1 0;
-    min-height: 42px;
-    font-size: 13px;
-  }
 }
 
 .callout-grid{
