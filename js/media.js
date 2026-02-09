@@ -71,7 +71,6 @@
   const reelHlsControllers = new WeakMap();
   let hlsJsPromise = null;
   let youtubeApiPromise = null;
-  const mediaLogic = window.DMZMediaLogic || {};
 
   function resolveUrl(url) {
     if (!url) return "";
@@ -603,9 +602,6 @@
   }
 
   function buildSearchText(item) {
-    if (mediaLogic.buildSearchText) {
-      return mediaLogic.buildSearchText(item);
-    }
     const parts = [
       item.title,
       item.description,
@@ -615,13 +611,13 @@
       ...(item.tags || []),
       ...(item.meta || []),
     ];
-    return parts.filter(Boolean).join(" ").toLowerCase();
+    return parts
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
   }
 
   function parseDateValue(item) {
-    if (mediaLogic.parseDateValue) {
-      return mediaLogic.parseDateValue(item);
-    }
     const raw = item && (item.createdAt || item.uploadedAt || item.date || item.uploadDate);
     if (!raw) return null;
     const timestamp = Date.parse(raw);
@@ -631,9 +627,6 @@
 
 
   function parseViewsValue(item) {
-    if (mediaLogic.parseViewsValue) {
-      return mediaLogic.parseViewsValue(item);
-    }
     const raw = item && (item.views || item.viewCount);
     if (raw == null) return null;
     const value = typeof raw === "number" ? raw : Number(String(raw).replace(/[^0-9]/g, ""));
@@ -641,9 +634,6 @@
   }
 
   function shuffleArray(items) {
-    if (mediaLogic.shuffleArray) {
-      return mediaLogic.shuffleArray(items);
-    }
     const array = [...items];
     for (let i = array.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -663,15 +653,6 @@
 
   function applySort(items, indexMap) {
     const list = Array.isArray(items) ? [...items] : [];
-    if (mediaLogic.applySort) {
-      const result = mediaLogic.applySort(list, {
-        sort: currentSort,
-        shuffleOrder,
-        indexMap,
-      });
-      shuffleOrder = result && Array.isArray(result.shuffleOrder) ? result.shuffleOrder : shuffleOrder;
-      return result && Array.isArray(result.list) ? result.list : list;
-    }
     if (currentSort === "manual") return list;
     if (currentSort === "shuffle") {
       const keys = list.map((item, index) => item.id || `__idx-${index}`);
@@ -989,10 +970,10 @@
   }
 
   function normalizeKey(value) {
-    if (mediaLogic.normalizeKey) {
-      return mediaLogic.normalizeKey(value);
-    }
-    return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
   }
 
   function formatLocationLabel(value) {
@@ -1013,9 +994,6 @@
   }
 
   function normalizeTag(tag) {
-    if (mediaLogic.normalizeTag) {
-      return mediaLogic.normalizeTag(tag);
-    }
     return String(tag || "").trim().toLowerCase();
   }
 
@@ -1141,9 +1119,6 @@
   }
 
   function matchesLocationKey(locationKey, targetKey) {
-    if (mediaLogic.matchesLocationKey) {
-      return mediaLogic.matchesLocationKey(locationKey, targetKey);
-    }
     if (!locationKey || !targetKey) return false;
     return locationKey === targetKey || locationKey.includes(targetKey) || targetKey.includes(locationKey);
   }
@@ -1258,27 +1233,18 @@
   }
 
   function matchesItemFilter(item, filter) {
-    if (mediaLogic.matchesItemFilter) {
-      return mediaLogic.matchesItemFilter(item, filter);
-    }
     if (filter === "all") return true;
     const tags = Array.isArray(item && item.tags) ? item.tags.map((tag) => String(tag).toLowerCase()) : [];
     return tags.some((tag) => tag.includes(String(filter).toLowerCase()));
   }
 
   function matchesItemSelectedTags(item) {
-    if (mediaLogic.matchesItemSelectedTags) {
-      return mediaLogic.matchesItemSelectedTags(item, selectedTags);
-    }
     if (!selectedTags.size) return true;
     const tags = Array.isArray(item && item.tags) ? item.tags.map((tag) => normalizeTag(tag)) : [];
     return [...selectedTags].every((tag) => tags.includes(tag));
   }
 
   function matchesItemSelectedLocation(item) {
-    if (mediaLogic.matchesItemSelectedLocation) {
-      return mediaLogic.matchesItemSelectedLocation(item, selectedLocationId, locationNameById);
-    }
     if (!selectedLocationId) return true;
     const itemLocation = normalizeKey(item && item.location ? item.location : "");
     const selectedName = locationNameById.get(selectedLocationId) || "";
@@ -1287,9 +1253,6 @@
   }
 
   function matchesItemSearch(item) {
-    if (mediaLogic.matchesItemSearch) {
-      return mediaLogic.matchesItemSearch(item, searchQuery);
-    }
     if (!searchQuery) return true;
     const haystack = buildSearchText(item).toLowerCase();
     if (!haystack) return false;
@@ -1314,7 +1277,12 @@
   }
 
   function shuffleItems(items) {
-    return shuffleArray(items);
+    const list = Array.isArray(items) ? items.slice() : [];
+    for (let i = list.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
   }
 
   function buildReelMedia(item) {
