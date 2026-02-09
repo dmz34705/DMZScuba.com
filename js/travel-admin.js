@@ -57,7 +57,6 @@
   const fieldLogisticsDetails = document.getElementById("destFieldLogisticsDetails");
   const fieldDiveSites = document.getElementById("destFieldDiveSites");
   const fieldNonDiving = document.getElementById("destFieldNonDiving");
-  const fieldBaseJson = document.getElementById("destFieldBaseJson");
   const fieldExpandedJson = document.getElementById("destFieldExpandedJson");
   const applyJsonButton = document.getElementById("destApplyJson");
   const formatJsonButton = document.getElementById("destFormatJson");
@@ -345,8 +344,7 @@
 
     const pretty = JSON.stringify(item, null, 2);
     suppressJsonDirty = true;
-    fieldBaseJson.value = pretty;
-    fieldExpandedJson.value = pretty;
+    if (fieldExpandedJson) fieldExpandedJson.value = pretty;
     suppressJsonDirty = false;
     advancedJsonDirty = false;
     syncPreviewFromItem(item);
@@ -354,8 +352,7 @@
 
   function parseAdvancedJsonFields() {
     const rawExpanded = fieldExpandedJson ? fieldExpandedJson.value.trim() : "";
-    const rawBase = fieldBaseJson ? fieldBaseJson.value.trim() : "";
-    const raw = rawExpanded || rawBase;
+    const raw = rawExpanded;
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -683,7 +680,6 @@
       const parsed = collectForm();
       const pretty = JSON.stringify(parsed, null, 2);
       suppressJsonDirty = true;
-      if (fieldBaseJson) fieldBaseJson.value = pretty;
       if (fieldExpandedJson) fieldExpandedJson.value = pretty;
       suppressJsonDirty = false;
       advancedJsonDirty = false;
@@ -854,11 +850,6 @@
   if (deleteButton) deleteButton.addEventListener("click", deleteSelected);
   if (applyJsonButton) applyJsonButton.addEventListener("click", applyJson);
   if (formatJsonButton) formatJsonButton.addEventListener("click", formatJson);
-  if (fieldBaseJson) {
-    fieldBaseJson.addEventListener("input", () => {
-      if (!suppressJsonDirty) advancedJsonDirty = true;
-    });
-  }
   if (fieldExpandedJson) {
     fieldExpandedJson.addEventListener("input", () => {
       if (!suppressJsonDirty) advancedJsonDirty = true;
