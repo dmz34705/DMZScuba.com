@@ -17,6 +17,8 @@ Use this checklist for every dev and live promotion cycle.
    - `git commit -m "<message>"`
    - `git push origin main`
 5. Confirm Cloudflare `dmzscuba-com` deploy is green (Production).
+6. Run smoke checks against deployed dev project:
+   - `Smoke Check.bat https://dmzscuba-com.pages.dev`
 
 ## 2) Live Promotion (`dmzscuba-live`) - Only When Explicitly Approved
 
@@ -30,6 +32,8 @@ Use this checklist for every dev and live promotion cycle.
 6. Push live repo `main`:
    - `git -C "H:/dmz-scuba-live" push origin main`
 7. Confirm Cloudflare `dmzscuba-live` deploy is green (Production).
+8. Run smoke checks against deployed live project:
+   - `Smoke Check.bat https://dmzscuba-live.pages.dev`
 
 ## 3) Minimum Smoke Checks Before Signoff
 

@@ -175,6 +175,10 @@ Worker:
 1. Open `workers/dmz-media-api`.
 2. Run Wrangler commands directly or use `Deploy Worker.bat` from repo root.
 
+Smoke checks:
+1. Run `Smoke Check.bat <base-url>`.
+2. Example: `Smoke Check.bat https://dmzscuba-com.pages.dev`
+
 ## Deployment Workflow
 
 Static site (Cloudflare Pages):
