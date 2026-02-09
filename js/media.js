@@ -1276,6 +1276,15 @@
     });
   }
 
+  function shuffleItems(items) {
+    const list = Array.isArray(items) ? items.slice() : [];
+    for (let i = list.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  }
+
   function buildReelMedia(item) {
     const wrap = document.createElement("div");
     wrap.className = "media-reel-media";
@@ -1964,7 +1973,7 @@
 
   function syncReelModeItems() {
     if (!reelState.open) return;
-    const nextItems = getFilteredMediaItems();
+    const nextItems = shuffleItems(getFilteredMediaItems());
     if (!nextItems.length) {
       closeReelMode();
       return;
@@ -1984,7 +1993,7 @@
 
   function openReelMode() {
     if (reelState.open) return;
-    const items = getFilteredMediaItems();
+    const items = shuffleItems(getFilteredMediaItems());
     if (!items.length) return;
     ensureReelOverlay();
     reelState.open = true;
