@@ -217,4 +217,5 @@ Low priority:
 
 - Windows helper scripts in repo root are part of the active workflow (`push.bat`, `Deploy Worker.bat`, `Python Server.bat`, `Pcloudfare.bat`).
 - `AGENTS.md` documents assistant workflow expectations for this repo.
+- `RELEASE-CHECKLIST.md` is the operational release gate for dev and live promotions.
 - Keep `assets/data/media.json` viable as a fallback snapshot even when API is primary.
