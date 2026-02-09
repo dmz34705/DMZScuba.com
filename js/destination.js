@@ -73,7 +73,6 @@
   const interestIdInput = document.getElementById("destInterestId");
   const mediaLink = document.getElementById("destMediaLink");
   const mediaApiUrl = apiRoot ? `${apiRoot}/api/media` : "/api/media";
-  const mediaWorkerFallbackUrl = "https://dmz-media-api.zacharylisowski55.workers.dev/api/media";
   const mediaDataUrl = "/assets/data/media.json";
 
   let currentId = "";
@@ -1616,7 +1615,7 @@
         return null;
       }
     };
-    const candidateApiUrls = [...new Set([mediaApiUrl, "/api/media", mediaWorkerFallbackUrl])];
+    const candidateApiUrls = [...new Set([mediaApiUrl, "/api/media"])];
     for (const url of candidateApiUrls) {
       const apiRes = await safeFetch(url, { cache: "no-store" }, "API");
       if (!apiRes || !apiRes.ok) continue;
