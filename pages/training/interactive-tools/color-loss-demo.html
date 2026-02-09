@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DMZ Scuba | Underwater Color Loss Demo</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Outfit:wght@500;700&display=swap");
+
+    :root {
+      --bg-top: #9fd4f2;
+      --bg-mid: #1b7cb4;
+      --bg-deep: #082f4f;
+      --panel: rgba(6, 20, 37, 0.78);
+      --panel-border: rgba(255, 255, 255, 0.2);
+      --text: #eaf7ff;
+      --muted: #a7cfe5;
+      --accent: #7fe6ff;
+      --good: #7af1aa;
+      --danger: #ff9f9f;
+      --depth-glow: 0.16;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Barlow", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 80% 10%, rgba(255, 255, 255, 0.22), transparent 55%),
+        radial-gradient(900px 500px at 8% 24%, rgba(174, 240, 255, 0.2), transparent 50%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-deep) 100%);
+      overflow: hidden;
+    }
+
+    .page {
+      width: min(1180px, 96vw);
+      margin: 2vh auto;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1rem;
+      align-items: stretch;
+      min-height: 94vh;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      padding: 1rem;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    h1 {
+      margin: 0;
+      line-height: 1.05;
+      font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+      font-family: "Outfit", "Barlow", sans-serif;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    .group-title {
+      margin: 0;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #d3f0ff;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.45rem;
+    }
+
+    .field label {
+      font-size: 0.95rem;
+    }
+
+    input[type="color"] {
+      width: 56px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font: inherit;
+      padding: 0.5rem 0.65rem;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .scene {
+      --surface-h: 54px;
+      --fx: 72%;
+      --fy: 38%;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        linear-gradient(180deg, rgba(159, 212, 242, 0.18), rgba(8, 47, 79, 0.65)),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08) 0,
+          rgba(255, 255, 255, 0.08) 1px,
+          transparent 1px,
+          transparent 48px
+        );
+    }
+
+    .light-rays {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ray {
+      position: absolute;
+      top: -10%;
+      width: 120px;
+      height: 145%;
+      background: linear-gradient(180deg, rgba(210, 245, 255, 0.36), rgba(210, 245, 255, 0));
+      transform-origin: top center;
+      filter: blur(2px);
+      opacity: 0.36;
+      animation: raySway 13s ease-in-out infinite;
+    }
+
+    .ray:nth-child(1) {
+      left: 12%;
+      transform: rotate(7deg);
+      animation-delay: -1s;
+    }
+
+    .ray:nth-child(2) {
+      left: 44%;
+      width: 96px;
+      transform: rotate(3deg);
+      opacity: 0.26;
+      animation-duration: 16s;
+    }
+
+    .ray:nth-child(3) {
+      left: 73%;
+      width: 110px;
+      transform: rotate(-4deg);
+      opacity: 0.22;
+      animation-delay: -4s;
+      animation-duration: 14s;
+    }
+
+    .scene::before,
+    .scene::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(2px);
+      animation: rise 16s linear infinite;
+      pointer-events: none;
+    }
+
+    .scene::before {
+      width: 16px;
+      height: 16px;
+      left: 14%;
+      bottom: -20px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .scene::after {
+      width: 10px;
+      height: 10px;
+      left: 76%;
+      bottom: -15px;
+      background: rgba(255, 255, 255, 0.35);
+      animation-delay: 4s;
+      animation-duration: 13s;
+    }
+
+    @keyframes rise {
+      from {
+        transform: translateY(0) scale(0.9);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.9;
+      }
+      to {
+        transform: translateY(-110vh) scale(1.2);
+        opacity: 0;
+      }
+    }
+
+    @keyframes raySway {
+      0%, 100% { transform: translateX(0) rotate(6deg); }
+      50% { transform: translateX(-18px) rotate(2deg); }
+    }
+
+    .plankton {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.8;
+    }
+
+    .mote {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(230, 247, 255, 0.65);
+      filter: blur(0.2px);
+      animation: moteDrift linear infinite;
+    }
+
+    .mote:nth-child(1) { left: 10%; bottom: 9%; animation-duration: 16s; }
+    .mote:nth-child(2) { left: 22%; bottom: 24%; animation-duration: 19s; animation-delay: -5s; }
+    .mote:nth-child(3) { left: 37%; bottom: 17%; animation-duration: 14s; animation-delay: -2s; }
+    .mote:nth-child(4) { left: 52%; bottom: 11%; animation-duration: 18s; animation-delay: -9s; }
+    .mote:nth-child(5) { left: 66%; bottom: 20%; animation-duration: 15s; animation-delay: -4s; }
+    .mote:nth-child(6) { left: 76%; bottom: 13%; animation-duration: 17s; animation-delay: -7s; }
+    .mote:nth-child(7) { left: 86%; bottom: 25%; animation-duration: 13s; animation-delay: -3s; }
+    .mote:nth-child(8) { left: 92%; bottom: 8%; animation-duration: 16s; animation-delay: -11s; }
+
+    @keyframes moteDrift {
+      0% { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0; }
+      15% { opacity: 0.75; }
+      50% { transform: translate3d(-10px, -140px, 0) scale(1); }
+      100% { transform: translate3d(8px, -295px, 0) scale(1.05); opacity: 0; }
+    }
+
+    .creatures {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .creature {
+      position: absolute;
+      left: -70px;
+      top: var(--y, 40%);
+      width: 62px;
+      height: 62px;
+      transform-origin: center;
+      animation:
+        swimRight var(--swim-dur, 26s) linear infinite,
+        swimBob var(--bob-dur, 4.2s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s), var(--bob-delay, 0s);
+      filter: saturate(0.95) brightness(0.9);
+      will-change: transform, filter;
+    }
+
+    .creature.left {
+      left: calc(100% + 70px);
+      animation-name: swimLeft, swimBob;
+    }
+
+    .creature-sprite {
+      width: 62px;
+      height: 62px;
+      display: block;
+      image-rendering: auto;
+    }
+
+    .creature.left .creature-sprite {
+      transform: scaleX(-1);
+    }
+
+    @keyframes swimRight {
+      from { transform: translate3d(0, 0, 0) scale(var(--scale, 1)); }
+      to { transform: translate3d(calc(100vw + 140px), 0, 0) scale(var(--scale, 1)); }
+    }
+
+    @keyframes swimLeft {
+      from { transform: translate3d(0, 0, 0) scale(var(--scale, 1)); }
+      to { transform: translate3d(calc(-100vw - 140px), 0, 0) scale(var(--scale, 1)); }
+    }
+
+    @keyframes swimBob {
+      0%, 100% { margin-top: 0; }
+      50% { margin-top: -8px; }
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.4rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(6, 20, 37, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: #dbf4ff;
+    }
+
+    .pill.flash {
+      animation: tipFlash 0.45s ease-out;
+    }
+
+    @keyframes tipFlash {
+      0% { transform: scale(1); background: rgba(6, 20, 37, 0.72); }
+      40% { transform: scale(1.03); background: rgba(24, 63, 97, 0.86); }
+      100% { transform: scale(1); background: rgba(6, 20, 37, 0.72); }
+    }
+
+    .depth-ruler {
+      position: absolute;
+      left: 16px;
+      top: var(--surface-h);
+      bottom: 16px;
+      width: 44px;
+      border-right: 1px solid rgba(255, 255, 255, 0.28);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .tick {
+      position: absolute;
+      right: 0;
+      width: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.45);
+      font-size: 0.72rem;
+      color: #d8f2ff;
+      transform: translateY(-50%);
+      padding-right: 0.3rem;
+      text-align: right;
+    }
+
+    .diver {
+      position: absolute;
+      left: 56%;
+      top: 26%;
+      width: 282px;
+      padding: 0;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      z-index: 3;
+      animation: diverIdle 6s ease-in-out infinite;
+      transition: filter 0.2s ease;
+    }
+
+    .diver.dragging {
+      cursor: grabbing;
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.36));
+      animation: none;
+    }
+
+    @keyframes diverIdle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .diver-figure {
+      margin: 0;
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .diver-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 7px 10px rgba(0, 0, 0, 0.35));
+    }
+
+    .diver-caption {
+      margin: 0 auto;
+      width: max-content;
+      text-align: center;
+      font-family: "Outfit", "Barlow", sans-serif;
+      letter-spacing: 0.04em;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      color: #e3f5ff;
+      opacity: 0.96;
+      background: rgba(6, 20, 37, 0.5);
+      border: 1px solid rgba(192, 235, 255, 0.35);
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      backdrop-filter: blur(2px);
+    }
+
+    .depth-slider-wrap {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .depth-slider-wrap small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .helper-text {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .status {
+      color: var(--good);
+      margin: 0;
+      font-size: 0.9rem;
+      min-height: 1.2rem;
+    }
+
+    .ambient {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(0, 60, 110, 0), rgba(0, 20, 55, 0.65));
+      transition: opacity 0.2s linear;
+      opacity: 0;
+      z-index: 0;
+    }
+
+    .water-surface {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--surface-h);
+      pointer-events: none;
+      z-index: 2;
+      background:
+        linear-gradient(180deg, rgba(184, 242, 255, 0.56) 0%, rgba(132, 215, 240, 0.32) 38%, rgba(68, 170, 214, 0.16) 100%);
+      border-bottom: 1px solid rgba(220, 248, 255, 0.45);
+      box-shadow: 0 8px 28px rgba(131, 214, 244, 0.22);
+      overflow: hidden;
+    }
+
+    .water-surface::before,
+    .water-surface::after {
+      content: "";
+      position: absolute;
+      left: -20%;
+      width: 140%;
+      height: 22px;
+      background: rgba(220, 248, 255, 0.24);
+      border-radius: 50%;
+      filter: blur(0.3px);
+      animation: surfaceWave 7s ease-in-out infinite;
+    }
+
+    .water-surface::before {
+      top: 8px;
+    }
+
+    .water-surface::after {
+      top: 22px;
+      opacity: 0.66;
+      animation-delay: -3.5s;
+      animation-duration: 9s;
+    }
+
+    @keyframes surfaceWave {
+      0%, 100% { transform: translateX(0) scaleY(1); }
+      50% { transform: translateX(28px) scaleY(1.14); }
+    }
+
+    .seabed {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 20%;
+      min-height: 86px;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(12, 54, 78, 0) 0%, rgba(6, 28, 44, 0.45) 24%, rgba(8, 33, 49, 0.86) 100%),
+        radial-gradient(140% 100% at 50% 115%, rgba(13, 58, 78, 0.9) 0%, rgba(7, 33, 52, 0.98) 62%, rgba(6, 24, 38, 1) 100%);
+      border-top: 1px solid rgba(180, 226, 244, 0.16);
+    }
+
+    .seabed-true {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      background:
+        linear-gradient(180deg, rgba(26, 98, 126, 0) 0%, rgba(13, 65, 88, 0.34) 24%, rgba(12, 58, 76, 0.78) 100%),
+        radial-gradient(140% 100% at 50% 115%, rgba(24, 103, 133, 0.9) 0%, rgba(16, 77, 103, 0.96) 62%, rgba(12, 58, 76, 1) 100%);
+      -webkit-mask-image: radial-gradient(circle 185px at var(--fx) var(--fy), rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.95) 42%, rgba(0, 0, 0, 0) 74%);
+      mask-image: radial-gradient(circle 185px at var(--fx) var(--fy), rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.95) 42%, rgba(0, 0, 0, 0) 74%);
+    }
+
+    .scene.flashlight-on.flashlight-on-bottom .seabed-true {
+      opacity: 1;
+    }
+
+    .seabed::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 16%;
+      height: 34%;
+      background:
+        radial-gradient(closest-side, rgba(31, 111, 135, 0.32), rgba(31, 111, 135, 0) 72%) 8% 40% / 110px 36px no-repeat,
+        radial-gradient(closest-side, rgba(31, 111, 135, 0.26), rgba(31, 111, 135, 0) 72%) 34% 65% / 130px 40px no-repeat,
+        radial-gradient(closest-side, rgba(31, 111, 135, 0.28), rgba(31, 111, 135, 0) 72%) 58% 50% / 120px 38px no-repeat,
+        radial-gradient(closest-side, rgba(31, 111, 135, 0.26), rgba(31, 111, 135, 0) 72%) 82% 68% / 128px 40px no-repeat;
+      opacity: 0.85;
+    }
+
+    .seabed::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 72%;
+      background:
+        radial-gradient(20px 66px at 6% 100%, rgba(8, 27, 40, 0.82), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(16px 54px at 18% 100%, rgba(8, 27, 40, 0.74), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(22px 74px at 36% 100%, rgba(8, 27, 40, 0.82), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(16px 54px at 49% 100%, rgba(8, 27, 40, 0.72), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(19px 62px at 66% 100%, rgba(8, 27, 40, 0.78), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(14px 46px at 78% 100%, rgba(8, 27, 40, 0.68), rgba(8, 27, 40, 0) 72%),
+        radial-gradient(20px 70px at 92% 100%, rgba(8, 27, 40, 0.8), rgba(8, 27, 40, 0) 72%);
+      opacity: 0.9;
+    }
+
+    .flashlight-overlay {
+      --fx: 72%;
+      --fy: 38%;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      background:
+        radial-gradient(
+          circle 150px at var(--fx) var(--fy),
+          rgba(255, 254, 220, 0.34) 0%,
+          rgba(195, 235, 255, 0.2) 42%,
+          rgba(0, 0, 0, 0) 72%
+        );
+    }
+
+    .flashlight-overlay::after {
+      content: "";
+      position: absolute;
+      left: var(--fx);
+      top: var(--fy);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(220, 246, 255, 0.6);
+      box-shadow: 0 0 14px rgba(190, 235, 255, 0.45);
+      opacity: 0.65;
+    }
+
+    .flashlight-overlay.active {
+      opacity: 1;
+    }
+
+    @media (max-width: 960px) {
+      .scene {
+        --surface-h: 52px;
+      }
+
+      body {
+        overflow: auto;
+      }
+
+      .page {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        margin: 1rem auto;
+      }
+
+      .scene {
+        min-height: 66vh;
+      }
+
+      .diver {
+        left: 52%;
+        width: min(286px, 84vw);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" aria-label="Underwater color loss training demo">
+    <section class="panel controls" aria-label="Demo controls">
+      <header>
+        <h1>Underwater Color Loss</h1>
+        <p class="subtitle">Drag the diver deeper and compare how each gear color fades. Red drops first, while blue tends to remain longer.</p>
+      </header>
+
+      <section>
+        <p class="group-title">Gear Colors</p>
+        <div class="field">
+          <label for="colorMask">Mask</label>
+          <input type="color" id="colorMask" value="#00ff88" />
+        </div>
+        <div class="field">
+          <label for="colorWetsuit">Wetsuit</label>
+          <input type="color" id="colorWetsuit" value="#ff3b30" />
+        </div>
+        <div class="field">
+          <label for="colorTank">Tank</label>
+          <input type="color" id="colorTank" value="#8f7bff" />
+        </div>
+        <div class="field">
+          <label for="colorFins">Fins</label>
+          <input type="color" id="colorFins" value="#ffd83d" />
+        </div>
+      </section>
+
+      <section>
+        <p class="group-title">Depth</p>
+        <div class="depth-slider-wrap">
+          <input type="range" id="depthSlider" min="0" max="40" step="1" value="10" />
+          <small>Drag the diver or use this slider for precise depth.</small>
+        </div>
+      </section>
+
+      <section>
+        <p class="group-title">Display</p>
+        <div class="field">
+          <label for="unitToggle">Depth units</label>
+          <select id="unitToggle">
+            <option value="m">Meters</option>
+            <option value="ft">Feet</option>
+          </select>
+        </div>
+      </section>
+
+      <section>
+        <p class="group-title">Lighting</p>
+        <button id="flashlightToggle" type="button" aria-pressed="false">Flashlight: Off</button>
+        <p class="helper-text">Turn on and move your pointer (or finger) over the water to reveal truer colors at depth.</p>
+      </section>
+
+      <div class="button-row">
+        <button id="presetSafety" type="button">Safety Colors</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel scene" id="scene" aria-label="Water column simulation">
+      <div class="ambient" id="ambient"></div>
+      <div class="water-surface" aria-hidden="true"></div>
+      <div class="seabed" aria-hidden="true">
+        <div class="seabed-true"></div>
+      </div>
+      <div class="flashlight-overlay" id="flashlightOverlay" aria-hidden="true"></div>
+      <div class="light-rays" aria-hidden="true">
+        <span class="ray"></span>
+        <span class="ray"></span>
+        <span class="ray"></span>
+      </div>
+      <div class="plankton" aria-hidden="true">
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+        <span class="mote"></span>
+      </div>
+      <div class="creatures" id="creatures" aria-hidden="true">
+        <div class="creature left f4" style="--y: 24%; --swim-dur: 33s; --delay: -11s; --scale: 1.18; --frame-dur: 0.68s; --bob-dur: 4.3s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/1/Walk.png" data-frames="4"></canvas>
+        </div>
+        <div class="creature f6" style="--y: 36%; --swim-dur: 28s; --delay: -4s; --scale: 3.84; --frame-dur: 0.58s; --bob-dur: 3.7s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/2/Walk.png" data-frames="6"></canvas>
+        </div>
+        <div class="creature left f4" style="--y: 47%; --swim-dur: 31s; --delay: -16s; --scale: 1.06; --frame-dur: 0.7s; --bob-dur: 4.1s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/3/Walk.png" data-frames="4"></canvas>
+        </div>
+        <div class="creature f4" style="--y: 57%; --swim-dur: 35s; --delay: -8s; --scale: 1.2; --frame-dur: 0.75s; --bob-dur: 4.6s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/4/Walk.png" data-frames="4"></canvas>
+        </div>
+        <div class="creature left f6" style="--y: 66%; --swim-dur: 30s; --delay: -20s; --scale: 1.08; --frame-dur: 0.62s; --bob-dur: 3.9s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/5/Walk.png" data-frames="6"></canvas>
+        </div>
+        <div class="creature f6" style="--y: 74%; --swim-dur: 38s; --delay: -14s; --scale: 1.26; --frame-dur: 0.66s; --bob-dur: 4.8s;">
+          <canvas class="creature-sprite creature-canvas" width="62" height="62" data-src="sprites/6/Walk.png" data-frames="6"></canvas>
+        </div>
+      </div>
+      <div class="hud">
+        <div class="pill" id="depthDisplay">Depth: 10 m</div>
+        <div class="pill" id="tips">Tip: Bright warm colors lose visibility first.</div>
+      </div>
+
+      <div class="depth-ruler" id="ruler"></div>
+
+      <article class="diver" id="diver">
+        <figure class="diver-figure">
+          <svg class="diver-svg" viewBox="0 0 1299 754" aria-label="Scuba diver line-art">
+            <rect x="0" y="0" width="1299" height="754" fill="transparent" />
+            <g fill="none" stroke="#0a0f15" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+              <path id="wetsuitTorso" d="M 53 141 L 45 182 L 48 214 L 60 245 L 84 271 L 94 272 L 298 241 L 379 411 L 397 430 L 422 436 L 597 426 L 492 536 L 300 451 L 288 438 L 279 433 L 256 431 L 229 440 L 11 561 L 4 581 L 3 600 L 12 634 L 27 659 L 45 678 L 73 694 L 103 697 L 262 539 L 485 638 L 498 641 L 514 639 L 530 630 L 717 473 L 858 479 L 862 635 L 869 652 L 882 663 L 1069 743 L 1088 742 L 1106 727 L 1111 713 L 1111 700 L 1104 684 L 1087 671 L 941 604 L 945 470 L 955 467 L 1027 597 L 1042 611 L 1051 614 L 1260 614 L 1276 607 L 1288 590 L 1290 573 L 1284 556 L 1274 546 L 1263 541 L 1086 540 L 1028 422 L 1063 416 L 1084 416 L 1095 406 L 1098 389 L 1117 379 L 1125 386 L 1141 391 L 1189 293 L 1179 284 L 1159 277 L 1152 253 L 1139 231 L 1118 211 L 1097 200 L 1075 195 L 1042 198 L 1015 211 L 991 235 L 986 233 L 975 256 L 979 260 L 973 282 L 973 315 L 960 305 L 940 296 L 951 262 L 960 258 L 968 248 L 968 235 L 961 226 L 946 224 L 929 202 L 912 192 L 889 186 L 684 187 L 652 201 L 636 219 L 630 237 L 631 252 L 642 273 L 659 287 L 678 294 L 679 297 L 659 304 L 645 317 L 447 337 L 380 197 L 380 180 L 376 168 L 363 153 L 349 145 L 328 139 L 90 105 L 75 111 L 61 126 Z" fill="#FF3B30"/>
+              <path d="M 304 241 L 356 233 L 373 220 L 379 206 L 444 341 L 647 321 L 655 312 L 670 303 L 695 298 L 917 298 L 919 336 L 934 372 L 955 396 L 974 409 L 995 417 L 1024 422 L 1083 544 L 1263 545 L 1274 551 L 1284 565 L 1284 589 L 1273 604 L 1260 610 L 1048 609 L 1032 597 L 957 462 L 942 467 L 939 493 L 937 607 L 1093 679 L 1105 694 L 1106 717 L 1100 728 L 1091 736 L 1084 739 L 1069 739 L 890 662 L 872 649 L 866 634 L 862 475 L 716 469 L 523 630 L 509 636 L 486 634 L 266 535 L 299 504 L 306 493 L 308 471 L 303 458 L 493 541 L 608 421 L 411 431 L 402 428 L 385 413 Z"/>
+              <path id="finsTop" d="M 50 170 L 53 154 L 63 131 L 77 115 L 89 109 L 340 146 L 354 152 L 369 165 L 376 181 L 376 200 L 370 217 L 352 230 L 87 268 L 69 251 L 57 230 L 50 202 Z" fill="#FFD83D"/>
+              <path id="finsBottom" d="M 293 449 L 304 472 L 304 486 L 297 500 L 102 693 L 86 693 L 69 688 L 49 676 L 34 661 L 17 635 L 8 607 L 8 582 L 15 563 L 239 440 L 257 435 L 270 435 L 282 439 Z" fill="#FFD83D"/>
+              <path id="tank" d="M 637 226 L 647 211 L 661 200 L 692 190 L 888 190 L 906 194 L 926 205 L 944 228 L 959 230 L 965 239 L 963 249 L 958 254 L 950 256 L 943 269 L 934 306 L 937 336 L 945 356 L 954 369 L 978 390 L 1000 399 L 1019 402 L 1055 399 L 1058 382 L 1068 374 L 1078 373 L 1091 382 L 1094 390 L 1093 401 L 1086 410 L 1076 414 L 1062 412 L 1044 416 L 1011 416 L 989 411 L 967 400 L 942 376 L 927 349 L 921 322 L 925 279 L 909 288 L 891 293 L 683 292 L 662 284 L 644 269 L 634 245 Z" fill="#8F7BFF"/>
+              <path id="mask" d="M 982 262 L 1103 319 L 1105 323 L 1101 335 L 1101 349 L 1105 363 L 1113 376 L 1097 385 L 1088 373 L 1070 369 L 1061 373 L 1049 389 L 1033 384 L 1013 372 L 991 347 L 980 322 L 977 283 Z" fill="#00FF88"/>
+              <path id="maskFront" d="M 995 237 L 1014 217 L 1037 204 L 1059 199 L 1086 201 L 1112 212 L 1132 229 L 1148 254 L 1155 277 L 1130 285 L 1118 297 Z" fill="#00FF88"/>
+              <path d="M 986 241 L 989 239 L 1118 302 L 1133 288 L 1148 282 L 1167 283 L 1184 294 L 1140 385 L 1135 386 L 1125 381 L 1109 362 L 1105 348 L 1106 331 L 1111 319 L 982 256 Z"/>
+              <path d="M 940 301 L 960 310 L 977 325 L 986 347 L 1000 365 L 1010 396 L 983 388 L 956 365 L 942 339 L 938 317 Z"/>
+              <path d="M 980 165 L 967 175 L 966 189 L 974 199 L 988 201 L 999 193 L 1002 181 L 994 168 Z"/>
+              <path d="M 948 90 L 938 97 L 935 112 L 943 123 L 956 126 L 969 117 L 971 104 L 961 91 Z"/>
+              <path d="M 774 33 L 762 37 L 755 49 L 758 62 L 771 70 L 782 68 L 791 57 L 789 42 L 783 36 Z"/>
+              <path d="M 871 13 L 861 20 L 858 35 L 866 46 L 879 49 L 892 40 L 894 27 L 884 14 Z"/>
+              <path d="M 873 106 L 862 114 L 860 129 L 869 140 L 881 142 L 893 134 L 896 122 L 887 108 Z"/>
+              <path d="M 874 110 L 884 111 L 892 122 L 890 131 L 880 138 L 872 137 L 864 128 L 865 117 Z"/>
+              <path d="M 949 94 L 961 96 L 967 104 L 966 114 L 955 122 L 946 120 L 939 111 L 941 100 Z"/>
+              <path d="M 872 17 L 884 19 L 890 27 L 889 37 L 878 45 L 869 43 L 862 34 L 864 23 Z"/>
+              <path d="M 769 38 L 778 38 L 787 47 L 787 56 L 778 65 L 768 65 L 760 57 L 760 47 Z"/>
+              <path d="M 981 169 L 991 171 L 997 178 L 996 190 L 987 197 L 977 196 L 970 188 L 972 175 Z"/>
+              <path d="M 1007 374 L 1051 395 L 1017 397 Z"/>
+              <path d="M 919 289 L 918 294 L 907 293 Z"/>
+            </g>
+          </svg>
+          <figcaption class="diver-caption">Drag Diver To Change Depth</figcaption>
+        </figure>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const maxDepthM = 40;
+
+    const gearData = {
+      mask: { base: [0, 255, 136], k: 0.045 },
+      wetsuit: { base: [255, 59, 48], k: 0.16 },
+      tank: { base: [143, 123, 255], k: 0.03 },
+      fins: { base: [255, 216, 61], k: 0.085 }
+    };
+
+    const ids = ["mask", "wetsuit", "tank", "fins"];
+    const diver = document.getElementById("diver");
+    const scene = document.getElementById("scene");
+    const depthDisplay = document.getElementById("depthDisplay");
+    const tips = document.getElementById("tips");
+    const unitToggle = document.getElementById("unitToggle");
+    const depthSlider = document.getElementById("depthSlider");
+    const flashlightToggle = document.getElementById("flashlightToggle");
+    const flashlightOverlay = document.getElementById("flashlightOverlay");
+    const ambient = document.getElementById("ambient");
+    const status = document.getElementById("status");
+    const ruler = document.getElementById("ruler");
+    const seabed = document.querySelector(".seabed");
+    const creatureNodes = Array.from(document.querySelectorAll(".creature"));
+    const creatureActors = [];
+
+    const pickerMap = {
+      mask: document.getElementById("colorMask"),
+      wetsuit: document.getElementById("colorWetsuit"),
+      tank: document.getElementById("colorTank"),
+      fins: document.getElementById("colorFins")
+    };
+    const partMap = {
+      mask: [document.getElementById("mask"), document.getElementById("maskFront")],
+      wetsuit: [document.getElementById("wetsuitTorso")],
+      tank: [document.getElementById("tank")],
+      fins: [document.getElementById("finsTop"), document.getElementById("finsBottom")]
+    };
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let depthMeters = 10;
+    let tipBand = -1;
+    let flashlightOn = false;
+    let flashlightClientX = 0;
+    let flashlightClientY = 0;
+
+    function hexToRgb(hex) {
+      const value = parseInt(hex.slice(1), 16);
+      return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+    }
+
+    function rgbToHue([r, g, b]) {
+      const rn = r / 255;
+      const gn = g / 255;
+      const bn = b / 255;
+      const max = Math.max(rn, gn, bn);
+      const min = Math.min(rn, gn, bn);
+      const diff = max - min;
+      if (diff === 0) return 0;
+      if (max === rn) return (60 * ((gn - bn) / diff) + 360) % 360;
+      if (max === gn) return 60 * ((bn - rn) / diff) + 120;
+      return 60 * ((rn - gn) / diff) + 240;
+    }
+
+    function rgbToHsv([r, g, b]) {
+      const rn = r / 255;
+      const gn = g / 255;
+      const bn = b / 255;
+      const max = Math.max(rn, gn, bn);
+      const min = Math.min(rn, gn, bn);
+      const diff = max - min;
+      const hue = rgbToHue([r, g, b]);
+      const sat = max === 0 ? 0 : diff / max;
+      const val = max;
+      return { hue, sat, val };
+    }
+
+    function attenuate(rgb, depth) {
+      const [r0, g0, b0] = rgb;
+      const { hue, sat, val } = rgbToHsv(rgb);
+      const isSafetyYellow = hue >= 48 && hue <= 78 && sat >= 0.45 && val >= 0.55;
+      const isSafetyOrange = hue >= 18 && hue <= 44 && sat >= 0.45 && val >= 0.5;
+      const isHighViz = isSafetyYellow || isSafetyOrange;
+
+      let kr = 0.16;
+      let kg = 0.065;
+      let kb = 0.03;
+
+      if (isSafetyYellow) {
+        kr = 0.07;
+        kg = 0.032;
+        kb = 0.03;
+      } else if (isSafetyOrange) {
+        kr = 0.06;
+        kg = 0.036;
+        kb = 0.03;
+      }
+
+      let r = Math.round(r0 * Math.exp(-kr * depth));
+      let g = Math.round(g0 * Math.exp(-kg * depth));
+      let b = Math.round(b0 * Math.exp(-kb * depth));
+
+      if (isHighViz) {
+        const floor = Math.max(38, Math.round(78 - depth * 0.9));
+        r = Math.max(r, floor);
+        g = Math.max(g, floor);
+      }
+
+      return [r, g, b];
+    }
+
+    function syncBasesFromPickers() {
+      ids.forEach((id) => {
+        gearData[id].base = hexToRgb(pickerMap[id].value);
+      });
+    }
+
+    function lerp(start, end, t) {
+      return Math.round(start + (end - start) * t);
+    }
+
+    function getFlashlightStrength(part) {
+      if (!flashlightOn) return 0;
+      const rect = part.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(cx - flashlightClientX, cy - flashlightClientY);
+      const sceneRect = scene.getBoundingClientRect();
+      const radius = Math.max(90, Math.min(170, sceneRect.width * 0.22));
+      const core = radius * 0.38;
+      if (dist <= core) return 1;
+      if (dist >= radius) return 0;
+      const x = (dist - core) / (radius - core);
+      return 1 - (x * x * (3 - 2 * x));
+    }
+
+    function setFlashlightPosition(clientX, clientY) {
+      const rect = scene.getBoundingClientRect();
+      const clampedX = clamp(clientX, rect.left, rect.right);
+      const clampedY = clamp(clientY, rect.top, rect.bottom);
+      flashlightClientX = clampedX;
+      flashlightClientY = clampedY;
+      const xPct = ((clampedX - rect.left) / rect.width) * 100;
+      const yPct = ((clampedY - rect.top) / rect.height) * 100;
+      scene.style.setProperty("--fx", `${xPct}%`);
+      scene.style.setProperty("--fy", `${yPct}%`);
+      flashlightOverlay.style.setProperty("--fx", `${xPct}%`);
+      flashlightOverlay.style.setProperty("--fy", `${yPct}%`);
+      const seabedRect = seabed.getBoundingClientRect();
+      const overSeabed = clampedY >= seabedRect.top && clampedY <= seabedRect.bottom;
+      scene.classList.toggle("flashlight-on-bottom", flashlightOn && overSeabed);
+      if (flashlightOn) updateSwatches(depthMeters);
+    }
+
+    function parseSeconds(value, fallback) {
+      const n = parseFloat(String(value || "").replace("s", ""));
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function initCreatures() {
+      const size = 62;
+      creatureNodes.forEach((node) => {
+        const canvas = node.querySelector(".creature-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const workCanvas = document.createElement("canvas");
+        workCanvas.width = size;
+        workCanvas.height = size;
+        const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+        const src = canvas.dataset.src;
+        const frames = Number(canvas.dataset.frames || 4);
+        const frameDur = parseSeconds(getComputedStyle(node).getPropertyValue("--frame-dur"), 0.7) * 1000;
+        const img = new Image();
+        const actor = {
+          node,
+          canvas,
+          ctx,
+          workCanvas,
+          workCtx,
+          img,
+          frames,
+          frameDur,
+          size,
+          srcFrame: 48,
+          ready: false,
+          pixelReadable: true,
+          offset: Math.random() * 1400
+        };
+        img.onload = () => {
+          try {
+            actor.workCtx.clearRect(0, 0, actor.size, actor.size);
+            actor.workCtx.drawImage(
+              actor.img,
+              0,
+              0,
+              actor.srcFrame,
+              actor.srcFrame,
+              0,
+              0,
+              actor.size,
+              actor.size
+            );
+            actor.workCtx.getImageData(0, 0, 1, 1);
+          } catch (_e) {
+            actor.pixelReadable = false;
+          }
+          actor.ready = true;
+        };
+        img.src = src;
+        creatureActors.push(actor);
+      });
+    }
+
+    function attenuatePixel(r0, g0, b0, depth) {
+      return [
+        Math.round(r0 * Math.exp(-0.16 * depth)),
+        Math.round(g0 * Math.exp(-0.065 * depth)),
+        Math.round(b0 * Math.exp(-0.03 * depth))
+      ];
+    }
+
+    function renderCreatures(time) {
+      const sceneRect = scene.getBoundingClientRect();
+      creatureActors.forEach((actor) => {
+        if (!actor.ready) return;
+        const frameIndex = Math.floor((time + actor.offset) / actor.frameDur) % actor.frames;
+        const sx = frameIndex * actor.srcFrame;
+        actor.workCtx.clearRect(0, 0, actor.size, actor.size);
+        actor.workCtx.drawImage(
+          actor.img,
+          sx,
+          0,
+          actor.srcFrame,
+          actor.srcFrame,
+          0,
+          0,
+          actor.size,
+          actor.size
+        );
+        const rect = actor.node.getBoundingClientRect();
+        const cy = rect.top + rect.height / 2;
+        const depth = clamp(((cy - sceneRect.top) / sceneRect.height) * maxDepthM, 0, maxDepthM);
+        const lit = getFlashlightStrength(actor.node);
+        actor.ctx.clearRect(0, 0, actor.size, actor.size);
+        if (!actor.pixelReadable) {
+          const depthRatio = depth / maxDepthM;
+          const fadedWeight = 1 - lit;
+          const sat = Math.max(0.22, 1 - depthRatio * 0.78 * fadedWeight);
+          const bright = Math.max(0.36, 1 - depthRatio * 0.42 * fadedWeight);
+          const hueShift = -34 * depthRatio * fadedWeight;
+          actor.ctx.filter = `saturate(${sat.toFixed(3)}) brightness(${bright.toFixed(3)}) hue-rotate(${hueShift.toFixed(1)}deg)`;
+          actor.ctx.drawImage(actor.workCanvas, 0, 0);
+          actor.ctx.filter = "none";
+          return;
+        }
+
+        let frame;
+        try {
+          frame = actor.workCtx.getImageData(0, 0, actor.size, actor.size);
+        } catch (_e) {
+          actor.pixelReadable = false;
+          actor.ctx.drawImage(actor.workCanvas, 0, 0);
+          return;
+        }
+
+        const data = frame.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3];
+          if (a === 0) continue;
+          const r0 = data[i];
+          const g0 = data[i + 1];
+          const b0 = data[i + 2];
+          const faded = attenuatePixel(r0, g0, b0, depth);
+          data[i] = lerp(faded[0], r0, lit);
+          data[i + 1] = lerp(faded[1], g0, lit);
+          data[i + 2] = lerp(faded[2], b0, lit);
+        }
+
+        actor.ctx.putImageData(frame, 0, 0);
+      });
+      requestAnimationFrame(renderCreatures);
+    }
+
+    function setDepthText(depth) {
+      if (unitToggle.value === "ft") {
+        const feet = Math.round(depth * 3.28084);
+        depthDisplay.textContent = `Depth: ${feet} ft`;
+      } else {
+        depthDisplay.textContent = `Depth: ${Math.round(depth)} m`;
+      }
+    }
+
+    function updateTips(depth) {
+      let nextBand = 0;
+      if (depth < 8) nextBand = 0;
+      else if (depth < 18) nextBand = 1;
+      else if (depth < 30) nextBand = 2;
+      else nextBand = 3;
+
+      if (nextBand === tipBand) return;
+      tipBand = nextBand;
+
+      if (tipBand === 0) tips.textContent = "Tip: Surface colors are still close to true.";
+      else if (tipBand === 1) tips.textContent = "Tip: Reds and oranges begin to mute quickly.";
+      else if (tipBand === 2) tips.textContent = "Tip: Warm tones keep fading, blue remains dominant.";
+      else tips.textContent = "Tip: At greater depth, most gear shifts toward cool tones.";
+
+      tips.classList.remove("flash");
+      void tips.offsetWidth;
+      tips.classList.add("flash");
+    }
+
+    function updateAmbient(depth) {
+      ambient.style.opacity = String(Math.min(0.78, depth / maxDepthM));
+      const depthRatio = depth / maxDepthM;
+      scene.style.setProperty("--depth-glow", String(0.14 + depthRatio * 0.22));
+      diver.style.filter = `drop-shadow(0 9px 15px rgba(0, 0, 0, 0.28)) drop-shadow(0 0 ${10 + depth * 0.7}px rgba(98, 190, 240, ${0.16 + depthRatio * 0.22}))`;
+    }
+
+    function updateSwatches(depth) {
+      ids.forEach((id) => {
+        const base = gearData[id].base;
+        const faded = attenuate(base, depth);
+        partMap[id].forEach((part) => {
+          const lit = getFlashlightStrength(part);
+          const r = lerp(faded[0], base[0], lit);
+          const g = lerp(faded[1], base[1], lit);
+          const b = lerp(faded[2], base[2], lit);
+          part.setAttribute("fill", `rgb(${r}, ${g}, ${b})`);
+        });
+      });
+
+    }
+
+    function getClientPoint(event) {
+      if (event.touches && event.touches[0]) return event.touches[0];
+      return event;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function depthToY(depth) {
+      const sceneRect = scene.getBoundingClientRect();
+      const diverRect = diver.getBoundingClientRect();
+      const maxY = sceneRect.height - diverRect.height;
+      return (depth / maxDepthM) * maxY;
+    }
+
+    function yToDepth(y) {
+      const sceneRect = scene.getBoundingClientRect();
+      const diverRect = diver.getBoundingClientRect();
+      const maxY = Math.max(1, sceneRect.height - diverRect.height);
+      return clamp((y / maxY) * maxDepthM, 0, maxDepthM);
+    }
+
+    function applyDepth(depth, syncPosition) {
+      depthMeters = clamp(depth, 0, maxDepthM);
+      depthSlider.value = String(Math.round(depthMeters));
+      setDepthText(depthMeters);
+      updateTips(depthMeters);
+      updateAmbient(depthMeters);
+      updateSwatches(depthMeters);
+
+      if (syncPosition) {
+        const y = depthToY(depthMeters);
+        diver.style.top = `${y}px`;
+      }
+    }
+
+    function startDrag(event) {
+      isDragging = true;
+      diver.classList.add("dragging");
+      const point = getClientPoint(event);
+      const rect = diver.getBoundingClientRect();
+      dragOffsetX = point.clientX - rect.left;
+      dragOffsetY = point.clientY - rect.top;
+    }
+
+    function moveDrag(event) {
+      if (!isDragging) return;
+      const sceneRect = scene.getBoundingClientRect();
+      const diverRect = diver.getBoundingClientRect();
+      const point = getClientPoint(event);
+
+      const x = clamp(point.clientX - sceneRect.left - dragOffsetX, 56, sceneRect.width - diverRect.width - 12);
+      const y = clamp(point.clientY - sceneRect.top - dragOffsetY, 0, sceneRect.height - diverRect.height);
+
+      diver.style.left = `${x}px`;
+      diver.style.top = `${y}px`;
+      setFlashlightPosition(point.clientX, point.clientY);
+      applyDepth(yToDepth(y), false);
+    }
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      diver.classList.remove("dragging");
+    }
+
+    function populateRuler() {
+      const steps = 8;
+      ruler.innerHTML = "";
+      for (let i = 0; i <= steps; i += 1) {
+        const depth = (maxDepthM / steps) * i;
+        const tick = document.createElement("div");
+        tick.className = "tick";
+        tick.style.top = `${(i / steps) * 100}%`;
+        if (i === 0) tick.style.transform = "translateY(0)";
+        else if (i === steps) tick.style.transform = "translateY(-100%)";
+        tick.textContent = `${Math.round(depth)}m`;
+        ruler.appendChild(tick);
+      }
+    }
+
+    function resetDemo() {
+      pickerMap.mask.value = "#00ff88";
+      pickerMap.wetsuit.value = "#ff3b30";
+      pickerMap.tank.value = "#8f7bff";
+      pickerMap.fins.value = "#ffd83d";
+      unitToggle.value = "m";
+      syncBasesFromPickers();
+      applyDepth(10, true);
+      status.textContent = "Reset to default training colors.";
+    }
+
+    function setSafetyPreset() {
+      pickerMap.mask.value = "#b4ff1a";
+      pickerMap.wetsuit.value = "#ff5500";
+      pickerMap.tank.value = "#ff00b3";
+      pickerMap.fins.value = "#ffe600";
+      syncBasesFromPickers();
+      applyDepth(depthMeters, false);
+      status.textContent = "Applied high-visibility safety color preset.";
+    }
+
+    ids.forEach((id) => {
+      pickerMap[id].addEventListener("input", () => {
+        syncBasesFromPickers();
+        applyDepth(depthMeters, false);
+      });
+    });
+
+    depthSlider.addEventListener("input", (event) => {
+      applyDepth(Number(event.target.value), true);
+    });
+
+    unitToggle.addEventListener("change", () => applyDepth(depthMeters, false));
+
+    scene.addEventListener("mousemove", (event) => {
+      setFlashlightPosition(event.clientX, event.clientY);
+    });
+    scene.addEventListener("touchmove", (event) => {
+      const point = getClientPoint(event);
+      setFlashlightPosition(point.clientX, point.clientY);
+    }, { passive: true });
+
+    flashlightToggle.addEventListener("click", () => {
+      flashlightOn = !flashlightOn;
+      scene.classList.toggle("flashlight-on", flashlightOn);
+      if (!flashlightOn) scene.classList.remove("flashlight-on-bottom");
+      flashlightOverlay.classList.toggle("active", flashlightOn);
+      flashlightToggle.textContent = flashlightOn ? "Flashlight: On" : "Flashlight: Off";
+      flashlightToggle.setAttribute("aria-pressed", flashlightOn ? "true" : "false");
+      status.textContent = flashlightOn
+        ? "Flashlight enabled. Aim at the diver to reveal truer colors."
+        : "Flashlight disabled. You are viewing natural ambient color loss.";
+      applyDepth(depthMeters, false);
+    });
+
+    diver.addEventListener("mousedown", startDrag);
+    diver.addEventListener("touchstart", startDrag, { passive: true });
+    window.addEventListener("mousemove", moveDrag);
+    window.addEventListener("touchmove", moveDrag, { passive: true });
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+
+    document.getElementById("resetBtn").addEventListener("click", resetDemo);
+    document.getElementById("presetSafety").addEventListener("click", setSafetyPreset);
+
+    window.addEventListener("resize", () => {
+      const rect = scene.getBoundingClientRect();
+      setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
+      applyDepth(depthMeters, true);
+    });
+
+    populateRuler();
+    initCreatures();
+    requestAnimationFrame(renderCreatures);
+    syncBasesFromPickers();
+    {
+      const rect = scene.getBoundingClientRect();
+      setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
+    }
+    applyDepth(depthMeters, true);
+  </script>
+</body>
+</html>

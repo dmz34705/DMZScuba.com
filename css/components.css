@@ -252,6 +252,14 @@
   background-position: center 42%;
 }
 
+.feature-card-tools{
+  background:
+    linear-gradient(180deg, rgba(5,11,20,0.45) 0%, rgba(5,11,20,0.85) 100%),
+    url("../assets/images/hero/hero-skillsrefresh.png");
+  background-size: cover;
+  background-position: center 48%;
+}
+
 .feature-card.is-centered{
   grid-column: 2;
 }
