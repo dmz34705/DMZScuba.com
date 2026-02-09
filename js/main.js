@@ -38,6 +38,45 @@ console.log("main.js loaded");
     return base ? `${base}/api/contact` : "/api/contact";
   }
 
+  function getTelemetryApiUrl() {
+    const base =
+      (document.body &&
+        (document.body.dataset.telemetryApi ||
+          document.body.dataset.contactApi ||
+          document.body.dataset.adminApi ||
+          document.body.dataset.mediaApi)) ||
+      "";
+    return base ? `${base}/api/client-telemetry` : "/api/client-telemetry";
+  }
+
+  function sendTelemetry(eventType, details = {}) {
+    if (!eventType) return;
+    const payload = {
+      eventType: String(eventType),
+      details: details && typeof details === "object" ? details : {},
+      pageUrl: window.location.href,
+      userAgent: navigator.userAgent,
+      sentAt: new Date().toISOString(),
+    };
+    const body = JSON.stringify(payload);
+    const url = getTelemetryApiUrl();
+    try {
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+        return;
+      }
+    } catch (error) {
+      // Fall back to fetch.
+    }
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   function collectFields(form) {
     const data = {};
     const formData = new FormData(form);
@@ -124,7 +163,7 @@ console.log("main.js loaded");
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        throw new Error("Send failed");
+        throw new Error(`Send failed (${response.status})`);
       }
       showToast("Message sent. We will reply soon.");
       if (submitButton) {
@@ -140,6 +179,12 @@ console.log("main.js loaded");
         }, 700);
       }
     } catch (error) {
+      sendTelemetry("contact_submit_failed", {
+        form: payload.form,
+        hasEmail: Boolean(email),
+        hasMessage: Boolean(message),
+        reason: String((error && error.message) || "unknown"),
+      });
       showToast("Send failed. Please email info@dmzscuba.com.");
       if (submitButton) {
         submitButton.textContent = originalLabel;
@@ -152,6 +197,9 @@ console.log("main.js loaded");
 
   window.DMZForms = {
     submit: submitDmzForm,
+  };
+  window.DMZTelemetry = {
+    report: sendTelemetry,
   };
 
   // Copy helper (supports file:// via fallback)

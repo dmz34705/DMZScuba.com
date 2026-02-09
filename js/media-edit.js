@@ -119,6 +119,26 @@
     return fetch(`${apiRoot}${path}`, { ...options, headers });
   }
 
+  function reportTelemetry(eventType, details = {}) {
+    if (!eventType) return;
+    if (window.DMZTelemetry && typeof window.DMZTelemetry.report === "function") {
+      window.DMZTelemetry.report(eventType, details);
+      return;
+    }
+    const payload = {
+      eventType: String(eventType),
+      details: details && typeof details === "object" ? details : {},
+      pageUrl: window.location.href,
+      sentAt: new Date().toISOString(),
+    };
+    fetch(`${apiRoot}/api/client-telemetry`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   function buildTusMetadata(file) {
     const pairs = [];
     if (file && file.name) {
@@ -277,6 +297,11 @@
         tusCompleted = true;
       } catch (error) {
         console.error("Tus upload failed", error);
+        reportTelemetry("media_upload_tus_failed", {
+          reason: String((error && error.message) || "unknown"),
+          fileName: file && file.name ? file.name : "",
+          fileSize: file && Number.isFinite(file.size) ? file.size : 0,
+        });
         onStatus("fallback");
       }
     }
@@ -339,6 +364,11 @@
         })
         .catch((error) => {
           console.error("Queued Stream upload failed", error);
+          reportTelemetry("media_upload_queue_failed", {
+            reason: String((error && error.message) || "unknown"),
+            taskId: task && task.id ? task.id : "",
+            fileName: task && task.file && task.file.name ? task.file.name : "",
+          });
           if (typeof task.onError === "function") {
             task.onError(error);
           }
@@ -1176,6 +1206,10 @@
           queuedTaskId = "";
           uploadStatus.textContent = "Upload failed. You can queue it again.";
           progressLabel.textContent = "Failed";
+          reportTelemetry("media_upload_failed", {
+            itemId: targetId,
+            fileName: file && file.name ? file.name : "",
+          });
           setUploadCardStatus(targetId, { state: "failed", label: "Upload failed" });
           updateUploadState(file);
           setTimeout(() => {

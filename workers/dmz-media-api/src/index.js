@@ -1244,6 +1244,24 @@ async function handleStreamTusUpload(request, env) {
   return jsonResponse({ ok: true, uploadURL: location, uid });
 }
 
+async function handleClientTelemetry(request) {
+  const body = await request.json().catch(() => ({}));
+  const eventType = String(body.eventType || "").trim().slice(0, 80);
+  if (!eventType) {
+    return jsonResponse({ ok: false, error: "Missing eventType." }, 400);
+  }
+  const payload = {
+    kind: "client_telemetry",
+    eventType,
+    pageUrl: String(body.pageUrl || "").slice(0, 500),
+    userAgent: String(body.userAgent || "").slice(0, 400),
+    details: body.details && typeof body.details === "object" ? body.details : {},
+    receivedAt: new Date().toISOString(),
+  };
+  console.log(JSON.stringify(payload));
+  return jsonResponse({ ok: true });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
@@ -1258,6 +1276,8 @@ export default {
       response = await handleGetMedia(env);
     } else if (pathname === "/api/contact" && request.method === "POST") {
       response = await handleContact(request, env);
+    } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
+      response = await handleClientTelemetry(request);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
     } else if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {

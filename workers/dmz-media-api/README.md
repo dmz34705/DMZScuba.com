@@ -34,6 +34,11 @@ Source of truth: `src/index.js`.
   - Sends internal notifications via Resend
   - Sends user auto-replies (general inquiry or interest-list templates/fallback)
 
+- `POST /api/client-telemetry`
+  - Accepts lightweight client error events
+  - Current usage: contact submit failures and media upload failures
+  - Logs structured telemetry to Worker logs
+
 - `GET /api/v2/destinations`
   - Returns destination v2 collection payload
 
