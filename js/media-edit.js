@@ -21,6 +21,12 @@
   const dragState = {
     card: null,
   };
+  const uploadQueueState = {
+    maxConcurrent: 3,
+    active: 0,
+    pending: [],
+    sequence: 0,
+  };
 
   function lockModalScroll() {
     if (modalScrollState.lockCount === 0) {
@@ -118,6 +124,163 @@
       pairs.push(`filetype ${btoa(file.type)}`);
     }
     return pairs.join(",");
+  }
+
+  function findMediaIndexById(id) {
+    if (!id || !window.DMZMedia || typeof window.DMZMedia.getMediaItems !== "function") return -1;
+    const items = window.DMZMedia.getMediaItems() || [];
+    return items.findIndex((entry) => entry && entry.id === id);
+  }
+
+  function applyStreamUploadToMediaItem(itemId, streamId, thumbUrl = "") {
+    if (!itemId || !streamId || !window.DMZMedia) return;
+    const index = findMediaIndexById(itemId);
+    if (index === -1) return;
+    const items = window.DMZMedia.getMediaItems() || [];
+    const current = items[index] || {};
+    window.DMZMedia.updateMediaItem(index, {
+      type: "video",
+      url: "",
+      streamId,
+      thumbUrl: current.thumbUrl || thumbUrl || buildStreamThumbUrl(streamId),
+    });
+    if (typeof window.DMZMedia.setMediaItems === "function") {
+      window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+    }
+    markDirty();
+  }
+
+  async function uploadFileToStream(file, callbacks = {}) {
+    const onStatus = typeof callbacks.onStatus === "function" ? callbacks.onStatus : () => {};
+    const onProgress =
+      typeof callbacks.onProgress === "function" ? callbacks.onProgress : () => {};
+    onStatus("starting");
+    onProgress(0);
+
+    let uploadedUid = "";
+    const useTus = Boolean(window.tus && typeof window.tus.Upload === "function");
+    let tusCompleted = false;
+
+    if (useTus) {
+      try {
+        const resp = await apiFetch("/api/admin/stream-tus-upload", {
+          method: "POST",
+          headers: {
+            "Tus-Resumable": "1.0.0",
+            "Upload-Length": String(file.size),
+            "Upload-Metadata": buildTusMetadata(file),
+          },
+        });
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          throw new Error(`Resumable init failed (${resp.status}). ${errorText || ""}`.trim());
+        }
+        const data = await resp.json();
+        const uploadUrl = data?.uploadURL;
+        uploadedUid = data?.uid || "";
+        if (!uploadUrl) throw new Error("Missing upload URL");
+        onStatus("uploading");
+        await new Promise((resolve, reject) => {
+          const upload = new window.tus.Upload(file, {
+            uploadUrl,
+            chunkSize: 50 * 1024 * 1024,
+            retryDelays: [0, 1000, 3000, 5000, 8000],
+            onProgress(bytesSent, bytesTotal) {
+              if (!bytesTotal) return;
+              const percent = Math.min(100, Math.round((bytesSent / bytesTotal) * 100));
+              onProgress(percent);
+            },
+            onError(error) {
+              reject(error);
+            },
+            onSuccess() {
+              resolve();
+            },
+          });
+          upload.start();
+        });
+        tusCompleted = true;
+      } catch (error) {
+        console.error("Tus upload failed", error);
+        onStatus("fallback");
+      }
+    }
+
+    if (!tusCompleted) {
+      const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
+      const data = await resp.json();
+      const uploadUrl = data?.result?.uploadURL;
+      uploadedUid = uploadedUid || data?.result?.uid || "";
+      if (!uploadUrl) throw new Error("Missing upload URL");
+      onStatus("uploading");
+      const formData = new FormData();
+      formData.append("file", file);
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", uploadUrl, true);
+        xhr.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable) return;
+          const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+          onProgress(percent);
+        });
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error("Upload failed"));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.send(formData);
+      });
+    }
+
+    if (!uploadedUid) throw new Error("Missing Stream ID after upload.");
+    onProgress(100);
+    onStatus("complete");
+    return {
+      streamId: uploadedUid,
+      thumbUrl: buildStreamThumbUrl(uploadedUid),
+    };
+  }
+
+  function runUploadQueue() {
+    while (uploadQueueState.active < uploadQueueState.maxConcurrent && uploadQueueState.pending.length) {
+      const task = uploadQueueState.pending.shift();
+      if (!task) break;
+      uploadQueueState.active += 1;
+      const onDone = () => {
+        uploadQueueState.active = Math.max(0, uploadQueueState.active - 1);
+        runUploadQueue();
+      };
+      uploadFileToStream(task.file, {
+        onStatus: task.onStatus,
+        onProgress: task.onProgress,
+      })
+        .then((result) => {
+          if (typeof task.onComplete === "function") {
+            task.onComplete(result);
+          }
+        })
+        .catch((error) => {
+          console.error("Queued Stream upload failed", error);
+          if (typeof task.onError === "function") {
+            task.onError(error);
+          }
+        })
+        .finally(onDone);
+    }
+  }
+
+  function enqueueStreamUploadTask(task) {
+    if (!task || !task.file) return null;
+    const queuedTask = {
+      ...task,
+      id: `stream-upload-${Date.now()}-${uploadQueueState.sequence++}`,
+    };
+    uploadQueueState.pending.push(queuedTask);
+    runUploadQueue();
+    return queuedTask.id;
   }
 
   function ensureId(item) {
@@ -605,9 +768,12 @@
     const streamUploadBtn = document.createElement("button");
     streamUploadBtn.type = "button";
     streamUploadBtn.className = "media-edit-save";
-    streamUploadBtn.textContent = "Upload to Stream";
+    streamUploadBtn.textContent = "Queue Stream Upload";
     streamUploadBtn.disabled = true;
+    let uploadQueued = false;
+    let uploadInFlight = false;
     let uploadComplete = false;
+    let queuedTaskId = "";
     let uploadCreatedItem = false;
     let uploadCreatedItemId = "";
 
@@ -776,15 +942,19 @@
     function updateUploadState(file) {
       if (!file) {
         streamUploadBtn.disabled = true;
-        streamUploadBtn.textContent = "Upload to Stream";
+        streamUploadBtn.textContent = "Queue Stream Upload";
         uploadStatus.textContent = "Pick a file to upload to Stream.";
+        uploadQueued = false;
+        uploadInFlight = false;
         uploadComplete = false;
         return;
       }
       if (file.type && file.type.startsWith("image/")) {
         streamUploadBtn.disabled = true;
-        streamUploadBtn.textContent = "Upload to Stream";
+        streamUploadBtn.textContent = "Queue Stream Upload";
         uploadStatus.textContent = "Images use direct URLs or local assets (no Stream upload).";
+        uploadQueued = false;
+        uploadInFlight = false;
         uploadComplete = false;
         return;
       }
@@ -794,9 +964,21 @@
         uploadStatus.textContent = "Upload complete. Stream ID added.";
         return;
       }
+      if (uploadInFlight) {
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Uploading...";
+        uploadStatus.textContent = "Uploading in background...";
+        return;
+      }
+      if (uploadQueued) {
+        streamUploadBtn.disabled = true;
+        streamUploadBtn.textContent = "Upload queued";
+        uploadStatus.textContent = "Upload is queued and will start automatically.";
+        return;
+      }
       streamUploadBtn.disabled = false;
-      streamUploadBtn.textContent = "Upload to Stream";
-      uploadStatus.textContent = "Ready to upload video to Stream.";
+      streamUploadBtn.textContent = "Queue Stream Upload";
+      uploadStatus.textContent = "Ready to queue video upload to Stream.";
     }
 
     mediaFileInput.addEventListener("change", () => {
@@ -835,139 +1017,8 @@
       }
     });
 
-    streamUploadBtn.addEventListener("click", async () => {
-      const file = mediaFileInput.files && mediaFileInput.files[0];
-      if (!file) {
-        streamUploadBtn.textContent = "Pick a video file first";
-        return;
-      }
-      if (file.type && file.type.startsWith("image/")) {
-        streamUploadBtn.textContent = "Video uploads only";
-        return;
-      }
-      streamUploadBtn.disabled = true;
-      streamUploadBtn.textContent = "Uploading...";
-      uploadStatus.textContent = "Uploading to Stream. Please stay on this page.";
-      progressWrap.hidden = false;
-      progressBar.style.width = "0%";
-      progressLabel.textContent = "0%";
-      try {
-        const useTus = Boolean(window.tus && typeof window.tus.Upload === "function");
-        if (!useTus) {
-          uploadStatus.textContent = "Resumable upload unavailable. Falling back.";
-        }
-
-        let tusCompleted = false;
-        if (useTus) {
-          try {
-            const resp = await apiFetch("/api/admin/stream-tus-upload", {
-              method: "POST",
-              headers: {
-                "Tus-Resumable": "1.0.0",
-                "Upload-Length": String(file.size),
-                "Upload-Metadata": buildTusMetadata(file),
-              },
-            });
-            if (!resp.ok) {
-              const errorText = await resp.text();
-              throw new Error(`Resumable init failed (${resp.status}). ${errorText || ""}`.trim());
-            }
-            const data = await resp.json();
-            const uploadUrl = data?.uploadURL;
-            const uid = data?.uid;
-            if (!uploadUrl) throw new Error("Missing upload URL");
-            if (uid) {
-              streamIdInput.value = uid;
-              if (!thumbUrlInput.value) {
-                thumbUrlInput.value = buildStreamThumbUrl(uid);
-              }
-            }
-
-            await new Promise((resolve, reject) => {
-              const upload = new window.tus.Upload(file, {
-                uploadUrl,
-                chunkSize: 50 * 1024 * 1024,
-                retryDelays: [0, 1000, 3000, 5000, 8000],
-                onProgress(bytesSent, bytesTotal) {
-                  if (!bytesTotal) return;
-                  const percent = Math.min(100, Math.round((bytesSent / bytesTotal) * 100));
-                  progressBar.style.width = `${percent}%`;
-                  progressLabel.textContent = `${percent}%`;
-                },
-                onError(error) {
-                  reject(error);
-                },
-                onSuccess() {
-                  resolve();
-                },
-              });
-              upload.start();
-            });
-            tusCompleted = true;
-          } catch (error) {
-            console.error("Tus upload failed", error);
-            uploadStatus.textContent = "Resumable upload failed. Trying standard upload...";
-          }
-        }
-
-        if (!tusCompleted) {
-          const resp = await apiFetch("/api/admin/stream-direct-upload", { method: "POST" });
-          const data = await resp.json();
-          const uploadUrl = data?.result?.uploadURL;
-          const uid = data?.result?.uid;
-          if (!uploadUrl) throw new Error("Missing upload URL");
-          const formData = new FormData();
-          formData.append("file", file);
-          await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", uploadUrl, true);
-            xhr.upload.addEventListener("progress", (event) => {
-              if (!event.lengthComputable) return;
-              const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
-              progressBar.style.width = `${percent}%`;
-              progressLabel.textContent = `${percent}%`;
-            });
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve();
-              } else {
-                reject(new Error("Upload failed"));
-              }
-            };
-            xhr.onerror = () => reject(new Error("Upload failed"));
-            xhr.send(formData);
-          });
-          streamIdInput.value = uid || "";
-          if (streamIdInput.value && !thumbUrlInput.value) {
-            thumbUrlInput.value = buildStreamThumbUrl(streamIdInput.value);
-          }
-        }
-
-        mediaUrlInput.value = "";
-        uploadComplete = true;
-        streamUploadBtn.disabled = true;
-        streamUploadBtn.textContent = "Upload successful";
-        uploadStatus.textContent = "Upload complete. Stream ID added to draft.";
-        ensureUploadedItemDraft(file);
-      } catch (error) {
-        console.error("Stream upload failed", error);
-        streamUploadBtn.textContent = "Upload failed";
-        uploadStatus.textContent = "Upload failed. Check your connection and try again.";
-      } finally {
-        if (!uploadComplete) {
-          streamUploadBtn.disabled = false;
-          setTimeout(() => {
-            streamUploadBtn.textContent = "Upload to Stream";
-            progressWrap.hidden = true;
-          }, 1200);
-        } else {
-          progressWrap.hidden = true;
-        }
-      }
-    });
-
     function ensureUploadedItemDraft(file) {
-      if (uploadCreatedItem || item || !window.DMZMedia) return;
+      if (uploadCreatedItem || item || !window.DMZMedia) return "";
       const rawName = file && file.name ? file.name : "Uploaded Video";
       const title = rawName.replace(/\.[^/.]+$/, "");
       const nextItem = {
@@ -988,7 +1039,84 @@
       window.DMZMedia.addMediaItem(created);
       uploadCreatedItem = true;
       markDirty();
+      return uploadCreatedItemId;
     }
+
+    function queueUploadForTarget(file, targetId) {
+      if (!file || !targetId || queuedTaskId || uploadComplete) return null;
+      uploadQueued = true;
+      uploadInFlight = false;
+      progressWrap.hidden = false;
+      progressBar.style.width = "0%";
+      progressLabel.textContent = "Queued";
+      updateUploadState(file);
+      queuedTaskId = enqueueStreamUploadTask({
+        file,
+        onStatus(status) {
+          if (status === "uploading") {
+            uploadInFlight = true;
+            progressLabel.textContent = "Uploading...";
+          } else if (status === "fallback") {
+            progressLabel.textContent = "Retrying...";
+          }
+          updateUploadState(file);
+        },
+        onProgress(percent) {
+          progressBar.style.width = `${percent}%`;
+          progressLabel.textContent = `${percent}%`;
+        },
+        onComplete(result) {
+          uploadQueued = false;
+          uploadInFlight = false;
+          uploadComplete = true;
+          queuedTaskId = "";
+          const streamId = result && result.streamId ? result.streamId : "";
+          const nextThumb = result && result.thumbUrl ? result.thumbUrl : "";
+          if (streamId) {
+            streamIdInput.value = streamId;
+            if (!thumbUrlInput.value) {
+              thumbUrlInput.value = nextThumb || buildStreamThumbUrl(streamId);
+            }
+            applyStreamUploadToMediaItem(targetId, streamId, nextThumb);
+          }
+          uploadStatus.textContent = "Upload complete. Stream ID added to draft.";
+          progressBar.style.width = "100%";
+          progressLabel.textContent = "100%";
+          updateUploadState(file);
+          setTimeout(() => {
+            progressWrap.hidden = true;
+          }, 1000);
+        },
+        onError() {
+          uploadQueued = false;
+          uploadInFlight = false;
+          queuedTaskId = "";
+          uploadStatus.textContent = "Upload failed. You can queue it again.";
+          progressLabel.textContent = "Failed";
+          updateUploadState(file);
+          setTimeout(() => {
+            progressWrap.hidden = true;
+          }, 1200);
+        },
+      });
+      return queuedTaskId;
+    }
+
+    streamUploadBtn.addEventListener("click", () => {
+      const file = mediaFileInput.files && mediaFileInput.files[0];
+      if (!file) {
+        streamUploadBtn.textContent = "Pick a video file first";
+        return;
+      }
+      if (file.type && file.type.startsWith("image/")) {
+        streamUploadBtn.textContent = "Video uploads only";
+        return;
+      }
+      const targetId = (item && item.id) || uploadCreatedItemId || ensureUploadedItemDraft(file);
+      if (!targetId) return;
+      mediaUrlInput.value = "";
+      queueUploadForTarget(file, targetId);
+    });
 
     updateUploadState(null);
 
@@ -1021,20 +1149,36 @@
           (item && item.createdAt) ||
           new Date().toISOString(),
       };
+      const selectedFile = mediaFileInput.files && mediaFileInput.files[0];
+      const shouldQueueStreamUpload = Boolean(
+        selectedFile &&
+          !(selectedFile.type && selectedFile.type.startsWith("image/")) &&
+          !streamIdInput.value.trim()
+      );
+      let persistedId = nextItem.id || "";
       if (item && typeof index === "number") {
         window.DMZMedia.updateMediaItem(index, nextItem);
         window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+        persistedId = item.id || nextItem.id || "";
       } else if (uploadCreatedItemId) {
         const items = window.DMZMedia.getMediaItems();
         const createdIndex = items.findIndex((entry) => entry && entry.id === uploadCreatedItemId);
         if (createdIndex !== -1) {
           window.DMZMedia.updateMediaItem(createdIndex, { ...nextItem, id: uploadCreatedItemId });
           window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+          persistedId = uploadCreatedItemId;
         } else {
-          window.DMZMedia.addMediaItem(ensureId(nextItem));
+          const created = ensureId(nextItem);
+          window.DMZMedia.addMediaItem(created);
+          persistedId = created.id || "";
         }
       } else {
-        window.DMZMedia.addMediaItem(ensureId(nextItem));
+        const created = ensureId(nextItem);
+        window.DMZMedia.addMediaItem(created);
+        persistedId = created.id || "";
+      }
+      if (shouldQueueStreamUpload && persistedId && !queuedTaskId) {
+        queueUploadForTarget(selectedFile, persistedId);
       }
       markDirty();
       closeModal();
