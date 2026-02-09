@@ -27,6 +27,10 @@
     pending: [],
     sequence: 0,
   };
+  const uploadCardStatusById = new Map();
+  const uploadCardRenderState = {
+    queued: false,
+  };
 
   function lockModalScroll() {
     if (modalScrollState.lockCount === 0) {
@@ -148,6 +152,77 @@
       window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
     }
     markDirty();
+  }
+
+  function getUploadCardStatusLabel(status) {
+    const state = status && status.state ? status.state : "";
+    const progress = typeof status?.progress === "number" ? Math.max(0, Math.min(100, status.progress)) : 0;
+    if (status && status.label) return status.label;
+    if (state === "uploading") return `Uploading ${progress}%`;
+    if (state === "queued") return "Queued";
+    if (state === "retrying") return "Retrying";
+    if (state === "complete") return "Uploaded";
+    if (state === "failed") return "Upload failed";
+    return "Uploading";
+  }
+
+  function renderUploadCardIndicators(mediaGrid) {
+    if (!mediaGrid) return;
+    mediaGrid.querySelectorAll(".media-upload-thumb-status").forEach((node) => node.remove());
+    if (!document.body.classList.contains("media-edit-mode")) return;
+    if (!window.DMZMedia || typeof window.DMZMedia.getMediaItems !== "function") return;
+    const items = window.DMZMedia.getMediaItems() || [];
+    const cards = mediaGrid.querySelectorAll(".media-card:not(.media-edit-add)");
+    cards.forEach((card) => {
+      const index = Number(card.getAttribute("data-index"));
+      if (!Number.isFinite(index) || index < 0) return;
+      const item = items[index];
+      if (!item || !item.id) return;
+      const status = uploadCardStatusById.get(item.id);
+      if (!status) return;
+      const thumb = card.querySelector(".media-thumb");
+      if (!thumb) return;
+      const state = status.state || "uploading";
+      const progress =
+        typeof status.progress === "number" ? Math.max(0, Math.min(100, status.progress)) : 0;
+      const indicator = document.createElement("div");
+      indicator.className = `media-upload-thumb-status is-${state}`;
+      const label = document.createElement("span");
+      label.className = "media-upload-thumb-label";
+      label.textContent = getUploadCardStatusLabel(status);
+      const track = document.createElement("span");
+      track.className = "media-upload-thumb-track";
+      const fill = document.createElement("span");
+      fill.className = "media-upload-thumb-fill";
+      fill.style.width = `${state === "queued" ? 8 : progress}%`;
+      track.appendChild(fill);
+      indicator.appendChild(label);
+      indicator.appendChild(track);
+      thumb.appendChild(indicator);
+    });
+  }
+
+  function scheduleUploadCardStatusRender() {
+    if (uploadCardRenderState.queued) return;
+    uploadCardRenderState.queued = true;
+    requestAnimationFrame(() => {
+      uploadCardRenderState.queued = false;
+      renderUploadCardIndicators(document.getElementById("mediaGrid"));
+    });
+  }
+
+  function setUploadCardStatus(itemId, nextStatus) {
+    if (!itemId || !nextStatus) return;
+    const current = uploadCardStatusById.get(itemId) || {};
+    uploadCardStatusById.set(itemId, { ...current, ...nextStatus });
+    scheduleUploadCardStatusRender();
+  }
+
+  function clearUploadCardStatus(itemId) {
+    if (!itemId) return;
+    if (!uploadCardStatusById.has(itemId)) return;
+    uploadCardStatusById.delete(itemId);
+    scheduleUploadCardStatusRender();
   }
 
   async function uploadFileToStream(file, callbacks = {}) {
@@ -1049,6 +1124,7 @@
       progressWrap.hidden = false;
       progressBar.style.width = "0%";
       progressLabel.textContent = "Queued";
+      setUploadCardStatus(targetId, { state: "queued", progress: 0, label: "Queued" });
       updateUploadState(file);
       queuedTaskId = enqueueStreamUploadTask({
         file,
@@ -1056,14 +1132,17 @@
           if (status === "uploading") {
             uploadInFlight = true;
             progressLabel.textContent = "Uploading...";
+            setUploadCardStatus(targetId, { state: "uploading", label: "" });
           } else if (status === "fallback") {
             progressLabel.textContent = "Retrying...";
+            setUploadCardStatus(targetId, { state: "retrying", label: "Retrying..." });
           }
           updateUploadState(file);
         },
         onProgress(percent) {
           progressBar.style.width = `${percent}%`;
           progressLabel.textContent = `${percent}%`;
+          setUploadCardStatus(targetId, { state: "uploading", progress: percent, label: "" });
         },
         onComplete(result) {
           uploadQueued = false;
@@ -1082,7 +1161,11 @@
           uploadStatus.textContent = "Upload complete. Stream ID added to draft.";
           progressBar.style.width = "100%";
           progressLabel.textContent = "100%";
+          setUploadCardStatus(targetId, { state: "complete", progress: 100, label: "Uploaded" });
           updateUploadState(file);
+          setTimeout(() => {
+            clearUploadCardStatus(targetId);
+          }, 2200);
           setTimeout(() => {
             progressWrap.hidden = true;
           }, 1000);
@@ -1093,6 +1176,7 @@
           queuedTaskId = "";
           uploadStatus.textContent = "Upload failed. You can queue it again.";
           progressLabel.textContent = "Failed";
+          setUploadCardStatus(targetId, { state: "failed", label: "Upload failed" });
           updateUploadState(file);
           setTimeout(() => {
             progressWrap.hidden = true;
@@ -1234,6 +1318,7 @@
     const addCard = mediaGrid.querySelector(".media-edit-add");
     if (addCard) addCard.remove();
     mediaGrid.querySelectorAll(".media-edit-fields").forEach((fields) => fields.remove());
+    mediaGrid.querySelectorAll(".media-upload-thumb-status").forEach((status) => status.remove());
     mediaGrid.querySelectorAll("[data-edit-field]").forEach((el) => {
       el.removeAttribute("contenteditable");
       el.removeAttribute("data-edit-field");
@@ -1321,6 +1406,7 @@
         addEditButtons(mediaGrid);
         ensureAddCard(mediaGrid);
         enableInlineEdits(mediaGrid);
+        renderUploadCardIndicators(mediaGrid);
         updateDragAvailability();
       }
     });
@@ -1392,6 +1478,7 @@
         addEditButtons(mediaGrid);
         ensureAddCard(mediaGrid);
         enableInlineEdits(mediaGrid);
+        renderUploadCardIndicators(mediaGrid);
         updateDragAvailability();
         if (window.DMZMedia && window.DMZMedia.updateMasonry) {
           window.DMZMedia.updateMasonry();
