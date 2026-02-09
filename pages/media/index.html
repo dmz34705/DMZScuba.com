@@ -261,11 +261,6 @@
         if (header && next) {
           header.classList.remove("is-hidden");
         }
-        if (mobileQuery.matches) {
-          document.body.classList.toggle("media-mobile-lock", next);
-        } else {
-          document.body.classList.remove("media-mobile-lock");
-        }
       };
 
       toggle.addEventListener("click", () => {
@@ -287,15 +282,8 @@
       });
 
       window.addEventListener("resize", () => {
-        if (!document.body.classList.contains("media-admin-open")) {
-          document.body.classList.remove("media-mobile-lock");
-          return;
-        }
-        if (!mobileQuery.matches) {
-          document.body.classList.remove("media-mobile-lock");
-        } else {
-          document.body.classList.add("media-mobile-lock");
-        }
+        if (!document.body.classList.contains("media-admin-open")) return;
+        toggle.setAttribute("aria-expanded", "true");
       });
     })();
   </script>
