@@ -179,6 +179,9 @@ Smoke checks:
 1. Run `Smoke Check.bat <base-url>`.
 2. Example: `Smoke Check.bat https://dmzscuba-com.pages.dev`
 
+Media logic unit tests:
+1. Run `Test Media Logic.bat`
+
 ## Deployment Workflow
 
 Static site (Cloudflare Pages):

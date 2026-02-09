@@ -19,6 +19,8 @@ Use this checklist for every dev and live promotion cycle.
 5. Confirm Cloudflare `dmzscuba-com` deploy is green (Production).
 6. Run smoke checks against deployed dev project:
    - `Smoke Check.bat https://dmzscuba-com.pages.dev`
+7. If media filtering/sorting/reel logic was touched, run:
+   - `Test Media Logic.bat`
 
 ## 2) Live Promotion (`dmzscuba-live`) - Only When Explicitly Approved
 
