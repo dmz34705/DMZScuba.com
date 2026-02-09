@@ -1356,6 +1356,25 @@
     card.setAttribute("data-item-id", item && item.id ? item.id : "");
     const frame = document.createElement("div");
     frame.className = "media-reel-frame";
+    const cardActions = document.createElement("div");
+    cardActions.className = "media-reel-card-actions";
+    const soundBtn = document.createElement("button");
+    soundBtn.type = "button";
+    soundBtn.className = "media-reel-card-btn media-reel-sound-toggle";
+    soundBtn.setAttribute("aria-label", "Toggle reel sound");
+    soundBtn.setAttribute("aria-pressed", reelState.soundOn ? "true" : "false");
+    soundBtn.textContent = reelState.soundOn ? "Mute" : "Enable Sound";
+    soundBtn.addEventListener("click", () => {
+      setReelSound(!reelState.soundOn, { userGesture: true });
+    });
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "media-reel-card-btn";
+    closeBtn.setAttribute("aria-label", "Close reel mode");
+    closeBtn.textContent = "Close";
+    closeBtn.addEventListener("click", closeReelMode);
+    cardActions.appendChild(soundBtn);
+    cardActions.appendChild(closeBtn);
 
     const media = buildReelMedia(item || {});
     const scrim = document.createElement("div");
@@ -1403,6 +1422,7 @@
     frame.appendChild(media);
     frame.appendChild(scrim);
     frame.appendChild(copy);
+    frame.appendChild(cardActions);
     card.appendChild(frame);
     return card;
   }
@@ -1686,9 +1706,11 @@
   }
 
   function updateReelSoundButton() {
-    if (!reelState.soundButtonEl) return;
-    reelState.soundButtonEl.textContent = reelState.soundOn ? "Mute" : "Enable Sound";
-    reelState.soundButtonEl.setAttribute("aria-pressed", reelState.soundOn ? "true" : "false");
+    if (!reelState.overlayEl) return;
+    reelState.overlayEl.querySelectorAll(".media-reel-sound-toggle").forEach((btn) => {
+      btn.textContent = reelState.soundOn ? "Mute" : "Enable Sound";
+      btn.setAttribute("aria-pressed", reelState.soundOn ? "true" : "false");
+    });
   }
 
   function setReelSound(nextValue, options = {}) {
@@ -1834,13 +1856,12 @@
 
     const sound = document.createElement("button");
     sound.type = "button";
-    sound.className = "media-reel-close";
+    sound.className = "media-reel-close media-reel-sound-toggle";
     sound.setAttribute("aria-label", "Toggle reel sound");
     sound.setAttribute("aria-pressed", "true");
     sound.addEventListener("click", () => {
       setReelSound(!reelState.soundOn, { userGesture: true });
     });
-    reelState.soundButtonEl = sound;
     updateReelSoundButton();
 
     const actions = document.createElement("div");

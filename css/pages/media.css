@@ -1289,6 +1289,27 @@ body.media-authenticated .media-admin-fab{
   overflow: hidden;
 }
 
+.media-reel-card-actions{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: none;
+  gap: 8px;
+}
+
+.media-reel-card-btn{
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(8, 12, 18, 0.74);
+  color: rgba(234,242,255,0.94);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
 .media-reel-media{
   position: absolute;
   inset: 0;
@@ -1417,6 +1438,14 @@ body.media-authenticated .media-admin-fab{
 }
 
 @media (min-width: 981px){
+  .media-reel-header{
+    display: none;
+  }
+
+  .media-reel-card-actions{
+    display: flex;
+  }
+
   .media-reel-card{
     background:
       radial-gradient(900px 460px at 50% 52%, rgba(42, 56, 74, 0.45) 0%, rgba(2,5,11,0.05) 58%),
