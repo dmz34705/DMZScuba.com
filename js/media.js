@@ -1354,6 +1354,8 @@
     const card = document.createElement("article");
     card.className = "media-reel-card";
     card.setAttribute("data-item-id", item && item.id ? item.id : "");
+    const frame = document.createElement("div");
+    frame.className = "media-reel-frame";
 
     const media = buildReelMedia(item || {});
     const scrim = document.createElement("div");
@@ -1398,9 +1400,10 @@
       copy.appendChild(meta);
     }
 
-    card.appendChild(media);
-    card.appendChild(scrim);
-    card.appendChild(copy);
+    frame.appendChild(media);
+    frame.appendChild(scrim);
+    frame.appendChild(copy);
+    card.appendChild(frame);
     return card;
   }
 

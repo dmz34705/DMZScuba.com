@@ -1283,6 +1283,12 @@ body.media-authenticated .media-admin-fab{
   background: #02050b;
 }
 
+.media-reel-frame{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
 .media-reel-media{
   position: absolute;
   inset: 0;
@@ -1407,6 +1413,34 @@ body.media-authenticated .media-admin-fab{
     left: 12px;
     right: 12px;
     bottom: 18px;
+  }
+}
+
+@media (min-width: 981px){
+  .media-reel-card{
+    background:
+      radial-gradient(900px 460px at 50% 52%, rgba(42, 56, 74, 0.45) 0%, rgba(2,5,11,0.05) 58%),
+      #02050b;
+  }
+
+  .media-reel-frame{
+    left: 50%;
+    top: 50%;
+    width: min(440px, calc(100vw - 64px));
+    height: min(88vh, calc(var(--media-reel-vh, 100dvh) - 56px));
+    transform: translate(-50%, -50%);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow:
+      0 24px 60px rgba(0,0,0,0.62),
+      0 0 0 1px rgba(255,255,255,0.05) inset;
+    background: #000;
+  }
+
+  .media-reel-overlay-copy{
+    left: 14px;
+    right: 14px;
+    bottom: 16px;
   }
 }
 
