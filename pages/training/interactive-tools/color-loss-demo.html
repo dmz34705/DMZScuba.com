@@ -26,8 +26,14 @@
       box-sizing: border-box;
     }
 
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+
     body {
       margin: 0;
+      height: 100%;
       padding: clamp(0.5rem, 1.5vw, 1rem);
       color: var(--text);
       font-family: "Barlow", "Segoe UI", sans-serif;
@@ -35,7 +41,7 @@
         radial-gradient(1200px 700px at 80% 10%, rgba(255, 255, 255, 0.22), transparent 55%),
         radial-gradient(900px 500px at 8% 24%, rgba(174, 240, 255, 0.2), transparent 50%),
         linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-deep) 100%);
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     body.immersive-lock {
@@ -3076,12 +3082,21 @@
       setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
     }
     placeDiverAtBestStart(8);
-    try {
-      if (!localStorage.getItem("dmzColorTourSeen")) {
+    const isEmbedded = (() => {
+      try {
+        return window.self !== window.top;
+      } catch (_e) {
+        return true;
+      }
+    })();
+    if (!isEmbedded) {
+      try {
+        if (!localStorage.getItem("dmzColorTourSeen")) {
+          setTimeout(() => openTour(0), 450);
+        }
+      } catch (_e) {
         setTimeout(() => openTour(0), 450);
       }
-    } catch (_e) {
-      setTimeout(() => openTour(0), 450);
     }
   </script>
 </body>
