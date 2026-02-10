@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -19,6 +19,7 @@
       --good: #7af1aa;
       --danger: #ff9f9f;
       --depth-glow: 0.16;
+      --demo-max-width: 1220px;
     }
 
     * {
@@ -27,24 +28,64 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
+      padding: clamp(0.5rem, 1.5vw, 1rem);
       color: var(--text);
       font-family: "Barlow", "Segoe UI", sans-serif;
       background:
         radial-gradient(1200px 700px at 80% 10%, rgba(255, 255, 255, 0.22), transparent 55%),
         radial-gradient(900px 500px at 8% 24%, rgba(174, 240, 255, 0.2), transparent 50%),
         linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-deep) 100%);
+      overflow-x: hidden;
+    }
+
+    body.immersive-lock {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
       overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
     }
 
     .page {
-      width: min(1180px, 96vw);
-      margin: 2vh auto;
+      width: min(100%, var(--demo-max-width));
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 1rem;
+      grid-template-columns: minmax(235px, 300px) minmax(0, 1fr) minmax(235px, 300px);
+      gap: 0.85rem;
       align-items: stretch;
-      min-height: 94vh;
+      min-height: 0;
+    }
+
+    .page.immersive-mode {
+      width: 100vw;
+      max-width: none;
+      height: 100dvh;
+      margin: 0;
+      gap: 0;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+      background:
+        radial-gradient(1200px 700px at 80% 10%, rgba(255, 255, 255, 0.2), transparent 55%),
+        radial-gradient(900px 500px at 8% 24%, rgba(174, 240, 255, 0.16), transparent 50%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 38%, var(--bg-deep) 100%);
+    }
+
+    .page.immersive-mode .controls,
+    .page.immersive-mode .controls-secondary {
+      display: none !important;
+    }
+
+    .page.immersive-mode .scene {
+      height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 16px);
+      min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 16px);
+      border-radius: 14px;
+      border: 1px solid rgba(201, 235, 255, 0.2);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35), inset 0 0 60px rgba(7, 34, 56, 0.25);
+      padding: 10px;
     }
 
     .panel {
@@ -52,14 +93,34 @@
       border: 1px solid var(--panel-border);
       border-radius: 20px;
       backdrop-filter: blur(8px);
-      padding: 1rem;
+      padding: 0.85rem;
       box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+      min-width: 0;
+      height: 100%;
     }
 
     .controls {
       display: flex;
       flex-direction: column;
-      gap: 0.9rem;
+      gap: 0.7rem;
+    }
+
+    .controls-secondary {
+      align-self: stretch;
+    }
+
+    .panel-head {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #bfe8ff;
+      font-weight: 700;
     }
 
     h1 {
@@ -84,6 +145,102 @@
       letter-spacing: 0.03em;
       text-transform: uppercase;
       color: #d3f0ff;
+    }
+
+    .control-card {
+      border: 1px solid rgba(205, 238, 255, 0.17);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(31, 72, 101, 0.34), rgba(12, 38, 58, 0.32));
+      padding: 0.62rem 0.7rem;
+      box-shadow: inset 0 1px 0 rgba(225, 246, 255, 0.06);
+    }
+
+    .right-header {
+      margin: 0 0 0.1rem;
+      color: #bfe8ff;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 108px;
+      gap: 0.5rem;
+      margin-top: 0.2rem;
+      align-items: start;
+    }
+
+    .stat-card {
+      border: 1px solid rgba(185, 231, 255, 0.22);
+      border-radius: 12px;
+      background: rgba(7, 31, 48, 0.55);
+      padding: 0.5rem 0.6rem;
+      min-height: 62px;
+    }
+
+    .stats-grid .stat-card:last-child {
+      width: 108px;
+      justify-self: end;
+      align-self: start;
+    }
+
+    .stat-card span {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: #aed8ec;
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-card strong {
+      display: block;
+      font-family: "Outfit", "Barlow", sans-serif;
+      font-size: clamp(0.82rem, 1.5vw, 1rem);
+      line-height: 1.12;
+      min-height: 1.12em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #f0f9ff;
+    }
+
+    #zoneLabel {
+      width: 100%;
+      padding-right: 0.45rem;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      font-size: clamp(0.78rem, 1.35vw, 0.94rem);
+      line-height: 1.08;
+    }
+
+    #lightLabel {
+      width: 4.6ch;
+      padding-right: 0.45rem;
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .interaction-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0.2rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .interaction-steps li {
+      border: 1px solid rgba(184, 231, 255, 0.22);
+      background: rgba(11, 38, 56, 0.5);
+      border-radius: 10px;
+      padding: 0.28rem 0.46rem;
+      font-size: 0.74rem;
+      line-height: 1.25;
+      color: #d7effb;
+      white-space: nowrap;
     }
 
     .field {
@@ -136,11 +293,68 @@
       gap: 0.5rem;
     }
 
+    .actions-card {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .visibility {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.45rem;
+      margin-top: 0.45rem;
+    }
+
+    .visibility-row {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.84rem;
+    }
+
+    .visibility-row[data-state="low"] .vis-value {
+      color: #ffd2a3;
+    }
+
+    .visibility-row[data-state="critical"] .vis-value {
+      color: #ffb2b2;
+    }
+
+    .vis-track {
+      position: relative;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(196, 233, 255, 0.24);
+      overflow: hidden;
+    }
+
+    .vis-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ffb655, #ffe674 48%, #8effb8 100%);
+      transition: width 0.2s ease;
+    }
+
+    .vis-value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      color: #d9f1ff;
+      min-width: 3ch;
+      text-align: right;
+    }
+
     .scene {
-      --surface-h: 54px;
+      --surface-h: 86px;
       --fx: 72%;
       --fy: 38%;
       position: relative;
+      height: 100%;
+      min-height: clamp(340px, 45vw, 640px);
       overflow: hidden;
       isolation: isolate;
       background:
@@ -159,6 +373,8 @@
       inset: 0;
       pointer-events: none;
       z-index: 0;
+      opacity: calc(0.25 + var(--sun-strength, 0.82) * 0.75);
+      transition: opacity 0.25s linear;
       overflow: hidden;
     }
 
@@ -281,7 +497,6 @@
     .creatures {
       position: absolute;
       inset: 0;
-      z-index: 2;
       pointer-events: none;
       overflow: hidden;
     }
@@ -297,7 +512,12 @@
         swimRight var(--swim-dur, 26s) linear infinite,
         swimBob var(--bob-dur, 4.2s) ease-in-out infinite;
       animation-delay: var(--delay, 0s), var(--bob-delay, 0s);
-      filter: saturate(0.95) brightness(0.9);
+      filter:
+        saturate(var(--sat, 0.95))
+        brightness(var(--bright, 0.9))
+        blur(var(--blur, 0px));
+      opacity: var(--op, 0.95);
+      z-index: var(--z, 2);
       will-change: transform, filter;
     }
 
@@ -310,7 +530,8 @@
       width: 62px;
       height: 62px;
       display: block;
-      image-rendering: auto;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     .creature.left .creature-sprite {
@@ -339,7 +560,8 @@
       right: 14px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 0.45rem;
       pointer-events: none;
       z-index: 2;
     }
@@ -355,6 +577,54 @@
       font-weight: 600;
       font-size: 0.92rem;
       color: #dbf4ff;
+    }
+
+    #depthDisplay {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    #tips {
+      margin-left: auto;
+      display: block;
+      max-width: min(62%, 430px);
+      border-radius: 14px;
+      line-height: 1.25;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .scene-meta {
+      position: absolute;
+      right: 16px;
+      top: 72px;
+      z-index: 3;
+      pointer-events: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(6, 20, 37, 0.6);
+      border: 1px solid rgba(201, 235, 255, 0.22);
+      border-radius: 999px;
+      padding: 0.24rem 0.45rem;
+      font-size: 0.67rem;
+      letter-spacing: 0.03em;
+      color: #d9f2ff;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #7af1aa;
+      box-shadow: 0 0 8px rgba(122, 241, 170, 0.6);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .dot.is-off {
+      background: #adc8d6;
+      box-shadow: 0 0 6px rgba(173, 200, 214, 0.45);
     }
 
     .pill.flash {
@@ -378,6 +648,7 @@
       pointer-events: none;
     }
 
+
     .tick {
       position: absolute;
       right: 0;
@@ -394,14 +665,20 @@
       position: absolute;
       left: 56%;
       top: 26%;
-      width: 282px;
+      width: clamp(120px, 14vw, 175px);
       padding: 0;
       cursor: grab;
       user-select: none;
       touch-action: none;
-      z-index: 3;
+      z-index: 4;
       animation: diverIdle 6s ease-in-out infinite;
       transition: filter 0.2s ease;
+    }
+
+    .scene:focus-visible,
+    .diver:focus-visible {
+      outline: 2px solid rgba(157, 232, 255, 0.9);
+      outline-offset: 2px;
     }
 
     .diver.dragging {
@@ -467,11 +744,114 @@
       accent-color: var(--accent);
     }
 
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(164, 230, 255, 0.62), rgba(81, 198, 243, 0.45));
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      margin-top: -6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: radial-gradient(circle at 30% 30%, #ffffff, #8ae1ff 72%, #4fc7f0 100%);
+      box-shadow: 0 0 0 2px rgba(12, 47, 69, 0.4);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(90deg, rgba(164, 230, 255, 0.62), rgba(81, 198, 243, 0.45));
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: radial-gradient(circle at 30% 30%, #ffffff, #8ae1ff 72%, #4fc7f0 100%);
+      box-shadow: 0 0 0 2px rgba(12, 47, 69, 0.4);
+      cursor: pointer;
+    }
+
     .status {
       color: var(--good);
       margin: 0;
       font-size: 0.9rem;
       min-height: 1.2rem;
+      border: 1px solid rgba(163, 231, 186, 0.24);
+      border-radius: 10px;
+      background: rgba(24, 72, 50, 0.2);
+      padding: 0.45rem 0.55rem;
+    }
+
+    .spectrum {
+      display: grid;
+      gap: 0.32rem;
+      margin-top: 0.2rem;
+    }
+
+    .spectrum-row {
+      display: grid;
+      grid-template-columns: 20px 1fr 42px;
+      align-items: center;
+      gap: 0.36rem;
+      font-size: 0.82rem;
+      color: #d8f2ff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .spectrum-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 18px;
+      border-radius: 6px;
+      border: 1px solid rgba(196, 233, 255, 0.26);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .spectrum-key.r { background: rgba(255, 90, 90, 0.22); color: #ffc8c8; }
+    .spectrum-key.g { background: rgba(116, 230, 149, 0.22); color: #cdf8d7; }
+    .spectrum-key.b { background: rgba(124, 168, 255, 0.22); color: #d6e6ff; }
+    .spectrum-key.w { background: rgba(232, 241, 255, 0.2); color: #f4f8ff; }
+
+    .spectrum-track {
+      position: relative;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(196, 233, 255, 0.24);
+      overflow: hidden;
+    }
+
+    .spectrum-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      border-radius: inherit;
+      transition: width 0.2s ease;
+    }
+
+    #specBarR { background: linear-gradient(90deg, #b64242, #ff6c6c); }
+    #specBarG { background: linear-gradient(90deg, #3c8f58, #66d98c); }
+    #specBarB { background: linear-gradient(90deg, #3866c0, #70a4ff); }
+    #specBarW { background: linear-gradient(90deg, #9db5d9, #e6f1ff); }
+
+    .spectrum-value {
+      text-align: right;
+      min-width: 4ch;
+      font-weight: 700;
+      color: #d9f1ff;
     }
 
     .ambient {
@@ -497,6 +877,72 @@
       border-bottom: 1px solid rgba(220, 248, 255, 0.45);
       box-shadow: 0 8px 28px rgba(131, 214, 244, 0.22);
       overflow: hidden;
+    }
+
+    .surface-band {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: calc(var(--surface-h) + 52px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .sun-source {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: clamp(36px, 5.4vw, 56px);
+      height: clamp(36px, 5.4vw, 56px);
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 30%, #fffbe0 0%, #ffe48d 52%, #ffb45f 100%);
+      box-shadow:
+        0 0 0 6px rgba(255, 234, 167, 0.2),
+        0 0 34px rgba(255, 214, 132, 0.7),
+        0 0 78px rgba(255, 188, 96, 0.45);
+      opacity: calc(0.5 + var(--sun-strength, 0.82) * 0.5);
+      transition: opacity 0.25s linear, transform 0.25s linear;
+    }
+
+    .sun-source::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: clamp(140px, 24vw, 290px);
+      height: clamp(150px, 30vw, 360px);
+      transform: translateX(-50%);
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 235, 170, 0.26) 0%, rgba(255, 219, 152, 0.13) 38%, rgba(152, 215, 255, 0) 80%);
+      filter: blur(1px);
+    }
+
+    .surface-island {
+      position: absolute;
+      bottom: calc(100% - var(--surface-h));
+      width: clamp(190px, 28vw, 420px);
+      max-height: clamp(110px, 15vw, 210px);
+      max-width: 44%;
+      object-fit: contain;
+      object-position: bottom;
+      opacity: 0.98;
+      filter: drop-shadow(0 10px 10px rgba(3, 16, 25, 0.42));
+    }
+
+    .surface-island.left {
+      left: 0;
+      transform: translate(-36%, 0);
+    }
+
+    .surface-island.right {
+      right: 0;
+      transform: translate(36%, 0) scaleX(-1);
+    }
+
+    .surface-island.is-missing {
+      display: none;
     }
 
     .water-surface::before,
@@ -629,69 +1075,553 @@
       opacity: 1;
     }
 
-    @media (max-width: 960px) {
-      .scene {
-        --surface-h: 52px;
+    .legend {
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      z-index: 3;
+      border-radius: 12px;
+      border: 1px solid rgba(194, 233, 255, 0.2);
+      background: rgba(6, 20, 37, 0.58);
+      padding: 0.42rem 0.55rem;
+      display: grid;
+      gap: 0.3rem;
+      pointer-events: none;
+      max-width: min(320px, 70%);
+    }
+
+    .legend-title {
+      margin: 0;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #bde5fa;
+      font-weight: 700;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.74rem;
+      color: #d7f0ff;
+    }
+
+    .legend-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+    }
+
+    .legend-chip {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .legend-chip.warm { background: #ffbc72; }
+    .legend-chip.cool { background: #8db4ff; }
+    .legend-chip.reveal { background: #fff2ae; }
+
+    .mobile-overlay {
+      display: none;
+    }
+
+    .mobile-tool-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+
+    .mob-btn {
+      border: 1px solid rgba(198, 234, 255, 0.26);
+      border-radius: 12px;
+      background: rgba(5, 24, 41, 0.58);
+      color: #e6f7ff;
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      gap: 0.05rem;
+      line-height: 1;
+      padding: 0.2rem 0.25rem;
+      box-shadow: inset 0 1px 0 rgba(232, 248, 255, 0.08);
+    }
+
+    .mob-btn .sym {
+      font-size: 1rem;
+    }
+
+    .mob-btn .lab {
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #bfe3f6;
+      font-weight: 700;
+    }
+
+    .mob-btn.is-on {
+      background: rgba(21, 72, 102, 0.72);
+      border-color: rgba(170, 229, 255, 0.42);
+    }
+
+    .mobile-depth {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.45rem;
+      border-radius: 12px;
+      border: 1px solid rgba(197, 233, 255, 0.22);
+      background: rgba(5, 24, 41, 0.58);
+    }
+
+    .mobile-depth-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      padding: 0;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .mobile-depth-core {
+      display: grid;
+      gap: 0.18rem;
+    }
+
+    .mobile-depth-text {
+      font-size: 0.74rem;
+      color: #d8f2ff;
+      letter-spacing: 0.03em;
+      font-weight: 700;
+    }
+
+    .mobile-colors {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.28rem;
+      padding: 0.35rem;
+      border-radius: 11px;
+      border: 1px solid rgba(197, 233, 255, 0.2);
+      background: rgba(5, 24, 41, 0.58);
+    }
+
+    .mobile-colors[hidden] {
+      display: none;
+    }
+
+    .mobile-color {
+      display: grid;
+      gap: 0.16rem;
+      justify-items: center;
+      font-size: 0.56rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #bbe1f5;
+      font-weight: 700;
+    }
+
+    .mobile-color input[type="color"] {
+      width: 34px;
+      height: 28px;
+      border-radius: 9px;
+      padding: 0;
+    }
+
+    .tour-launch {
+      width: 100%;
+      min-height: 40px;
+    }
+
+    .tour-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      pointer-events: none;
+    }
+
+    .tour-overlay.active {
+      display: block;
+    }
+
+    .tour-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 11, 20, 0.62);
+    }
+
+    .tour-spotlight {
+      position: absolute;
+      border-radius: 14px;
+      border: 2px solid rgba(165, 231, 255, 0.9);
+      box-shadow: 0 0 0 9999px rgba(3, 11, 20, 0.52), 0 0 0 2px rgba(6, 20, 37, 0.9);
+      pointer-events: none;
+      transition: all 0.22s ease;
+    }
+
+    .tour-card {
+      position: absolute;
+      width: min(340px, calc(100vw - 24px));
+      border-radius: 14px;
+      border: 1px solid rgba(179, 229, 255, 0.28);
+      background: rgba(6, 20, 37, 0.96);
+      color: #dff4ff;
+      padding: 0.72rem;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.38);
+      pointer-events: auto;
+      transition: all 0.22s ease;
+    }
+
+    .tour-kicker {
+      margin: 0 0 0.22rem;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #a9d8ef;
+      font-weight: 700;
+    }
+
+    .tour-title {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.2;
+      color: #f2fbff;
+    }
+
+    .tour-copy {
+      margin: 0.35rem 0 0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      color: #cce7f5;
+    }
+
+    .tour-actions {
+      margin-top: 0.62rem;
+      display: grid;
+      grid-template-columns: auto auto 1fr auto;
+      gap: 0.32rem;
+      align-items: center;
+    }
+
+    .tour-step {
+      font-size: 0.72rem;
+      color: #abd6ea;
+      font-weight: 700;
+    }
+
+    .tour-btn {
+      border: 1px solid rgba(186, 231, 255, 0.28);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #dcf4ff;
+      font: inherit;
+      font-size: 0.76rem;
+      padding: 0.34rem 0.5rem;
+      cursor: pointer;
+    }
+
+    .tour-btn.primary {
+      background: rgba(99, 203, 244, 0.24);
+      border-color: rgba(154, 227, 255, 0.54);
+      color: #f4fbff;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1200px) {
+      .page {
+        grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
       }
 
-      body {
-        overflow: auto;
+      .controls-secondary {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .page {
+        align-items: start;
+      }
+
+      .panel {
+        height: auto;
+      }
+
+      .scene {
+        --surface-h: 78px;
       }
 
       .page {
         grid-template-columns: 1fr;
-        min-height: auto;
-        margin: 1rem auto;
+        min-height: 0;
+        margin: 0 auto;
+        gap: 0;
       }
 
       .scene {
-        min-height: 66vh;
+        min-height: clamp(600px, 88vh, 980px);
+        border-radius: 16px;
       }
 
+      .panel {
+        padding: 0.55rem;
+      }
+
+      .legend {
+        display: none;
+      }
+
+      .controls,
+      .controls-secondary {
+        display: none;
+      }
+
+      .hud {
+        top: 8px;
+        left: 10px;
+        right: 10px;
+      }
+
+      .pill {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+      }
+
+      #tips {
+        max-width: min(58%, 320px);
+        padding: 0.28rem 0.46rem;
+      }
+
+      .scene-meta {
+        right: 10px;
+        top: 56px;
+        font-size: 0.61rem;
+        padding: 0.2rem 0.38rem;
+      }
+
+      .depth-ruler {
+        display: none;
+      }
+
+
       .diver {
-        left: 52%;
-        width: min(286px, 84vw);
+        left: 50%;
+        width: min(220px, 56vw);
+      }
+
+      .mobile-overlay {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        top: 86px;
+        bottom: 10px;
+        z-index: 7;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 74px;
+        grid-template-areas:
+          "colors tools";
+        gap: 0.35rem 0.45rem;
+        align-content: start;
+        pointer-events: none;
+      }
+
+      .surface-island {
+        width: clamp(150px, 44vw, 270px);
+        max-height: clamp(88px, 20vw, 140px);
+        max-width: 52%;
+      }
+
+      .surface-island.left {
+        transform: translate(-34%, 0);
+      }
+
+      .surface-island.right {
+        transform: translate(34%, 0) scaleX(-1);
+      }
+
+      .mobile-overlay > * {
+        pointer-events: auto;
+      }
+
+      .mobile-tool-row {
+        grid-area: tools;
+        grid-template-columns: 1fr;
+        align-content: start;
+        margin-top: 10px;
+      }
+
+      .mobile-depth {
+        position: absolute;
+        left: 0;
+        right: 84px;
+        bottom: 0;
+      }
+
+      .mobile-colors {
+        grid-area: colors;
       }
     }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 0.25rem;
+      }
+
+      .scene {
+        min-height: clamp(560px, 92vh, 900px);
+      }
+
+
+      .mobile-tool-row {
+        grid-template-columns: 1fr;
+        gap: 0.28rem;
+        margin-top: 8px;
+      }
+
+      .mobile-tool-row #mobColorToggle {
+        grid-column: auto;
+      }
+
+      .mobile-overlay {
+        top: 78px;
+        bottom: 10px;
+        grid-template-columns: minmax(0, 1fr) 62px;
+        grid-template-areas:
+          "colors tools";
+      }
+
+      .mob-btn {
+        min-height: 40px;
+        border-radius: 10px;
+      }
+
+      .mob-btn .sym {
+        font-size: 0.92rem;
+      }
+
+      .mob-btn .lab {
+        font-size: 0.56rem;
+      }
+
+      .mobile-depth {
+        padding: 0.34rem 0.38rem;
+        right: 72px;
+      }
+
+      #tips {
+        max-width: min(52%, 250px);
+        font-size: 0.74rem;
+        margin-top: 0.16rem;
+      }
+
+      .mobile-depth-btn {
+        width: 30px;
+        height: 30px;
+      }
+
+      .mobile-colors {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 430px) {
+      .mobile-overlay {
+        top: 74px;
+        bottom: 10px;
+        grid-template-columns: minmax(0, 1fr) 56px;
+        grid-template-areas:
+          "colors tools";
+      }
+
+      .mobile-tool-row {
+        grid-template-columns: 1fr;
+        gap: 0.24rem;
+        margin-top: 6px;
+      }
+
+      .mob-btn {
+        min-height: 36px;
+        padding: 0.16rem 0.2rem;
+      }
+
+      .mob-btn .sym {
+        font-size: 0.86rem;
+      }
+
+      .mob-btn .lab {
+        font-size: 0.5rem;
+      }
+
+      .mobile-colors {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mobile-depth {
+        right: 64px;
+      }
+
+      #tips {
+        max-width: 47%;
+        margin-top: 0.22rem;
+      }
+    }
+
   </style>
 </head>
 <body>
   <main class="page" aria-label="Underwater color loss training demo">
     <section class="panel controls" aria-label="Demo controls">
-      <header>
+      <header class="panel-head">
+        <p class="eyebrow">Interactive Training Module</p>
         <h1>Underwater Color Loss</h1>
-        <p class="subtitle">Drag the diver deeper and compare how each gear color fades. Red drops first, while blue tends to remain longer.</p>
+        <p class="subtitle">Drag the diver deeper and compare how each gear color fades. Warm colors are absorbed first, while cooler tones remain visible longer.</p>
+        <div class="stats-grid" aria-live="polite">
+          <article class="stat-card">
+            <span>Depth Zone</span>
+            <strong id="zoneLabel">Sunlit Zone</strong>
+          </article>
+          <article class="stat-card">
+            <span>Ambient Light</span>
+            <strong id="lightLabel">100%</strong>
+          </article>
+        </div>
+        <ul class="interaction-steps" aria-label="How to use this simulation">
+          <li><strong>1.</strong> Set gear colors.</li>
+          <li><strong>2.</strong> Change depth.</li>
+          <li><strong>3.</strong> Toggle flashlight.</li>
+        </ul>
       </header>
 
-      <section>
+      <section class="control-card">
         <p class="group-title">Gear Colors</p>
         <div class="field">
           <label for="colorMask">Mask</label>
-          <input type="color" id="colorMask" value="#00ff88" />
+          <input type="color" id="colorMask" value="#ff3b30" />
         </div>
         <div class="field">
           <label for="colorWetsuit">Wetsuit</label>
-          <input type="color" id="colorWetsuit" value="#ff3b30" />
+          <input type="color" id="colorWetsuit" value="#6a625d" />
         </div>
         <div class="field">
           <label for="colorTank">Tank</label>
-          <input type="color" id="colorTank" value="#8f7bff" />
+          <input type="color" id="colorTank" value="#f2f3f4" />
         </div>
         <div class="field">
           <label for="colorFins">Fins</label>
-          <input type="color" id="colorFins" value="#ffd83d" />
+          <input type="color" id="colorFins" value="#f4ea24" />
         </div>
       </section>
 
-      <section>
+      <section class="control-card">
         <p class="group-title">Depth</p>
         <div class="depth-slider-wrap">
           <input type="range" id="depthSlider" min="0" max="40" step="1" value="10" />
-          <small>Drag the diver or use this slider for precise depth.</small>
+          <small>Drag the diver, use this slider, or use keyboard arrows for precise depth.</small>
         </div>
       </section>
 
-      <section>
+      <section class="control-card">
         <p class="group-title">Display</p>
         <div class="field">
           <label for="unitToggle">Depth units</label>
@@ -702,23 +1632,16 @@
         </div>
       </section>
 
-      <section>
-        <p class="group-title">Lighting</p>
-        <button id="flashlightToggle" type="button" aria-pressed="false">Flashlight: Off</button>
-        <p class="helper-text">Turn on and move your pointer (or finger) over the water to reveal truer colors at depth.</p>
-      </section>
-
-      <div class="button-row">
-        <button id="presetSafety" type="button">Safety Colors</button>
-        <button id="resetBtn" type="button">Reset</button>
-      </div>
-
-      <p id="status" class="status" aria-live="polite"></p>
     </section>
 
-    <section class="panel scene" id="scene" aria-label="Water column simulation">
+    <section class="panel scene" id="scene" tabindex="0" aria-label="Water column simulation">
       <div class="ambient" id="ambient"></div>
       <div class="water-surface" aria-hidden="true"></div>
+      <div class="surface-band" aria-hidden="true">
+        <img class="surface-island left" id="surfaceIslandLeft" src="assets/island-clipart-md.png" alt="" />
+        <div class="sun-source" id="sunSource"></div>
+        <img class="surface-island right" id="surfaceIslandRight" src="assets/island-clipart-md.png" alt="" />
+      </div>
       <div class="seabed" aria-hidden="true">
         <div class="seabed-true"></div>
       </div>
@@ -762,10 +1685,66 @@
         <div class="pill" id="depthDisplay">Depth: 10 m</div>
         <div class="pill" id="tips">Tip: Bright warm colors lose visibility first.</div>
       </div>
+      <div class="scene-meta" aria-live="polite">
+        <span class="dot is-off" id="flashModeDot" aria-hidden="true"></span>
+        <span id="flashModeText">Natural light mode</span>
+      </div>
+
+      <aside class="legend" aria-label="Color loss legend">
+        <p class="legend-title">What You Are Seeing</p>
+        <div class="legend-row">
+          <span><i class="legend-chip warm"></i>Warm tones fade earliest</span>
+          <span><i class="legend-chip cool"></i>Cool tones stay longer</span>
+          <span><i class="legend-chip reveal"></i>Flashlight reveals true color</span>
+        </div>
+      </aside>
 
       <div class="depth-ruler" id="ruler"></div>
+      <div class="mobile-overlay" aria-label="Mobile overlay controls">
+        <div class="mobile-tool-row">
+          <button class="mob-btn" id="mobFlash" type="button" aria-label="Toggle flashlight">
+            <span class="sym">&#x1F526;</span>
+            <span class="lab">Light</span>
+          </button>
+          <button class="mob-btn" id="mobUnits" type="button" aria-label="Toggle depth units">
+            <span class="sym">m</span>
+            <span class="lab">Units</span>
+          </button>
+          <button class="mob-btn" id="mobPreset" type="button" aria-label="Apply safety preset">
+            <span class="sym">&#x26A0;</span>
+            <span class="lab">Preset</span>
+          </button>
+          <button class="mob-btn" id="mobReset" type="button" aria-label="Reset demo">
+            <span class="sym">&#x21BA;</span>
+            <span class="lab">Reset</span>
+          </button>
+          <button class="mob-btn" id="mobColorToggle" type="button" aria-label="Show color controls">
+            <span class="sym">&#x1F3A8;</span>
+            <span class="lab">Colors</span>
+          </button>
+          <button class="mob-btn" id="mobFullscreen" type="button" aria-label="Toggle fullscreen">
+            <span class="sym">&#x2922;</span>
+            <span class="lab">Expand</span>
+          </button>
+          
+        </div>
+        <div class="mobile-depth">
+          <button class="mobile-depth-btn" id="mobDepthUp" type="button" aria-label="Increase depth">+</button>
+          <div class="mobile-depth-core">
+            <span class="mobile-depth-text" id="mobDepthText">Depth: 10 m</span>
+            <input id="mobDepthSlider" type="range" min="0" max="40" step="1" value="10" aria-label="Depth slider" />
+          </div>
+          <button class="mobile-depth-btn" id="mobDepthDown" type="button" aria-label="Decrease depth">-</button>
+        </div>
+        <div class="mobile-colors" id="mobileColorsPanel" hidden>
+          <label class="mobile-color">Mask<input type="color" id="mobColorMask" value="#ff3b30" /></label>
+          <label class="mobile-color">Suit<input type="color" id="mobColorWetsuit" value="#6a625d" /></label>
+          <label class="mobile-color">Tank<input type="color" id="mobColorTank" value="#f2f3f4" /></label>
+          <label class="mobile-color">Fins<input type="color" id="mobColorFins" value="#f4ea24" /></label>
+        </div>
+      </div>
 
-      <article class="diver" id="diver">
+      <article class="diver" id="diver" tabindex="0" aria-label="Draggable diver, use arrow keys to adjust depth">
         <figure class="diver-figure">
           <svg class="diver-svg" viewBox="0 0 1299 754" aria-label="Scuba diver line-art">
             <rect x="0" y="0" width="1299" height="754" fill="transparent" />
@@ -797,21 +1776,127 @@
         </figure>
       </article>
     </section>
+
+    <section class="panel controls controls-secondary" aria-label="Demo controls secondary">
+      <p class="right-header">Scene Tools</p>
+
+      <section class="control-card">
+        <p class="group-title">Lighting</p>
+        <button id="flashlightToggle" type="button" aria-pressed="false">Flashlight: Off</button>
+        <p class="helper-text">Turn on and move your pointer (or finger) over the water to reveal truer colors at depth.</p>
+      </section>
+
+      <section class="control-card">
+        <p class="group-title">Estimated Visibility</p>
+        <div class="visibility" id="visibility">
+          <div class="visibility-row" data-part="mask">
+            <span>Mask</span>
+            <span class="vis-track"><span class="vis-bar" id="visBarMask"></span></span>
+            <span class="vis-value" id="visMask">0%</span>
+          </div>
+          <div class="visibility-row" data-part="wetsuit">
+            <span>Wetsuit</span>
+            <span class="vis-track"><span class="vis-bar" id="visBarWetsuit"></span></span>
+            <span class="vis-value" id="visWetsuit">0%</span>
+          </div>
+          <div class="visibility-row" data-part="tank">
+            <span>Tank</span>
+            <span class="vis-track"><span class="vis-bar" id="visBarTank"></span></span>
+            <span class="vis-value" id="visTank">0%</span>
+          </div>
+          <div class="visibility-row" data-part="fins">
+            <span>Fins</span>
+            <span class="vis-track"><span class="vis-bar" id="visBarFins"></span></span>
+            <span class="vis-value" id="visFins">0%</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-card actions-card">
+        <p class="group-title">Actions</p>
+        <div class="button-row" role="group" aria-label="Preset and reset">
+          <button id="presetSafety" type="button">Apply Safety Colors</button>
+          <button id="resetBtn" type="button">Reset Demo</button>
+        </div>
+        <button id="fullscreenBtn" type="button">&#x2922; Enter Fullscreen</button>
+        <button id="tourLaunch" class="tour-launch" type="button">Help Tour</button>
+        <p id="status" class="status" aria-live="polite"></p>
+      </section>
+
+      <section class="control-card">
+        <p class="group-title">Depth Light Spectrum</p>
+        <div class="spectrum" id="depthSpectrum" aria-label="Relative RGBW light at current diver depth">
+          <div class="spectrum-row">
+            <span class="spectrum-key r">R</span>
+            <span class="spectrum-track"><span class="spectrum-bar" id="specBarR"></span></span>
+            <span class="spectrum-value" id="specR">0%</span>
+          </div>
+          <div class="spectrum-row">
+            <span class="spectrum-key g">G</span>
+            <span class="spectrum-track"><span class="spectrum-bar" id="specBarG"></span></span>
+            <span class="spectrum-value" id="specG">0%</span>
+          </div>
+          <div class="spectrum-row">
+            <span class="spectrum-key b">B</span>
+            <span class="spectrum-track"><span class="spectrum-bar" id="specBarB"></span></span>
+            <span class="spectrum-value" id="specB">0%</span>
+          </div>
+          <div class="spectrum-row">
+            <span class="spectrum-key w">W</span>
+            <span class="spectrum-track"><span class="spectrum-bar" id="specBarW"></span></span>
+            <span class="spectrum-value" id="specW">0%</span>
+          </div>
+        </div>
+      </section>
+    </section>
   </main>
+
+  <div class="tour-overlay" id="tourOverlay" aria-hidden="true">
+    <div class="tour-mask" id="tourMask"></div>
+    <div class="tour-spotlight" id="tourSpotlight"></div>
+    <section class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-label="Demo walkthrough">
+      <p class="tour-kicker">Quick Walkthrough</p>
+      <h2 class="tour-title" id="tourTitle">Welcome</h2>
+      <p class="tour-copy" id="tourCopy">This short guide shows how to use the demo.</p>
+      <div class="tour-actions">
+        <button class="tour-btn" id="tourSkip" type="button">Skip</button>
+        <button class="tour-btn" id="tourBack" type="button">Back</button>
+        <span class="tour-step" id="tourStep">1 / 1</span>
+        <button class="tour-btn primary" id="tourNext" type="button">Next</button>
+      </div>
+    </section>
+  </div>
 
   <script>
     const maxDepthM = 40;
+    const WATER_MODEL = {
+      // Per-meter spectral attenuation tuned for clear tropical daylight.
+      kr: 0.11,
+      kg: 0.048,
+      kb: 0.02,
+      // Ambient daylight falloff (clear-water baseline).
+      ambientK: 0.05,
+      // Perceptual haze/contrast-loss shaping (not pure spectral physics).
+      hazeMax: 0.2,
+      blackLiftMax: 18
+    };
+    // 1.0 = clear tropical, 1.6 = moderate churn, 2.2 = murkier training scenario.
+    let waterClarity = 1.0;
 
     const gearData = {
-      mask: { base: [0, 255, 136], k: 0.045 },
-      wetsuit: { base: [255, 59, 48], k: 0.16 },
-      tank: { base: [143, 123, 255], k: 0.03 },
-      fins: { base: [255, 216, 61], k: 0.085 }
+      mask: { base: [255, 59, 48], k: 0.045 },
+      wetsuit: { base: [106, 98, 93], k: 0.16 },
+      tank: { base: [242, 243, 244], k: 0.03 },
+      fins: { base: [244, 234, 36], k: 0.085 }
     };
 
     const ids = ["mask", "wetsuit", "tank", "fins"];
     const diver = document.getElementById("diver");
     const scene = document.getElementById("scene");
+    const page = document.querySelector(".page");
+    const sunSource = document.getElementById("sunSource");
+    const surfaceIslandLeft = document.getElementById("surfaceIslandLeft");
+    const surfaceIslandRight = document.getElementById("surfaceIslandRight");
     const depthDisplay = document.getElementById("depthDisplay");
     const tips = document.getElementById("tips");
     const unitToggle = document.getElementById("unitToggle");
@@ -821,9 +1906,39 @@
     const ambient = document.getElementById("ambient");
     const status = document.getElementById("status");
     const ruler = document.getElementById("ruler");
+    const mobFlash = document.getElementById("mobFlash");
+    const mobUnits = document.getElementById("mobUnits");
+    const mobPreset = document.getElementById("mobPreset");
+    const mobReset = document.getElementById("mobReset");
+    const mobFullscreen = document.getElementById("mobFullscreen");
+    const mobColorToggle = document.getElementById("mobColorToggle");
+    const mobDepthUp = document.getElementById("mobDepthUp");
+    const mobDepthDown = document.getElementById("mobDepthDown");
+    const mobDepthText = document.getElementById("mobDepthText");
+    const mobDepthSlider = document.getElementById("mobDepthSlider");
+    const mobileColorsPanel = document.getElementById("mobileColorsPanel");
     const seabed = document.querySelector(".seabed");
-    const creatureNodes = Array.from(document.querySelectorAll(".creature"));
+    const zoneLabel = document.getElementById("zoneLabel");
+    const lightLabel = document.getElementById("lightLabel");
+    const flashModeText = document.getElementById("flashModeText");
+    const flashModeDot = document.getElementById("flashModeDot");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const tourLaunch = document.getElementById("tourLaunch");
+    const tourOverlay = document.getElementById("tourOverlay");
+    const tourSpotlight = document.getElementById("tourSpotlight");
+    const tourCard = document.getElementById("tourCard");
+    const tourTitle = document.getElementById("tourTitle");
+    const tourCopy = document.getElementById("tourCopy");
+    const tourStep = document.getElementById("tourStep");
+    const tourNext = document.getElementById("tourNext");
+    const tourBack = document.getElementById("tourBack");
+    const tourSkip = document.getElementById("tourSkip");
+    let creatureNodes = [];
     const creatureActors = [];
+    [surfaceIslandLeft, surfaceIslandRight].forEach((img) => {
+      if (!img) return;
+      img.addEventListener("error", () => img.classList.add("is-missing"), { once: true });
+    });
 
     const pickerMap = {
       mask: document.getElementById("colorMask"),
@@ -831,11 +1946,45 @@
       tank: document.getElementById("colorTank"),
       fins: document.getElementById("colorFins")
     };
+    const mobPickerMap = {
+      mask: document.getElementById("mobColorMask"),
+      wetsuit: document.getElementById("mobColorWetsuit"),
+      tank: document.getElementById("mobColorTank"),
+      fins: document.getElementById("mobColorFins")
+    };
     const partMap = {
       mask: [document.getElementById("mask"), document.getElementById("maskFront")],
       wetsuit: [document.getElementById("wetsuitTorso")],
       tank: [document.getElementById("tank")],
       fins: [document.getElementById("finsTop"), document.getElementById("finsBottom")]
+    };
+    const visibilityMap = {
+      mask: {
+        row: document.querySelector('.visibility-row[data-part="mask"]'),
+        value: document.getElementById("visMask"),
+        bar: document.getElementById("visBarMask")
+      },
+      wetsuit: {
+        row: document.querySelector('.visibility-row[data-part="wetsuit"]'),
+        value: document.getElementById("visWetsuit"),
+        bar: document.getElementById("visBarWetsuit")
+      },
+      tank: {
+        row: document.querySelector('.visibility-row[data-part="tank"]'),
+        value: document.getElementById("visTank"),
+        bar: document.getElementById("visBarTank")
+      },
+      fins: {
+        row: document.querySelector('.visibility-row[data-part="fins"]'),
+        value: document.getElementById("visFins"),
+        bar: document.getElementById("visBarFins")
+      }
+    };
+    const spectrumMap = {
+      r: { value: document.getElementById("specR"), bar: document.getElementById("specBarR") },
+      g: { value: document.getElementById("specG"), bar: document.getElementById("specBarG") },
+      b: { value: document.getElementById("specB"), bar: document.getElementById("specBarB") },
+      w: { value: document.getElementById("specW"), bar: document.getElementById("specBarW") }
     };
     let isDragging = false;
     let dragOffsetX = 0;
@@ -843,8 +1992,45 @@
     let depthMeters = 10;
     let tipBand = -1;
     let flashlightOn = false;
+    let fallbackImmersive = false;
+    let tourIndex = 0;
+    let tourActive = false;
     let flashlightClientX = 0;
     let flashlightClientY = 0;
+
+    const tourSteps = [
+      {
+        target: "#diver",
+        spotlightTarget: ".diver-svg",
+        pad: 16,
+        title: "Move Through Depth",
+        body: "Drag the diver up or down to see how colors change with depth."
+      },
+      {
+        target: "#depthSlider",
+        mobileTarget: "#mobDepthSlider",
+        title: "Fine Depth Control",
+        body: "Use the slider for precise depth steps."
+      },
+      {
+        target: "#flashlightToggle",
+        mobileTarget: "#mobFlash",
+        title: "Reveal True Color",
+        body: "Toggle light to compare ambient color loss with flashlight visibility."
+      },
+      {
+        target: "#colorMask",
+        mobileTarget: "#mobColorToggle",
+        title: "Edit Gear Colors",
+        body: "Adjust color choices to compare what stays visible best."
+      },
+      {
+        target: "#fullscreenBtn",
+        mobileTarget: "#mobFullscreen",
+        title: "Use Fullscreen",
+        body: "Enter fullscreen for distraction-free use, especially on phones."
+      }
+    ];
 
     function hexToRgb(hex) {
       const value = parseInt(hex.slice(1), 16);
@@ -877,25 +2063,61 @@
       return { hue, sat, val };
     }
 
-    function attenuate(rgb, depth) {
+    function getSunColumnStrengthAtX(clientX) {
+      const sceneRect = scene.getBoundingClientRect();
+      const sunCenterX = sceneRect.left + sceneRect.width * 0.5;
+      const spread = Math.max(70, sceneRect.width * 0.34);
+      const dx = (clientX - sunCenterX) / spread;
+      return Math.exp(-(dx * dx));
+    }
+
+    function getSunColumnStrengthForRect(rect) {
+      return getSunColumnStrengthAtX(rect.left + rect.width / 2);
+    }
+
+    function getSunlightStrength(depth, sunColumn = 1) {
+      const depthFalloff = Math.exp(-(WATER_MODEL.ambientK * waterClarity) * depth);
+      return clamp(depthFalloff * (0.58 + sunColumn * 0.42), 0.05, 1);
+    }
+
+    function applyHazeModel(rgb, depth, sunStrength) {
+      const depthRatio = clamp(depth / maxDepthM, 0, 1);
+      const haze = WATER_MODEL.hazeMax * depthRatio * (1 - 0.28 * sunStrength);
+      const lift = WATER_MODEL.blackLiftMax * depthRatio * (1 - 0.25 * sunStrength);
+      const [r, g, b] = rgb;
+      const luma = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
+      const dr = r * (1 - haze) + luma * haze;
+      const dg = g * (1 - haze) + luma * haze;
+      const db = b * (1 - haze) + luma * haze;
+      // Veiling light bias at depth (scattering appearance).
+      const veil = [74, 116, 152];
+      const veilMix = haze * 0.45;
+      return [
+        Math.min(255, Math.round((dr + lift) * (1 - veilMix) + veil[0] * veilMix)),
+        Math.min(255, Math.round((dg + lift) * (1 - veilMix) + veil[1] * veilMix)),
+        Math.min(255, Math.round((db + lift) * (1 - veilMix) + veil[2] * veilMix))
+      ];
+    }
+
+    function attenuate(rgb, depth, sunColumn = 1) {
       const [r0, g0, b0] = rgb;
       const { hue, sat, val } = rgbToHsv(rgb);
       const isSafetyYellow = hue >= 48 && hue <= 78 && sat >= 0.45 && val >= 0.55;
       const isSafetyOrange = hue >= 18 && hue <= 44 && sat >= 0.45 && val >= 0.5;
       const isHighViz = isSafetyYellow || isSafetyOrange;
 
-      let kr = 0.16;
-      let kg = 0.065;
-      let kb = 0.03;
+      let kr = WATER_MODEL.kr * waterClarity;
+      let kg = WATER_MODEL.kg * waterClarity;
+      let kb = WATER_MODEL.kb * waterClarity;
 
       if (isSafetyYellow) {
-        kr = 0.07;
-        kg = 0.032;
-        kb = 0.03;
+        kr = 0.055 * waterClarity;
+        kg = 0.028 * waterClarity;
+        kb = 0.02 * waterClarity;
       } else if (isSafetyOrange) {
-        kr = 0.06;
-        kg = 0.036;
-        kb = 0.03;
+        kr = 0.052 * waterClarity;
+        kg = 0.032 * waterClarity;
+        kb = 0.02 * waterClarity;
       }
 
       let r = Math.round(r0 * Math.exp(-kr * depth));
@@ -908,7 +2130,16 @@
         g = Math.max(g, floor);
       }
 
-      return [r, g, b];
+      const sunStrength = getSunlightStrength(depth, sunColumn);
+      const warmBoost = Math.max(0, 1 - depth / 15) * sunStrength;
+      r = Math.min(255, Math.round(r + (255 - r) * 0.23 * warmBoost));
+      g = Math.min(255, Math.round(g + (246 - g) * 0.14 * warmBoost));
+      b = Math.min(255, Math.round(b + (230 - b) * 0.05 * warmBoost));
+
+      const deepBlueBias = (1 - sunStrength) * clamp(depth / maxDepthM, 0, 1) * 0.22;
+      b = Math.min(255, Math.round(b + (255 - b) * deepBlueBias));
+
+      return applyHazeModel([r, g, b], depth, sunStrength);
     }
 
     function syncBasesFromPickers() {
@@ -959,6 +2190,96 @@
       return Number.isFinite(n) ? n : fallback;
     }
 
+    function buildCreatureField() {
+      const wrap = document.getElementById("creatures");
+      if (!wrap) return;
+      const baseNodes = Array.from(wrap.querySelectorAll(".creature"));
+      if (baseNodes.length === 0) return;
+
+      // Double creature count by cloning each base actor once with motion/depth jitter.
+      baseNodes.forEach((node, i) => {
+        const clone = node.cloneNode(true);
+        const y = parseFloat(node.style.getPropertyValue("--y")) || 40;
+        const dur = parseFloat(node.style.getPropertyValue("--swim-dur")) || 30;
+        const delay = parseFloat(node.style.getPropertyValue("--delay")) || 0;
+        const scale = parseFloat(node.style.getPropertyValue("--scale")) || 1;
+        const frameDur = parseFloat(node.style.getPropertyValue("--frame-dur")) || 0.7;
+        const bobDur = parseFloat(node.style.getPropertyValue("--bob-dur")) || 4.2;
+
+        clone.style.setProperty("--y", `${clamp(y + (i % 2 === 0 ? 5 : -6), 18, 82)}%`);
+        clone.style.setProperty("--swim-dur", `${Math.max(22, dur + (i % 3) * 2 - 3)}s`);
+        clone.style.setProperty("--delay", `${delay - 7 - i * 1.5}s`);
+        clone.style.setProperty("--scale", `${Math.max(0.9, scale * (0.9 + ((i % 4) * 0.1)))}`);
+        clone.style.setProperty("--frame-dur", `${Math.max(0.5, frameDur + (i % 3) * 0.04)}s`);
+        clone.style.setProperty("--bob-dur", `${Math.max(3.2, bobDur + (i % 3) * 0.35)}s`);
+        if (i % 2 === 1) clone.classList.toggle("left");
+        wrap.appendChild(clone);
+      });
+
+      creatureNodes = Array.from(wrap.querySelectorAll(".creature"));
+
+      // Assign deterministic tint variants for visual diversity.
+      const hueSteps = [-90, -60, -35, -12, 0, 18, 35, 52, 75, 105, 140, -130];
+      creatureNodes.forEach((node, i) => {
+        const baseScale = parseFloat(node.style.getPropertyValue("--scale")) || 1;
+        const baseDur = parseFloat(node.style.getPropertyValue("--swim-dur")) || 30;
+        const baseY = parseFloat(node.style.getPropertyValue("--y")) || 40;
+        const canvas = node.querySelector(".creature-canvas");
+        const src = canvas?.dataset?.src || "";
+
+        // Layered depth profile for pseudo-3D parallax.
+        const layer = i % 3;
+        if (layer === 0) {
+          // Far: smaller, slower, dimmer, always behind diver.
+          node.style.setProperty("--z", "2");
+          node.style.setProperty("--op", "0.62");
+          node.style.setProperty("--blur", "0.6px");
+          node.style.setProperty("--sat", "0.82");
+          node.style.setProperty("--bright", "0.82");
+          node.style.setProperty("--scale", `${Math.max(0.75, baseScale * 0.78)}`);
+          node.style.setProperty("--swim-dur", `${Math.max(28, baseDur * 1.28)}s`);
+          node.style.setProperty("--y", `${clamp(baseY + 7, 22, 86)}%`);
+        } else if (layer === 1) {
+          // Mid: baseline motion near diver depth band.
+          node.style.setProperty("--z", "4");
+          node.style.setProperty("--op", "0.82");
+          node.style.setProperty("--blur", "0.22px");
+          node.style.setProperty("--sat", "0.92");
+          node.style.setProperty("--bright", "0.9");
+          node.style.setProperty("--scale", `${Math.max(0.85, baseScale * 0.95)}`);
+          node.style.setProperty("--swim-dur", `${Math.max(24, baseDur * 1.02)}s`);
+          node.style.setProperty("--y", `${clamp(baseY + 2, 20, 84)}%`);
+        } else {
+          // Near: larger, faster, brighter, in front of diver.
+          node.style.setProperty("--z", "6");
+          node.style.setProperty("--op", "0.98");
+          node.style.setProperty("--blur", "0px");
+          node.style.setProperty("--sat", "1.04");
+          node.style.setProperty("--bright", "1");
+          node.style.setProperty("--scale", `${Math.max(1, baseScale * 1.18)}`);
+          node.style.setProperty("--swim-dur", `${Math.max(18, baseDur * 0.74)}s`);
+          node.style.setProperty("--y", `${clamp(baseY - 4, 14, 80)}%`);
+        }
+
+        // Keep sprite 1 near the surface to demonstrate bright shallow-water color retention.
+        if (src.includes("sprites/1/Walk.png")) {
+          const topLane = 12 + (i % 3) * 3;
+          node.style.setProperty("--y", `${clamp(topLane, 10, 20)}%`);
+          node.style.setProperty("--z", "6");
+          node.style.setProperty("--op", "1");
+          node.style.setProperty("--blur", "0px");
+          node.style.setProperty("--sat", "1.08");
+          node.style.setProperty("--bright", "1.06");
+          node.style.setProperty("--swim-dur", `${Math.max(17, baseDur * 0.7)}s`);
+          node.style.setProperty("--scale", `${Math.max(1, baseScale * 1.12)}`);
+        }
+
+        node.dataset.tintHue = String(hueSteps[i % hueSteps.length]);
+        node.dataset.tintSat = (0.9 + (i % 5) * 0.1).toFixed(2);
+        node.dataset.tintBright = (0.88 + (i % 4) * 0.08).toFixed(2);
+      });
+    }
+
     function initCreatures() {
       const size = 62;
       creatureNodes.forEach((node) => {
@@ -969,6 +2290,8 @@
         workCanvas.width = size;
         workCanvas.height = size;
         const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
+        if (ctx) ctx.imageSmoothingEnabled = false;
+        if (workCtx) workCtx.imageSmoothingEnabled = false;
         const src = canvas.dataset.src;
         const frames = Number(canvas.dataset.frames || 4);
         const frameDur = parseSeconds(getComputedStyle(node).getPropertyValue("--frame-dur"), 0.7) * 1000;
@@ -986,7 +2309,10 @@
           srcFrame: 48,
           ready: false,
           pixelReadable: true,
-          offset: Math.random() * 1400
+          offset: Math.random() * 1400,
+          tintHue: Number(node.dataset.tintHue || 0),
+          tintSat: Number(node.dataset.tintSat || 1),
+          tintBright: Number(node.dataset.tintBright || 1)
         };
         img.onload = () => {
           try {
@@ -1013,12 +2339,18 @@
       });
     }
 
-    function attenuatePixel(r0, g0, b0, depth) {
-      return [
-        Math.round(r0 * Math.exp(-0.16 * depth)),
-        Math.round(g0 * Math.exp(-0.065 * depth)),
-        Math.round(b0 * Math.exp(-0.03 * depth))
-      ];
+    function attenuatePixel(r0, g0, b0, depth, sunColumn = 1) {
+      let r = Math.round(r0 * Math.exp(-(WATER_MODEL.kr * waterClarity) * depth));
+      let g = Math.round(g0 * Math.exp(-(WATER_MODEL.kg * waterClarity) * depth));
+      let b = Math.round(b0 * Math.exp(-(WATER_MODEL.kb * waterClarity) * depth));
+      const sunStrength = getSunlightStrength(depth, sunColumn);
+      const warmBoost = Math.max(0, 1 - depth / 15) * sunStrength;
+      r = Math.min(255, Math.round(r + (255 - r) * 0.2 * warmBoost));
+      g = Math.min(255, Math.round(g + (246 - g) * 0.12 * warmBoost));
+      b = Math.min(255, Math.round(b + (230 - b) * 0.045 * warmBoost));
+      const deepBlueBias = (1 - sunStrength) * clamp(depth / maxDepthM, 0, 1) * 0.2;
+      b = Math.min(255, Math.round(b + (255 - b) * deepBlueBias));
+      return applyHazeModel([r, g, b], depth, sunStrength);
     }
 
     function renderCreatures(time) {
@@ -1028,6 +2360,7 @@
         const frameIndex = Math.floor((time + actor.offset) / actor.frameDur) % actor.frames;
         const sx = frameIndex * actor.srcFrame;
         actor.workCtx.clearRect(0, 0, actor.size, actor.size);
+        actor.workCtx.filter = `hue-rotate(${actor.tintHue}deg) saturate(${actor.tintSat}) brightness(${actor.tintBright})`;
         actor.workCtx.drawImage(
           actor.img,
           sx,
@@ -1039,9 +2372,11 @@
           actor.size,
           actor.size
         );
+        actor.workCtx.filter = "none";
         const rect = actor.node.getBoundingClientRect();
         const cy = rect.top + rect.height / 2;
         const depth = clamp(((cy - sceneRect.top) / sceneRect.height) * maxDepthM, 0, maxDepthM);
+        const sunColumn = getSunColumnStrengthForRect(rect);
         const lit = getFlashlightStrength(actor.node);
         actor.ctx.clearRect(0, 0, actor.size, actor.size);
         if (!actor.pixelReadable) {
@@ -1072,7 +2407,7 @@
           const r0 = data[i];
           const g0 = data[i + 1];
           const b0 = data[i + 2];
-          const faded = attenuatePixel(r0, g0, b0, depth);
+          const faded = attenuatePixel(r0, g0, b0, depth, sunColumn);
           data[i] = lerp(faded[0], r0, lit);
           data[i + 1] = lerp(faded[1], g0, lit);
           data[i + 2] = lerp(faded[2], b0, lit);
@@ -1091,6 +2426,236 @@
         depthDisplay.textContent = `Depth: ${Math.round(depth)} m`;
       }
     }
+
+    function syncMobileOverlay(depth) {
+      if (!mobDepthText || !mobDepthSlider) return;
+      const symbol = mobUnits.querySelector(".sym");
+      symbol.textContent = unitToggle.value;
+      mobFlash.classList.toggle("is-on", flashlightOn);
+      if (unitToggle.value === "ft") {
+        const feet = Math.round(depth * 3.28084);
+        mobDepthText.textContent = `Depth: ${feet} ft`;
+      } else {
+        mobDepthText.textContent = `Depth: ${Math.round(depth)} m`;
+      }
+      mobDepthSlider.value = String(Math.round(depth));
+    }
+
+    function syncDesktopPickersFromMobile() {
+      ids.forEach((id) => {
+        if (mobPickerMap[id]) pickerMap[id].value = mobPickerMap[id].value;
+      });
+      syncBasesFromPickers();
+    }
+
+    function syncMobilePickersFromDesktop() {
+      ids.forEach((id) => {
+        if (mobPickerMap[id]) mobPickerMap[id].value = pickerMap[id].value;
+      });
+    }
+
+    function getTourTarget(step) {
+      const mobile = window.matchMedia("(max-width: 1080px)").matches;
+      const selector = mobile && step.mobileTarget ? step.mobileTarget : step.target;
+      const primary = document.querySelector(selector);
+      if (primary && isVisible(primary)) return primary;
+      const fallback = document.querySelector(step.target);
+      if (fallback && isVisible(fallback)) return fallback;
+      return primary || fallback;
+    }
+
+    function getTourSpotlightRect(step, target) {
+      if (!step.spotlightTarget) return target.getBoundingClientRect();
+      const spotlightNode = target.querySelector(step.spotlightTarget) || document.querySelector(step.spotlightTarget);
+      if (!spotlightNode || !isVisible(spotlightNode)) return target.getBoundingClientRect();
+      return spotlightNode.getBoundingClientRect();
+    }
+
+    function placeTourCard(targetRect, pad) {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cardRect = tourCard.getBoundingClientRect();
+
+      let left = targetRect.left;
+      let top = targetRect.bottom + 10;
+
+      if (top + cardRect.height > vh - 12) top = targetRect.top - cardRect.height - 10;
+      if (top < 12) top = 12;
+      if (left + cardRect.width > vw - 12) left = vw - cardRect.width - 12;
+      if (left < 12) left = 12;
+
+      const spotlightLeft = clamp(targetRect.left - pad, 8, vw - 28);
+      const spotlightTop = clamp(targetRect.top - pad, 8, vh - 28);
+      const spotlightWidth = clamp(targetRect.width + pad * 2, 20, vw - spotlightLeft - 8);
+      const spotlightHeight = clamp(targetRect.height + pad * 2, 20, vh - spotlightTop - 8);
+
+      tourSpotlight.style.left = `${spotlightLeft}px`;
+      tourSpotlight.style.top = `${spotlightTop}px`;
+      tourSpotlight.style.width = `${spotlightWidth}px`;
+      tourSpotlight.style.height = `${spotlightHeight}px`;
+      tourCard.style.left = `${left}px`;
+      tourCard.style.top = `${top}px`;
+    }
+
+    function renderTourStep() {
+      const step = tourSteps[tourIndex];
+      const target = getTourTarget(step);
+      if (!target) {
+        tourTitle.textContent = step.title;
+        tourCopy.textContent = step.body;
+        return;
+      }
+
+      target.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      const rect = getTourSpotlightRect(step, target);
+      const pad = step.pad || 8;
+
+      tourTitle.textContent = step.title;
+      tourCopy.textContent = step.body;
+      tourStep.textContent = `${tourIndex + 1} / ${tourSteps.length}`;
+      tourBack.disabled = tourIndex === 0;
+      tourNext.textContent = tourIndex === tourSteps.length - 1 ? "Done" : "Next";
+      placeTourCard(rect, pad);
+    }
+
+    function closeTour(markSeen) {
+      tourActive = false;
+      tourOverlay.classList.remove("active");
+      tourOverlay.setAttribute("aria-hidden", "true");
+      if (markSeen) {
+        try {
+          localStorage.setItem("dmzColorTourSeen", "1");
+        } catch (_e) {
+          // ignore storage restrictions
+        }
+      }
+    }
+
+    function openTour(startIndex) {
+      tourIndex = clamp(startIndex, 0, tourSteps.length - 1);
+      tourActive = true;
+      tourOverlay.classList.add("active");
+      tourOverlay.setAttribute("aria-hidden", "false");
+      renderTourStep();
+    }
+
+    function isNativeFullscreenActive() {
+      return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    function updateFullscreenUi() {
+      const active = isNativeFullscreenActive() || fallbackImmersive;
+      fullscreenBtn.textContent = active ? "\u2921 Exit Fullscreen" : "\u2922 Enter Fullscreen";
+      mobFullscreen.classList.toggle("is-on", active);
+      const mobileLabel = mobFullscreen.querySelector(".lab");
+      const mobileSymbol = mobFullscreen.querySelector(".sym");
+      if (mobileLabel) mobileLabel.textContent = active ? "Exit" : "Expand";
+      if (mobileSymbol) mobileSymbol.textContent = active ? "\u2921" : "\u2922";
+      page.classList.toggle("immersive-mode", active);
+    }
+
+    function applyFallbackImmersive(enabled) {
+      fallbackImmersive = enabled;
+      document.body.classList.toggle("immersive-lock", enabled);
+      updateFullscreenUi();
+      requestAnimationFrame(() => {
+        const rect = scene.getBoundingClientRect();
+        setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
+        placeDiverAtBestStart(depthMeters);
+      });
+    }
+
+    async function requestNativeFullscreen() {
+      if (page.requestFullscreen) {
+        await page.requestFullscreen({ navigationUI: "hide" });
+        return true;
+      }
+      if (page.webkitRequestFullscreen) {
+        page.webkitRequestFullscreen();
+        return true;
+      }
+      return false;
+    }
+
+    async function exitNativeFullscreen() {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        return true;
+      }
+      if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+        return true;
+      }
+      return false;
+    }
+
+    async function toggleFullscreenMode() {
+      const active = isNativeFullscreenActive() || fallbackImmersive;
+      if (active) {
+        const exited = await exitNativeFullscreen().catch(() => false);
+        if (!exited) applyFallbackImmersive(false);
+        return;
+      }
+
+      try {
+        const entered = await requestNativeFullscreen();
+        if (!entered) applyFallbackImmersive(true);
+      } catch (_e) {
+        applyFallbackImmersive(true);
+      }
+    }
+
+    function getDepthZone(depth) {
+      if (depth < 12) return "Sunlit Zone";
+      if (depth < 25) return "Color Drop Zone";
+      if (depth < 35) return "Low-Light Zone";
+      return "Deep Blue Zone";
+    }
+
+    function estimateVisibility(base, depth) {
+      const sunColumn = getSunColumnStrengthForRect(diver.getBoundingClientRect());
+      const faded = attenuate(base, depth, sunColumn);
+      const baseLuma = (base[0] * 0.2126) + (base[1] * 0.7152) + (base[2] * 0.0722);
+      const fadedLuma = (faded[0] * 0.2126) + (faded[1] * 0.7152) + (faded[2] * 0.0722);
+      const value = Math.round(clamp((fadedLuma / Math.max(1, baseLuma)) * 100, 4, 100));
+      return value;
+    }
+
+    function updateDepthSpectrum(depth) {
+      const sunColumn = getSunColumnStrengthForRect(diver.getBoundingClientRect());
+      const sunStrength = getSunlightStrength(depth, sunColumn);
+      const r = Math.round(clamp(Math.exp(-(WATER_MODEL.kr * waterClarity) * depth) * sunStrength * 100, 0, 100));
+      const g = Math.round(clamp(Math.exp(-(WATER_MODEL.kg * waterClarity) * depth) * sunStrength * 100, 0, 100));
+      const b = Math.round(clamp(Math.exp(-(WATER_MODEL.kb * waterClarity) * depth) * sunStrength * 100, 0, 100));
+      const w = Math.round(clamp(sunStrength * 100, 0, 100));
+      const next = { r, g, b, w };
+
+      Object.entries(next).forEach(([key, pct]) => {
+        const entry = spectrumMap[key];
+        if (!entry?.value || !entry?.bar) return;
+        entry.value.textContent = `${pct}%`;
+        entry.bar.style.width = `${pct}%`;
+      });
+    }
+
+    function updateReadouts(depth) {
+      const depthRatio = depth / maxDepthM;
+      zoneLabel.textContent = getDepthZone(depth);
+      const sunStrength = getSunlightStrength(depth, getSunColumnStrengthForRect(diver.getBoundingClientRect()));
+      lightLabel.textContent = `${Math.round(sunStrength * 100)}%`;
+
+      ids.forEach((id) => {
+        const pct = estimateVisibility(gearData[id].base, depth);
+        const entry = visibilityMap[id];
+        entry.value.textContent = `${pct}%`;
+        entry.bar.style.width = `${pct}%`;
+        if (pct <= 30) entry.row.dataset.state = "critical";
+        else if (pct <= 55) entry.row.dataset.state = "low";
+        else entry.row.dataset.state = "ok";
+      });
+      updateDepthSpectrum(depth);
+    }
+
 
     function updateTips(depth) {
       let nextBand = 0;
@@ -1113,16 +2678,23 @@
     }
 
     function updateAmbient(depth) {
-      ambient.style.opacity = String(Math.min(0.78, depth / maxDepthM));
       const depthRatio = depth / maxDepthM;
+      const sunStrength = getSunlightStrength(depth, getSunColumnStrengthForRect(diver.getBoundingClientRect()));
+      ambient.style.opacity = String(Math.min(0.82, (depth / maxDepthM) * (0.88 + (1 - sunStrength) * 0.28)));
+      scene.style.setProperty("--sun-strength", sunStrength.toFixed(3));
+      if (sunSource) {
+        const sink = depthRatio * 10;
+        sunSource.style.transform = `translateX(-50%) translateY(${sink.toFixed(1)}px)`;
+      }
       scene.style.setProperty("--depth-glow", String(0.14 + depthRatio * 0.22));
       diver.style.filter = `drop-shadow(0 9px 15px rgba(0, 0, 0, 0.28)) drop-shadow(0 0 ${10 + depth * 0.7}px rgba(98, 190, 240, ${0.16 + depthRatio * 0.22}))`;
     }
 
     function updateSwatches(depth) {
+      const sunColumn = getSunColumnStrengthForRect(diver.getBoundingClientRect());
       ids.forEach((id) => {
         const base = gearData[id].base;
-        const faded = attenuate(base, depth);
+        const faded = attenuate(base, depth, sunColumn);
         partMap[id].forEach((part) => {
           const lit = getFlashlightStrength(part);
           const r = lerp(faded[0], base[0], lit);
@@ -1143,18 +2715,68 @@
       return Math.min(max, Math.max(min, value));
     }
 
+    function getHorizontalBounds(sceneRect, diverRect) {
+      const mobile = window.matchMedia("(max-width: 1080px)").matches;
+      const minX = mobile ? 12 : 56;
+      const maxX = Math.max(minX, sceneRect.width - diverRect.width - 12);
+      return { minX, maxX };
+    }
+
+    function overlapArea(a, b) {
+      const w = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const h = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return w * h;
+    }
+
+    function isVisible(node) {
+      if (!node) return false;
+      const style = getComputedStyle(node);
+      if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
+      const r = node.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    }
+
+    function getOccluderRects(sceneRect) {
+      const nodes = [
+        document.querySelector(".hud"),
+        document.querySelector(".scene-meta"),
+        document.querySelector(".mobile-overlay")
+      ];
+      return nodes
+        .filter(isVisible)
+        .map((node) => {
+          const r = node.getBoundingClientRect();
+          return {
+            left: r.left - sceneRect.left,
+            top: r.top - sceneRect.top,
+            right: r.right - sceneRect.left,
+            bottom: r.bottom - sceneRect.top
+          };
+        });
+    }
+
+    function getDepthYBounds(sceneRect, diverRect) {
+      const surfaceH = parseFloat(getComputedStyle(scene).getPropertyValue("--surface-h")) || 54;
+      const topBuffer = surfaceH + 34;
+      const minY = clamp(topBuffer, 0, Math.max(0, sceneRect.height - diverRect.height));
+      const maxY = Math.max(minY + 1, sceneRect.height - diverRect.height);
+      return { minY, maxY };
+    }
+
     function depthToY(depth) {
       const sceneRect = scene.getBoundingClientRect();
       const diverRect = diver.getBoundingClientRect();
-      const maxY = sceneRect.height - diverRect.height;
-      return (depth / maxDepthM) * maxY;
+      const { minY, maxY } = getDepthYBounds(sceneRect, diverRect);
+      const range = Math.max(1, maxY - minY);
+      return minY + (depth / maxDepthM) * range;
     }
 
     function yToDepth(y) {
       const sceneRect = scene.getBoundingClientRect();
       const diverRect = diver.getBoundingClientRect();
-      const maxY = Math.max(1, sceneRect.height - diverRect.height);
-      return clamp((y / maxY) * maxDepthM, 0, maxDepthM);
+      const { minY, maxY } = getDepthYBounds(sceneRect, diverRect);
+      const range = Math.max(1, maxY - minY);
+      return clamp(((y - minY) / range) * maxDepthM, 0, maxDepthM);
     }
 
     function applyDepth(depth, syncPosition) {
@@ -1164,11 +2786,65 @@
       updateTips(depthMeters);
       updateAmbient(depthMeters);
       updateSwatches(depthMeters);
+      updateReadouts(depthMeters);
 
       if (syncPosition) {
         const y = depthToY(depthMeters);
         diver.style.top = `${y}px`;
       }
+
+      syncMobileOverlay(depthMeters);
+    }
+
+    function nudgeDepth(delta) {
+      applyDepth(depthMeters + delta, true);
+    }
+
+    function placeDiverAtBestStart(preferredDepth) {
+      const sceneRect = scene.getBoundingClientRect();
+      const diverRect = diver.getBoundingClientRect();
+      const { minX, maxX } = getHorizontalBounds(sceneRect, diverRect);
+      const occluders = getOccluderRects(sceneRect);
+
+      const mobile = window.matchMedia("(max-width: 1080px)").matches;
+      const baseDepth = clamp(preferredDepth, 0, maxDepthM);
+      const depthCandidates = mobile
+        ? [baseDepth, baseDepth + 2, baseDepth + 4, baseDepth - 2]
+        : [baseDepth, baseDepth + 1, baseDepth - 1];
+      const xRange = maxX - minX;
+      const xCandidates = mobile
+        ? [minX, minX + xRange * 0.14, minX + xRange * 0.28, minX + xRange * 0.42]
+        : [minX + xRange * 0.58, minX + xRange * 0.48, minX + xRange * 0.38, minX + xRange * 0.28];
+
+      let best = {
+        score: Number.POSITIVE_INFINITY,
+        x: clamp(minX, minX, maxX),
+        depth: baseDepth
+      };
+
+      depthCandidates.forEach((depth) => {
+        const safeDepth = clamp(depth, 0, maxDepthM);
+        const y = depthToY(safeDepth);
+        xCandidates.forEach((xRaw) => {
+          const x = clamp(xRaw, minX, maxX);
+          const diverBox = {
+            left: x,
+            top: y,
+            right: x + diverRect.width,
+            bottom: y + diverRect.height
+          };
+          let score = Math.abs(safeDepth - baseDepth) * 12 + (x - minX) * 0.1;
+          occluders.forEach((occluder) => {
+            score += overlapArea(diverBox, occluder) * 2.5;
+          });
+          if (score < best.score) {
+            best = { score, x, depth: safeDepth };
+          }
+        });
+      });
+
+      applyDepth(best.depth, true);
+      diver.style.left = `${Math.round(best.x)}px`;
     }
 
     function startDrag(event) {
@@ -1185,9 +2861,10 @@
       const sceneRect = scene.getBoundingClientRect();
       const diverRect = diver.getBoundingClientRect();
       const point = getClientPoint(event);
-
-      const x = clamp(point.clientX - sceneRect.left - dragOffsetX, 56, sceneRect.width - diverRect.width - 12);
-      const y = clamp(point.clientY - sceneRect.top - dragOffsetY, 0, sceneRect.height - diverRect.height);
+      const { minX, maxX } = getHorizontalBounds(sceneRect, diverRect);
+      const { minY, maxY } = getDepthYBounds(sceneRect, diverRect);
+      const x = clamp(point.clientX - sceneRect.left - dragOffsetX, minX, maxX);
+      const y = clamp(point.clientY - sceneRect.top - dragOffsetY, minY, maxY);
 
       diver.style.left = `${x}px`;
       diver.style.top = `${y}px`;
@@ -1223,6 +2900,7 @@
       pickerMap.fins.value = "#ffd83d";
       unitToggle.value = "m";
       syncBasesFromPickers();
+      syncMobilePickersFromDesktop();
       applyDepth(10, true);
       status.textContent = "Reset to default training colors.";
     }
@@ -1233,6 +2911,7 @@
       pickerMap.tank.value = "#ff00b3";
       pickerMap.fins.value = "#ffe600";
       syncBasesFromPickers();
+      syncMobilePickersFromDesktop();
       applyDepth(depthMeters, false);
       status.textContent = "Applied high-visibility safety color preset.";
     }
@@ -1240,6 +2919,7 @@
     ids.forEach((id) => {
       pickerMap[id].addEventListener("input", () => {
         syncBasesFromPickers();
+        syncMobilePickersFromDesktop();
         applyDepth(depthMeters, false);
       });
     });
@@ -1248,7 +2928,101 @@
       applyDepth(Number(event.target.value), true);
     });
 
+    mobDepthSlider.addEventListener("input", (event) => {
+      applyDepth(Number(event.target.value), true);
+    });
+
+    mobDepthUp.addEventListener("click", () => nudgeDepth(1));
+    mobDepthDown.addEventListener("click", () => nudgeDepth(-1));
+
+    mobFlash.addEventListener("click", () => flashlightToggle.click());
+    mobPreset.addEventListener("click", () => document.getElementById("presetSafety").click());
+    mobReset.addEventListener("click", () => document.getElementById("resetBtn").click());
+    mobFullscreen.addEventListener("click", () => {
+      toggleFullscreenMode();
+    });
+
+    fullscreenBtn.addEventListener("click", () => {
+      toggleFullscreenMode();
+    });
+
+    mobUnits.addEventListener("click", () => {
+      unitToggle.value = unitToggle.value === "m" ? "ft" : "m";
+      unitToggle.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    mobColorToggle.addEventListener("click", () => {
+      mobileColorsPanel.hidden = !mobileColorsPanel.hidden;
+    });
+
+    tourLaunch.addEventListener("click", () => {
+      openTour(0);
+    });
+
+    tourSkip.addEventListener("click", () => {
+      closeTour(true);
+    });
+
+    tourBack.addEventListener("click", () => {
+      if (!tourActive) return;
+      tourIndex = clamp(tourIndex - 1, 0, tourSteps.length - 1);
+      renderTourStep();
+    });
+
+    tourNext.addEventListener("click", () => {
+      if (!tourActive) return;
+      if (tourIndex >= tourSteps.length - 1) {
+        closeTour(true);
+        return;
+      }
+      tourIndex += 1;
+      renderTourStep();
+    });
+
+    ids.forEach((id) => {
+      mobPickerMap[id].addEventListener("input", () => {
+        syncDesktopPickersFromMobile();
+        applyDepth(depthMeters, false);
+      });
+    });
+
     unitToggle.addEventListener("change", () => applyDepth(depthMeters, false));
+
+    document.addEventListener("fullscreenchange", () => {
+      if (!isNativeFullscreenActive()) fallbackImmersive = false;
+      updateFullscreenUi();
+    });
+    document.addEventListener("webkitfullscreenchange", () => {
+      if (!isNativeFullscreenActive()) fallbackImmersive = false;
+      updateFullscreenUi();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const active = document.activeElement;
+      const diverFocused = active === diver;
+      const sceneFocused = active === scene;
+      if (!diverFocused && !sceneFocused) return;
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        nudgeDepth(1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        nudgeDepth(-1);
+      } else if (event.key === "PageDown") {
+        event.preventDefault();
+        nudgeDepth(4);
+      } else if (event.key === "PageUp") {
+        event.preventDefault();
+        nudgeDepth(-4);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        applyDepth(0, true);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        applyDepth(maxDepthM, true);
+      }
+    });
 
     scene.addEventListener("mousemove", (event) => {
       setFlashlightPosition(event.clientX, event.clientY);
@@ -1265,6 +3039,8 @@
       flashlightOverlay.classList.toggle("active", flashlightOn);
       flashlightToggle.textContent = flashlightOn ? "Flashlight: On" : "Flashlight: Off";
       flashlightToggle.setAttribute("aria-pressed", flashlightOn ? "true" : "false");
+      flashModeText.textContent = flashlightOn ? "Flashlight reveal mode" : "Natural light mode";
+      flashModeDot.classList.toggle("is-off", !flashlightOn);
       status.textContent = flashlightOn
         ? "Flashlight enabled. Aim at the diver to reveal truer colors."
         : "Flashlight disabled. You are viewing natural ambient color loss.";
@@ -1284,18 +3060,31 @@
     window.addEventListener("resize", () => {
       const rect = scene.getBoundingClientRect();
       setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
-      applyDepth(depthMeters, true);
+      placeDiverAtBestStart(depthMeters);
+      if (tourActive) renderTourStep();
     });
 
     populateRuler();
+    buildCreatureField();
     initCreatures();
     requestAnimationFrame(renderCreatures);
     syncBasesFromPickers();
+    syncMobilePickersFromDesktop();
+    updateFullscreenUi();
     {
       const rect = scene.getBoundingClientRect();
       setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
     }
-    applyDepth(depthMeters, true);
+    placeDiverAtBestStart(8);
+    try {
+      if (!localStorage.getItem("dmzColorTourSeen")) {
+        setTimeout(() => openTour(0), 450);
+      }
+    } catch (_e) {
+      setTimeout(() => openTour(0), 450);
+    }
   </script>
 </body>
 </html>
+
+

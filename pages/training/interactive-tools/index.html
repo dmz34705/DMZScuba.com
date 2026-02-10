@@ -23,7 +23,7 @@
     .tools-frame {
       width: 100%;
       aspect-ratio: 16 / 10;
-      min-height: 560px;
+      height: clamp(420px, 66vh, 760px);
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 16px;
       overflow: hidden;
@@ -52,7 +52,7 @@
 
     @media (max-width: 900px) {
       .tools-frame {
-        min-height: 480px;
+        height: clamp(360px, 62vh, 620px);
       }
     }
   </style>
@@ -104,7 +104,7 @@
           Drag the diver to change depth, test high-visibility gear colors, and use the flashlight to compare natural ambient light vs artificial light recovery.
         </p>
         <div class="tools-stage">
-          <div class="tools-frame">
+          <div class="tools-frame" id="colorLossFrame">
             <iframe src="./color-loss-demo.html" title="DMZ Scuba Interactive Color Loss Demo" loading="lazy"></iframe>
           </div>
           <p class="tools-note">Tip: Orange and highlighter-yellow stay visible longer than many colors, but a light source restores true color detail at depth.</p>
@@ -126,6 +126,43 @@
     </footer>
 
     <script src="../../../js/main.js"></script>
+    <script>
+      (function autoFitDemoFrame() {
+        const frame = document.getElementById("colorLossFrame");
+        const section = document.getElementById("color-loss-tool");
+        if (!frame || !section) return;
+
+        const ASPECT = 16 / 10;
+
+        function fit() {
+          const sectionRect = section.getBoundingClientRect();
+          const frameWidth = frame.clientWidth;
+          if (!frameWidth) return;
+
+          const viewportH = window.innerHeight || document.documentElement.clientHeight;
+          const availableH = Math.max(320, viewportH - Math.max(0, sectionRect.top) - 36);
+          const targetH = frameWidth / ASPECT;
+          const minH = window.innerWidth <= 900 ? 360 : 420;
+          const maxH = window.innerWidth <= 900 ? 620 : 760;
+          const fittedH = Math.round(Math.min(maxH, Math.max(minH, Math.min(targetH, availableH))));
+
+          frame.style.height = `${fittedH}px`;
+        }
+
+        let rafId = 0;
+        function scheduleFit() {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(fit);
+        }
+
+        window.addEventListener("resize", scheduleFit, { passive: true });
+        window.addEventListener("orientationchange", scheduleFit, { passive: true });
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(scheduleFit).catch(() => {});
+        }
+        scheduleFit();
+      })();
+    </script>
   </div>
 </body>
 </html>
