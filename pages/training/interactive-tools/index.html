@@ -12,21 +12,21 @@
   <link rel="stylesheet" href="../../../css/responsive.css" />
   <style>
     .tools-stage {
-      border-radius: var(--radius);
-      border: 1px solid rgba(255,255,255,0.12);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(5,11,20,0.4) 100%);
-      box-shadow: 0 18px 42px rgba(0,0,0,0.48);
-      padding: 14px;
+      border-radius: 24px;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
       margin-top: 14px;
     }
 
     .tools-frame {
       width: 100%;
-      height: clamp(360px, 72vh, 900px);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 16px;
+      height: 760px;
+      border: 0;
+      border-radius: 20px;
       overflow: hidden;
-      background: rgba(3,8,16,0.85);
+      background: transparent;
       display: flex;
       align-items: flex-start;
       justify-content: center;
@@ -36,19 +36,17 @@
       position: relative;
       transform-origin: top center;
       will-change: transform;
+      width: 1220px;
+      height: 760px;
     }
 
     .tools-frame iframe {
-      width: 1180px;
+      width: 1220px;
       height: 760px;
       border: 0;
       display: block;
-    }
-
-    .tools-note {
-      margin: 14px 0 0;
-      color: var(--muted);
-      font-size: 14px;
+      border-radius: 20px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
     }
 
     .tools-actions {
@@ -60,7 +58,11 @@
 
     @media (max-width: 900px) {
       .tools-frame {
-        height: clamp(320px, 66vh, 720px);
+        border-radius: 16px;
+      }
+
+      .tools-frame iframe {
+        border-radius: 16px;
       }
     }
   </style>
@@ -117,7 +119,6 @@
               <iframe src="./color-loss-demo.html" title="DMZ Scuba Interactive Color Loss Demo" loading="lazy" scrolling="no"></iframe>
             </div>
           </div>
-          <p class="tools-note">Tip: Orange and highlighter-yellow stay visible longer than many colors, but a light source restores true color detail at depth.</p>
         </div>
       </section>
 
@@ -140,60 +141,18 @@
       (function autoFitDemoFrame() {
         const frame = document.getElementById("colorLossFrame");
         const canvas = document.getElementById("colorLossCanvas");
-        const iframe = canvas ? canvas.querySelector("iframe") : null;
         if (!frame || !canvas) return;
-        let baseW = 1220;
-        let baseH = 820;
-
-        function measureBase() {
-          if (!iframe) return;
-          try {
-            const doc = iframe.contentDocument;
-            if (!doc) return;
-            const page = doc.querySelector(".page");
-            const body = doc.body;
-            const html = doc.documentElement;
-            if (!body || !html) return;
-
-            const bodyStyle = doc.defaultView && doc.defaultView.getComputedStyle
-              ? doc.defaultView.getComputedStyle(body)
-              : null;
-            const padX = bodyStyle
-              ? (parseFloat(bodyStyle.paddingLeft) || 0) + (parseFloat(bodyStyle.paddingRight) || 0)
-              : 0;
-            const padY = bodyStyle
-              ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
-              : 0;
-
-            const pageRect = page ? page.getBoundingClientRect() : { width: 0, height: 0 };
-            const measuredW = Math.max(
-              Math.ceil(pageRect.width + padX),
-              html.scrollWidth,
-              body.scrollWidth
-            );
-            const measuredH = Math.max(
-              Math.ceil(pageRect.height + padY),
-              html.scrollHeight,
-              body.scrollHeight
-            );
-
-            if (measuredW > 300 && measuredH > 300) {
-              baseW = measuredW;
-              baseH = measuredH;
-            }
-          } catch (_e) {
-            // ignore cross-frame or load-timing issues; fallback base stays in use
-          }
-        }
+        const baseW = 1220;
+        const baseH = 760;
 
         function fit() {
           const frameWidth = frame.clientWidth;
-          const frameHeight = frame.clientHeight;
-          if (!frameWidth || !frameHeight) return;
-          const scale = Math.min(frameWidth / baseW, frameHeight / baseH, 1);
+          if (!frameWidth) return;
+          const scale = Math.min(frameWidth / baseW, 1);
           canvas.style.transform = `scale(${scale.toFixed(4)})`;
           canvas.style.width = `${baseW}px`;
           canvas.style.height = `${baseH}px`;
+          frame.style.height = `${Math.round(baseH * scale)}px`;
         }
 
         let rafId = 0;
@@ -204,12 +163,6 @@
 
         window.addEventListener("resize", scheduleFit, { passive: true });
         window.addEventListener("orientationchange", scheduleFit, { passive: true });
-        if (iframe) {
-          iframe.addEventListener("load", () => {
-            measureBase();
-            scheduleFit();
-          });
-        }
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(scheduleFit).catch(() => {});
         }
