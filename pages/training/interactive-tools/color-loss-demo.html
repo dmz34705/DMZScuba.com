@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -278,14 +278,10 @@
       font: inherit;
     }
 
-    .unit-dropdown {
-      position: relative;
-      min-width: 118px;
-    }
-
-    .unit-dropdown .dropdown-toggle {
+    .unit-toggle-btn {
       width: 100%;
-      text-align: left;
+      min-width: 118px;
+      text-align: center;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(0,0,0,0.22);
@@ -298,58 +294,17 @@
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
     }
 
-    .unit-dropdown .dropdown-toggle:focus {
+    .unit-toggle-btn:focus {
       outline: none;
     }
 
-    .unit-dropdown .dropdown-toggle:focus-visible,
-    .unit-dropdown.is-open .dropdown-toggle {
+    .unit-toggle-btn:focus-visible {
       border-color: rgba(85,185,255,0.55);
       background: rgba(0,0,0,0.28);
       box-shadow: 0 0 0 4px rgba(85,185,255,0.12);
     }
 
-    .unit-dropdown .dropdown-value {
-      display: inline-block;
-    }
-
-    .unit-dropdown .dropdown-panel {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      right: 0;
-      padding: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(7, 12, 20, 0.96);
-      box-shadow: 0 16px 38px rgba(0,0,0,0.45);
-      display: none;
-      z-index: 30;
-      gap: 6px;
-    }
-
-    .unit-dropdown.is-open .dropdown-panel {
-      display: grid;
-    }
-
-    .unit-dropdown .dropdown-option {
-      border: 0;
-      background: rgba(255,255,255,0.04);
-      color: rgba(234,242,255,0.86);
-      padding: 8px 10px;
-      border-radius: 12px;
-      text-align: left;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 140ms ease, border-color 140ms ease;
-    }
-
-    .unit-dropdown .dropdown-option:hover,
-    .unit-dropdown .dropdown-option.is-selected {
-      background: rgba(85,185,255,0.14);
-    }
-
-    .unit-dropdown select {
+    #unitToggle {
       position: absolute;
       opacity: 0;
       pointer-events: none;
@@ -1712,19 +1667,11 @@
         <p class="group-title">Display</p>
         <div class="field">
           <label for="unitToggle">Depth units</label>
-          <div class="unit-dropdown" id="unitToggleDropdown">
-            <button class="dropdown-toggle" id="unitToggleBtn" type="button" aria-expanded="false" aria-controls="unitTogglePanel">
-              <span class="dropdown-value" id="unitToggleValue">Meters</span>
-            </button>
-            <div class="dropdown-panel" id="unitTogglePanel" role="listbox">
-              <button class="dropdown-option" type="button" data-value="m">Meters</button>
-              <button class="dropdown-option" type="button" data-value="ft">Feet</button>
-            </div>
-            <select id="unitToggle">
-              <option value="m">Meters</option>
-              <option value="ft">Feet</option>
-            </select>
-          </div>
+          <button class="unit-toggle-btn" id="unitToggleBtn" type="button" aria-label="Toggle depth units">Meters</button>
+          <select id="unitToggle">
+            <option value="m">Meters</option>
+            <option value="ft">Feet</option>
+          </select>
         </div>
       </section>
 
@@ -2029,12 +1976,7 @@
     const tourNext = document.getElementById("tourNext");
     const tourBack = document.getElementById("tourBack");
     const tourSkip = document.getElementById("tourSkip");
-    const unitToggleDropdown = document.getElementById("unitToggleDropdown");
     const unitToggleBtn = document.getElementById("unitToggleBtn");
-    const unitToggleValue = document.getElementById("unitToggleValue");
-    const unitToggleOptions = unitToggleDropdown
-      ? Array.from(unitToggleDropdown.querySelectorAll(".dropdown-option"))
-      : [];
     let creatureNodes = [];
     const creatureActors = [];
     [surfaceIslandLeft, surfaceIslandRight].forEach((img) => {
@@ -2835,18 +2777,9 @@
       updateDepthSpectrum(depth);
     }
 
-    function closeUnitDropdown() {
-      if (!unitToggleDropdown || !unitToggleBtn) return;
-      unitToggleDropdown.classList.remove("is-open");
-      unitToggleBtn.setAttribute("aria-expanded", "false");
-    }
-
-    function syncUnitDropdownUi() {
-      if (!unitToggleValue) return;
-      unitToggleValue.textContent = unitToggle.value === "ft" ? "Feet" : "Meters";
-      unitToggleOptions.forEach((option) => {
-        option.classList.toggle("is-selected", option.dataset.value === unitToggle.value);
-      });
+    function syncUnitToggleUi() {
+      if (!unitToggleBtn) return;
+      unitToggleBtn.textContent = unitToggle.value === "ft" ? "Feet" : "Meters";
     }
 
 
@@ -3092,7 +3025,7 @@
       pickerMap.tank.value = "#8f7bff";
       pickerMap.fins.value = "#ffd83d";
       unitToggle.value = "m";
-      syncUnitDropdownUi();
+      syncUnitToggleUi();
       syncBasesFromPickers();
       syncMobilePickersFromDesktop();
       applyDepth(10, true);
@@ -3145,32 +3078,10 @@
       unitToggle.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
-    if (unitToggleDropdown && unitToggleBtn) {
+    if (unitToggleBtn) {
       unitToggleBtn.addEventListener("click", () => {
-        const open = unitToggleDropdown.classList.toggle("is-open");
-        unitToggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
-      });
-
-      unitToggleOptions.forEach((option) => {
-        option.addEventListener("click", () => {
-          const nextValue = option.dataset.value;
-          if (!nextValue) return;
-          if (unitToggle.value !== nextValue) {
-            unitToggle.value = nextValue;
-            unitToggle.dispatchEvent(new Event("change", { bubbles: true }));
-          } else {
-            syncUnitDropdownUi();
-          }
-          closeUnitDropdown();
-        });
-      });
-
-      document.addEventListener("click", (event) => {
-        if (!unitToggleDropdown.contains(event.target)) closeUnitDropdown();
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeUnitDropdown();
+        unitToggle.value = unitToggle.value === "m" ? "ft" : "m";
+        unitToggle.dispatchEvent(new Event("change", { bubbles: true }));
       });
     }
 
@@ -3210,7 +3121,7 @@
     });
 
     unitToggle.addEventListener("change", () => {
-      syncUnitDropdownUi();
+      syncUnitToggleUi();
       applyDepth(depthMeters, false);
     });
 
@@ -3295,7 +3206,7 @@
     initCreatures();
     requestAnimationFrame(renderCreatures);
     syncBasesFromPickers();
-    syncUnitDropdownUi();
+    syncUnitToggleUi();
     syncMobilePickersFromDesktop();
     updateFullscreenUi();
     {
