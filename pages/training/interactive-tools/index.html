@@ -170,6 +170,28 @@
           return Math.max(520, Math.min(Math.round(vh * 0.72), 700));
         }
 
+        function measuredMobileHeight() {
+          try {
+            const doc = iframe.contentDocument;
+            if (!doc) return 0;
+            const scene = doc.querySelector(".scene");
+            const body = doc.body;
+            if (!scene || !body) return 0;
+            const bodyStyle = doc.defaultView && doc.defaultView.getComputedStyle
+              ? doc.defaultView.getComputedStyle(body)
+              : null;
+            const padY = bodyStyle
+              ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
+              : 0;
+            const sceneRect = scene.getBoundingClientRect();
+            const measured = Math.round(sceneRect.height + padY + 8);
+            if (!Number.isFinite(measured) || measured < 420) return 0;
+            return Math.min(Math.max(measured, 460), 640);
+          } catch (_e) {
+            return 0;
+          }
+        }
+
         function fit() {
           const frameWidth = frame.clientWidth;
           if (!frameWidth) return;
@@ -188,7 +210,7 @@
           }
 
           if (mobileMode) {
-            const targetH = mobileHeight();
+            const targetH = measuredMobileHeight() || mobileHeight();
             canvas.style.transform = "none";
             canvas.style.width = `${frameWidth}px`;
             canvas.style.height = `${targetH}px`;
@@ -232,6 +254,7 @@
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(scheduleFit).catch(() => {});
         }
+        iframe.addEventListener("load", scheduleFit);
         scheduleFit();
       })();
     </script>
