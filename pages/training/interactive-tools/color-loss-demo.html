@@ -2573,6 +2573,13 @@
     function applyFallbackImmersive(enabled) {
       fallbackImmersive = enabled;
       document.body.classList.toggle("immersive-lock", enabled);
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "dmzColorLossImmersive", enabled }, "*");
+        }
+      } catch (_e) {
+        // ignore cross-frame messaging restrictions
+      }
       updateFullscreenUi();
       requestAnimationFrame(() => {
         const rect = scene.getBoundingClientRect();

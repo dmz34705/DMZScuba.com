@@ -32,6 +32,16 @@
       justify-content: center;
     }
 
+    .tools-frame.tools-frame-immersive {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      border-radius: 0;
+      background: #000;
+      padding: 0;
+      margin: 0;
+    }
+
     .tools-frame-canvas {
       position: relative;
       transform-origin: top center;
@@ -116,7 +126,7 @@
         <div class="tools-stage">
           <div class="tools-frame" id="colorLossFrame">
             <div class="tools-frame-canvas" id="colorLossCanvas">
-              <iframe src="./color-loss-demo.html" title="DMZ Scuba Interactive Color Loss Demo" loading="lazy" scrolling="no"></iframe>
+              <iframe src="./color-loss-demo.html" title="DMZ Scuba Interactive Color Loss Demo" loading="lazy" scrolling="no" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="fullscreen"></iframe>
             </div>
           </div>
         </div>
@@ -147,11 +157,28 @@
         const desktopH = 780;
         const mobileH = 940;
         const mobileQuery = window.matchMedia("(max-width: 900px)");
+        let embeddedImmersive = false;
+
+        function viewportHeight() {
+          return Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, 1);
+        }
 
         function fit() {
           const frameWidth = frame.clientWidth;
           if (!frameWidth) return;
           const mobileMode = mobileQuery.matches;
+
+          if (embeddedImmersive) {
+            const fullW = Math.max(window.innerWidth || frameWidth, 1);
+            const fullH = viewportHeight();
+            canvas.style.transform = "none";
+            canvas.style.width = `${fullW}px`;
+            canvas.style.height = `${fullH}px`;
+            iframe.style.width = `${fullW}px`;
+            iframe.style.height = `${fullH}px`;
+            frame.style.height = `${fullH}px`;
+            return;
+          }
 
           if (mobileMode) {
             canvas.style.transform = "none";
@@ -183,6 +210,14 @@
         if (mobileQuery && mobileQuery.addEventListener) {
           mobileQuery.addEventListener("change", scheduleFit);
         }
+        window.addEventListener("message", (event) => {
+          const data = event && event.data;
+          if (!data || data.type !== "dmzColorLossImmersive") return;
+          embeddedImmersive = Boolean(data.enabled);
+          frame.classList.toggle("tools-frame-immersive", embeddedImmersive);
+          document.body.style.overflow = embeddedImmersive ? "hidden" : "";
+          scheduleFit();
+        });
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(scheduleFit).catch(() => {});
         }
