@@ -155,12 +155,16 @@
         if (!frame || !canvas || !iframe) return;
         const desktopW = 1220;
         const desktopH = 780;
-        const mobileH = 940;
         const mobileQuery = window.matchMedia("(max-width: 900px)");
         let embeddedImmersive = false;
 
         function viewportHeight() {
           return Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, 1);
+        }
+
+        function mobileHeight() {
+          const vh = viewportHeight();
+          return Math.max(520, Math.min(Math.round(vh * 0.72), 700));
         }
 
         function fit() {
@@ -181,12 +185,13 @@
           }
 
           if (mobileMode) {
+            const targetH = mobileHeight();
             canvas.style.transform = "none";
             canvas.style.width = `${frameWidth}px`;
-            canvas.style.height = `${mobileH}px`;
+            canvas.style.height = `${targetH}px`;
             iframe.style.width = `${frameWidth}px`;
-            iframe.style.height = `${mobileH}px`;
-            frame.style.height = `${mobileH}px`;
+            iframe.style.height = `${targetH}px`;
+            frame.style.height = `${targetH}px`;
             return;
           }
 
