@@ -159,7 +159,10 @@
         let embeddedImmersive = false;
 
         function viewportHeight() {
-          return Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, 1);
+          const vvHeight = window.visualViewport && window.visualViewport.height
+            ? Math.round(window.visualViewport.height)
+            : 0;
+          return Math.max(vvHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, 1);
         }
 
         function mobileHeight() {
@@ -212,6 +215,9 @@
 
         window.addEventListener("resize", scheduleFit, { passive: true });
         window.addEventListener("orientationchange", scheduleFit, { passive: true });
+        if (window.visualViewport && window.visualViewport.addEventListener) {
+          window.visualViewport.addEventListener("resize", scheduleFit, { passive: true });
+        }
         if (mobileQuery && mobileQuery.addEventListener) {
           mobileQuery.addEventListener("change", scheduleFit);
         }
