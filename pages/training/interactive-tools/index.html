@@ -167,7 +167,7 @@
 
         function mobileHeight() {
           const vh = viewportHeight();
-          return Math.max(520, Math.min(Math.round(vh * 0.72), 700));
+          return Math.max(560, Math.min(Math.round(vh * 0.8), 760));
         }
 
         function measuredMobileHeight() {
@@ -184,9 +184,9 @@
               ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
               : 0;
             const sceneRect = scene.getBoundingClientRect();
-            const measured = Math.round(sceneRect.height + padY + 8);
+            const measured = Math.round(sceneRect.height + padY + 18);
             if (!Number.isFinite(measured) || measured < 420) return 0;
-            return Math.min(Math.max(measured, 460), 640);
+            return Math.min(Math.max(measured, 520), 720);
           } catch (_e) {
             return 0;
           }
@@ -210,7 +210,8 @@
           }
 
           if (mobileMode) {
-            const targetH = measuredMobileHeight() || mobileHeight();
+            const maxSafe = Math.max(520, viewportHeight() - 24);
+            const targetH = Math.min(measuredMobileHeight() || mobileHeight(), maxSafe);
             canvas.style.transform = "none";
             canvas.style.width = `${frameWidth}px`;
             canvas.style.height = `${targetH}px`;
