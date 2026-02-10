@@ -141,18 +141,35 @@
       (function autoFitDemoFrame() {
         const frame = document.getElementById("colorLossFrame");
         const canvas = document.getElementById("colorLossCanvas");
-        if (!frame || !canvas) return;
-        const baseW = 1220;
-        const baseH = 780;
+        const iframe = canvas ? canvas.querySelector("iframe") : null;
+        if (!frame || !canvas || !iframe) return;
+        const desktopW = 1220;
+        const desktopH = 780;
+        const mobileH = 940;
+        const mobileQuery = window.matchMedia("(max-width: 900px)");
 
         function fit() {
           const frameWidth = frame.clientWidth;
           if (!frameWidth) return;
-          const scale = Math.min(frameWidth / baseW, 1);
+          const mobileMode = mobileQuery.matches;
+
+          if (mobileMode) {
+            canvas.style.transform = "none";
+            canvas.style.width = `${frameWidth}px`;
+            canvas.style.height = `${mobileH}px`;
+            iframe.style.width = `${frameWidth}px`;
+            iframe.style.height = `${mobileH}px`;
+            frame.style.height = `${mobileH}px`;
+            return;
+          }
+
+          const scale = Math.min(frameWidth / desktopW, 1);
           canvas.style.transform = `scale(${scale.toFixed(4)})`;
-          canvas.style.width = `${baseW}px`;
-          canvas.style.height = `${baseH}px`;
-          frame.style.height = `${Math.round(baseH * scale)}px`;
+          canvas.style.width = `${desktopW}px`;
+          canvas.style.height = `${desktopH}px`;
+          iframe.style.width = `${desktopW}px`;
+          iframe.style.height = `${desktopH}px`;
+          frame.style.height = `${Math.round(desktopH * scale)}px`;
         }
 
         let rafId = 0;
@@ -163,6 +180,9 @@
 
         window.addEventListener("resize", scheduleFit, { passive: true });
         window.addEventListener("orientationchange", scheduleFit, { passive: true });
+        if (mobileQuery && mobileQuery.addEventListener) {
+          mobileQuery.addEventListener("change", scheduleFit);
+        }
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(scheduleFit).catch(() => {});
         }
