@@ -2003,6 +2003,16 @@
     let tourActive = false;
     let flashlightClientX = 0;
     let flashlightClientY = 0;
+    const isEmbeddedContext = (() => {
+      try {
+        return window.self !== window.top;
+      } catch (_e) {
+        return true;
+      }
+    })();
+    const tourSeenKey = isEmbeddedContext
+      ? "dmzColorTourSeenEmbedded"
+      : "dmzColorTourSeenStandalone";
 
     const tourSteps = [
       {
@@ -2530,7 +2540,7 @@
       tourOverlay.setAttribute("aria-hidden", "true");
       if (markSeen) {
         try {
-          localStorage.setItem("dmzColorTourSeen", "1");
+          localStorage.setItem(tourSeenKey, "1");
         } catch (_e) {
           // ignore storage restrictions
         }
@@ -3082,21 +3092,12 @@
       setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
     }
     placeDiverAtBestStart(8);
-    const isEmbedded = (() => {
-      try {
-        return window.self !== window.top;
-      } catch (_e) {
-        return true;
-      }
-    })();
-    if (!isEmbedded) {
-      try {
-        if (!localStorage.getItem("dmzColorTourSeen")) {
-          setTimeout(() => openTour(0), 450);
-        }
-      } catch (_e) {
+    try {
+      if (!localStorage.getItem(tourSeenKey)) {
         setTimeout(() => openTour(0), 450);
       }
+    } catch (_e) {
+      setTimeout(() => openTour(0), 450);
     }
   </script>
 </body>
