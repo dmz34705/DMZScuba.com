@@ -110,6 +110,41 @@
     </div>
   </section>
 
+  <section class="dive-quiz-entry" aria-labelledby="dive-quiz-title">
+    <div class="dive-quiz-entry-inner">
+      <h2 id="dive-quiz-title">Not sure where to start?</h2>
+      <p class="dive-quiz-subtext">We'll guide you.</p>
+      <div class="dive-quiz-mode-grid">
+        <button type="button" class="dive-quiz-mode dive-quiz-mode-primary" data-open-quiz="quick">
+          <span class="dive-quiz-mode-title">Quick Recommendation (30 sec)</span>
+          <span class="dive-quiz-mode-copy">Get your best next step instantly.</span>
+        </button>
+        <button type="button" class="dive-quiz-mode" data-open-quiz="builder">
+          <span class="dive-quiz-mode-title">Build Your Dive Path (2 min)</span>
+          <span class="dive-quiz-mode-copy">Map your future as a diver.</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="dive-quiz-modal" id="dive-quiz-modal" aria-hidden="true">
+    <div class="dive-quiz-card" role="dialog" aria-modal="true" aria-labelledby="dive-quiz-dialog-title">
+      <div class="dive-quiz-head">
+        <h2 id="dive-quiz-dialog-title">Find Your Dive Path</h2>
+        <button type="button" class="dive-quiz-close" data-close-quiz aria-label="Close quiz">Close</button>
+      </div>
+      <p class="dive-quiz-mode-label" id="dive-quiz-mode-label">Quick Recommendation</p>
+      <p class="dive-quiz-progress" id="dive-quiz-progress" aria-live="polite"></p>
+
+      <div class="dive-quiz-body" id="dive-quiz-body"></div>
+
+      <div class="dive-quiz-actions" id="dive-quiz-actions">
+        <button type="button" class="btn secondary" id="dive-quiz-back">Back</button>
+        <button type="button" class="btn primary" id="dive-quiz-next">Next</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= WHY + CTA (SINGLE BACKGROUND IMAGE) ================= -->
   <section class="why-bg">
     <img
@@ -155,6 +190,7 @@
 
   <!-- Main JS -->
   <script src="js/main.js"></script>
+  <script src="js/quiz.js"></script>
 </body>
 </html>
 
