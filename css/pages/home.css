@@ -70,6 +70,12 @@
   gap: 24px;
 }
 
+/* Remove inherited hero text panel from main stylesheet; keep full-bleed cinematic hero */
+.hero-content::before{
+  content: none;
+  display: none;
+}
+
 .hero-copy{
   position: relative;
   z-index: 1;
