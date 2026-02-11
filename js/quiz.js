@@ -243,6 +243,7 @@
     index: 0,
     answers: {},
     questions: [],
+    lastResult: null,
     lastFocused: null,
     keyHandlerBound: false
   };
@@ -365,6 +366,22 @@
       .slice(0, 80);
   }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function formatAnswerKey(key) {
+    return String(key || "")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, (match) => match.toUpperCase());
+  }
+
   function maxKey(scores) {
     return Object.keys(scores).reduce((best, key) => (scores[key] > scores[best] ? key : best), "cert");
   }
@@ -384,6 +401,15 @@
     if (!question) return value || "";
     const option = question.options.find((item) => item.value === value);
     return option ? option.title : value || "";
+  }
+
+  function buildAnswerSummary(answers) {
+    return Object.entries(answers || {})
+      .map(([key, value]) => {
+        const label = labelForAnswer(key, value) || String(value || "");
+        return `${formatAnswerKey(key)}: ${label}`;
+      })
+      .join(" | ");
   }
 
   function buildHighlights(answers) {
@@ -567,6 +593,7 @@
 
     return {
       routeType,
+      pathSlug: routeSlug,
       title: "Your Dive Path",
       intro: "Based on your answers, this is your best next move.",
       start: startMap[routeType],
@@ -664,6 +691,7 @@
 
     return {
       routeType,
+      pathSlug: routeSlug,
       title: "Your Dive Path",
       intro: "This path is built from your interests, comfort level, and timeline.",
       start: startMap[routeType],
@@ -708,6 +736,7 @@
 
   function renderResult() {
     const result = state.mode === "builder" ? builderResult() : quickResult();
+    state.lastResult = result;
     progressEl.textContent = "Result ready";
     actionsEl.hidden = true;
     const highlightHtml = result.highlights
@@ -716,6 +745,23 @@
     const executionHtml = result.execution
       .map((item) => `<li><strong>${item.phase}:</strong> ${item.text}</li>`)
       .join("");
+    const answerSummary = buildAnswerSummary(state.answers);
+    const executionSummary = result.execution.map((item) => `${item.phase}: ${item.text}`).join(" | ");
+    const quizMessage = [
+      `Recommended route: ${result.routeType}`,
+      `Recommended start: ${result.start}`,
+      `Timeline: ${state.answers.timeline || "n/a"}`,
+      `Execution plan: ${executionSummary}`
+    ].join(" | ");
+    const formSubject = `Dive Quiz Lead: ${result.start}`;
+    const safeMode = escapeHtml(state.mode);
+    const safeRoute = escapeHtml(result.routeType);
+    const safePathSlug = escapeHtml(result.pathSlug || "");
+    const safeCtaHref = escapeHtml(result.ctaHref);
+    const safeSupportHref = escapeHtml(result.supportCta.href);
+    const safeAnswerSummary = escapeHtml(answerSummary);
+    const safeQuizMessage = escapeHtml(quizMessage);
+    const safeSubject = escapeHtml(formSubject);
 
     bodyEl.innerHTML = `
       <section class="dive-quiz-result">
@@ -739,7 +785,39 @@
           <a class="dive-quiz-result-cta-secondary" href="${result.supportCta.href}">${result.supportCta.label}</a>
           <button type="button" class="dive-quiz-retake-link" data-retake-quiz>Retake Quiz</button>
         </div>
-        <div class="dive-quiz-email-placeholder">Email capture can be added here later without changing quiz logic.</div>
+        <section class="dive-quiz-capture" aria-label="Email your quiz results">
+          <h4>Send me this path</h4>
+          <p>Drop your email and I will follow up with your recommended plan.</p>
+          <form class="dive-quiz-capture-form" data-form-name="Dive Quiz Contact" data-subject="${safeSubject}">
+            <input type="text" name="company" class="dive-quiz-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <div class="dive-quiz-capture-grid">
+              <label class="dive-quiz-capture-field">
+                <span>Name</span>
+                <input type="text" name="name" autocomplete="name" placeholder="Your name">
+              </label>
+              <label class="dive-quiz-capture-field">
+                <span>Email</span>
+                <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+              </label>
+              <label class="dive-quiz-capture-field">
+                <span>Phone (optional)</span>
+                <input type="tel" name="phone" autocomplete="tel" placeholder="Best number">
+              </label>
+              <label class="dive-quiz-capture-field dive-quiz-capture-field-wide">
+                <span>Notes (optional)</span>
+                <textarea name="goals" rows="3" placeholder="Anything you want me to factor into your plan?"></textarea>
+              </label>
+            </div>
+            <input type="hidden" name="quiz_mode" value="${safeMode}">
+            <input type="hidden" name="quiz_route" value="${safeRoute}">
+            <input type="hidden" name="quiz_path" value="${safePathSlug}">
+            <input type="hidden" name="quiz_primary_cta" value="${safeCtaHref}">
+            <input type="hidden" name="quiz_support_cta" value="${safeSupportHref}">
+            <input type="hidden" name="quiz_answers_summary" value="${safeAnswerSummary}">
+            <input type="hidden" name="message" value="${safeQuizMessage}">
+            <button type="submit" class="btn primary dive-quiz-capture-submit">Email My Results</button>
+          </form>
+        </section>
         <p class="dive-quiz-result-note">Your path is practical and flexible. DMZ can tune it with you after contact.</p>
         <p class="dive-quiz-meta">Route: ${result.routeType} | Mode: ${state.mode}</p>
       </section>
@@ -779,6 +857,22 @@
     if (retakeButton) {
       openQuiz(state.mode, retakeButton);
     }
+  });
+
+  bodyEl.addEventListener("submit", (event) => {
+    const form = event.target.closest(".dive-quiz-capture-form");
+    if (!form) return;
+    event.preventDefault();
+    if (!window.DMZForms || typeof window.DMZForms.submit !== "function") {
+      if (window.DMZTelemetry && typeof window.DMZTelemetry.report === "function") {
+        window.DMZTelemetry.report("quiz_capture_submit_unavailable", {
+          mode: state.mode || "",
+          route: (state.lastResult && state.lastResult.routeType) || ""
+        });
+      }
+      return;
+    }
+    window.DMZForms.submit(form, { requireEmail: true });
   });
 
   backButton.addEventListener("click", () => {

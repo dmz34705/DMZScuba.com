@@ -681,13 +681,88 @@
   color: rgba(234,242,255,0.74);
 }
 
-.dive-quiz-email-placeholder{
+.dive-quiz-capture{
   border-radius: 12px;
-  border: 1px dashed rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.03);
-  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(85,185,255,0.08) 0%, rgba(0,0,0,0.12) 100%);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.dive-quiz-capture h4{
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: rgba(234,242,255,0.95);
+}
+
+.dive-quiz-capture p{
+  margin: 0;
   font-size: 13px;
-  color: rgba(234,242,255,0.74);
+  color: rgba(234,242,255,0.78);
+}
+
+.dive-quiz-capture-form{
+  display: grid;
+  gap: 10px;
+}
+
+.dive-quiz-capture-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dive-quiz-capture-field{
+  display: grid;
+  gap: 5px;
+}
+
+.dive-quiz-capture-field span{
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: rgba(234,242,255,0.86);
+}
+
+.dive-quiz-capture-field input,
+.dive-quiz-capture-field textarea{
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.24);
+  color: rgba(234,242,255,0.94);
+  padding: 9px 10px;
+}
+
+.dive-quiz-capture-field input::placeholder,
+.dive-quiz-capture-field textarea::placeholder{
+  color: rgba(234,242,255,0.52);
+}
+
+.dive-quiz-capture-field input:focus-visible,
+.dive-quiz-capture-field textarea:focus-visible{
+  outline: 2px solid rgba(85,185,255,0.55);
+  outline-offset: 2px;
+  border-color: rgba(85,185,255,0.45);
+}
+
+.dive-quiz-capture-field-wide{
+  grid-column: 1 / -1;
+}
+
+.dive-quiz-capture-submit{
+  width: 100%;
+}
+
+.dive-quiz-honeypot{
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .dive-quiz-meta{
@@ -713,7 +788,7 @@
   .dive-quiz-result > p,
   .dive-quiz-confidence,
   .dive-quiz-highlights,
-  .dive-quiz-email-placeholder,
+  .dive-quiz-capture,
   .dive-quiz-result-note,
   .dive-quiz-meta{
     grid-column: 1 / -1;
@@ -733,6 +808,12 @@
     grid-column: 1 / -1;
     margin-top: 2px;
     max-width: 520px;
+  }
+}
+
+@media (max-width: 780px){
+  .dive-quiz-capture-grid{
+    grid-template-columns: 1fr;
   }
 }
 
