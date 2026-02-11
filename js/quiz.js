@@ -785,9 +785,9 @@
           <a class="dive-quiz-result-cta-secondary" href="${result.supportCta.href}">${result.supportCta.label}</a>
           <button type="button" class="dive-quiz-retake-link" data-retake-quiz>Retake Quiz</button>
         </div>
-        <section class="dive-quiz-capture" aria-label="Email your quiz results">
-          <h4>Send me this path</h4>
-          <p>Drop your email and I will follow up with your recommended plan.</p>
+        <section class="dive-quiz-capture" aria-label="Send your quiz results to DMZ Scuba">
+          <h4>Send To DMZ Scuba</h4>
+          <p>Share your email and DMZ Scuba will follow up with your recommended plan.</p>
           <form class="dive-quiz-capture-form" data-form-name="Dive Quiz Contact" data-subject="${safeSubject}">
             <input type="text" name="company" class="dive-quiz-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="dive-quiz-capture-grid">
@@ -815,7 +815,7 @@
             <input type="hidden" name="quiz_support_cta" value="${safeSupportHref}">
             <input type="hidden" name="quiz_answers_summary" value="${safeAnswerSummary}">
             <input type="hidden" name="message" value="${safeQuizMessage}">
-            <button type="submit" class="btn primary dive-quiz-capture-submit">Email My Results</button>
+            <button type="submit" class="btn primary dive-quiz-capture-submit">Send To DMZ Scuba</button>
           </form>
         </section>
         <p class="dive-quiz-result-note">Your path is practical and flexible. DMZ can tune it with you after contact.</p>
@@ -838,10 +838,6 @@
   }
 
   closeButton.addEventListener("click", closeQuiz);
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) closeQuiz();
-  });
-
   bodyEl.addEventListener("click", (event) => {
     const optionButton = event.target.closest("[data-option-value]");
     if (optionButton) {
