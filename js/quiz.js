@@ -12,7 +12,7 @@
   const nextButton = document.getElementById("dive-quiz-next");
   const card = modal.querySelector(".dive-quiz-card");
 
-  const quickQuestions = [
+  const quickQuestionBank = [
     {
       id: "experience",
       prompt: "What is your diving status right now?",
@@ -23,13 +23,34 @@
       ]
     },
     {
-      id: "goal",
-      prompt: "What sounds best right now?",
+      id: "newGoal",
+      when: (answers) => answers.experience === "new",
+      prompt: "What do you want from your first dive step?",
       options: [
-        { value: "cert", title: "Start certification", copy: "Build core skills from day one." },
-        { value: "refresh", title: "Refresher and guided dives", copy: "Get comfortable again fast." },
-        { value: "travel", title: "Travel planning", copy: "I want a destination-focused path." },
-        { value: "unsure", title: "Not sure yet", copy: "Help me choose the right path." }
+        { value: "cert", title: "Start certification", copy: "Build confidence and core skills." },
+        { value: "discovery", title: "Talk through options first", copy: "I want guidance before committing." },
+        { value: "travelPrep", title: "Get ready for a trip", copy: "I want to prep for planned travel." }
+      ]
+    },
+    {
+      id: "certifiedGoal",
+      when: (answers) => answers.experience === "certified",
+      prompt: "What is your next move as a certified diver?",
+      options: [
+        { value: "travel", title: "Plan travel diving", copy: "I want trip-ready progression." },
+        { value: "specialty", title: "Build a specialty path", copy: "I want focused skill progression." },
+        { value: "guided", title: "More local dive days", copy: "I want more reps and confidence." },
+        { value: "unsure", title: "Not sure yet", copy: "Help me choose the best option." }
+      ]
+    },
+    {
+      id: "rustyGoal",
+      when: (answers) => answers.experience === "rusty",
+      prompt: "What feels most important right now?",
+      options: [
+        { value: "refresh", title: "Skill refresher first", copy: "Rebuild comfort and control." },
+        { value: "guided", title: "Guided local dives", copy: "Get active again with support." },
+        { value: "travel", title: "Get trip-ready soon", copy: "Tune up and prep for travel." }
       ]
     },
     {
@@ -50,8 +71,28 @@
       ]
     },
     {
+      id: "newBarrier",
+      when: (answers) => answers.experience === "new",
+      prompt: "What is your biggest blocker to starting?",
+      options: [
+        { value: "confidence", title: "Confidence in the water", copy: "I want patient coaching." },
+        { value: "time", title: "Schedule and timing", copy: "I need a realistic timeline." },
+        { value: "cost", title: "Understanding cost and value", copy: "I want clear options first." }
+      ]
+    },
+    {
+      id: "certifiedFocus",
+      when: (answers) => answers.experience === "certified",
+      prompt: "What focus area would improve your dives most?",
+      options: [
+        { value: "navigation", title: "Navigation and control", copy: "Move smarter and safer underwater." },
+        { value: "buoyancy", title: "Buoyancy and trim", copy: "Improve efficiency and confidence." },
+        { value: "photo", title: "Photo and video skills", copy: "Capture dives while staying stable." }
+      ]
+    },
+    {
       id: "coaching",
-      prompt: "What style works best for you?",
+      prompt: "What coaching style works best for you?",
       options: [
         { value: "small", title: "Small group coaching", copy: "Learn with close instructor support." },
         { value: "private", title: "Private focus", copy: "I prefer one-on-one pace." },
@@ -60,7 +101,7 @@
     }
   ];
 
-  const builderQuestions = [
+  const builderQuestionBank = [
     {
       id: "experience",
       prompt: "Where are you in your dive journey?",
@@ -69,6 +110,36 @@
         { value: "ow", title: "Open Water certified", copy: "Ready for next skills." },
         { value: "advanced", title: "Advanced or higher", copy: "Looking to specialize or travel more." },
         { value: "rusty", title: "Certified but rusty", copy: "Need a clean restart." }
+      ]
+    },
+    {
+      id: "newStart",
+      when: (answers) => answers.experience === "new",
+      prompt: "What kind of start sounds right for you?",
+      options: [
+        { value: "openwater", title: "Open Water certification", copy: "Start with a complete training path." },
+        { value: "discovery", title: "Talk first, then schedule", copy: "I want a clear plan before committing." },
+        { value: "tripReady", title: "Certify for an upcoming trip", copy: "I need a timeline that matches travel." }
+      ]
+    },
+    {
+      id: "certPath",
+      when: (answers) => answers.experience === "ow" || answers.experience === "advanced",
+      prompt: "What progression feels best next?",
+      options: [
+        { value: "advanced", title: "Advanced progression", copy: "Expand depth, navigation, and confidence." },
+        { value: "specialty", title: "Specialty training", copy: "Focus on wreck, drysuit, nitrox, or photo." },
+        { value: "travelPrep", title: "Travel readiness", copy: "Train around your destination plans." }
+      ]
+    },
+    {
+      id: "rustyReset",
+      when: (answers) => answers.experience === "rusty",
+      prompt: "What reset path would help most?",
+      options: [
+        { value: "refresher", title: "Skill refresher", copy: "Rebuild confidence and comfort first." },
+        { value: "guided", title: "Guided dive days", copy: "Get active again with supported reps." },
+        { value: "hybrid", title: "Refresh plus travel prep", copy: "Tune up and then prep for a trip." }
       ]
     },
     {
@@ -91,21 +162,22 @@
       ]
     },
     {
+      id: "confidenceBlocker",
+      when: (answers) => answers.comfort === "low",
+      prompt: "What would help your confidence most?",
+      options: [
+        { value: "pool", title: "Pool and fundamentals", copy: "Start controlled and structured." },
+        { value: "quarry", title: "Guided local open water", copy: "Build confidence in real conditions." },
+        { value: "smallGroup", title: "Smaller coaching environment", copy: "I learn best with close support." }
+      ]
+    },
+    {
       id: "timeline",
       prompt: "What is your target timeline?",
       options: [
         { value: "now", title: "Now", copy: "I want to start this month." },
         { value: "quarter", title: "Next 1 to 3 months", copy: "I am planning with intention." },
         { value: "later", title: "Later this year", copy: "I want a long-term plan." }
-      ]
-    },
-    {
-      id: "gear",
-      prompt: "How interested are you in gear setup guidance?",
-      options: [
-        { value: "yes", title: "Very interested", copy: "I want practical setup advice." },
-        { value: "some", title: "Some interest", copy: "Only what I need right now." },
-        { value: "no", title: "Not a priority", copy: "I can rent or keep it simple." }
       ]
     },
     {
@@ -118,13 +190,22 @@
       ]
     },
     {
-      id: "trainingGoal",
-      prompt: "What training path sounds best right now?",
+      id: "travelWindow",
+      when: (answers) => answers.travel === "warm" || answers.travel === "expedition",
+      prompt: "When is that trip window?",
       options: [
-        { value: "openwater", title: "Open Water", copy: "Start from the foundation." },
-        { value: "advanced", title: "Advanced progression", copy: "Level up with real-world reps." },
-        { value: "refresher", title: "Skill refresh", copy: "Rebuild control before adding depth." },
-        { value: "unsure", title: "Need guidance", copy: "Help me choose the right route." }
+        { value: "soon", title: "Within 3 months", copy: "Fast timeline and focused prep." },
+        { value: "halfYear", title: "Within 6 months", copy: "Steady progression before travel." },
+        { value: "later", title: "More than 6 months", copy: "Long runway for a full path." }
+      ]
+    },
+    {
+      id: "gear",
+      prompt: "How interested are you in gear setup guidance?",
+      options: [
+        { value: "yes", title: "Very interested", copy: "I want practical setup advice." },
+        { value: "some", title: "Some interest", copy: "Only what I need right now." },
+        { value: "no", title: "Not a priority", copy: "I can rent or keep it simple." }
       ]
     },
     {
@@ -166,11 +247,31 @@
     keyHandlerBound: false
   };
 
+  function getQuestionBank(mode) {
+    return mode === "builder" ? builderQuestionBank : quickQuestionBank;
+  }
+
+  function buildActiveQuestions(mode, answers) {
+    return getQuestionBank(mode).filter((question) => !question.when || question.when(answers));
+  }
+
+  function refreshQuestionSet() {
+    const active = buildActiveQuestions(state.mode, state.answers);
+    const allowed = new Set(active.map((q) => q.id));
+    Object.keys(state.answers).forEach((key) => {
+      if (!allowed.has(key)) delete state.answers[key];
+    });
+    state.questions = active;
+    if (state.index > state.questions.length - 1) {
+      state.index = Math.max(0, state.questions.length - 1);
+    }
+  }
+
   function openQuiz(mode, triggerEl) {
     state.mode = mode === "builder" ? "builder" : "quick";
     state.index = 0;
     state.answers = {};
-    state.questions = state.mode === "builder" ? builderQuestions : quickQuestions;
+    state.questions = [];
     state.lastFocused = triggerEl || document.activeElement;
 
     modeLabel.textContent = state.mode === "builder" ? "Dive Path Builder" : "Quick Recommendation";
@@ -222,6 +323,7 @@
   }
 
   function renderQuestion() {
+    refreshQuestionSet();
     const question = state.questions[state.index];
     if (!question) return;
 
@@ -273,24 +375,30 @@
     return `${basePath}${queryString ? `?${queryString}` : ""}${hash || ""}`;
   }
 
+  function resolveQuickGoal(answers) {
+    return answers.newGoal || answers.certifiedGoal || answers.rustyGoal || "";
+  }
+
   function quickResult() {
     const answers = state.answers;
     const experience = answers.experience;
-    const goal = answers.goal;
+    const goal = resolveQuickGoal(answers);
     const timeline = answers.timeline;
     const comfort = answers.comfort;
 
     let routeType = "contact";
     if (experience === "new" || goal === "cert") {
       routeType = "cert";
-    } else if (experience === "rusty" || goal === "refresh") {
+    } else if (experience === "rusty" || goal === "refresh" || goal === "guided") {
       routeType = "refresh";
-    } else if (goal === "travel" && experience !== "new") {
+    } else if (goal === "travel" || goal === "travelPrep") {
       routeType = "travel";
-    } else if (goal === "unsure" || timeline === "exploring") {
+    } else if (goal === "specialty") {
       routeType = "contact";
-    } else if (comfort === "ready") {
-      routeType = "travel";
+    }
+
+    if (timeline === "exploring" || goal === "discovery" || goal === "unsure") {
+      routeType = "contact";
     }
 
     const startMap = {
@@ -310,7 +418,7 @@
       ? "Build repeat reps, then step into advanced goals"
       : "Step into advanced goals with a clear training timeline";
 
-    const routeSlug = slugify(`${routeType}-${startMap[routeType]}`);
+    const routeSlug = slugify(`${routeType}-${startMap[routeType]}-${goal || "general"}`);
     const ctaHref = buildCta(routeType, "quick", routeSlug);
 
     return {
@@ -329,27 +437,35 @@
     const answers = state.answers;
     const scores = { cert: 0, refresh: 0, travel: 0, contact: 0 };
 
-    if (answers.experience === "new") scores.cert += 4;
+    if (answers.experience === "new") scores.cert += 5;
     if (answers.experience === "rusty") scores.refresh += 4;
     if (answers.experience === "advanced") scores.travel += 2;
     if (answers.experience === "ow") scores.travel += 1;
 
-    if (answers.trainingGoal === "openwater") scores.cert += 3;
-    if (answers.trainingGoal === "refresher") scores.refresh += 3;
-    if (answers.trainingGoal === "advanced") scores.travel += 2;
-    if (answers.trainingGoal === "unsure") scores.contact += 3;
+    if (answers.newStart === "openwater") scores.cert += 3;
+    if (answers.newStart === "discovery") scores.contact += 3;
+    if (answers.newStart === "tripReady") scores.travel += 2;
+
+    if (answers.certPath === "advanced" || answers.certPath === "specialty") scores.travel += 2;
+    if (answers.certPath === "travelPrep") scores.travel += 3;
+
+    if (answers.rustyReset === "refresher" || answers.rustyReset === "guided") scores.refresh += 3;
+    if (answers.rustyReset === "hybrid") {
+      scores.refresh += 2;
+      scores.travel += 1;
+    }
+
+    if (answers.comfort === "low") scores.refresh += 2;
+    if (answers.comfort === "high") scores.travel += 1;
+
+    if (answers.travel === "warm" || answers.travel === "expedition") scores.travel += 3;
+    if (answers.travel === "none") scores.cert += 1;
 
     if (answers.timeline === "now") {
       scores.cert += 1;
       scores.refresh += 1;
     }
     if (answers.timeline === "later") scores.contact += 1;
-
-    if (answers.travel === "warm" || answers.travel === "expedition") scores.travel += 3;
-    if (answers.travel === "none") scores.cert += 1;
-
-    if (answers.comfort === "low") scores.refresh += 2;
-    if (answers.comfort === "high") scores.travel += 1;
 
     if (answers.gear === "yes") {
       scores.cert += 1;
@@ -358,6 +474,9 @@
 
     if (answers.focus === "confidence") scores.refresh += 1;
     if (answers.focus === "adventure") scores.travel += 1;
+    if (answers.focus === "navigation") scores.travel += 1;
+
+    if (answers.newStart === "discovery") scores.contact += 2;
 
     const routeType = maxKey(scores);
     const specialtyMap = {
@@ -385,7 +504,9 @@
       ? "Advanced pathway with repeat dives and specialty milestones"
       : "Steady progression toward advanced goals at your pace";
 
-    const routeSlug = slugify(`${routeType}-${answers.interest}-${answers.focus}-${answers.timeline}`);
+    const routeSlug = slugify(
+      `${routeType}-${answers.interest || "general"}-${answers.focus || "balanced"}-${answers.timeline || "flex"}`
+    );
     const ctaHref = buildCta(routeType, "builder", routeSlug);
 
     return {
@@ -461,6 +582,7 @@
   bodyEl.addEventListener("click", (event) => {
     const optionButton = event.target.closest("[data-option-value]");
     if (optionButton) {
+      refreshQuestionSet();
       const question = state.questions[state.index];
       if (!question) return;
       state.answers[question.id] = optionButton.getAttribute("data-option-value");
@@ -481,6 +603,7 @@
   });
 
   nextButton.addEventListener("click", () => {
+    refreshQuestionSet();
     if (state.index >= state.questions.length - 1) {
       renderResult();
       return;
