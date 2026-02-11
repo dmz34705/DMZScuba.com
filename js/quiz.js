@@ -379,6 +379,146 @@
     return answers.newGoal || answers.certifiedGoal || answers.rustyGoal || "";
   }
 
+  function labelForAnswer(questionId, value) {
+    const question = [...quickQuestionBank, ...builderQuestionBank].find((item) => item.id === questionId);
+    if (!question) return value || "";
+    const option = question.options.find((item) => item.value === value);
+    return option ? option.title : value || "";
+  }
+
+  function buildHighlights(answers) {
+    const keys = ["experience", "timeline", "interest", "focus", "travel", "comfort", "coaching"];
+    return keys
+      .map((key) => {
+        const value = answers[key];
+        if (!value) return "";
+        return labelForAnswer(key, value);
+      })
+      .filter(Boolean)
+      .slice(0, 4);
+  }
+
+  function buildExecutionPlan(routeType, answers) {
+    const timeline = answers.timeline || "quarter";
+    const coaching = answers.coaching || "either";
+    const comfort = answers.comfort || "medium";
+    const travel = answers.travel || "";
+    const immediate = timeline === "now" || timeline === "soon" ? "within 24 hours" : "this week";
+
+    if (routeType === "cert") {
+      return [
+        {
+          phase: `Now (${immediate})`,
+          text: "Pick your Open Water start window and submit a training inquiry."
+        },
+        {
+          phase: "This week",
+          text:
+            coaching === "private"
+              ? "Lock a private-focused training plan with clear milestones."
+              : "Lock your class timeline and first skills session."
+        },
+        {
+          phase: "Next 30 days",
+          text:
+            comfort === "cautious"
+              ? "Complete fundamentals + confidence reps, then schedule open-water progression."
+              : "Complete core milestones and prep your next progression step."
+        }
+      ];
+    }
+
+    if (routeType === "refresh") {
+      return [
+        {
+          phase: `Now (${immediate})`,
+          text: "Request a refresher or guided-dive reset based on your current comfort level."
+        },
+        {
+          phase: "This week",
+          text: "Schedule targeted local reps to rebuild control, trim, and confidence."
+        },
+        {
+          phase: "Next 30 days",
+          text:
+            travel === "warm" || travel === "expedition"
+              ? "Transition from refresher into trip-prep coaching."
+              : "Move into advanced or specialty progression once consistency is back."
+        }
+      ];
+    }
+
+    if (routeType === "travel") {
+      return [
+        {
+          phase: `Now (${immediate})`,
+          text: "Choose your target trip window and confirm your current skill baseline."
+        },
+        {
+          phase: "This week",
+          text: "Build a trip-prep plan: local reps, focused skills, and gear priorities."
+        },
+        {
+          phase: "Next 30 days",
+          text: "Execute your prep dives and finalize travel-readiness milestones."
+        }
+      ];
+    }
+
+    return [
+      {
+        phase: `Now (${immediate})`,
+        text: "Submit a discovery request so DMZ can map your best-fit path."
+      },
+      {
+        phase: "This week",
+        text: "Review training, refresher, and travel options matched to your goals."
+      },
+      {
+        phase: "Next 30 days",
+        text: "Start the recommended lane with clear milestones and next-step checkpoints."
+      }
+    ];
+  }
+
+  function buildSupportCta(routeType, mode, pathSlug, answers) {
+    const summary = `Mode: ${mode}; Path: ${pathSlug}; Experience: ${answers.experience || "n/a"}; Timeline: ${
+      answers.timeline || "n/a"
+    }.`;
+    const common = {
+      quiz_mode: mode,
+      quiz_path: pathSlug,
+      source: "dive-path-quiz",
+      message: summary
+    };
+
+    if (routeType === "cert") {
+      return {
+        label: "Talk Through My Plan",
+        href: buildHref("pages/contact/index.html", { ...common, interest: "training" }, "#dive-now")
+      };
+    }
+
+    if (routeType === "refresh") {
+      return {
+        label: "View Skill Refresh",
+        href: buildHref("pages/training/skill-refresh/index.html", common)
+      };
+    }
+
+    if (routeType === "travel") {
+      return {
+        label: "Talk Through Travel Prep",
+        href: buildHref("pages/contact/index.html", { ...common, interest: "travel" }, "#dive-now")
+      };
+    }
+
+    return {
+      label: "See Training Options",
+      href: buildHref("pages/training/index.html", common)
+    };
+  }
+
   function quickResult() {
     const answers = state.answers;
     const experience = answers.experience;
@@ -419,7 +559,11 @@
       : "Step into advanced goals with a clear training timeline";
 
     const routeSlug = slugify(`${routeType}-${startMap[routeType]}-${goal || "general"}`);
-    const ctaHref = buildCta(routeType, "quick", routeSlug);
+    const ctaHref = buildCta(routeType, "quick", routeSlug, answers);
+    const supportCta = buildSupportCta(routeType, "quick", routeSlug, answers);
+    const confidence = routeType === "contact" ? "Guided fit path" : "Strong match";
+    const highlights = buildHighlights(answers);
+    const execution = buildExecutionPlan(routeType, answers);
 
     return {
       routeType,
@@ -429,7 +573,12 @@
       next,
       thenStep,
       future,
-      ctaHref
+      ctaHref,
+      primaryLabel: "Start This Path",
+      supportCta,
+      confidence,
+      highlights,
+      execution
     };
   }
 
@@ -507,7 +656,11 @@
     const routeSlug = slugify(
       `${routeType}-${answers.interest || "general"}-${answers.focus || "balanced"}-${answers.timeline || "flex"}`
     );
-    const ctaHref = buildCta(routeType, "builder", routeSlug);
+    const ctaHref = buildCta(routeType, "builder", routeSlug, answers);
+    const supportCta = buildSupportCta(routeType, "builder", routeSlug, answers);
+    const confidence = routeType === "contact" ? "Needs consult fit" : "Strong match";
+    const highlights = buildHighlights(answers);
+    const execution = buildExecutionPlan(routeType, answers);
 
     return {
       routeType,
@@ -517,15 +670,25 @@
       next,
       thenStep,
       future,
-      ctaHref
+      ctaHref,
+      primaryLabel: "Start This Path",
+      supportCta,
+      confidence,
+      highlights,
+      execution
     };
   }
 
-  function buildCta(routeType, mode, pathSlug) {
+  function buildCta(routeType, mode, pathSlug, answers) {
     const baseParams = {
       quiz_mode: mode,
       quiz_path: pathSlug,
-      source: "dive-path-quiz"
+      source: "dive-path-quiz",
+      route: routeType,
+      experience: answers.experience || "",
+      timeline: answers.timeline || "",
+      comfort: answers.comfort || "",
+      interest: answers.interest || ""
     };
     if (routeType === "cert") {
       return buildHref("pages/training/open-water/index.html", baseParams);
@@ -547,19 +710,34 @@
     const result = state.mode === "builder" ? builderResult() : quickResult();
     progressEl.textContent = "Result ready";
     actionsEl.hidden = true;
+    const highlightHtml = result.highlights
+      .map((item) => `<li>${item}</li>`)
+      .join("");
+    const executionHtml = result.execution
+      .map((item) => `<li><strong>${item.phase}:</strong> ${item.text}</li>`)
+      .join("");
 
     bodyEl.innerHTML = `
       <section class="dive-quiz-result">
         <h3>${result.title}</h3>
         <p>${result.intro}</p>
+        <p class="dive-quiz-confidence"><strong>Match:</strong> ${result.confidence}</p>
+        <ul class="dive-quiz-highlights">${highlightHtml}</ul>
         <ul class="dive-quiz-result-list">
           <li><strong>Start:</strong> ${result.start}</li>
           <li><strong>Next:</strong> ${result.next}</li>
           <li><strong>Then:</strong> ${result.thenStep}</li>
           <li><strong>Future:</strong> ${result.future}</li>
         </ul>
-        <a class="btn primary dive-quiz-result-cta" href="${result.ctaHref}">Start This Path</a>
-        <button type="button" class="btn secondary" data-retake-quiz>Retake Quiz</button>
+        <div class="dive-quiz-plan">
+          <h4>Execution Plan</h4>
+          <ul class="dive-quiz-plan-list">${executionHtml}</ul>
+        </div>
+        <div class="dive-quiz-result-actions">
+          <a class="btn primary dive-quiz-result-cta" href="${result.ctaHref}">${result.primaryLabel}</a>
+          <a class="btn secondary dive-quiz-result-cta-secondary" href="${result.supportCta.href}">${result.supportCta.label}</a>
+          <button type="button" class="btn secondary" data-retake-quiz>Retake Quiz</button>
+        </div>
         <div class="dive-quiz-email-placeholder">Email capture can be added here later without changing quiz logic.</div>
         <p class="dive-quiz-result-note">Your path is practical and flexible. DMZ can tune it with you after contact.</p>
         <p class="dive-quiz-meta">Route: ${result.routeType} | Mode: ${state.mode}</p>
