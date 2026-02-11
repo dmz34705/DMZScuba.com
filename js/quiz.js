@@ -735,8 +735,9 @@
         </div>
         <div class="dive-quiz-result-actions">
           <a class="btn primary dive-quiz-result-cta" href="${result.ctaHref}">${result.primaryLabel}</a>
-          <a class="btn secondary dive-quiz-result-cta-secondary" href="${result.supportCta.href}">${result.supportCta.label}</a>
-          <button type="button" class="btn secondary" data-retake-quiz>Retake Quiz</button>
+          <p class="dive-quiz-cta-note">Takes about 2 minutes. We will follow up with your next best step.</p>
+          <a class="dive-quiz-result-cta-secondary" href="${result.supportCta.href}">${result.supportCta.label}</a>
+          <button type="button" class="dive-quiz-retake-link" data-retake-quiz>Retake Quiz</button>
         </div>
         <div class="dive-quiz-email-placeholder">Email capture can be added here later without changing quiz logic.</div>
         <p class="dive-quiz-result-note">Your path is practical and flexible. DMZ can tune it with you after contact.</p>
