@@ -526,22 +526,10 @@
 }
 
 .dive-quiz-result-list li{
-  position: relative;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.10);
   background: linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.12) 100%);
   padding: 11px 12px 11px 14px;
-}
-
-.dive-quiz-result-list li::before{
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(226,27,35,0.95) 0%, rgba(85,185,255,0.9) 100%);
 }
 
 .dive-quiz-result-list strong{
