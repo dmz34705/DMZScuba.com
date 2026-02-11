@@ -142,6 +142,29 @@
   flex-wrap: wrap;
 }
 
+/* CTA ladder: quiet trust signal supporting the hero primary action */
+.hero-trust-line{
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  font-size: 12.5px;
+  color: rgba(234,242,255,0.74);
+  max-width: 560px;
+}
+
+.hero-trust-line span{
+  display: inline-flex;
+  align-items: center;
+}
+
+.hero-trust-line span + span::before{
+  content: "|";
+  margin-right: 14px;
+  color: rgba(234,242,255,0.48);
+}
+
 .hero-buttons .btn:focus-visible{
   outline: 2px solid rgba(85,185,255,0.75);
   outline-offset: 2px;
@@ -280,7 +303,7 @@
   margin: 0 0 6px;
   font-size: clamp(20px, 2.1vw, 26px);
   letter-spacing: 0.4px;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .dive-quiz-subtext{
@@ -729,6 +752,12 @@ body.quiz-open{
   transform: translateY(-1px);
   border-color: rgba(255,255,255,0.18);
   background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+}
+
+/* Accessibility: preserve strong keyboard visibility on card links */
+.feature-card:focus-visible{
+  outline: 2px solid rgba(85,185,255,0.78);
+  outline-offset: 2px;
 }
 
 .feature-card h3{
