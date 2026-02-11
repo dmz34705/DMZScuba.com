@@ -496,6 +496,35 @@ console.log("main.js loaded");
       window.addEventListener("resize", () => updateHeaderVisibility());
     }
 
+    const stickyCta = document.getElementById("mobile-sticky-cta");
+    if (stickyCta) {
+      const dismissed = (() => {
+        try {
+          return window.localStorage.getItem("dmz-mobile-sticky-cta-dismissed") === "1";
+        } catch (error) {
+          return false;
+        }
+      })();
+      if (dismissed) {
+        stickyCta.classList.add("is-hidden");
+      }
+    }
+
+    document.addEventListener("click", (event) => {
+      const closeBtn = event.target.closest("[data-dismiss-target]");
+      if (!closeBtn) return;
+      const targetSelector = closeBtn.getAttribute("data-dismiss-target");
+      if (!targetSelector) return;
+      const target = document.querySelector(targetSelector);
+      if (!target) return;
+      target.classList.add("is-hidden");
+      try {
+        window.localStorage.setItem("dmz-mobile-sticky-cta-dismissed", "1");
+      } catch (error) {
+        // Ignore storage failures and keep dismiss behavior for current view.
+      }
+    });
+
     // 1) Copy icon buttons
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-copy]");
