@@ -753,6 +753,12 @@
     button.addEventListener("click", () => openQuiz(button.getAttribute("data-open-quiz"), button));
   });
 
+  const params = new URLSearchParams(window.location.search);
+  const openQuizMode = params.get("openQuiz");
+  if (openQuizMode === "quick" || openQuizMode === "builder") {
+    openQuiz(openQuizMode, modeButtons[0] || null);
+  }
+
   closeButton.addEventListener("click", closeQuiz);
   modal.addEventListener("click", (event) => {
     if (event.target === modal) closeQuiz();

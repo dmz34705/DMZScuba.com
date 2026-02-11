@@ -1,1 +1,2 @@
 /api/* https://dmz-media-api.zacharylisowski55.workers.dev/api/:splat 200
+/training /pages/training/index.html 200
