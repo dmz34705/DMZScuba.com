@@ -257,12 +257,18 @@
 }
 
 .dive-quiz-entry-inner{
+  position: relative;
   border-radius: var(--radius);
   border: 1px solid rgba(255,255,255,0.10);
-  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  background:
+    linear-gradient(180deg, rgba(5,11,20,0.50) 0%, rgba(5,11,20,0.76) 100%),
+    url("../../assets/images/hero/hero-quiz.png");
+  background-size: cover;
+  background-position: center 42%;
   box-shadow: 0 16px 38px rgba(0,0,0,0.45);
   padding: 20px 18px;
   text-align: center;
+  overflow: hidden;
 }
 
 .dive-quiz-entry h2{
