@@ -167,26 +167,32 @@
 
         function mobileHeight() {
           const vh = viewportHeight();
-          return Math.max(560, Math.min(Math.round(vh * 0.8), 760));
+          return Math.max(440, Math.min(Math.round(vh * 0.8), 760));
         }
 
         function measuredMobileHeight() {
           try {
             const doc = iframe.contentDocument;
             if (!doc) return 0;
+            const root = doc.documentElement;
             const scene = doc.querySelector(".scene");
             const body = doc.body;
-            if (!scene || !body) return 0;
+            if (!body) return 0;
+            const fullHeight = root ? Math.round(root.scrollHeight) : 0;
             const bodyStyle = doc.defaultView && doc.defaultView.getComputedStyle
               ? doc.defaultView.getComputedStyle(body)
               : null;
             const padY = bodyStyle
               ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
               : 0;
-            const sceneRect = scene.getBoundingClientRect();
-            const measured = Math.round(sceneRect.height + padY + 18);
-            if (!Number.isFinite(measured) || measured < 420) return 0;
-            return Math.min(Math.max(measured, 520), 720);
+            let measured = fullHeight;
+            if (!Number.isFinite(measured) || measured < 360) {
+              if (!scene) return 0;
+              const sceneRect = scene.getBoundingClientRect();
+              measured = Math.round(sceneRect.height + padY + 18);
+            }
+            if (!Number.isFinite(measured) || measured < 360) return 0;
+            return Math.min(Math.max(measured, 420), 760);
           } catch (_e) {
             return 0;
           }
