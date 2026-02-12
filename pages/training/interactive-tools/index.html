@@ -192,6 +192,28 @@
           }
         }
 
+        function measuredDesktopHeight() {
+          try {
+            const doc = iframe.contentDocument;
+            if (!doc) return 0;
+            const page = doc.querySelector(".page");
+            const body = doc.body;
+            if (!page || !body) return 0;
+            const bodyStyle = doc.defaultView && doc.defaultView.getComputedStyle
+              ? doc.defaultView.getComputedStyle(body)
+              : null;
+            const padY = bodyStyle
+              ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
+              : 0;
+            const pageRect = page.getBoundingClientRect();
+            const measured = Math.round(pageRect.height + padY + 4);
+            if (!Number.isFinite(measured) || measured < desktopH) return 0;
+            return Math.min(measured, 1100);
+          } catch (_e) {
+            return 0;
+          }
+        }
+
         function fit() {
           const frameWidth = frame.clientWidth;
           if (!frameWidth) return;
@@ -221,13 +243,14 @@
             return;
           }
 
+          const targetDesktopH = Math.max(desktopH, measuredDesktopHeight() || 0);
           const scale = Math.min(frameWidth / desktopW, 1);
           canvas.style.transform = `scale(${scale.toFixed(4)})`;
           canvas.style.width = `${desktopW}px`;
-          canvas.style.height = `${desktopH}px`;
+          canvas.style.height = `${targetDesktopH}px`;
           iframe.style.width = `${desktopW}px`;
-          iframe.style.height = `${desktopH}px`;
-          frame.style.height = `${Math.round(desktopH * scale)}px`;
+          iframe.style.height = `${targetDesktopH}px`;
+          frame.style.height = `${Math.round(targetDesktopH * scale)}px`;
         }
 
         let rafId = 0;
