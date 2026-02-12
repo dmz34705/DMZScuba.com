@@ -227,6 +227,7 @@
           const frameWidth = frame.clientWidth;
           if (!frameWidth) return;
           const mobileMode = mobileQuery.matches;
+          const mobileFrameBuffer = 8;
 
           if (embeddedImmersive) {
             const fullW = Math.max(window.innerWidth || frameWidth, 1);
@@ -242,7 +243,8 @@
 
           if (mobileMode) {
             const maxSafe = Math.max(520, viewportHeight() - 24);
-            const targetH = Math.min(measuredMobileHeight() || mobileHeight(), maxSafe);
+            const measuredH = measuredMobileHeight() || mobileHeight();
+            const targetH = Math.min(measuredH + mobileFrameBuffer, maxSafe);
             canvas.style.transform = "none";
             canvas.style.width = `${frameWidth}px`;
             canvas.style.height = `${targetH}px`;
