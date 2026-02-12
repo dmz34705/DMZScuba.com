@@ -261,6 +261,19 @@
       font-size: 0.95rem;
     }
 
+    .field.stack {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+      align-items: start;
+    }
+
+    .field.stack .value {
+      justify-self: end;
+      font-size: 0.8rem;
+      color: #cce9f7;
+      font-variant-numeric: tabular-nums;
+    }
+
     input[type="color"] {
       width: 56px;
       height: 32px;
@@ -408,6 +421,54 @@
           transparent 1px,
           transparent 48px
         );
+    }
+
+    .camera-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      background: #041220;
+    }
+
+    .camera-layer.active {
+      display: block;
+    }
+
+    .camera-feed {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .camera-output {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #041220;
+    }
+
+    .scene.camera-mode .ambient,
+    .scene.camera-mode .water-surface,
+    .scene.camera-mode .surface-band,
+    .scene.camera-mode .seabed,
+    .scene.camera-mode .flashlight-overlay,
+    .scene.camera-mode .light-rays,
+    .scene.camera-mode .plankton,
+    .scene.camera-mode .creatures,
+    .scene.camera-mode .legend,
+    .scene.camera-mode .depth-ruler,
+    .scene.camera-mode .diver {
+      display: none;
+    }
+
+    .scene.camera-mode::before,
+    .scene.camera-mode::after {
+      display: none;
     }
 
     .light-rays {
@@ -1503,6 +1564,7 @@
       .mobile-colors {
         grid-area: colors;
       }
+
     }
 
     @media (max-width: 680px) {
@@ -1565,6 +1627,7 @@
       .mobile-colors {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
     }
 
     @media (max-width: 430px) {
@@ -1664,6 +1727,28 @@
       </section>
 
       <section class="control-card">
+        <p class="group-title">Camera Live View</p>
+        <div class="button-row" id="cameraButtons">
+          <button id="startCameraBtn" type="button">Start Camera</button>
+          <button id="stopCameraBtn" type="button" disabled>Stop Camera</button>
+        </div>
+      </section>
+
+      <section class="control-card">
+        <p class="group-title">Water Model</p>
+        <div class="field stack">
+          <label for="waterClaritySlider">Water clarity</label>
+          <input type="range" id="waterClaritySlider" min="0.6" max="2.2" step="0.05" value="1" />
+          <span class="value" id="waterClarityValue">1.00</span>
+        </div>
+        <div class="field stack">
+          <label for="colorLossStrengthSlider">Color loss strength</label>
+          <input type="range" id="colorLossStrengthSlider" min="0.5" max="1.6" step="0.05" value="1" />
+          <span class="value" id="colorLossStrengthValue">1.00</span>
+        </div>
+      </section>
+
+      <section class="control-card">
         <p class="group-title">Display</p>
         <div class="field">
           <label for="unitToggle">Depth units</label>
@@ -1679,6 +1764,10 @@
 
     <section class="panel scene" id="scene" tabindex="0" aria-label="Water column simulation">
       <div class="ambient" id="ambient"></div>
+      <div class="camera-layer" id="cameraLayer" aria-hidden="true">
+        <video id="cameraVideo" class="camera-feed" autoplay muted playsinline></video>
+        <canvas id="cameraCanvas" class="camera-output"></canvas>
+      </div>
       <div class="water-surface" aria-hidden="true"></div>
       <div class="surface-band" aria-hidden="true">
         <img class="surface-island left" id="surfaceIslandLeft" src="assets/island-clipart-md.png" alt="" />
@@ -1764,6 +1853,10 @@
           <button class="mob-btn" id="mobColorToggle" type="button" aria-label="Show color controls">
             <span class="sym">&#x1F3A8;</span>
             <span class="lab">Colors</span>
+          </button>
+          <button class="mob-btn" id="mobCamera" type="button" aria-label="Show camera controls">
+            <span class="sym">&#x1F4F7;</span>
+            <span class="lab">Camera</span>
           </button>
           <button class="mob-btn" id="mobFullscreen" type="button" aria-label="Toggle fullscreen">
             <span class="sym">&#x2922;</span>
@@ -1955,12 +2048,22 @@
     const mobReset = document.getElementById("mobReset");
     const mobFullscreen = document.getElementById("mobFullscreen");
     const mobColorToggle = document.getElementById("mobColorToggle");
+    const mobCamera = document.getElementById("mobCamera");
     const mobDepthUp = document.getElementById("mobDepthUp");
     const mobDepthDown = document.getElementById("mobDepthDown");
     const mobDepthText = document.getElementById("mobDepthText");
     const mobDepthSlider = document.getElementById("mobDepthSlider");
     const mobileColorsPanel = document.getElementById("mobileColorsPanel");
     const seabed = document.querySelector(".seabed");
+    const startCameraBtn = document.getElementById("startCameraBtn");
+    const stopCameraBtn = document.getElementById("stopCameraBtn");
+    const cameraLayer = document.getElementById("cameraLayer");
+    const cameraVideo = document.getElementById("cameraVideo");
+    const cameraCanvas = document.getElementById("cameraCanvas");
+    const waterClaritySlider = document.getElementById("waterClaritySlider");
+    const waterClarityValue = document.getElementById("waterClarityValue");
+    const colorLossStrengthSlider = document.getElementById("colorLossStrengthSlider");
+    const colorLossStrengthValue = document.getElementById("colorLossStrengthValue");
     const zoneLabel = document.getElementById("zoneLabel");
     const lightLabel = document.getElementById("lightLabel");
     const flashModeText = document.getElementById("flashModeText");
@@ -2034,6 +2137,7 @@
     let dragOffsetX = 0;
     let dragOffsetY = 0;
     let depthMeters = 10;
+    let colorLossStrength = 1.0;
     let tipBand = -1;
     let flashlightOn = false;
     let fallbackImmersive = false;
@@ -2041,6 +2145,17 @@
     let tourActive = false;
     let flashlightClientX = 0;
     let flashlightClientY = 0;
+    let cameraStream = null;
+    let cameraAnimationFrame = 0;
+    let cameraRunning = false;
+    let cameraInputMode = "demo";
+    let cameraLastWidth = 0;
+    let cameraLastHeight = 0;
+    const cameraWorkCanvas = document.createElement("canvas");
+    const cameraWorkCtx = cameraWorkCanvas.getContext("2d", { willReadFrequently: true });
+    const cameraOutCtx = cameraCanvas.getContext("2d");
+    const CAMERA_FACING_MODE = "environment";
+    const CAMERA_QUALITY_SCALE = 0.75;
     const isEmbeddedContext = (() => {
       try {
         return window.self !== window.top;
@@ -2200,47 +2315,59 @@
       ];
     }
 
-    function attenuate(rgb, depth, sunColumn = 1) {
-      const [r0, g0, b0] = rgb;
-      const { hue, sat, val } = rgbToHsv(rgb);
-      const isSafetyYellow = hue >= 48 && hue <= 78 && sat >= 0.45 && val >= 0.55;
-      const isSafetyOrange = hue >= 18 && hue <= 44 && sat >= 0.45 && val >= 0.5;
-      const isHighViz = isSafetyYellow || isSafetyOrange;
+    function getEffectiveDepth(depth) {
+      return clamp(depth * colorLossStrength, 0, maxDepthM * 2);
+    }
 
+    function applyColorLossModel(rgb, depth, sunColumn = 1, enableSafetyTuning = true) {
+      const [r0, g0, b0] = rgb;
+      const adjustedDepth = getEffectiveDepth(depth);
+      let isHighViz = false;
       let kr = WATER_MODEL.kr * waterClarity;
       let kg = WATER_MODEL.kg * waterClarity;
       let kb = WATER_MODEL.kb * waterClarity;
 
-      if (isSafetyYellow) {
-        kr = 0.055 * waterClarity;
-        kg = 0.028 * waterClarity;
-        kb = 0.02 * waterClarity;
-      } else if (isSafetyOrange) {
-        kr = 0.052 * waterClarity;
-        kg = 0.032 * waterClarity;
-        kb = 0.02 * waterClarity;
+      if (enableSafetyTuning) {
+        const { hue, sat, val } = rgbToHsv(rgb);
+        const isSafetyYellow = hue >= 48 && hue <= 78 && sat >= 0.45 && val >= 0.55;
+        const isSafetyOrange = hue >= 18 && hue <= 44 && sat >= 0.45 && val >= 0.5;
+        isHighViz = isSafetyYellow || isSafetyOrange;
+
+        if (isSafetyYellow) {
+          kr = 0.055 * waterClarity;
+          kg = 0.028 * waterClarity;
+          kb = 0.02 * waterClarity;
+        } else if (isSafetyOrange) {
+          kr = 0.052 * waterClarity;
+          kg = 0.032 * waterClarity;
+          kb = 0.02 * waterClarity;
+        }
       }
 
-      let r = Math.round(r0 * Math.exp(-kr * depth));
-      let g = Math.round(g0 * Math.exp(-kg * depth));
-      let b = Math.round(b0 * Math.exp(-kb * depth));
+      let r = Math.round(r0 * Math.exp(-kr * adjustedDepth));
+      let g = Math.round(g0 * Math.exp(-kg * adjustedDepth));
+      let b = Math.round(b0 * Math.exp(-kb * adjustedDepth));
 
       if (isHighViz) {
-        const floor = Math.max(38, Math.round(78 - depth * 0.9));
+        const floor = Math.max(38, Math.round(78 - adjustedDepth * 0.9));
         r = Math.max(r, floor);
         g = Math.max(g, floor);
       }
 
-      const sunStrength = getSunlightStrength(depth, sunColumn);
-      const warmBoost = Math.max(0, 1 - depth / 15) * sunStrength;
+      const sunStrength = getSunlightStrength(adjustedDepth, sunColumn);
+      const warmBoost = Math.max(0, 1 - adjustedDepth / 15) * sunStrength;
       r = Math.min(255, Math.round(r + (255 - r) * 0.23 * warmBoost));
       g = Math.min(255, Math.round(g + (246 - g) * 0.14 * warmBoost));
       b = Math.min(255, Math.round(b + (230 - b) * 0.05 * warmBoost));
 
-      const deepBlueBias = (1 - sunStrength) * clamp(depth / maxDepthM, 0, 1) * 0.22;
+      const deepBlueBias = (1 - sunStrength) * clamp(adjustedDepth / maxDepthM, 0, 1) * 0.22;
       b = Math.min(255, Math.round(b + (255 - b) * deepBlueBias));
 
-      return applyHazeModel([r, g, b], depth, sunStrength);
+      return applyHazeModel([r, g, b], adjustedDepth, sunStrength);
+    }
+
+    function attenuate(rgb, depth, sunColumn = 1) {
+      return applyColorLossModel(rgb, depth, sunColumn, true);
     }
 
     function syncBasesFromPickers() {
@@ -2455,17 +2582,7 @@
     }
 
     function attenuatePixel(r0, g0, b0, depth, sunColumn = 1) {
-      let r = Math.round(r0 * Math.exp(-(WATER_MODEL.kr * waterClarity) * depth));
-      let g = Math.round(g0 * Math.exp(-(WATER_MODEL.kg * waterClarity) * depth));
-      let b = Math.round(b0 * Math.exp(-(WATER_MODEL.kb * waterClarity) * depth));
-      const sunStrength = getSunlightStrength(depth, sunColumn);
-      const warmBoost = Math.max(0, 1 - depth / 15) * sunStrength;
-      r = Math.min(255, Math.round(r + (255 - r) * 0.2 * warmBoost));
-      g = Math.min(255, Math.round(g + (246 - g) * 0.12 * warmBoost));
-      b = Math.min(255, Math.round(b + (230 - b) * 0.045 * warmBoost));
-      const deepBlueBias = (1 - sunStrength) * clamp(depth / maxDepthM, 0, 1) * 0.2;
-      b = Math.min(255, Math.round(b + (255 - b) * deepBlueBias));
-      return applyHazeModel([r, g, b], depth, sunStrength);
+      return applyColorLossModel([r0, g0, b0], depth, sunColumn, false);
     }
 
     function renderCreatures(time) {
@@ -2530,6 +2647,177 @@
         actor.ctx.putImageData(frame, 0, 0);
       });
       requestAnimationFrame(renderCreatures);
+    }
+
+    function isMobileViewport() {
+      return window.matchMedia("(max-width: 1080px)").matches;
+    }
+
+    function getCameraTargetSize(videoW, videoH) {
+      const scale = CAMERA_QUALITY_SCALE;
+      const maxEdge = isMobileViewport() ? 540 : 720;
+      const longEdge = Math.max(videoW, videoH);
+      const baseScale = longEdge > maxEdge ? maxEdge / longEdge : 1;
+      const finalScale = baseScale * scale;
+      return {
+        width: Math.max(2, Math.round(videoW * finalScale)),
+        height: Math.max(2, Math.round(videoH * finalScale))
+      };
+    }
+
+    async function requestCameraStream(facingMode) {
+      const attempts = [
+        { audio: false, video: { facingMode: { ideal: facingMode } } },
+        { audio: false, video: { facingMode } },
+        { audio: false, video: true }
+      ];
+
+      if (navigator.mediaDevices?.getUserMedia) {
+        let lastError = null;
+        for (const constraints of attempts) {
+          try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (err) {
+            lastError = err;
+            if (err?.name !== "OverconstrainedError" && err?.name !== "ConstraintNotSatisfiedError") {
+              throw err;
+            }
+          }
+        }
+        if (lastError) throw lastError;
+      }
+
+      const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+      if (legacyGetUserMedia) {
+        return new Promise((resolve, reject) => {
+          legacyGetUserMedia.call(navigator, attempts[1], resolve, reject);
+        });
+      }
+
+      throw new Error("MediaDevicesUnavailable");
+    }
+
+    function setCameraModeUi(mode) {
+      const usingCamera = mode === "camera";
+      cameraInputMode = mode;
+      scene.classList.toggle("camera-mode", usingCamera);
+      cameraLayer.classList.toggle("active", usingCamera);
+      cameraLayer.setAttribute("aria-hidden", usingCamera ? "false" : "true");
+      if (mobCamera) mobCamera.classList.toggle("is-on", usingCamera);
+    }
+
+    function applyColorLossToFrame(imageData, depth, sunColumn) {
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] === 0) continue;
+        const faded = applyColorLossModel([data[i], data[i + 1], data[i + 2]], depth, sunColumn, true);
+        data[i] = faded[0];
+        data[i + 1] = faded[1];
+        data[i + 2] = faded[2];
+      }
+      return imageData;
+    }
+
+    function renderCameraFrame() {
+      if (!cameraRunning) return;
+      if (!cameraWorkCtx || cameraVideo.readyState < 2 || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+        cameraAnimationFrame = requestAnimationFrame(renderCameraFrame);
+        return;
+      }
+
+      const target = getCameraTargetSize(cameraVideo.videoWidth, cameraVideo.videoHeight);
+      if (target.width !== cameraLastWidth || target.height !== cameraLastHeight) {
+        cameraLastWidth = target.width;
+        cameraLastHeight = target.height;
+        cameraWorkCanvas.width = target.width;
+        cameraWorkCanvas.height = target.height;
+        cameraCanvas.width = target.width;
+        cameraCanvas.height = target.height;
+      }
+
+      cameraWorkCtx.drawImage(cameraVideo, 0, 0, cameraLastWidth, cameraLastHeight);
+      let frame;
+      try {
+        frame = cameraWorkCtx.getImageData(0, 0, cameraLastWidth, cameraLastHeight);
+      } catch (_err) {
+        status.textContent = "Camera frame processing is unavailable.";
+        cameraAnimationFrame = requestAnimationFrame(renderCameraFrame);
+        return;
+      }
+
+      const processed = applyColorLossToFrame(frame, depthMeters, 1);
+      cameraWorkCtx.putImageData(processed, 0, 0);
+      cameraOutCtx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+      cameraOutCtx.drawImage(cameraWorkCanvas, 0, 0);
+
+      cameraAnimationFrame = requestAnimationFrame(renderCameraFrame);
+    }
+
+    async function startCamera() {
+      if (!window.isSecureContext) {
+        const message = "Camera needs HTTPS (or localhost) in Safari.";
+        status.textContent = message;
+        return;
+      }
+      if (!cameraWorkCtx || !cameraOutCtx) {
+        status.textContent = "Camera processing is not available in this browser.";
+        return;
+      }
+
+      if (cameraRunning) return;
+      const facingMode = CAMERA_FACING_MODE;
+
+      try {
+        const stream = await requestCameraStream(facingMode);
+        cameraStream = stream;
+        cameraVideo.setAttribute("autoplay", "");
+        cameraVideo.setAttribute("muted", "");
+        cameraVideo.setAttribute("playsinline", "");
+        cameraVideo.muted = true;
+        cameraVideo.playsInline = true;
+        cameraVideo.srcObject = stream;
+        try {
+          await cameraVideo.play();
+        } catch (_playErr) {
+          // iOS Safari can resolve stream but delay play until metadata is ready.
+        }
+        cameraRunning = true;
+        startCameraBtn.disabled = true;
+        stopCameraBtn.disabled = false;
+        setCameraModeUi("camera");
+        cameraAnimationFrame = requestAnimationFrame(renderCameraFrame);
+      } catch (err) {
+        let message = "Camera: Unable to start.";
+        if (err?.name === "NotAllowedError") message = "Camera: Permission denied.";
+        else if (err?.name === "NotFoundError") message = "Camera: No camera device found.";
+        else if (err?.name === "NotReadableError") message = "Camera: Camera is busy or unavailable.";
+        else if (err?.name === "SecurityError") message = "Camera blocked by browser security settings.";
+        else if (err?.message === "MediaDevicesUnavailable") message = "Camera API unavailable in this browser.";
+        status.textContent = `${message} If embedded, allow camera on the iframe.`;
+      }
+    }
+
+    function stopCamera() {
+      if (cameraAnimationFrame) {
+        cancelAnimationFrame(cameraAnimationFrame);
+        cameraAnimationFrame = 0;
+      }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+        cameraStream = null;
+      }
+      cameraVideo.srcObject = null;
+      cameraRunning = false;
+      startCameraBtn.disabled = false;
+      stopCameraBtn.disabled = true;
+      cameraOutCtx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+      setCameraModeUi("demo");
+    }
+
+    async function switchCamera() {
+      if (!cameraRunning) return;
+      stopCamera();
+      await startCamera();
     }
 
     function setDepthText(depth) {
@@ -2744,10 +3032,11 @@
 
     function updateDepthSpectrum(depth) {
       const sunColumn = getSunColumnStrengthForRect(diver.getBoundingClientRect());
-      const sunStrength = getSunlightStrength(depth, sunColumn);
-      const r = Math.round(clamp(Math.exp(-(WATER_MODEL.kr * waterClarity) * depth) * sunStrength * 100, 0, 100));
-      const g = Math.round(clamp(Math.exp(-(WATER_MODEL.kg * waterClarity) * depth) * sunStrength * 100, 0, 100));
-      const b = Math.round(clamp(Math.exp(-(WATER_MODEL.kb * waterClarity) * depth) * sunStrength * 100, 0, 100));
+      const adjustedDepth = getEffectiveDepth(depth);
+      const sunStrength = getSunlightStrength(adjustedDepth, sunColumn);
+      const r = Math.round(clamp(Math.exp(-(WATER_MODEL.kr * waterClarity) * adjustedDepth) * sunStrength * 100, 0, 100));
+      const g = Math.round(clamp(Math.exp(-(WATER_MODEL.kg * waterClarity) * adjustedDepth) * sunStrength * 100, 0, 100));
+      const b = Math.round(clamp(Math.exp(-(WATER_MODEL.kb * waterClarity) * adjustedDepth) * sunStrength * 100, 0, 100));
       const w = Math.round(clamp(sunStrength * 100, 0, 100));
       const next = { r, g, b, w };
 
@@ -2762,7 +3051,7 @@
     function updateReadouts(depth) {
       const depthRatio = depth / maxDepthM;
       zoneLabel.textContent = getDepthZone(depth);
-      const sunStrength = getSunlightStrength(depth, getSunColumnStrengthForRect(diver.getBoundingClientRect()));
+      const sunStrength = getSunlightStrength(getEffectiveDepth(depth), getSunColumnStrengthForRect(diver.getBoundingClientRect()));
       lightLabel.textContent = `${Math.round(sunStrength * 100)}%`;
 
       ids.forEach((id) => {
@@ -2805,7 +3094,7 @@
 
     function updateAmbient(depth) {
       const depthRatio = depth / maxDepthM;
-      const sunStrength = getSunlightStrength(depth, getSunColumnStrengthForRect(diver.getBoundingClientRect()));
+      const sunStrength = getSunlightStrength(getEffectiveDepth(depth), getSunColumnStrengthForRect(diver.getBoundingClientRect()));
       ambient.style.opacity = String(Math.min(0.82, (depth / maxDepthM) * (0.88 + (1 - sunStrength) * 0.28)));
       scene.style.setProperty("--sun-strength", sunStrength.toFixed(3));
       if (sunSource) {
@@ -3024,8 +3313,13 @@
       pickerMap.wetsuit.value = "#ff3b30";
       pickerMap.tank.value = "#8f7bff";
       pickerMap.fins.value = "#ffd83d";
+      waterClarity = 1;
+      colorLossStrength = 1;
+      waterClaritySlider.value = "1";
+      colorLossStrengthSlider.value = "1";
       unitToggle.value = "m";
       syncUnitToggleUi();
+      updateWaterModelUi();
       syncBasesFromPickers();
       syncMobilePickersFromDesktop();
       applyDepth(10, true);
@@ -3043,6 +3337,11 @@
       status.textContent = "Applied high-visibility safety color preset.";
     }
 
+    function updateWaterModelUi() {
+      waterClarityValue.textContent = waterClarity.toFixed(2);
+      colorLossStrengthValue.textContent = colorLossStrength.toFixed(2);
+    }
+
     ids.forEach((id) => {
       pickerMap[id].addEventListener("input", () => {
         syncBasesFromPickers();
@@ -3053,6 +3352,26 @@
 
     depthSlider.addEventListener("input", (event) => {
       applyDepth(Number(event.target.value), true);
+    });
+
+    startCameraBtn.addEventListener("click", async () => {
+      await startCamera();
+    });
+
+    stopCameraBtn.addEventListener("click", () => {
+      stopCamera();
+    });
+
+    waterClaritySlider.addEventListener("input", (event) => {
+      waterClarity = Number(event.target.value);
+      updateWaterModelUi();
+      applyDepth(depthMeters, false);
+    });
+
+    colorLossStrengthSlider.addEventListener("input", (event) => {
+      colorLossStrength = Number(event.target.value);
+      updateWaterModelUi();
+      applyDepth(depthMeters, false);
     });
 
     mobDepthSlider.addEventListener("input", (event) => {
@@ -3087,6 +3406,16 @@
 
     mobColorToggle.addEventListener("click", () => {
       mobileColorsPanel.hidden = !mobileColorsPanel.hidden;
+    });
+
+    mobCamera.addEventListener("click", async () => {
+      if (cameraRunning) {
+        stopCamera();
+        status.textContent = "Camera closed. Returned to demo scene.";
+        return;
+      }
+      mobileColorsPanel.hidden = true;
+      await startCamera();
     });
 
     tourLaunch.addEventListener("click", () => {
@@ -3198,7 +3527,13 @@
       const rect = scene.getBoundingClientRect();
       setFlashlightPosition(rect.left + rect.width * 0.72, rect.top + rect.height * 0.38);
       placeDiverAtBestStart(depthMeters);
+      cameraLastWidth = 0;
+      cameraLastHeight = 0;
       if (tourActive) renderTourStep();
+    });
+
+    window.addEventListener("beforeunload", () => {
+      stopCamera();
     });
 
     populateRuler();
@@ -3208,6 +3543,8 @@
     syncBasesFromPickers();
     syncUnitToggleUi();
     syncMobilePickersFromDesktop();
+    updateWaterModelUi();
+    setCameraModeUi("demo");
     updateFullscreenUi();
     {
       const rect = scene.getBoundingClientRect();
