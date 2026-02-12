@@ -174,22 +174,25 @@
           try {
             const doc = iframe.contentDocument;
             if (!doc) return 0;
-            const root = doc.documentElement;
+            const page = doc.querySelector(".page");
             const scene = doc.querySelector(".scene");
             const body = doc.body;
             if (!body) return 0;
-            const fullHeight = root ? Math.round(root.scrollHeight) : 0;
             const bodyStyle = doc.defaultView && doc.defaultView.getComputedStyle
               ? doc.defaultView.getComputedStyle(body)
               : null;
             const padY = bodyStyle
               ? (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0)
               : 0;
-            let measured = fullHeight;
+            let measured = 0;
+            if (page) {
+              const pageRect = page.getBoundingClientRect();
+              measured = Math.round(pageRect.height + 4);
+            }
             if (!Number.isFinite(measured) || measured < 360) {
               if (!scene) return 0;
               const sceneRect = scene.getBoundingClientRect();
-              measured = Math.round(sceneRect.height + padY + 18);
+              measured = Math.round(sceneRect.height + padY + 12);
             }
             if (!Number.isFinite(measured) || measured < 360) return 0;
             return Math.min(Math.max(measured, 420), 760);
