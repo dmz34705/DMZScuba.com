@@ -15,7 +15,35 @@
 <link rel="stylesheet" href="/css/responsive.css" />
 
   <!-- SEO basics -->
-  <meta name="description" content="DMZ Scuba — Professional dive training, epic dive travel, and real underwater exploration. Always dive." />
+  <meta name="description" content="Professional scuba training, dive travel, and underwater exploration in the Chicago area." />
+  <link rel="canonical" href="https://www.dmzscuba.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DMZ Scuba" />
+  <meta property="og:title" content="DMZ Scuba | Scuba Training, Travel, and Exploration" />
+  <meta property="og:description" content="Professional scuba training, dive travel, and underwater exploration in the Chicago area." />
+  <meta property="og:url" content="https://www.dmzscuba.com/" />
+  <meta property="og:image" content="https://www.dmzscuba.com/assets/images/logos/dmz-scuba-logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DMZ Scuba | Scuba Training, Travel, and Exploration" />
+  <meta name="twitter:description" content="Professional scuba training, dive travel, and underwater exploration in the Chicago area." />
+  <meta name="twitter:image" content="https://www.dmzscuba.com/assets/images/logos/dmz-scuba-logo.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DMZ Scuba",
+    "url": "https://www.dmzscuba.com/",
+    "logo": "https://www.dmzscuba.com/assets/images/logos/dmz-scuba-logo.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "DMZ Scuba",
+    "url": "https://www.dmzscuba.com/"
+  }
+  </script>
 </head>
 <body>
 
@@ -65,7 +93,7 @@
           <strong>Always dive.</strong>
         </p>
         <p class="hero-local-line">Scuba certification and continuing education in La Grange, IL (Chicago area)</p>
-        <p class="hero-address-line">Training base: 1030 S La Grange Rd, La Grange, IL 60525</p>
+        <p class="hero-address-line"><a href="https://maps.apple.com/?q=1030%20S%20La%20Grange%20Rd%2C%20La%20Grange%2C%20IL%2060525" class="js-map-link" data-map-query="1030 S La Grange Rd, La Grange, IL 60525" title="Get directions to La Grange training location">Training base: 1030 S La Grange Rd, La Grange, IL 60525</a></p>
 
         <div class="hero-buttons">
           <a href="/training" class="btn primary" aria-label="Plan my scuba training">Plan My Training</a>
@@ -200,6 +228,42 @@
   <!-- Main JS -->
   <script src="js/main.js"></script>
   <script src="js/quiz.js"></script>
+  <script>
+    (function mapLinkChooser() {
+      const links = document.querySelectorAll(".js-map-link");
+      if (!links.length) return;
+
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isAndroid = /Android/i.test(ua);
+
+      links.forEach((link) => {
+        link.addEventListener("click", (event) => {
+          const query = link.getAttribute("data-map-query") || "";
+          if (!query) return;
+
+          const encoded = encodeURIComponent(query);
+          const appleUrl = `https://maps.apple.com/?q=${encoded}`;
+          const geoUrl = `geo:0,0?q=${encoded}`;
+          const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+
+          event.preventDefault();
+
+          if (isIOS) {
+            window.location.href = appleUrl;
+            return;
+          }
+
+          if (isAndroid) {
+            window.location.href = geoUrl;
+            return;
+          }
+
+          window.open(googleUrl, "_blank", "noopener");
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
 
