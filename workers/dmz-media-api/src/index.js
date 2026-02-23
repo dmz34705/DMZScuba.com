@@ -319,7 +319,7 @@ function buildQuizResultsConfirmationEmail() {
             <tr>
               <td style="padding:22px 24px;color:#dce8f8;">
                 <p style="margin:0 0 12px 0;font-size:15px;line-height:1.75;">Thank you for completing the DMZ Scuba Dive Path Quiz. We received your results and are preparing your personalized next-step plan.</p>
-                <p style="margin:0 0 12px 0;font-size:15px;line-height:1.75;">Please watch for either an email from <a href="mailto:info@dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">info@dmzscuba.com</a> or a call from <a href="tel:+16307039125" style="color:#9bd3ff;text-decoration:none;">630-703-9125</a>.</p>
+                <p style="margin:0 0 12px 0;font-size:15px;line-height:1.75;">Please watch for either an email from <a href="mailto:info@dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">info@dmzscuba.com</a> or a call from <a href="tel:+16306604536" style="color:#9bd3ff;text-decoration:none;">630-660-4536</a>.</p>
                 <p style="margin:0;font-size:15px;line-height:1.75;color:#eaf2ff;">Warm regards,<br/>Zachary Lisowski<br/>Owner | DMZ Scuba LLC<br/><a href="mailto:info@dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">info@dmzscuba.com</a><br/><a href="https://dmzscuba.com" style="color:#9bd3ff;text-decoration:none;">dmzscuba.com</a></p>
               </td>
             </tr>
@@ -335,7 +335,7 @@ function buildQuizResultsConfirmationEmail() {
     "",
     "Please watch for either:",
     "- Email: info@dmzscuba.com",
-    "- Call: 630-703-9125",
+    "- Call: 630-660-4536",
     "",
     "DMZ Scuba",
   ].join("\n");
