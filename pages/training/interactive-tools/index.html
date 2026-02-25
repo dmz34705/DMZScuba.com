@@ -144,7 +144,7 @@
         <div class="tools-stage">
           <div class="tools-frame" id="boylesLawFrame">
             <div class="tools-frame-canvas" id="boylesLawCanvas">
-              <iframe src="./boyles-law-demo.html" title="DMZ Scuba Interactive Boyle's Law Demo" loading="lazy" scrolling="no" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="fullscreen"></iframe>
+              <iframe src="./boyles-law-demo.html?embed=1" title="DMZ Scuba Interactive Boyle's Law Demo" loading="lazy" scrolling="no" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="fullscreen"></iframe>
             </div>
           </div>
         </div>
@@ -308,8 +308,8 @@
         const canvas = document.getElementById("boylesLawCanvas");
         const iframe = canvas ? canvas.querySelector("iframe") : null;
         if (!frame || !canvas || !iframe) return;
-        const desktopW = 1480;
-        const desktopH = 900;
+        const desktopW = 1240;
+        const desktopH = 760;
         const mobileQuery = window.matchMedia("(max-width: 900px)");
 
         function viewportHeight() {

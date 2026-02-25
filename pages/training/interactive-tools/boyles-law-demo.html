@@ -59,6 +59,28 @@
       overflow-x: hidden;
     }
 
+    body.boyles-embedded {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #031425;
+    }
+
+    :where(#boylesDemo).embedded-host {
+      min-height: 100%;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    :where(#boylesDemo).embedded-host .page {
+      transform: none;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 8px;
+      min-height: 100%;
+    }
+
     :where(#boylesDemo).mobile-fullscreen {
       position: fixed;
       inset: 0;
@@ -2492,6 +2514,19 @@
     const diverOffsetX = -84;
     const diverOffsetY = 112;
     const demoRoot = document.getElementById("boylesDemo");
+    const embeddedMode = (() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("embed") === "1" || window.self !== window.top;
+      } catch (_error) {
+        return window.self !== window.top;
+      }
+    })();
+    if (embeddedMode) {
+      document.body.classList.add("boyles-embedded");
+      if (demoRoot) demoRoot.classList.add("embedded-host");
+      document.documentElement.style.setProperty("--embed-scale", "1");
+    }
     const depthSlider = document.getElementById("depthSlider");
     const depthText = document.getElementById("depthText");
     const pressureText = document.getElementById("pressureText");
