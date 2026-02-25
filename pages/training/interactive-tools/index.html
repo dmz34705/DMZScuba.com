@@ -111,6 +111,7 @@
           </p>
           <div class="page-hero-actions">
             <a class="btn primary" href="#color-loss-tool">Open Color-Loss Demo</a>
+            <a class="btn secondary" href="#boyles-law-tool">Open Boyle's Law Demo</a>
             <a class="btn secondary" href="../index.html">Back to Training</a>
           </div>
         </div>
@@ -130,6 +131,20 @@
           <div class="tools-frame" id="colorLossFrame">
             <div class="tools-frame-canvas" id="colorLossCanvas">
               <iframe src="./color-loss-demo.html" title="DMZ Scuba Interactive Color Loss Demo" loading="lazy" scrolling="no" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="fullscreen"></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section" id="boyles-law-tool">
+        <h2>Boyle's Law Scuba Simulator</h2>
+        <p>
+          Train pressure and volume intuition with guided checkpoints. Move depth, compare ATA changes, and see how compression and breathing gas use drive safer dive decisions.
+        </p>
+        <div class="tools-stage">
+          <div class="tools-frame" id="boylesLawFrame">
+            <div class="tools-frame-canvas" id="boylesLawCanvas">
+              <iframe src="./boyles-law-demo.html" title="DMZ Scuba Interactive Boyle's Law Demo" loading="lazy" scrolling="no" allowfullscreen webkitallowfullscreen mozallowfullscreen allow="fullscreen"></iframe>
             </div>
           </div>
         </div>
@@ -281,6 +296,100 @@
           document.body.style.overflow = embeddedImmersive ? "hidden" : "";
           scheduleFit();
         });
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(scheduleFit).catch(() => {});
+        }
+        iframe.addEventListener("load", scheduleFit);
+        scheduleFit();
+      })();
+
+      (function autoFitBoylesFrame() {
+        const frame = document.getElementById("boylesLawFrame");
+        const canvas = document.getElementById("boylesLawCanvas");
+        const iframe = canvas ? canvas.querySelector("iframe") : null;
+        if (!frame || !canvas || !iframe) return;
+        const desktopW = 1480;
+        const desktopH = 900;
+        const mobileQuery = window.matchMedia("(max-width: 900px)");
+
+        function viewportHeight() {
+          const vvHeight = window.visualViewport && window.visualViewport.height
+            ? Math.round(window.visualViewport.height)
+            : 0;
+          return Math.max(vvHeight, window.innerHeight || 0, document.documentElement.clientHeight || 0, 1);
+        }
+
+        function measuredMobileHeight() {
+          try {
+            const doc = iframe.contentDocument;
+            if (!doc) return 0;
+            const scene = doc.querySelector(".scene-wrap");
+            if (!scene) return 0;
+            const rect = scene.getBoundingClientRect();
+            const measured = Math.round(rect.height + 14);
+            if (!Number.isFinite(measured) || measured < 420) return 0;
+            return Math.min(Math.max(measured, 520), 980);
+          } catch (_e) {
+            return 0;
+          }
+        }
+
+        function measuredDesktopHeight() {
+          try {
+            const doc = iframe.contentDocument;
+            if (!doc) return 0;
+            const page = doc.querySelector(".page");
+            if (!page) return 0;
+            const rect = page.getBoundingClientRect();
+            const measured = Math.round(rect.height + 10);
+            if (!Number.isFinite(measured) || measured < desktopH) return 0;
+            return Math.min(measured, 1280);
+          } catch (_e) {
+            return 0;
+          }
+        }
+
+        function fit() {
+          const frameWidth = frame.clientWidth;
+          if (!frameWidth) return;
+          const mobileMode = mobileQuery.matches;
+
+          if (mobileMode) {
+            const maxSafe = Math.max(560, viewportHeight() - 24);
+            const targetH = Math.min(measuredMobileHeight() || 760, maxSafe);
+            canvas.style.transform = "none";
+            canvas.style.width = `${frameWidth}px`;
+            canvas.style.height = `${targetH}px`;
+            iframe.style.width = `${frameWidth}px`;
+            iframe.style.height = `${targetH}px`;
+            frame.style.height = `${targetH}px`;
+            return;
+          }
+
+          const targetDesktopH = Math.max(desktopH, measuredDesktopHeight() || 0);
+          const scale = Math.min(frameWidth / desktopW, 1);
+          canvas.style.transform = `scale(${scale.toFixed(4)})`;
+          canvas.style.width = `${desktopW}px`;
+          canvas.style.height = `${targetDesktopH}px`;
+          iframe.style.width = `${desktopW}px`;
+          iframe.style.height = `${targetDesktopH}px`;
+          frame.style.height = `${Math.round(targetDesktopH * scale)}px`;
+        }
+
+        let rafId = 0;
+        function scheduleFit() {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(fit);
+        }
+
+        window.addEventListener("resize", scheduleFit, { passive: true });
+        window.addEventListener("orientationchange", scheduleFit, { passive: true });
+        if (window.visualViewport && window.visualViewport.addEventListener) {
+          window.visualViewport.addEventListener("resize", scheduleFit, { passive: true });
+        }
+        if (mobileQuery && mobileQuery.addEventListener) {
+          mobileQuery.addEventListener("change", scheduleFit);
+        }
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(scheduleFit).catch(() => {});
         }
