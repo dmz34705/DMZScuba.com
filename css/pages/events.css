@@ -416,12 +416,13 @@
 }
 
 .events-list-block {
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   align-content: stretch;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .events-list-block > div:first-child h2 {
@@ -492,8 +493,9 @@
   display: grid;
   align-content: start;
   gap: 8px;
+  flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
+  height: 0;
   overflow-y: auto;
   padding: 8px;
   border-radius: 16px;
@@ -511,11 +513,13 @@
 }
 
 .events-list-stack {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .event-card {
@@ -725,9 +729,18 @@
   }
 
   .events-list-stack {
-    display: grid;
-    grid-template-rows: none;
+    display: flex;
+    flex-direction: column;
+    flex: none;
     height: auto;
+    overflow: visible;
+  }
+
+  .events-list-block {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 }
 
