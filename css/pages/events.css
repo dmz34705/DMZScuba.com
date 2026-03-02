@@ -203,6 +203,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .events-nav-btn {
@@ -218,6 +219,46 @@
 .events-nav-btn:disabled {
   cursor: default;
   opacity: 0.45;
+}
+
+.events-month-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-right: 2px;
+}
+
+.events-jump-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+
+.events-jump-text {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(234,242,255,0.72);
+}
+
+.events-jump-select {
+  border: 0;
+  background: transparent;
+  color: rgba(234,242,255,0.92);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.events-jump-select option {
+  color: #111827;
 }
 
 .events-legend {

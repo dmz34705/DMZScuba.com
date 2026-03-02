@@ -340,6 +340,26 @@
 
       const prevDisabled = activeMonthIndex === 0 ? "disabled" : "";
       const nextDisabled = activeMonthIndex >= monthGroups.length - 1 ? "disabled" : "";
+      const availableYears = Array.from(
+        new Set(monthGroups.map((item) => item.monthDate.getFullYear()))
+      );
+      const activeYear = group.monthDate.getFullYear();
+      const activeMonth = group.monthDate.getMonth();
+      const monthOptions = Array.from({ length: 12 }, (_unused, monthNumber) => {
+        const monthDate = new Date(2026, monthNumber, 1);
+        const hasMonth = monthGroups.some(
+          (item) =>
+            item.monthDate.getFullYear() === activeYear &&
+            item.monthDate.getMonth() === monthNumber
+        );
+        return `<option value="${monthNumber}" ${monthNumber === activeMonth ? "selected" : ""} ${hasMonth ? "" : "disabled"}>${monthFormatter.format(monthDate)}</option>`;
+      }).join("");
+      const yearOptions = availableYears
+        .map((yearValue) => {
+          return `<option value="${yearValue}" ${yearValue === activeYear ? "selected" : ""}>${yearValue}</option>`;
+        })
+        .join("");
+
       const head = document.createElement("div");
       head.className = "events-month-head";
       head.innerHTML = `
@@ -349,6 +369,20 @@
           <p>Today is ${weekdayLongFormatter.format(today)}. ${group.events.length} scheduled item${group.events.length === 1 ? "" : "s"} this month.</p>
         </div>
         <div class="events-month-nav" aria-label="Calendar month controls">
+          <div class="events-month-jump">
+            <label class="events-jump-label">
+              <span class="events-jump-text">Month</span>
+              <select class="events-jump-select" data-events-month-select>
+                ${monthOptions}
+              </select>
+            </label>
+            <label class="events-jump-label">
+              <span class="events-jump-text">Year</span>
+              <select class="events-jump-select" data-events-year-select>
+                ${yearOptions}
+              </select>
+            </label>
+          </div>
           <button class="events-nav-btn" type="button" data-events-today>Current Month</button>
           <button class="events-nav-btn" type="button" data-events-prev ${prevDisabled}>Previous</button>
           <button class="events-nav-btn" type="button" data-events-next ${nextDisabled}>Next</button>
@@ -517,8 +551,46 @@
       }
 
       const todayButton = head.querySelector("[data-events-today]");
+      const monthSelect = head.querySelector("[data-events-month-select]");
+      const yearSelect = head.querySelector("[data-events-year-select]");
       const prevButton = head.querySelector("[data-events-prev]");
       const nextButton = head.querySelector("[data-events-next]");
+
+      function jumpToMonth(monthValue, yearValue) {
+        const targetIndex = monthGroups.findIndex(
+          (item) =>
+            item.monthDate.getFullYear() === yearValue &&
+            item.monthDate.getMonth() === monthValue
+        );
+        if (targetIndex < 0) return false;
+        activeMonthIndex = targetIndex;
+        selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+        renderMonth();
+        return true;
+      }
+
+      if (yearSelect) {
+        yearSelect.addEventListener("change", () => {
+          const yearValue = Number(yearSelect.value);
+          const monthValue = monthSelect ? Number(monthSelect.value) : activeMonth;
+          if (jumpToMonth(monthValue, yearValue)) return;
+          const fallback = monthGroups.findIndex(
+            (item) => item.monthDate.getFullYear() === yearValue
+          );
+          if (fallback < 0) return;
+          activeMonthIndex = fallback;
+          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          renderMonth();
+        });
+      }
+
+      if (monthSelect) {
+        monthSelect.addEventListener("change", () => {
+          const monthValue = Number(monthSelect.value);
+          const yearValue = yearSelect ? Number(yearSelect.value) : activeYear;
+          jumpToMonth(monthValue, yearValue);
+        });
+      }
 
       if (todayButton) {
         todayButton.addEventListener("click", () => {
