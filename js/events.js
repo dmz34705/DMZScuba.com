@@ -180,6 +180,20 @@
     return EVENT_TYPE_META[type] || EVENT_TYPE_META.Event;
   }
 
+  function buildLegendMarkup() {
+    const entries = Object.entries(EVENT_TYPE_META).filter(([key]) => key !== "Event");
+    return entries
+      .map(([label, meta]) => {
+        return `
+          <span class="events-legend-item">
+            <span class="events-legend-swatch ${meta.className}" aria-hidden="true">${meta.icon}</span>
+            <span>${label}</span>
+          </span>
+        `;
+      })
+      .join("");
+  }
+
   function renderEventCard(eventItem, compact = false) {
     const article = document.createElement("article");
     const typeMeta = getEventTypeMeta(eventItem.type);
@@ -341,6 +355,11 @@
         </div>
       `;
 
+      const legend = document.createElement("div");
+      legend.className = "events-legend";
+      legend.setAttribute("aria-label", "Event type key");
+      legend.innerHTML = buildLegendMarkup();
+
       const grid = document.createElement("div");
       grid.className = "events-month-grid";
 
@@ -397,24 +416,19 @@
         const uniqueTypes = Array.from(
           new Set(items.map((item) => (item.type || "Event")))
         )
-          .slice(0, 3)
+          .slice(0, 4)
           .map((type) => {
             const meta = getEventTypeMeta(type);
-            return `<span class="events-day-type-dot ${meta.className}" title="${type}" aria-hidden="true">${meta.icon}</span>`;
+            return `<span class="events-day-bar ${meta.className}" title="${type}" aria-hidden="true"></span>`;
           })
           .join("");
-
-        const previewTitle =
-          items.length > 1
-            ? `${items[0].title} + ${items.length - 1} more`
-            : items[0].title;
 
         button.innerHTML = `
           <span class="events-day-number">${day}</span>
           ${isToday ? '<span class="events-day-label">Today</span>' : ""}
           <span class="events-day-count">${items.length} scheduled</span>
-          <span class="events-day-type-row">${uniqueTypes}</span>
-          <span class="events-day-preview">${previewTitle}</span>
+          <span class="events-day-bar-stack">${uniqueTypes}</span>
+          ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}
         `;
         button.addEventListener("click", () => {
           selectedDateKey = currentKey;
@@ -425,43 +439,32 @@
       }
 
       card.append(head, grid);
+      card.insertBefore(legend, grid);
       monthHost.appendChild(card);
 
-      const selectedItems = eventMap.get(selectedDateKey) || [];
+      const upcomingItems = [];
+      for (let monthIndex = activeMonthIndex; monthIndex < monthGroups.length; monthIndex += 1) {
+        const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.dateObj >= today);
+        upcomingItems.push(...monthItems);
+        if (upcomingItems.length >= 6) break;
+      }
+      const listItems = upcomingItems.slice(0, 6);
       const agendaHead = document.createElement("div");
       agendaHead.className = "events-agenda-head";
-
-      if (selectedItems.length) {
-        const typeSummary = Array.from(
-          new Set(selectedItems.map((item) => item.type || "Event"))
-        ).join(" | ");
-        agendaHead.innerHTML = `
-          <div class="events-agenda-kicker">Selected Date</div>
-          <h3>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</h3>
-          <p>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled on this day. ${typeSummary}</p>
-        `;
-      } else if (selectedDateKey === todayKey) {
-        agendaHead.innerHTML = `
-          <div class="events-agenda-kicker">Today</div>
-          <h3>${weekdayLongFormatter.format(today)}</h3>
-          <p>No scheduled event today. Use the month controls to browse what is coming next.</p>
-        `;
-      } else {
-        agendaHead.innerHTML = `
-          <div class="events-agenda-kicker">Selected Date</div>
-          <h3>${monthFormatter.format(group.monthDate)}</h3>
-          <p>No scheduled events on the selected day.</p>
-        `;
-      }
+      agendaHead.innerHTML = `
+        <div class="events-agenda-kicker">Next Up</div>
+        <h3>${listItems.length ? "Upcoming Events" : "No Upcoming Events"}</h3>
+        <p>${listItems.length ? "Listed in chronological order with the soonest event at the top." : "No future events are scheduled in the current rolling window."}</p>
+      `;
       listHost.appendChild(agendaHead);
 
-      if (!selectedItems.length) {
+      if (!listItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
-        emptyItem.textContent = "No scheduled events on this date. Use Current Month, Previous, or Next to move through the rolling calendar.";
+        emptyItem.textContent = "No upcoming events are scheduled right now. Use the contact page if you need a custom date or training window.";
         listHost.appendChild(emptyItem);
       } else {
-        selectedItems.forEach((eventItem) => {
+        listItems.forEach((eventItem) => {
           listHost.appendChild(renderEventCard(eventItem, true));
         });
       }
