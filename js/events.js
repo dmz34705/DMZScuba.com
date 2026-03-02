@@ -26,41 +26,137 @@
     day: "numeric",
   });
 
+  function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function startOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
+  function addMonths(date, count) {
+    return new Date(date.getFullYear(), date.getMonth() + count, 1);
+  }
+
+  function dateKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function monthKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+    ].join("-");
+  }
+
   function parseEventDate(eventItem) {
     const parsed = new Date(`${eventItem.date}T12:00:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
-  function normalizeEvents(payload) {
-    const items = payload && Array.isArray(payload.events) ? payload.events : [];
-    return items
-      .map((eventItem) => {
-        const date = parseEventDate(eventItem);
-        if (!date) return null;
-        return {
-          ...eventItem,
-          dateObj: date,
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.dateObj - b.dateObj);
+  function parseMonthAnchor(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("-");
+    if (parts.length !== 2) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+    return new Date(year, month - 1, 1);
   }
 
-  function buildMonthGroups(events) {
-    const groups = [];
-    const byKey = new Map();
-    events.forEach((eventItem) => {
-      const monthKey = `${eventItem.dateObj.getFullYear()}-${String(eventItem.dateObj.getMonth() + 1).padStart(2, "0")}`;
-      let group = byKey.get(monthKey);
-      if (!group) {
-        const monthDate = new Date(eventItem.dateObj.getFullYear(), eventItem.dateObj.getMonth(), 1);
-        group = { key: monthKey, monthDate, events: [] };
-        byKey.set(monthKey, group);
-        groups.push(group);
-      }
-      group.events.push(eventItem);
+  function monthsBetween(a, b) {
+    return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth());
+  }
+
+  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
+    const first = new Date(year, monthIndex, 1);
+    const shift = (7 + weekday - first.getDay()) % 7;
+    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+    const candidate = new Date(year, monthIndex, dayNumber);
+    if (candidate.getMonth() !== monthIndex) return null;
+    return candidate;
+  }
+
+  function expandTemplateEvents(payload) {
+    const today = startOfDay(new Date());
+    const currentMonth = startOfMonth(today);
+    const horizonMonths = Math.max(1, Number(payload && payload.horizonMonths) || 30);
+    const explicitEvents = payload && Array.isArray(payload.events) ? payload.events : [];
+    const templates = payload && Array.isArray(payload.templates) ? payload.templates : [];
+    const generated = [];
+
+    explicitEvents.forEach((eventItem) => {
+      const dateObj = parseEventDate(eventItem);
+      if (!dateObj || dateObj < today) return;
+      generated.push({
+        ...eventItem,
+        dateObj,
+      });
     });
-    return groups;
+
+    templates.forEach((template) => {
+      const rule = template && template.rule ? template.rule : null;
+      if (!rule) return;
+      const anchor = parseMonthAnchor(template.startMonth) || currentMonth;
+      const intervalMonths = Math.max(1, Number(template.intervalMonths) || 1);
+      const allowedMonths = Array.isArray(template.months) ? template.months : null;
+      const weekOfMonth = Number(rule.weekOfMonth);
+      const weekday = Number(rule.weekday);
+      if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return;
+
+      for (let offset = 0; offset < horizonMonths; offset += 1) {
+        const monthDate = addMonths(currentMonth, offset);
+        if (monthDate < anchor) continue;
+        if (allowedMonths && !allowedMonths.includes(monthDate.getMonth() + 1)) continue;
+        if (monthsBetween(monthDate, anchor) % intervalMonths !== 0) continue;
+
+        const occurrence = nthWeekdayOfMonth(
+          monthDate.getFullYear(),
+          monthDate.getMonth(),
+          weekOfMonth,
+          weekday
+        );
+        if (!occurrence || occurrence < today) continue;
+
+        generated.push({
+          ...template,
+          id: `${template.id}-${dateKey(occurrence)}`,
+          date: dateKey(occurrence),
+          dateObj: occurrence,
+        });
+      }
+    });
+
+    return generated.sort((a, b) => a.dateObj - b.dateObj);
+  }
+
+  function buildMonthGroups(events, horizonMonths) {
+    const today = startOfDay(new Date());
+    const currentMonth = startOfMonth(today);
+    const months = [];
+    const groupsByKey = new Map();
+
+    for (let offset = 0; offset < horizonMonths; offset += 1) {
+      const monthDate = addMonths(currentMonth, offset);
+      const group = {
+        key: monthKey(monthDate),
+        monthDate,
+        events: [],
+      };
+      months.push(group);
+      groupsByKey.set(group.key, group);
+    }
+
+    events.forEach((eventItem) => {
+      const group = groupsByKey.get(monthKey(eventItem.dateObj));
+      if (group) group.events.push(eventItem);
+    });
+
+    return months;
   }
 
   function eventDateLabel(eventItem) {
@@ -112,22 +208,27 @@
     const stamp = previewRoot.querySelector("[data-events-updated]");
     if (!list || !empty) return;
 
+    const previewCount = Math.max(1, Number(payload && payload.previewCount) || 3);
     list.innerHTML = "";
+
     if (!events.length) {
       empty.hidden = false;
       list.hidden = true;
     } else {
       empty.hidden = true;
       list.hidden = false;
-      events.slice(0, 3).forEach((eventItem) => list.appendChild(renderEventCard(eventItem, true)));
+      events.slice(0, previewCount).forEach((eventItem) => {
+        list.appendChild(renderEventCard(eventItem, true));
+      });
     }
 
-    if (stamp && payload && payload.updated) {
-      stamp.textContent = `Last updated ${payload.updated}`;
+    if (stamp) {
+      const months = Math.max(1, Number(payload && payload.horizonMonths) || 30);
+      stamp.textContent = `Rolling ${months}-month schedule. Updates automatically as the date changes.`;
     }
   }
 
-  function renderCalendar(events) {
+  function renderCalendar(events, payload) {
     if (!pageRoot) return;
     const monthHost = pageRoot.querySelector("[data-events-calendar]");
     const listHost = pageRoot.querySelector("[data-events-list]");
@@ -139,7 +240,9 @@
     monthHost.innerHTML = "";
     listHost.innerHTML = "";
 
-    if (!events.length) {
+    const horizonMonths = Math.max(1, Number(payload && payload.horizonMonths) || 30);
+    const monthGroups = buildMonthGroups(events, horizonMonths);
+    if (!monthGroups.length) {
       empty.hidden = false;
       monthHost.hidden = true;
       listHost.hidden = true;
@@ -150,9 +253,22 @@
     monthHost.hidden = false;
     listHost.hidden = false;
 
-    const monthGroups = buildMonthGroups(events);
-    let activeMonthIndex = 0;
-    let selectedDateKey = monthGroups[0] && monthGroups[0].events[0] ? monthGroups[0].events[0].date : "";
+    const today = startOfDay(new Date());
+    const todayKey = dateKey(today);
+    const currentMonthKey = monthKey(today);
+    let activeMonthIndex = Math.max(
+      0,
+      monthGroups.findIndex((group) => group.key === currentMonthKey)
+    );
+
+    function defaultSelectedKey(group) {
+      if (!group) return "";
+      const todayItem = group.events.find((eventItem) => eventItem.date === todayKey);
+      if (todayItem) return todayItem.date;
+      return group.events[0] ? group.events[0].date : "";
+    }
+
+    let selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]);
 
     function notifyParentHeight() {
       if (window.parent === window) return;
@@ -171,38 +287,36 @@
     function renderMonth() {
       const group = monthGroups[activeMonthIndex];
       if (!group) return;
+
       monthHost.innerHTML = "";
       listHost.innerHTML = "";
+
+      const eventMap = new Map();
+      group.events.forEach((eventItem) => {
+        const items = eventMap.get(eventItem.date) || [];
+        items.push(eventItem);
+        eventMap.set(eventItem.date, items);
+      });
+
+      if (!selectedDateKey || (!eventMap.has(selectedDateKey) && selectedDateKey !== todayKey)) {
+        selectedDateKey = defaultSelectedKey(group) || todayKey;
+      }
 
       const card = document.createElement("section");
       card.className = "events-month-card";
 
-      const firstOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), 1);
-      const lastOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth() + 1, 0);
-      const offset = firstOfMonth.getDay();
-      const totalDays = lastOfMonth.getDate();
-      const eventMap = new Map();
-
-      group.events.forEach((eventItem) => {
-        const key = eventItem.date;
-        const items = eventMap.get(key) || [];
-        items.push(eventItem);
-        eventMap.set(key, items);
-      });
-      if (!selectedDateKey || !eventMap.has(selectedDateKey)) {
-        selectedDateKey = group.events[0] ? group.events[0].date : "";
-      }
-
-      const head = document.createElement("div");
-      head.className = "events-month-head";
       const prevDisabled = activeMonthIndex === 0 ? "disabled" : "";
       const nextDisabled = activeMonthIndex >= monthGroups.length - 1 ? "disabled" : "";
+      const head = document.createElement("div");
+      head.className = "events-month-head";
       head.innerHTML = `
-        <div>
+        <div class="events-month-title">
+          <div class="events-month-kicker">Rolling ${horizonMonths}-Month Calendar</div>
           <h2>${monthFormatter.format(group.monthDate)}</h2>
-          <p>${group.events.length} scheduled item${group.events.length === 1 ? "" : "s"}</p>
+          <p>Today is ${weekdayLongFormatter.format(today)}. ${group.events.length} scheduled item${group.events.length === 1 ? "" : "s"} this month.</p>
         </div>
         <div class="events-month-nav" aria-label="Calendar month controls">
+          <button class="events-nav-btn" type="button" data-events-today>Current Month</button>
           <button class="events-nav-btn" type="button" data-events-prev ${prevDisabled}>Previous</button>
           <button class="events-nav-btn" type="button" data-events-next ${nextDisabled}>Next</button>
         </div>
@@ -219,6 +333,11 @@
         grid.appendChild(header);
       }
 
+      const firstOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), 1);
+      const lastOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth() + 1, 0);
+      const offset = firstOfMonth.getDay();
+      const totalDays = lastOfMonth.getDate();
+
       for (let blank = 0; blank < offset; blank += 1) {
         const emptyCell = document.createElement("div");
         emptyCell.className = "events-day events-day-empty";
@@ -226,16 +345,24 @@
       }
 
       for (let day = 1; day <= totalDays; day += 1) {
-        const dateObj = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), day);
-        const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const items = eventMap.get(dateKey) || [];
+        const currentDate = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), day);
+        const currentKey = dateKey(currentDate);
+        const items = eventMap.get(currentKey) || [];
+        const isToday = currentKey === todayKey;
+        const isSelected = currentKey === selectedDateKey;
+        const isPast = currentDate < today;
+
         const cell = document.createElement("div");
         cell.className = items.length ? "events-day events-day-active" : "events-day";
-        const selectedClass = items.length && selectedDateKey === dateKey ? " events-day-selected" : "";
-        if (selectedClass) cell.className += selectedClass;
+        if (isToday) cell.className += " events-day-today";
+        if (isSelected) cell.className += " events-day-selected";
+        if (isPast) cell.className += " events-day-past";
 
         if (!items.length) {
-          cell.innerHTML = `<span class="events-day-number">${day}</span>`;
+          cell.innerHTML = `
+            <span class="events-day-number">${day}</span>
+            ${isToday ? '<span class="events-day-label">Today</span>' : ""}
+          `;
           grid.appendChild(cell);
           continue;
         }
@@ -243,19 +370,22 @@
         const button = document.createElement("button");
         button.type = "button";
         button.className = "events-day-button";
-        button.setAttribute("aria-pressed", selectedDateKey === dateKey ? "true" : "false");
-        button.setAttribute("aria-label", `${weekdayLongFormatter.format(dateObj)} with ${items.length} event${items.length === 1 ? "" : "s"}`);
+        button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+        button.setAttribute(
+          "aria-label",
+          `${weekdayLongFormatter.format(currentDate)} with ${items.length} event${items.length === 1 ? "" : "s"}`
+        );
         button.innerHTML = `
           <span class="events-day-number">${day}</span>
-          <span class="events-day-dot"></span>
-          <span class="events-day-count">${items.length} event${items.length === 1 ? "" : "s"}</span>
+          ${isToday ? '<span class="events-day-label">Today</span>' : ""}
+          <span class="events-day-count">${items.length} scheduled</span>
+          <span class="events-day-preview">${items[0].title}</span>
         `;
         button.addEventListener("click", () => {
-          selectedDateKey = dateKey;
+          selectedDateKey = currentKey;
           renderMonth();
         });
         cell.appendChild(button);
-
         grid.appendChild(cell);
       }
 
@@ -263,53 +393,81 @@
       monthHost.appendChild(card);
 
       const selectedItems = eventMap.get(selectedDateKey) || [];
-      const selectedDate = selectedItems[0] ? selectedItems[0].dateObj : group.monthDate;
       const agendaHead = document.createElement("div");
       agendaHead.className = "events-agenda-head";
-      agendaHead.innerHTML = `
-        <h3>${selectedItems.length ? weekdayLongFormatter.format(selectedDate) : monthFormatter.format(group.monthDate)}</h3>
-        <p>${selectedItems.length ? "Full details for the selected day." : "No events loaded for this month."}</p>
-      `;
+
+      if (selectedItems.length) {
+        agendaHead.innerHTML = `
+          <div class="events-agenda-kicker">Selected Date</div>
+          <h3>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</h3>
+          <p>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled on this day.</p>
+        `;
+      } else if (selectedDateKey === todayKey) {
+        agendaHead.innerHTML = `
+          <div class="events-agenda-kicker">Today</div>
+          <h3>${weekdayLongFormatter.format(today)}</h3>
+          <p>No scheduled event today. Use the month controls to browse what is coming next.</p>
+        `;
+      } else {
+        agendaHead.innerHTML = `
+          <div class="events-agenda-kicker">Selected Date</div>
+          <h3>${monthFormatter.format(group.monthDate)}</h3>
+          <p>No scheduled events on the selected day.</p>
+        `;
+      }
       listHost.appendChild(agendaHead);
 
       if (!selectedItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
-        emptyItem.textContent = "No scheduled events on the selected date. Use the month controls to browse other dates.";
+        emptyItem.textContent = "No scheduled events on this date. Use Current Month, Previous, or Next to move through the rolling calendar.";
         listHost.appendChild(emptyItem);
       } else {
-        selectedItems.forEach((eventItem) => listHost.appendChild(renderEventCard(eventItem)));
+        selectedItems.forEach((eventItem) => {
+          listHost.appendChild(renderEventCard(eventItem));
+        });
       }
 
+      const todayButton = head.querySelector("[data-events-today]");
       const prevButton = head.querySelector("[data-events-prev]");
       const nextButton = head.querySelector("[data-events-next]");
+
+      if (todayButton) {
+        todayButton.addEventListener("click", () => {
+          activeMonthIndex = Math.max(
+            0,
+            monthGroups.findIndex((item) => item.key === currentMonthKey)
+          );
+          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          renderMonth();
+        });
+      }
+
       if (prevButton) {
         prevButton.addEventListener("click", () => {
           if (activeMonthIndex <= 0) return;
           activeMonthIndex -= 1;
-          selectedDateKey = monthGroups[activeMonthIndex] && monthGroups[activeMonthIndex].events[0]
-            ? monthGroups[activeMonthIndex].events[0].date
-            : "";
+          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
           renderMonth();
         });
       }
+
       if (nextButton) {
         nextButton.addEventListener("click", () => {
           if (activeMonthIndex >= monthGroups.length - 1) return;
           activeMonthIndex += 1;
-          selectedDateKey = monthGroups[activeMonthIndex] && monthGroups[activeMonthIndex].events[0]
-            ? monthGroups[activeMonthIndex].events[0].date
-            : "";
+          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
           renderMonth();
         });
       }
 
       if (stamp) {
-        stamp.textContent = `Showing ${monthFormatter.format(group.monthDate)}. Use Previous and Next to browse the calendar.`;
+        stamp.textContent = `Auto-updating rolling calendar. Showing ${monthFormatter.format(group.monthDate)} with coverage through ${monthFormatter.format(monthGroups[monthGroups.length - 1].monthDate)}.`;
       }
       if (total) {
         total.textContent = String(events.length);
       }
+
       notifyParentHeight();
     }
 
@@ -324,6 +482,7 @@
         empty.textContent = "Event calendar is loading. Check back soon.";
       }
     }
+
     if (pageRoot) {
       const empty = pageRoot.querySelector("[data-events-empty]");
       const monthHost = pageRoot.querySelector("[data-events-calendar]");
@@ -365,6 +524,7 @@
       if (!data || data.type !== "dmzEventsResize" || !data.height) return;
       embedFrame.style.height = `${Math.max(920, Number(data.height) + 6)}px`;
     });
+
     embedFrame.addEventListener("load", () => {
       resizeEmbedFrame();
       try {
@@ -376,6 +536,7 @@
         // Ignore cross-document access issues if the embed source changes later.
       }
     });
+
     window.addEventListener("resize", resizeEmbedFrame, { passive: true });
   }
 
@@ -386,7 +547,7 @@
         return response.json();
       })
       .then((payload) => {
-        const events = normalizeEvents(payload);
+        const events = expandTemplateEvents(payload);
         renderPreview(events, payload);
         renderCalendar(events, payload);
         resizeEmbedFrame();

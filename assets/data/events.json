@@ -1,11 +1,12 @@
 {
   "updated": "2026-03-02",
   "timezone": "America/Chicago",
-  "events": [
+  "horizonMonths": 30,
+  "previewCount": 3,
+  "templates": [
     {
-      "id": "ow-orientation-mar",
+      "id": "ow-orientation",
       "title": "Open Water Orientation Night",
-      "date": "2026-03-12",
       "time": "6:30 PM",
       "endTime": "8:30 PM",
       "type": "Training",
@@ -13,38 +14,53 @@
       "location": "La Grange, IL",
       "summary": "A low-pressure intro session covering gear basics, certification steps, and what to expect before your first confined-water block.",
       "ctaLabel": "Reserve a Spot",
-      "ctaHref": "/pages/contact/index.html?interest=training#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=training#dive-now",
+      "rule": {
+        "weekOfMonth": 2,
+        "weekday": 4
+      },
+      "intervalMonths": 1,
+      "startMonth": "2026-03"
     },
     {
-      "id": "cozumel-qna-mar",
-      "title": "Cozumel Trip Planning Q&A",
-      "date": "2026-03-19",
+      "id": "trip-qna",
+      "title": "Trip Planning Q&A",
       "time": "7:00 PM",
       "endTime": "8:00 PM",
       "type": "Travel",
       "status": "Planned",
       "location": "Online + DMZ HQ",
-      "summary": "Walk through trip flow, ideal certification levels, and how DMZ structures the travel side so newer divers know exactly what they are committing to.",
+      "summary": "Walk through trip flow, ideal certification levels, and how DMZ structures travel so newer divers know exactly what they are committing to.",
       "ctaLabel": "Join the Interest List",
-      "ctaHref": "/pages/contact/index.html?interest=travel#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=travel#dive-now",
+      "rule": {
+        "weekOfMonth": 3,
+        "weekday": 2
+      },
+      "intervalMonths": 1,
+      "startMonth": "2026-03"
     },
     {
-      "id": "refresh-night-apr",
+      "id": "refresh-night",
       "title": "Skill Refresh Evening Session",
-      "date": "2026-04-09",
       "time": "6:00 PM",
       "endTime": "8:30 PM",
       "type": "Local Dive",
       "status": "Planned",
       "location": "La Grange, IL",
-      "summary": "A tune-up block for certified divers who want mask, buoyancy, and emergency-skill reps before the season gets busy.",
+      "summary": "A tune-up block for certified divers who want buoyancy, emergency-skill reps, and confidence before the season gets busy.",
       "ctaLabel": "Book a Refresh",
-      "ctaHref": "/pages/contact/index.html?interest=training#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=training#dive-now",
+      "rule": {
+        "weekOfMonth": 2,
+        "weekday": 3
+      },
+      "intervalMonths": 1,
+      "startMonth": "2026-03"
     },
     {
-      "id": "wreck-readiness-apr",
+      "id": "wreck-workshop",
       "title": "Wreck Readiness Workshop",
-      "date": "2026-04-23",
       "time": "6:30 PM",
       "endTime": "8:30 PM",
       "type": "Workshop",
@@ -52,12 +68,17 @@
       "location": "La Grange, IL",
       "summary": "A focused planning session on line awareness, reel discipline, team communication, and when to step into formal wreck training.",
       "ctaLabel": "Ask About Training",
-      "ctaHref": "/pages/contact/index.html?interest=training#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=training#dive-now",
+      "rule": {
+        "weekOfMonth": 4,
+        "weekday": 4
+      },
+      "intervalMonths": 2,
+      "startMonth": "2026-04"
     },
     {
-      "id": "shore-dive-may",
+      "id": "shore-dive",
       "title": "Local Shore Dive Meetup",
-      "date": "2026-05-02",
       "time": "8:00 AM",
       "endTime": "11:00 AM",
       "type": "Community",
@@ -65,12 +86,18 @@
       "location": "Chicagoland Area Site",
       "summary": "A low-key community dive for certified divers who want time in the water, buddy reps, and a reason to keep momentum between bigger trips.",
       "ctaLabel": "Get Dive Details",
-      "ctaHref": "/pages/contact/index.html?interest=custom#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=custom#dive-now",
+      "rule": {
+        "weekOfMonth": 1,
+        "weekday": 6
+      },
+      "intervalMonths": 1,
+      "months": [4, 5, 6, 7, 8, 9, 10],
+      "startMonth": "2026-04"
     },
     {
-      "id": "summer-travel-brief-may",
+      "id": "travel-briefing",
       "title": "Summer Travel Briefing Night",
-      "date": "2026-05-14",
       "time": "7:00 PM",
       "endTime": "8:15 PM",
       "type": "Travel",
@@ -78,7 +105,13 @@
       "location": "La Grange, IL",
       "summary": "Review current trip windows, prerequisites, and the fastest route to get certified in time for warm-water travel.",
       "ctaLabel": "Start My Dive Plan",
-      "ctaHref": "/pages/contact/index.html?interest=travel#dive-now"
+      "ctaHref": "/pages/contact/index.html?interest=travel#dive-now",
+      "rule": {
+        "weekOfMonth": 1,
+        "weekday": 2
+      },
+      "intervalMonths": 1,
+      "startMonth": "2026-03"
     }
   ]
 }
