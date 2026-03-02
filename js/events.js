@@ -424,7 +424,7 @@
         listHost.appendChild(emptyItem);
       } else {
         selectedItems.forEach((eventItem) => {
-          listHost.appendChild(renderEventCard(eventItem));
+          listHost.appendChild(renderEventCard(eventItem, true));
         });
       }
 
