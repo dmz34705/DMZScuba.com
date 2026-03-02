@@ -492,7 +492,6 @@
   display: grid;
   align-content: start;
   gap: 8px;
-  flex: 1 1 auto;
   min-height: 0;
   height: 100%;
   overflow-y: auto;
@@ -512,8 +511,8 @@
 }
 
 .events-list-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
   min-height: 0;
   height: 100%;
@@ -718,12 +717,17 @@
   }
 
   .events-upcoming-scroll {
-    max-height: none;
     height: auto;
     overflow: visible;
     padding: 0;
     border: 0;
     background: transparent;
+  }
+
+  .events-list-stack {
+    display: grid;
+    grid-template-rows: none;
+    height: auto;
   }
 }
 
