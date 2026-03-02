@@ -151,9 +151,29 @@
     listHost.hidden = false;
 
     const monthGroups = buildMonthGroups(events);
-    const monthLimit = monthGroups.slice(0, 4);
+    let activeMonthIndex = 0;
+    let selectedDateKey = monthGroups[0] && monthGroups[0].events[0] ? monthGroups[0].events[0].date : "";
 
-    monthLimit.forEach((group) => {
+    function notifyParentHeight() {
+      if (window.parent === window) return;
+      const root = document.querySelector(".events-embed-main") || document.body;
+      if (!root) return;
+      const height = Math.max(
+        root.scrollHeight || 0,
+        root.offsetHeight || 0,
+        document.body ? document.body.scrollHeight || 0 : 0
+      );
+      if (height > 0) {
+        window.parent.postMessage({ type: "dmzEventsResize", height }, "*");
+      }
+    }
+
+    function renderMonth() {
+      const group = monthGroups[activeMonthIndex];
+      if (!group) return;
+      monthHost.innerHTML = "";
+      listHost.innerHTML = "";
+
       const card = document.createElement("section");
       card.className = "events-month-card";
 
@@ -169,13 +189,22 @@
         items.push(eventItem);
         eventMap.set(key, items);
       });
+      if (!selectedDateKey || !eventMap.has(selectedDateKey)) {
+        selectedDateKey = group.events[0] ? group.events[0].date : "";
+      }
 
       const head = document.createElement("div");
       head.className = "events-month-head";
+      const prevDisabled = activeMonthIndex === 0 ? "disabled" : "";
+      const nextDisabled = activeMonthIndex >= monthGroups.length - 1 ? "disabled" : "";
       head.innerHTML = `
         <div>
           <h2>${monthFormatter.format(group.monthDate)}</h2>
           <p>${group.events.length} scheduled item${group.events.length === 1 ? "" : "s"}</p>
+        </div>
+        <div class="events-month-nav" aria-label="Calendar month controls">
+          <button class="events-nav-btn" type="button" data-events-prev ${prevDisabled}>Previous</button>
+          <button class="events-nav-btn" type="button" data-events-next ${nextDisabled}>Next</button>
         </div>
       `;
 
@@ -202,42 +231,89 @@
         const items = eventMap.get(dateKey) || [];
         const cell = document.createElement("div");
         cell.className = items.length ? "events-day events-day-active" : "events-day";
-        cell.innerHTML = `<span class="events-day-number">${day}</span>`;
+        const selectedClass = items.length && selectedDateKey === dateKey ? " events-day-selected" : "";
+        if (selectedClass) cell.className += selectedClass;
 
-        if (items.length) {
-          const stack = document.createElement("div");
-          stack.className = "events-day-list";
-          items.slice(0, 3).forEach((eventItem) => {
-            const item = document.createElement("div");
-            item.className = "events-day-pill";
-            item.textContent = eventItem.title;
-            item.title = `${weekdayLongFormatter.format(eventItem.dateObj)} | ${eventItem.title}`;
-            stack.appendChild(item);
-          });
-          if (items.length > 3) {
-            const more = document.createElement("div");
-            more.className = "events-day-more";
-            more.textContent = `+${items.length - 3} more`;
-            stack.appendChild(more);
-          }
-          cell.appendChild(stack);
+        if (!items.length) {
+          cell.innerHTML = `<span class="events-day-number">${day}</span>`;
+          grid.appendChild(cell);
+          continue;
         }
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "events-day-button";
+        button.setAttribute("aria-pressed", selectedDateKey === dateKey ? "true" : "false");
+        button.setAttribute("aria-label", `${weekdayLongFormatter.format(dateObj)} with ${items.length} event${items.length === 1 ? "" : "s"}`);
+        button.innerHTML = `
+          <span class="events-day-number">${day}</span>
+          <span class="events-day-dot"></span>
+          <span class="events-day-count">${items.length} event${items.length === 1 ? "" : "s"}</span>
+        `;
+        button.addEventListener("click", () => {
+          selectedDateKey = dateKey;
+          renderMonth();
+        });
+        cell.appendChild(button);
 
         grid.appendChild(cell);
       }
 
       card.append(head, grid);
       monthHost.appendChild(card);
-    });
 
-    events.forEach((eventItem) => listHost.appendChild(renderEventCard(eventItem)));
+      const selectedItems = eventMap.get(selectedDateKey) || [];
+      const selectedDate = selectedItems[0] ? selectedItems[0].dateObj : group.monthDate;
+      const agendaHead = document.createElement("div");
+      agendaHead.className = "events-agenda-head";
+      agendaHead.innerHTML = `
+        <h3>${selectedItems.length ? weekdayLongFormatter.format(selectedDate) : monthFormatter.format(group.monthDate)}</h3>
+        <p>${selectedItems.length ? "Full details for the selected day." : "No events loaded for this month."}</p>
+      `;
+      listHost.appendChild(agendaHead);
 
-    if (stamp) {
-      stamp.textContent = `Current calendar shows ${monthLimit.length} month${monthLimit.length === 1 ? "" : "s"} of scheduled items.`;
+      if (!selectedItems.length) {
+        const emptyItem = document.createElement("div");
+        emptyItem.className = "events-agenda-empty";
+        emptyItem.textContent = "No scheduled events on the selected date. Use the month controls to browse other dates.";
+        listHost.appendChild(emptyItem);
+      } else {
+        selectedItems.forEach((eventItem) => listHost.appendChild(renderEventCard(eventItem)));
+      }
+
+      const prevButton = head.querySelector("[data-events-prev]");
+      const nextButton = head.querySelector("[data-events-next]");
+      if (prevButton) {
+        prevButton.addEventListener("click", () => {
+          if (activeMonthIndex <= 0) return;
+          activeMonthIndex -= 1;
+          selectedDateKey = monthGroups[activeMonthIndex] && monthGroups[activeMonthIndex].events[0]
+            ? monthGroups[activeMonthIndex].events[0].date
+            : "";
+          renderMonth();
+        });
+      }
+      if (nextButton) {
+        nextButton.addEventListener("click", () => {
+          if (activeMonthIndex >= monthGroups.length - 1) return;
+          activeMonthIndex += 1;
+          selectedDateKey = monthGroups[activeMonthIndex] && monthGroups[activeMonthIndex].events[0]
+            ? monthGroups[activeMonthIndex].events[0].date
+            : "";
+          renderMonth();
+        });
+      }
+
+      if (stamp) {
+        stamp.textContent = `Showing ${monthFormatter.format(group.monthDate)}. Use Previous and Next to browse the calendar.`;
+      }
+      if (total) {
+        total.textContent = String(events.length);
+      }
+      notifyParentHeight();
     }
-    if (total) {
-      total.textContent = String(events.length);
-    }
+
+    renderMonth();
   }
 
   function renderError() {
@@ -284,6 +360,11 @@
   }
 
   if (embedFrame) {
+    window.addEventListener("message", (event) => {
+      const data = event && event.data;
+      if (!data || data.type !== "dmzEventsResize" || !data.height) return;
+      embedFrame.style.height = `${Math.max(920, Number(data.height) + 6)}px`;
+    });
     embedFrame.addEventListener("load", () => {
       resizeEmbedFrame();
       try {
