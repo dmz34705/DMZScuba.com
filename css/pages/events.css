@@ -88,6 +88,14 @@
   padding: 14px;
 }
 
+.events-page-layout-stacked {
+  grid-template-columns: 1fr;
+}
+
+.events-page-layout-stacked .events-list-block {
+  margin-top: 8px;
+}
+
 .events-embed-shell {
   margin: 0;
   background:
