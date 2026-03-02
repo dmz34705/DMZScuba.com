@@ -428,7 +428,7 @@
           ${isToday ? '<span class="events-day-label">Today</span>' : ""}
           <span class="events-day-count">${items.length} scheduled</span>
           <span class="events-day-bar-stack">${uniqueTypes}</span>
-          <span class="events-day-preview">${items[0].title}</span>
+          ${items.length === 1 ? `<span class="events-day-preview">${items[0].title}</span>` : ""}
           ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}
         `;
         button.addEventListener("click", () => {
