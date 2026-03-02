@@ -26,6 +26,15 @@
     day: "numeric",
   });
 
+  const EVENT_TYPE_META = {
+    Training: { icon: "T", className: "event-type-training" },
+    Travel: { icon: "TR", className: "event-type-travel" },
+    "Local Dive": { icon: "LD", className: "event-type-local-dive" },
+    Workshop: { icon: "WS", className: "event-type-workshop" },
+    Community: { icon: "CM", className: "event-type-community" },
+    Event: { icon: "EV", className: "event-type-default" },
+  };
+
   function startOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
@@ -167,14 +176,24 @@
     return parts.join(" | ");
   }
 
+  function getEventTypeMeta(type) {
+    return EVENT_TYPE_META[type] || EVENT_TYPE_META.Event;
+  }
+
   function renderEventCard(eventItem, compact = false) {
     const article = document.createElement("article");
-    article.className = compact ? "event-card event-card-compact" : "event-card";
+    const typeMeta = getEventTypeMeta(eventItem.type);
+    article.className = compact
+      ? `event-card event-card-compact ${typeMeta.className}`
+      : `event-card ${typeMeta.className}`;
 
     const meta = document.createElement("div");
     meta.className = "event-card-meta";
     meta.innerHTML = `
-      <span class="event-chip">${eventItem.type || "Event"}</span>
+      <span class="event-chip">
+        <span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>
+        <span>${eventItem.type || "Event"}</span>
+      </span>
       <span class="event-status">${eventItem.status || "Planned"}</span>
     `;
 
@@ -375,11 +394,27 @@
           "aria-label",
           `${weekdayLongFormatter.format(currentDate)} with ${items.length} event${items.length === 1 ? "" : "s"}`
         );
+        const uniqueTypes = Array.from(
+          new Set(items.map((item) => (item.type || "Event")))
+        )
+          .slice(0, 3)
+          .map((type) => {
+            const meta = getEventTypeMeta(type);
+            return `<span class="events-day-type-dot ${meta.className}" title="${type}" aria-hidden="true">${meta.icon}</span>`;
+          })
+          .join("");
+
+        const previewTitle =
+          items.length > 1
+            ? `${items[0].title} + ${items.length - 1} more`
+            : items[0].title;
+
         button.innerHTML = `
           <span class="events-day-number">${day}</span>
           ${isToday ? '<span class="events-day-label">Today</span>' : ""}
           <span class="events-day-count">${items.length} scheduled</span>
-          <span class="events-day-preview">${items[0].title}</span>
+          <span class="events-day-type-row">${uniqueTypes}</span>
+          <span class="events-day-preview">${previewTitle}</span>
         `;
         button.addEventListener("click", () => {
           selectedDateKey = currentKey;
@@ -397,10 +432,13 @@
       agendaHead.className = "events-agenda-head";
 
       if (selectedItems.length) {
+        const typeSummary = Array.from(
+          new Set(selectedItems.map((item) => item.type || "Event"))
+        ).join(" | ");
         agendaHead.innerHTML = `
           <div class="events-agenda-kicker">Selected Date</div>
           <h3>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</h3>
-          <p>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled on this day.</p>
+          <p>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled on this day. ${typeSummary}</p>
         `;
       } else if (selectedDateKey === todayKey) {
         agendaHead.innerHTML = `
