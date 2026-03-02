@@ -56,52 +56,57 @@
       </div>
     </section>
 
-    <main class="page-main" data-events-page data-events-src="/assets/data/events.json">
+    <main class="page-main" data-events-embed-shell>
       <section class="events-summary-strip" aria-label="Event calendar summary">
         <div class="events-summary-card">
-          <h2>One place for upcoming DMZ activity</h2>
+          <h2>Embedded planning calendar</h2>
           <p>
-            This calendar is the planning view for upcoming DMZ sessions. Use it to see what is on deck, then use the contact form to lock in details or claim a spot.
+            This page now uses a single embedded calendar window so visitors can stay in one place, scroll through upcoming dates, and compare training, travel, and community events without jumping between cards.
           </p>
           <div class="events-meta-row">
             <div class="events-metric">
-              <strong data-events-total>0</strong>
-              <span>planned items listed</span>
+              <strong>1</strong>
+              <span>scrollable calendar window</span>
             </div>
             <div class="events-metric">
               <strong>CHI</strong>
               <span>times shown in local DMZ time</span>
             </div>
           </div>
-          <p class="muted small" data-events-updated>Calendar updates load from the current event feed.</p>
+          <p class="muted small">The embedded view pulls from the same DMZ event feed and can be swapped to an external provider later without rebuilding this page.</p>
         </div>
 
         <aside class="events-helper-card">
           <h2>How to use this calendar</h2>
-          <p>These are planning blocks, not anonymous mass classes. Reach out early if you want a specific event, training lane, or trip window.</p>
+          <p>Scroll the embedded calendar for the current schedule, then use the contact form to lock in details or claim a spot.</p>
           <ul>
-            <li>Training and workshop nights can be tailored around demand.</li>
+            <li>Training and workshop nights can still be tailored around demand.</li>
             <li>Travel briefings help you line up certification before trip dates.</li>
             <li>Community dives may shift with weather or site conditions.</li>
           </ul>
         </aside>
       </section>
 
-      <section class="events-page-layout">
-        <div class="events-month-stack" data-events-calendar aria-live="polite"></div>
-
-        <div class="events-list-block">
+      <section class="events-embed-shell-card" aria-labelledby="events-embed-title">
+        <div class="events-embed-head">
           <div>
-            <h2>Upcoming Events</h2>
-            <p class="muted">Use this list when you want the fast version. The month grid helps you see spacing at a glance.</p>
+            <h2 id="events-embed-title">Interactive DMZ Calendar</h2>
+            <p class="muted">Scroll inside the calendar to move through the current event window. The right rail stays focused on upcoming items for quick scanning.</p>
           </div>
-          <div class="events-list-stack" data-events-list aria-live="polite"></div>
+          <a class="btn secondary" href="../contact/index.html#dive-now">Ask About a Date</a>
         </div>
+        <div class="events-embed-frame-wrap">
+          <iframe
+            class="events-embed-frame"
+            src="./embed.html"
+            title="DMZ Scuba events calendar"
+            loading="lazy"
+            scrolling="no"
+            data-events-embed-frame
+          ></iframe>
+        </div>
+        <p class="events-embed-note">If the calendar does not load, use the contact page and we will walk you through current openings.</p>
       </section>
-
-      <div class="events-empty-state" data-events-empty hidden>
-        No events are posted yet. Use the contact form and we will help you plan the right next step.
-      </div>
 
       <section class="cta cta-inline cta-inline-level-up">
         <h2>Want a date that is not listed yet?</h2>

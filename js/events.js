@@ -1,7 +1,8 @@
 (() => {
   const pageRoot = document.querySelector("[data-events-page]");
   const previewRoot = document.querySelector("[data-events-preview]");
-  if (!pageRoot && !previewRoot) return;
+  const embedFrame = document.querySelector("[data-events-embed-frame]");
+  if (!pageRoot && !previewRoot && !embedFrame) return;
 
   const dataUrl =
     (pageRoot && pageRoot.getAttribute("data-events-src")) ||
@@ -260,17 +261,57 @@
     }
   }
 
-  fetch(dataUrl)
-    .then((response) => {
-      if (!response.ok) throw new Error(`Event data failed (${response.status})`);
-      return response.json();
-    })
-    .then((payload) => {
-      const events = normalizeEvents(payload);
-      renderPreview(events, payload);
-      renderCalendar(events, payload);
-    })
-    .catch(() => {
-      renderError();
+  function resizeEmbedFrame() {
+    if (!embedFrame) return;
+    try {
+      const frameDoc = embedFrame.contentDocument;
+      if (!frameDoc) return;
+      const frameBody = frameDoc.body;
+      const frameMain = frameDoc.querySelector(".events-embed-main");
+      const target = frameMain || frameBody;
+      if (!target) return;
+      const height = Math.max(
+        target.scrollHeight || 0,
+        target.offsetHeight || 0,
+        frameBody ? frameBody.scrollHeight || 0 : 0
+      );
+      if (height > 0) {
+        embedFrame.style.height = `${height + 6}px`;
+      }
+    } catch (_error) {
+      // Same-origin embed expected. If that changes later, fixed min-height still applies.
+    }
+  }
+
+  if (embedFrame) {
+    embedFrame.addEventListener("load", () => {
+      resizeEmbedFrame();
+      try {
+        const frameWindow = embedFrame.contentWindow;
+        if (frameWindow) {
+          frameWindow.addEventListener("resize", resizeEmbedFrame, { passive: true });
+        }
+      } catch (_error) {
+        // Ignore cross-document access issues if the embed source changes later.
+      }
     });
+    window.addEventListener("resize", resizeEmbedFrame, { passive: true });
+  }
+
+  if (pageRoot || previewRoot) {
+    fetch(dataUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Event data failed (${response.status})`);
+        return response.json();
+      })
+      .then((payload) => {
+        const events = normalizeEvents(payload);
+        renderPreview(events, payload);
+        renderCalendar(events, payload);
+        resizeEmbedFrame();
+      })
+      .catch(() => {
+        renderError();
+      });
+  }
 })();

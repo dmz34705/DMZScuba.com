@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,follow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/events.css" />
+</head>
+
+<body class="events-embed-shell">
+  <main class="events-embed-main" data-events-page data-events-src="/assets/data/events.json">
+    <section class="events-page-layout events-page-layout-embed">
+      <div class="events-month-stack" data-events-calendar aria-live="polite"></div>
+
+      <div class="events-list-block">
+        <div>
+          <h2>Upcoming Events</h2>
+          <p class="muted">Use the list for the fast view while the calendar lets you scroll through the full schedule.</p>
+        </div>
+        <div class="events-list-stack" data-events-list aria-live="polite"></div>
+      </div>
+    </section>
+
+    <div class="events-empty-state" data-events-empty hidden>
+      No events are posted yet. Use the contact page and we will help you plan the right next step.
+    </div>
+  </main>
+
+  <script src="/js/events.js"></script>
+</body>
+</html>
