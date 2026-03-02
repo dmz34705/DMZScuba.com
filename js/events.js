@@ -1,0 +1,276 @@
+(() => {
+  const pageRoot = document.querySelector("[data-events-page]");
+  const previewRoot = document.querySelector("[data-events-preview]");
+  if (!pageRoot && !previewRoot) return;
+
+  const dataUrl =
+    (pageRoot && pageRoot.getAttribute("data-events-src")) ||
+    (previewRoot && previewRoot.getAttribute("data-events-src")) ||
+    "/assets/data/events.json";
+
+  const monthFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+  const dayFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+  });
+  const weekdayLongFormatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  function parseEventDate(eventItem) {
+    const parsed = new Date(`${eventItem.date}T12:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function normalizeEvents(payload) {
+    const items = payload && Array.isArray(payload.events) ? payload.events : [];
+    return items
+      .map((eventItem) => {
+        const date = parseEventDate(eventItem);
+        if (!date) return null;
+        return {
+          ...eventItem,
+          dateObj: date,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.dateObj - b.dateObj);
+  }
+
+  function buildMonthGroups(events) {
+    const groups = [];
+    const byKey = new Map();
+    events.forEach((eventItem) => {
+      const monthKey = `${eventItem.dateObj.getFullYear()}-${String(eventItem.dateObj.getMonth() + 1).padStart(2, "0")}`;
+      let group = byKey.get(monthKey);
+      if (!group) {
+        const monthDate = new Date(eventItem.dateObj.getFullYear(), eventItem.dateObj.getMonth(), 1);
+        group = { key: monthKey, monthDate, events: [] };
+        byKey.set(monthKey, group);
+        groups.push(group);
+      }
+      group.events.push(eventItem);
+    });
+    return groups;
+  }
+
+  function eventDateLabel(eventItem) {
+    const parts = [dayFormatter.format(eventItem.dateObj)];
+    if (eventItem.time) {
+      parts.push(eventItem.endTime ? `${eventItem.time} - ${eventItem.endTime}` : eventItem.time);
+    }
+    return parts.join(" | ");
+  }
+
+  function renderEventCard(eventItem, compact = false) {
+    const article = document.createElement("article");
+    article.className = compact ? "event-card event-card-compact" : "event-card";
+
+    const meta = document.createElement("div");
+    meta.className = "event-card-meta";
+    meta.innerHTML = `
+      <span class="event-chip">${eventItem.type || "Event"}</span>
+      <span class="event-status">${eventItem.status || "Planned"}</span>
+    `;
+
+    const title = document.createElement("h3");
+    title.textContent = eventItem.title;
+
+    const dateLine = document.createElement("p");
+    dateLine.className = "event-card-date";
+    dateLine.textContent = eventDateLabel(eventItem);
+
+    const location = document.createElement("p");
+    location.className = "event-card-location";
+    location.textContent = eventItem.location || "Location announced soon";
+
+    const summary = document.createElement("p");
+    summary.className = "event-card-summary";
+    summary.textContent = eventItem.summary || "";
+
+    const actions = document.createElement("div");
+    actions.className = "event-card-actions";
+    actions.innerHTML = `<a class="btn ${compact ? "secondary" : "primary"}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${eventItem.ctaLabel || "Get Details"}</a>`;
+
+    article.append(meta, title, dateLine, location, summary, actions);
+    return article;
+  }
+
+  function renderPreview(events, payload) {
+    if (!previewRoot) return;
+    const list = previewRoot.querySelector("[data-events-preview-list]");
+    const empty = previewRoot.querySelector("[data-events-preview-empty]");
+    const stamp = previewRoot.querySelector("[data-events-updated]");
+    if (!list || !empty) return;
+
+    list.innerHTML = "";
+    if (!events.length) {
+      empty.hidden = false;
+      list.hidden = true;
+    } else {
+      empty.hidden = true;
+      list.hidden = false;
+      events.slice(0, 3).forEach((eventItem) => list.appendChild(renderEventCard(eventItem, true)));
+    }
+
+    if (stamp && payload && payload.updated) {
+      stamp.textContent = `Last updated ${payload.updated}`;
+    }
+  }
+
+  function renderCalendar(events) {
+    if (!pageRoot) return;
+    const monthHost = pageRoot.querySelector("[data-events-calendar]");
+    const listHost = pageRoot.querySelector("[data-events-list]");
+    const empty = pageRoot.querySelector("[data-events-empty]");
+    const stamp = pageRoot.querySelector("[data-events-updated]");
+    const total = pageRoot.querySelector("[data-events-total]");
+    if (!monthHost || !listHost || !empty) return;
+
+    monthHost.innerHTML = "";
+    listHost.innerHTML = "";
+
+    if (!events.length) {
+      empty.hidden = false;
+      monthHost.hidden = true;
+      listHost.hidden = true;
+      return;
+    }
+
+    empty.hidden = true;
+    monthHost.hidden = false;
+    listHost.hidden = false;
+
+    const monthGroups = buildMonthGroups(events);
+    const monthLimit = monthGroups.slice(0, 4);
+
+    monthLimit.forEach((group) => {
+      const card = document.createElement("section");
+      card.className = "events-month-card";
+
+      const firstOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), 1);
+      const lastOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth() + 1, 0);
+      const offset = firstOfMonth.getDay();
+      const totalDays = lastOfMonth.getDate();
+      const eventMap = new Map();
+
+      group.events.forEach((eventItem) => {
+        const key = eventItem.date;
+        const items = eventMap.get(key) || [];
+        items.push(eventItem);
+        eventMap.set(key, items);
+      });
+
+      const head = document.createElement("div");
+      head.className = "events-month-head";
+      head.innerHTML = `
+        <div>
+          <h2>${monthFormatter.format(group.monthDate)}</h2>
+          <p>${group.events.length} scheduled item${group.events.length === 1 ? "" : "s"}</p>
+        </div>
+      `;
+
+      const grid = document.createElement("div");
+      grid.className = "events-month-grid";
+
+      for (let day = 0; day < 7; day += 1) {
+        const labelDate = new Date(2026, 2, 1 + day);
+        const header = document.createElement("div");
+        header.className = "events-weekday";
+        header.textContent = weekdayFormatter.format(labelDate);
+        grid.appendChild(header);
+      }
+
+      for (let blank = 0; blank < offset; blank += 1) {
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "events-day events-day-empty";
+        grid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= totalDays; day += 1) {
+        const dateObj = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), day);
+        const dateKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const items = eventMap.get(dateKey) || [];
+        const cell = document.createElement("div");
+        cell.className = items.length ? "events-day events-day-active" : "events-day";
+        cell.innerHTML = `<span class="events-day-number">${day}</span>`;
+
+        if (items.length) {
+          const stack = document.createElement("div");
+          stack.className = "events-day-list";
+          items.slice(0, 3).forEach((eventItem) => {
+            const item = document.createElement("div");
+            item.className = "events-day-pill";
+            item.textContent = eventItem.title;
+            item.title = `${weekdayLongFormatter.format(eventItem.dateObj)} | ${eventItem.title}`;
+            stack.appendChild(item);
+          });
+          if (items.length > 3) {
+            const more = document.createElement("div");
+            more.className = "events-day-more";
+            more.textContent = `+${items.length - 3} more`;
+            stack.appendChild(more);
+          }
+          cell.appendChild(stack);
+        }
+
+        grid.appendChild(cell);
+      }
+
+      card.append(head, grid);
+      monthHost.appendChild(card);
+    });
+
+    events.forEach((eventItem) => listHost.appendChild(renderEventCard(eventItem)));
+
+    if (stamp) {
+      stamp.textContent = `Current calendar shows ${monthLimit.length} month${monthLimit.length === 1 ? "" : "s"} of scheduled items.`;
+    }
+    if (total) {
+      total.textContent = String(events.length);
+    }
+  }
+
+  function renderError() {
+    if (previewRoot) {
+      const empty = previewRoot.querySelector("[data-events-preview-empty]");
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = "Event calendar is loading. Check back soon.";
+      }
+    }
+    if (pageRoot) {
+      const empty = pageRoot.querySelector("[data-events-empty]");
+      const monthHost = pageRoot.querySelector("[data-events-calendar]");
+      const listHost = pageRoot.querySelector("[data-events-list]");
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = "We could not load the event calendar right now. Use the contact page and we will help you plan the right next step.";
+      }
+      if (monthHost) monthHost.hidden = true;
+      if (listHost) listHost.hidden = true;
+    }
+  }
+
+  fetch(dataUrl)
+    .then((response) => {
+      if (!response.ok) throw new Error(`Event data failed (${response.status})`);
+      return response.json();
+    })
+    .then((payload) => {
+      const events = normalizeEvents(payload);
+      renderPreview(events, payload);
+      renderCalendar(events, payload);
+    })
+    .catch(() => {
+      renderError();
+    });
+})();

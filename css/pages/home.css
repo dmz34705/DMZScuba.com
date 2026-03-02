@@ -231,6 +231,132 @@
   outline-offset: 2px;
 }
 
+.events-preview{
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 18px;
+}
+
+.events-preview-head{
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.events-preview-eyebrow{
+  margin: 0 0 8px;
+  color: rgba(85,185,255,0.9);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.events-preview-head h2{
+  margin: 0;
+  max-width: 700px;
+}
+
+.events-preview-sub{
+  margin: 8px 0 0;
+  max-width: 680px;
+  color: var(--muted);
+}
+
+.events-preview-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.events-preview-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.events-preview .event-card{
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    radial-gradient(220px 120px at 0% 0%, rgba(85,185,255,0.10), rgba(85,185,255,0)),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+  box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+}
+
+.events-preview .event-card h3{
+  margin: 10px 0 8px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.events-preview .event-card-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.events-preview .event-chip,
+.events-preview .event-status{
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.events-preview .event-chip{
+  background: rgba(85,185,255,0.12);
+  color: rgba(197,232,255,0.96);
+}
+
+.events-preview .event-status{
+  background: rgba(226,27,35,0.12);
+  color: rgba(255,197,200,0.94);
+}
+
+.events-preview .event-card-date,
+.events-preview .event-card-location{
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.events-preview .event-card-location{
+  color: rgba(234,242,255,0.78);
+}
+
+.events-preview .event-card-summary{
+  margin: 0;
+  color: var(--muted);
+}
+
+.events-preview .event-card-actions{
+  margin-top: 14px;
+}
+
+.events-preview-empty,
+.events-preview-stamp{
+  margin: 12px 0 0;
+}
+
+@media (max-width: 980px){
+  .events-preview-head{
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .events-preview-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ============================================================
    FEATURED IMAGE STRIP — SINGLE (HOME)
    ============================================================ */

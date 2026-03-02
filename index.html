@@ -71,6 +71,7 @@
 <a href="pages/training/index.html">Training</a>
 <a href="pages/travel/index.html">Travel</a>
 <a href="pages/media/index.html">Media</a>
+<a href="pages/events/index.html">Events</a>
 <a href="pages/contact/index.html">Contact</a>
         <a href="/pages/about/index.html">About</a>
 <!-- CTA ladder: keep header action visible but non-competing with hero primary -->
@@ -157,6 +158,23 @@
     </div>
   </section>
 
+  <section class="events-preview" aria-labelledby="events-preview-title" data-events-preview data-events-src="/assets/data/events.json">
+    <div class="events-preview-head">
+      <div>
+        <p class="events-preview-eyebrow">Coming Up Next</p>
+        <h2 id="events-preview-title">Training nights, travel briefings, and local dive momentum.</h2>
+        <p class="events-preview-sub">Use the calendar to see what is planned, then reach out early if you want first pick on dates.</p>
+      </div>
+      <div class="events-preview-actions">
+        <a class="btn primary" href="pages/events/index.html">View Full Calendar</a>
+        <a class="btn secondary" href="pages/contact/index.html#dive-now">Claim a Spot</a>
+      </div>
+    </div>
+    <div class="events-preview-grid" data-events-preview-list aria-live="polite"></div>
+    <p class="events-preview-empty muted" data-events-preview-empty hidden>No events posted yet. Reach out and we will help you build the next step.</p>
+    <p class="events-preview-stamp" data-events-updated></p>
+  </section>
+
   <section class="dive-quiz-entry" aria-labelledby="dive-quiz-title">
     <div class="dive-quiz-entry-inner">
       <!-- Tone polish: reduce friction and keep guided-path voice -->
@@ -239,6 +257,7 @@
 
   <!-- Main JS -->
   <script src="js/main.js"></script>
+  <script src="js/events.js"></script>
   <script src="js/quiz.js"></script>
   <script>
     (function mapLinkChooser() {
