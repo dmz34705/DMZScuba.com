@@ -428,6 +428,7 @@
           ${isToday ? '<span class="events-day-label">Today</span>' : ""}
           <span class="events-day-count">${items.length} scheduled</span>
           <span class="events-day-bar-stack">${uniqueTypes}</span>
+          <span class="events-day-preview">${items[0].title}</span>
           ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}
         `;
         button.addEventListener("click", () => {
@@ -446,9 +447,10 @@
       for (let monthIndex = activeMonthIndex; monthIndex < monthGroups.length; monthIndex += 1) {
         const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.dateObj >= today);
         upcomingItems.push(...monthItems);
-        if (upcomingItems.length >= 6) break;
+        if (upcomingItems.length >= 18) break;
       }
-      const listItems = upcomingItems.slice(0, 6);
+      const listItems = upcomingItems.slice(0, 18);
+      const selectedItems = eventMap.get(selectedDateKey) || [];
       const agendaHead = document.createElement("div");
       agendaHead.className = "events-agenda-head";
       agendaHead.innerHTML = `
@@ -458,15 +460,60 @@
       `;
       listHost.appendChild(agendaHead);
 
+      const selectedSummary = document.createElement("div");
+      selectedSummary.className = "events-selected-summary";
+      if (selectedItems.length) {
+        const labels = selectedItems
+          .slice(0, 2)
+          .map((item) => item.title)
+          .join(" | ");
+        const moreCount = Math.max(0, selectedItems.length - 2);
+        selectedSummary.innerHTML = `
+          <div class="events-selected-summary-kicker">Selected Date</div>
+          <strong>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</strong>
+          <span>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} on this date${moreCount ? ` | ${labels} + ${moreCount} more` : ` | ${labels}`}</span>
+        `;
+      } else if (selectedDateKey === todayKey) {
+        selectedSummary.innerHTML = `
+          <div class="events-selected-summary-kicker">Selected Date</div>
+          <strong>${weekdayLongFormatter.format(today)}</strong>
+          <span>No scheduled events today. Use the month controls to browse what is coming next.</span>
+        `;
+      } else {
+        selectedSummary.innerHTML = `
+          <div class="events-selected-summary-kicker">Selected Date</div>
+          <strong>${monthFormatter.format(group.monthDate)}</strong>
+          <span>No scheduled events on the current selected date.</span>
+        `;
+      }
+      listHost.appendChild(selectedSummary);
+
       if (!listItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
         emptyItem.textContent = "No upcoming events are scheduled right now. Use the contact page if you need a custom date or training window.";
         listHost.appendChild(emptyItem);
       } else {
+        const scrollList = document.createElement("div");
+        scrollList.className = "events-upcoming-scroll";
+        let firstMatch = null;
+
         listItems.forEach((eventItem) => {
-          listHost.appendChild(renderEventCard(eventItem, true));
+          const card = renderEventCard(eventItem, true);
+          card.classList.add("events-upcoming-card");
+          if (eventItem.date === selectedDateKey) {
+            card.classList.add("is-selected");
+            if (!firstMatch) firstMatch = card;
+          }
+          scrollList.appendChild(card);
         });
+
+        listHost.appendChild(scrollList);
+        if (firstMatch) {
+          requestAnimationFrame(() => {
+            firstMatch.scrollIntoView({ block: "nearest", inline: "nearest" });
+          });
+        }
       }
 
       const todayButton = head.querySelector("[data-events-today]");
