@@ -81,6 +81,7 @@
   display: grid;
   grid-template-columns: minmax(760px, 1.64fr) minmax(210px, 0.36fr);
   gap: 18px;
+  align-items: stretch;
 }
 
 .events-page-layout-embed {
@@ -416,9 +417,11 @@
 
 .events-list-block {
   display: grid;
+  grid-template-rows: auto 1fr;
   gap: 10px;
-  align-content: start;
+  align-content: stretch;
   min-height: 0;
+  height: 100%;
 }
 
 .events-list-block > div:first-child h2 {
@@ -487,10 +490,16 @@
 
 .events-upcoming-scroll {
   display: grid;
+  align-content: start;
   gap: 8px;
-  max-height: 520px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
 }
 
 .events-upcoming-scroll::-webkit-scrollbar {
@@ -500,6 +509,14 @@
 .events-upcoming-scroll::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: rgba(255,255,255,0.14);
+}
+
+.events-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
 }
 
 .event-card {
@@ -702,8 +719,11 @@
 
   .events-upcoming-scroll {
     max-height: none;
+    height: auto;
     overflow: visible;
-    padding-right: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 }
 
