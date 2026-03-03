@@ -223,10 +223,10 @@
       return;
     }
 
-    const title = extra.title || (definition && definition.title) || (instance && instance.title) || "Event";
+    const title = (definition && definition.title) || extra.title || (instance && instance.title) || "Event";
     const heroSummary =
-      extra.heroSummary ||
       (definition && definition.heroSummary) ||
+      extra.heroSummary ||
       (instance && instance.summary) ||
       "Event details are loading.";
     const summary = (instance && instance.summary) || extra.heroSummary || "";
@@ -263,13 +263,13 @@
 
     if (primaryLinkEl) {
       primaryLinkEl.textContent =
-        extra.primaryCtaLabel ||
         (definition && definition.primaryCtaLabel) ||
+        extra.primaryCtaLabel ||
         (instance && instance.ctaLabel) ||
         "Contact DMZ";
       primaryLinkEl.href =
-        extra.primaryCtaHref ||
         (definition && definition.primaryCtaHref) ||
+        extra.primaryCtaHref ||
         (instance && instance.ctaHref) ||
         "/pages/contact/index.html#dive-now";
     }

@@ -42,6 +42,11 @@
   const fieldPreview = document.getElementById("eventsConfigPreview");
 
   const fieldKind = document.getElementById("eventsFieldKind");
+  const fieldDefinitionTitle = document.getElementById("eventsDefinitionTitle");
+  const fieldDefinitionSlug = document.getElementById("eventsDefinitionSlug");
+  const fieldDefinitionHeroSummary = document.getElementById("eventsDefinitionHeroSummary");
+  const fieldDefinitionCtaLabel = document.getElementById("eventsDefinitionCtaLabel");
+  const fieldDefinitionCtaHref = document.getElementById("eventsDefinitionCtaHref");
   const fieldId = document.getElementById("eventsFieldId");
   const fieldTitle = document.getElementById("eventsFieldTitle");
   const fieldDate = document.getElementById("eventsFieldDate");
@@ -453,6 +458,11 @@
 
   function clearForm() {
     if (fieldKind) fieldKind.value = "event";
+    if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
+    if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
+    if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = "";
+    if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = "";
+    if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = "";
     if (fieldId) fieldId.value = "";
     if (fieldTitle) fieldTitle.value = "";
     if (fieldDate) fieldDate.value = "";
@@ -470,6 +480,91 @@
     updateKindFields("event");
     if (advancedDetails) advancedDetails.open = false;
     resetSelectionContext();
+  }
+
+  function getDefinitionIdForEntry(entry) {
+    if (!entry || !entry.item) return "";
+    return String(entry.item.eventId || entry.item.id || "").trim();
+  }
+
+  function getDefinitionById(definitionId) {
+    if (!payload || !definitionId || !Array.isArray(payload.definitions)) return null;
+    return payload.definitions.find((item) => item && item.id === definitionId) || null;
+  }
+
+  function ensureDefinitionForEntry(entry) {
+    if (!payload || !entry) return null;
+    if (!Array.isArray(payload.definitions)) payload.definitions = [];
+    const definitionId = getDefinitionIdForEntry(entry);
+    if (!definitionId) return null;
+
+    let definition = getDefinitionById(definitionId);
+    if (!definition) {
+      const item = entry.item || {};
+      definition = {
+        id: definitionId,
+        slug: definitionId,
+        title: item.title || "Untitled Event",
+        type: item.type || "Event",
+        heroSummary: item.summary || "",
+        primaryCtaLabel: item.ctaLabel || "",
+        primaryCtaHref: item.ctaHref || "",
+      };
+      payload.definitions.push(definition);
+    }
+
+    return definition;
+  }
+
+  function fillDefinitionForm(entry) {
+    if (!entry) {
+      if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
+      if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
+      if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = "";
+      if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = "";
+      if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = "";
+      return;
+    }
+
+    const definition = ensureDefinitionForEntry(entry);
+    const item = entry.item || {};
+    if (fieldDefinitionTitle) fieldDefinitionTitle.value = (definition && definition.title) || item.title || "";
+    if (fieldDefinitionSlug) fieldDefinitionSlug.value = (definition && definition.slug) || "";
+    if (fieldDefinitionHeroSummary) {
+      fieldDefinitionHeroSummary.value = (definition && definition.heroSummary) || item.summary || "";
+    }
+    if (fieldDefinitionCtaLabel) {
+      fieldDefinitionCtaLabel.value = (definition && definition.primaryCtaLabel) || item.ctaLabel || "";
+    }
+    if (fieldDefinitionCtaHref) {
+      fieldDefinitionCtaHref.value = (definition && definition.primaryCtaHref) || item.ctaHref || "";
+    }
+  }
+
+  function commitDefinitionForm(options = {}) {
+    if (!payload || !selectedKey) return;
+    const entry = options.entry || getSelectedEntry();
+    if (!entry) return;
+
+    const definition = ensureDefinitionForEntry(entry);
+    if (!definition) return;
+
+    definition.title =
+      String((fieldDefinitionTitle && fieldDefinitionTitle.value) || "").trim() ||
+      String((entry.item && entry.item.title) || "").trim() ||
+      "Untitled Event";
+    definition.slug =
+      normalizeId(fieldDefinitionSlug ? fieldDefinitionSlug.value : "") ||
+      definition.slug ||
+      definition.id;
+    definition.heroSummary = String((fieldDefinitionHeroSummary && fieldDefinitionHeroSummary.value) || "").trim();
+    definition.primaryCtaLabel = String((fieldDefinitionCtaLabel && fieldDefinitionCtaLabel.value) || "").trim();
+    definition.primaryCtaHref = String((fieldDefinitionCtaHref && fieldDefinitionCtaHref.value) || "").trim();
+    definition.type =
+      String((fieldType && fieldType.value) || (entry.item && entry.item.type) || definition.type || "Event").trim() ||
+      "Event";
+
+    if (!options.skipDirty) setDirty(true);
   }
 
   function fillForm(entry) {
@@ -496,6 +591,7 @@
     if (fieldInterval) fieldInterval.value = String(item.intervalMonths || 1);
     if (fieldMonths) fieldMonths.value = listToCsv(item.months);
     if (advancedDetails) advancedDetails.open = false;
+    fillDefinitionForm(entry);
     updateKindFields(entry.kind);
     updateContextPanel(entry);
   }
@@ -551,6 +647,7 @@
     if (!payload || !selectedKey) return;
     const entry = getSelectedEntry();
     if (!entry) return;
+    commitDefinitionForm({ skipDirty: true, entry });
 
     const desiredKind =
       String((fieldKind && fieldKind.value) || entry.kind).trim() === "event" ? "event" : "template";
@@ -1039,6 +1136,11 @@
     fieldTimezone,
     fieldHorizon,
     fieldPreview,
+    fieldDefinitionTitle,
+    fieldDefinitionSlug,
+    fieldDefinitionHeroSummary,
+    fieldDefinitionCtaLabel,
+    fieldDefinitionCtaHref,
     fieldId,
     fieldTitle,
     fieldDate,
