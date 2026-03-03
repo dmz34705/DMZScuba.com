@@ -182,8 +182,7 @@
               <div class="events-admin-editor">
                 <div class="events-admin-section">
                   <div class="events-admin-subhead">
-                    <h3>Selected Entry</h3>
-                    <button class="btn secondary events-admin-delete" type="button">Delete Selected</button>
+                    <h3>Editing This Schedule</h3>
                   </div>
                   <div class="events-admin-context" id="eventsAdminContext">
                     <div class="events-admin-context-head">
@@ -192,6 +191,12 @@
                     </div>
                     <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
+                  </div>
+                  <div class="events-admin-flow">
+                    <strong class="events-admin-flow-title">Quick Flow</strong>
+                    <p class="events-admin-flow-step">1. Start with the basic event setup and timing.</p>
+                    <p class="events-admin-flow-step">2. Use Event Page only if visitors need a page for this date or series.</p>
+                    <p class="events-admin-flow-step">3. Publish when the date, short description, and button look right.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Basic Event Setup</h4>
@@ -346,6 +351,9 @@
                             Allowed months
                             <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
                           </label>
+                        </div>
+                        <div class="events-admin-danger-row">
+                          <button class="btn secondary events-admin-delete" type="button">Delete This Schedule</button>
                         </div>
                       </div>
                     </div>

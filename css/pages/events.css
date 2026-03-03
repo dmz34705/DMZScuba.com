@@ -1402,6 +1402,32 @@ body.events-admin-open .events-admin-modal {
     rgba(0,0,0,0.18);
 }
 
+.events-admin-flow {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.015)),
+    rgba(255,255,255,0.02);
+}
+
+.events-admin-flow-title {
+  color: rgba(245,248,255,0.94);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.events-admin-flow-step {
+  margin: 0;
+  color: rgba(234,242,255,0.76);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .events-admin-context-head {
   display: flex;
   flex-wrap: wrap;
@@ -1462,6 +1488,12 @@ body.events-admin-open .events-admin-modal {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(85,185,255,0.9);
+}
+
+.events-admin-danger-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
 }
 
 .events-admin-editor .events-admin-form-grid label {
