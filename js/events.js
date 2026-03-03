@@ -235,7 +235,7 @@
         <span>${eventItem.type || "Event"}</span>
       </span>
     `];
-    if (!compact || (eventItem.status && eventItem.status !== "Planned")) {
+    if (!compact && !agenda && eventItem.status) {
       metaParts.push(`<span class="event-status">${eventItem.status || "Planned"}</span>`);
     }
     meta.innerHTML = metaParts.join("");
@@ -259,8 +259,9 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    const ctaLabel = compact ? "Details" : eventItem.ctaLabel || "Get Details";
-    actions.innerHTML = `<a class="btn ${compact ? "secondary" : "primary"}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${ctaLabel}</a>`;
+    const ctaLabel = compact ? "Details" : agenda ? "View" : eventItem.ctaLabel || "Get Details";
+    const ctaClass = compact || agenda ? "secondary" : "primary";
+    actions.innerHTML = `<a class="btn ${ctaClass}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${ctaLabel}</a>`;
 
     if (agenda) {
       const dateBadge = document.createElement("div");
@@ -273,15 +274,12 @@
       const content = document.createElement("div");
       content.className = "event-card-agenda-main";
 
-      const schedule = document.createElement("p");
-      schedule.className = "event-card-agenda-schedule";
-      schedule.textContent = eventDateLabel(eventItem);
+      const infoLine = document.createElement("p");
+      infoLine.className = "event-card-agenda-info";
+      const locationText = eventItem.location || "Location announced soon";
+      infoLine.textContent = `${eventDateLabel(eventItem)} | ${locationText}`;
 
-      const locationLine = document.createElement("p");
-      locationLine.className = "event-card-agenda-location";
-      locationLine.textContent = eventItem.location || "Location announced soon";
-
-      content.append(meta, title, schedule, locationLine);
+      content.append(meta, title, infoLine);
       article.append(dateBadge, content, actions);
       return article;
     }
@@ -572,7 +570,7 @@
       monthHost.appendChild(card);
 
       const upcomingItems = [];
-      const agendaLimit = 8;
+      const agendaLimit = 6;
       for (let monthIndex = activeMonthIndex; monthIndex < monthGroups.length; monthIndex += 1) {
         const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.dateObj >= today);
         upcomingItems.push(...monthItems);
