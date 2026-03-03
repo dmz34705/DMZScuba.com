@@ -11,7 +11,7 @@
   const panel = document.getElementById("eventsAdminPanel");
   if (!panel) return;
 
-  const fab = document.querySelector(".events-admin-fab");
+  const triggerBtn = document.querySelector(".events-admin-trigger");
   const closeBtn = panel.querySelector(".events-admin-close");
   const statusEl = document.getElementById("eventsAdminStatus");
   const validationEl = document.getElementById("eventsAdminValidation");
@@ -91,12 +91,13 @@
 
   function toggleOpen(next) {
     document.body.classList.toggle("events-admin-open", Boolean(next));
-    if (fab) fab.setAttribute("aria-expanded", next ? "true" : "false");
+    if (triggerBtn) triggerBtn.setAttribute("aria-expanded", next ? "true" : "false");
   }
 
   function syncAuthUi() {
     const authed = isAuthed();
     document.body.classList.toggle("events-authenticated", authed);
+    if (triggerBtn) triggerBtn.textContent = authed ? "Edit Calendar" : "DMZ Login";
     if (loginBtn) loginBtn.style.display = authed ? "none" : "";
     if (logoutBtn) logoutBtn.style.display = authed ? "" : "none";
     if (saveBtn) saveBtn.disabled = !authed;
@@ -545,9 +546,13 @@
     }
   }
 
-  if (fab) {
-    fab.addEventListener("click", () => {
-      toggleOpen(true);
+  if (triggerBtn) {
+    triggerBtn.addEventListener("click", () => {
+      if (!isAuthed()) {
+        buildLoginModal(() => toggleOpen(true));
+        return;
+      }
+      toggleOpen(!document.body.classList.contains("events-admin-open"));
     });
   }
   if (closeBtn) {
@@ -595,13 +600,6 @@
       updateKindFields(fieldKind.value);
     });
   }
-
-  document.addEventListener("click", (event) => {
-    if (!document.body.classList.contains("events-admin-open")) return;
-    if (panel.contains(event.target) || (fab && fab.contains(event.target))) return;
-    if (event.target.closest(".events-auth-card")) return;
-    toggleOpen(false);
-  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") toggleOpen(false);
