@@ -1443,6 +1443,13 @@ body.events-admin-open .events-admin-modal {
   line-height: 1.5;
 }
 
+.events-admin-form-grid .events-admin-section-note {
+  padding: 2px 0 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
 .events-admin-detail-section {
   display: grid;
   gap: 10px;

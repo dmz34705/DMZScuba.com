@@ -190,90 +190,30 @@
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
-                    <h4>Event Page Basics</h4>
-                    <p class="events-admin-section-note">These fields define the public event page tied to this calendar item. The calendar controls when it happens. This controls what page people land on.</p>
-                    <div class="events-admin-form-grid">
-                      <label class="events-admin-span">
-                        Linked Event Page
-                        <select id="eventsDefinitionSelect"></select>
-                      </label>
-                      <label>
-                        Page Eyebrow
-                        <input type="text" id="eventsDefinitionEyebrow" placeholder="Training Event" />
-                      </label>
-                      <label class="events-admin-span">
-                        Page Title
-                        <input type="text" id="eventsDefinitionTitle" placeholder="Open Water Orientation Night" />
-                      </label>
-                      <label>
-                        Page Slug
-                        <input type="text" id="eventsDefinitionSlug" placeholder="open-water-orientation-night" />
-                      </label>
-                      <label>
-                        Page CTA Label
-                        <input type="text" id="eventsDefinitionCtaLabel" placeholder="Reserve a Spot" />
-                      </label>
-                      <label>
-                        Page CTA Link
-                        <input type="text" id="eventsDefinitionCtaHref" placeholder="/pages/contact/index.html#dive-now" />
-                      </label>
-                      <label class="events-admin-span">
-                        Hero Summary
-                        <textarea id="eventsDefinitionHeroSummary" rows="3"></textarea>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="events-admin-section events-admin-detail-section">
-                    <h4>Event Page Content</h4>
-                    <p class="events-admin-section-note">These fields shape the detail page itself so visitors understand what the event is, who it fits, and what they should expect.</p>
-                    <div class="events-admin-form-grid">
-                      <label class="events-admin-span">
-                        Narrative
-                        <textarea id="eventsDefinitionNarrative" rows="5"></textarea>
-                      </label>
-                      <label class="events-admin-span">
-                        Who This Fits
-                        <textarea id="eventsDefinitionExperience" rows="3"></textarea>
-                      </label>
-                      <label class="events-admin-span">
-                        Schedule Note
-                        <textarea id="eventsDefinitionScheduleNote" rows="3"></textarea>
-                      </label>
-                      <label class="events-admin-span">
-                        What To Expect
-                        <textarea id="eventsDefinitionWhatToExpect" rows="4" placeholder="One item per line"></textarea>
-                      </label>
-                      <label class="events-admin-span">
-                        Included
-                        <textarea id="eventsDefinitionIncluded" rows="4" placeholder="One item per line"></textarea>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="events-admin-section events-admin-detail-section">
-                    <h4>Quick Setup</h4>
-                    <p class="events-admin-section-note">This matches the light event editors used by Google and Apple: title, when it happens, and the key details people see.</p>
+                    <h4>Basic Event Setup</h4>
+                    <p class="events-admin-section-note">Start here: name the event, choose whether it is a one-time date or repeating, then set the time and location.</p>
                     <div class="events-admin-form-grid">
                       <label>
-                        Repeats
+                        Schedule Type
                         <select id="eventsFieldKind">
-                          <option value="event">Does not repeat</option>
+                          <option value="event">One date only</option>
                           <option value="template">Repeats</option>
                         </select>
                       </label>
                       <label class="events-admin-span">
-                        Title
+                        Event Name
                         <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
                       </label>
                       <label data-events-kind-only="event">
-                        Event date
+                        Event Date
                         <input type="date" id="eventsFieldDate" />
                       </label>
                       <label data-events-kind-only="template">
-                        First date in series
+                        First Date In Series
                         <input type="date" id="eventsFieldTemplateAnchorDate" />
                       </label>
                       <label>
-                        Event type
+                        Category
                         <input type="text" id="eventsFieldType" placeholder="Training" />
                       </label>
                       <label>
@@ -287,8 +227,8 @@
                     </div>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
-                    <h4>Timing</h4>
-                    <p class="events-admin-section-note">Simple timing up front. Repeating events only need how often the series comes back.</p>
+                    <h4>When It Happens</h4>
+                    <p class="events-admin-section-note">Set the time first. Only repeating events need the extra repeat settings.</p>
                     <div class="events-admin-form-grid">
                       <label>
                         Start Time
@@ -299,35 +239,100 @@
                         <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
                       </label>
                       <label data-events-kind-only="template">
-                        Repeat every (months)
+                        Repeat Every (Months)
                         <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
                       </label>
                     </div>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
-                    <h4>Message and CTA</h4>
-                    <p class="events-admin-section-note">This is the copy your visitors will read on the calendar and action button.</p>
+                    <h4>Calendar Card</h4>
+                    <p class="events-admin-section-note">This is the short copy people see in the calendar itself.</p>
                     <div class="events-admin-form-grid">
                       <label class="events-admin-span">
-                        Summary
+                        Short Calendar Description
                         <textarea id="eventsFieldSummary" rows="4"></textarea>
                       </label>
                       <label>
-                        CTA Label
+                        Button Text
                         <input type="text" id="eventsFieldCtaLabel" placeholder="Reserve a Spot" />
                       </label>
                       <label>
-                        CTA Link
+                        Button Link
                         <input type="text" id="eventsFieldCtaHref" placeholder="/pages/contact/index.html#dive-now" />
                       </label>
                     </div>
                   </div>
-                  <details class="events-admin-advanced" id="eventsAdminAdvanced">
-                    <summary>More Options</summary>
+                  <div class="events-admin-section events-admin-detail-section">
+                    <h4>Event Page</h4>
+                    <p class="events-admin-section-note">Choose whether this date uses an existing event page or creates a new one. Most edits below are plain visitor-facing copy.</p>
+                    <div class="events-admin-form-grid">
+                      <label class="events-admin-span">
+                        Use Existing Event Page?
+                        <select id="eventsDefinitionSelect"></select>
+                      </label>
+                      <p class="events-admin-section-note events-admin-span" id="eventsDefinitionHelp">Choose an existing page to reuse it, or pick "Create New Event Page" to make a fresh one for this event.</p>
+                      <label class="events-admin-span">
+                        Event Page Title
+                        <input type="text" id="eventsDefinitionTitle" placeholder="Open Water Orientation Night" />
+                      </label>
+                      <label>
+                        Main Button Text
+                        <input type="text" id="eventsDefinitionCtaLabel" placeholder="Reserve a Spot" />
+                      </label>
+                      <label>
+                        Main Button Link
+                        <input type="text" id="eventsDefinitionCtaHref" placeholder="/pages/contact/index.html#dive-now" />
+                      </label>
+                      <label class="events-admin-span">
+                        Short Description
+                        <textarea id="eventsDefinitionHeroSummary" rows="3"></textarea>
+                      </label>
+                    </div>
+                  </div>
+                  <details class="events-admin-advanced" id="eventsAdminPageDetails">
+                    <summary>More Page Details</summary>
                     <div class="events-admin-advanced-body">
                       <div class="events-admin-section events-admin-detail-section">
-                        <h4>Internal Details</h4>
-                        <p class="events-admin-section-note">The editor auto-builds this for you. This ID is only for the schedule record. The linked event page is handled separately above.</p>
+                        <p class="events-admin-section-note">Only open this when you want to flesh out the full event page. These are optional longer-form details.</p>
+                        <div class="events-admin-form-grid">
+                          <label>
+                            Small Label (Optional)
+                            <input type="text" id="eventsDefinitionEyebrow" placeholder="Training Event" />
+                          </label>
+                          <label>
+                            Page Link Name
+                            <input type="text" id="eventsDefinitionSlug" placeholder="open-water-orientation-night" />
+                          </label>
+                          <label class="events-admin-span">
+                            Full Page Description
+                            <textarea id="eventsDefinitionNarrative" rows="5"></textarea>
+                          </label>
+                          <label class="events-admin-span">
+                            Best For
+                            <textarea id="eventsDefinitionExperience" rows="3"></textarea>
+                          </label>
+                          <label class="events-admin-span">
+                            Helpful Schedule Note
+                            <textarea id="eventsDefinitionScheduleNote" rows="3"></textarea>
+                          </label>
+                          <label class="events-admin-span">
+                            What Visitors Should Expect
+                            <textarea id="eventsDefinitionWhatToExpect" rows="4" placeholder="One item per line"></textarea>
+                          </label>
+                          <label class="events-admin-span">
+                            Highlights / Included
+                            <textarea id="eventsDefinitionIncluded" rows="4" placeholder="One item per line"></textarea>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                  <details class="events-admin-advanced" id="eventsAdminAdvanced">
+                    <summary>Advanced</summary>
+                    <div class="events-admin-advanced-body">
+                      <div class="events-admin-section events-admin-detail-section">
+                        <h4>Internal Settings</h4>
+                        <p class="events-admin-section-note">You usually should not need these. They are here for special cases only.</p>
                         <div class="events-admin-form-grid">
                           <label>
                             Schedule Entry ID

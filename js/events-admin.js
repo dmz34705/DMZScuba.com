@@ -35,6 +35,7 @@
   const searchInput = document.getElementById("eventsAdminSearch");
   const selectEl = document.getElementById("eventsAdminSelect");
   const advancedDetails = document.getElementById("eventsAdminAdvanced");
+  const pageDetails = document.getElementById("eventsAdminPageDetails");
 
   const fieldUpdated = document.getElementById("eventsConfigUpdated");
   const fieldTimezone = document.getElementById("eventsConfigTimezone");
@@ -43,6 +44,7 @@
 
   const fieldKind = document.getElementById("eventsFieldKind");
   const fieldDefinitionSelect = document.getElementById("eventsDefinitionSelect");
+  const definitionHelpEl = document.getElementById("eventsDefinitionHelp");
   const fieldDefinitionEyebrow = document.getElementById("eventsDefinitionEyebrow");
   const fieldDefinitionTitle = document.getElementById("eventsDefinitionTitle");
   const fieldDefinitionSlug = document.getElementById("eventsDefinitionSlug");
@@ -119,6 +121,13 @@
   function setModalNote(text) {
     if (!modalNoteEl) return;
     modalNoteEl.textContent = text || "Pick a date in the calendar while edit mode is active to jump straight into that event.";
+  }
+
+  function setDefinitionHelp(text) {
+    if (!definitionHelpEl) return;
+    definitionHelpEl.textContent =
+      text ||
+      'Choose an existing page to reuse it, or pick "Create New Event Page" to make a fresh one for this event.';
   }
 
   function setDirty(next, customMessage) {
@@ -487,6 +496,7 @@
   function clearForm() {
     if (fieldKind) fieldKind.value = "event";
     if (fieldDefinitionSelect) fieldDefinitionSelect.innerHTML = "";
+    setDefinitionHelp();
     if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = "";
     if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
     if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
@@ -514,6 +524,7 @@
     if (fieldMonths) fieldMonths.value = "";
     updateKindFields("event");
     if (advancedDetails) advancedDetails.open = false;
+    if (pageDetails) pageDetails.open = false;
     resetSelectionContext();
   }
 
@@ -542,10 +553,13 @@
       .join("");
     fieldDefinitionSelect.innerHTML =
       `<option value="${NEW_DEFINITION_OPTION}">Create New Event Page</option>${optionMarkup}`;
-    fieldDefinitionSelect.value =
-      selectedId && definitions.some((item) => item && item.id === selectedId)
-        ? selectedId
-        : NEW_DEFINITION_OPTION;
+    const hasMatch = selectedId && definitions.some((item) => item && item.id === selectedId);
+    fieldDefinitionSelect.value = hasMatch ? selectedId : NEW_DEFINITION_OPTION;
+    setDefinitionHelp(
+      hasMatch
+        ? "This schedule is using an existing event page. Changing the page fields updates every schedule linked to that page."
+        : "You are creating a separate event page for this schedule. Keep the basics short, then open More Page Details only if needed."
+    );
   }
 
   function getDefinitionById(definitionId) {
@@ -632,6 +646,10 @@
 
   function fillDefinitionFormFromEntry(entry) {
     const item = entry && entry.item ? entry.item : {};
+    if (fieldDefinitionSelect) fieldDefinitionSelect.value = NEW_DEFINITION_OPTION;
+    setDefinitionHelp(
+      "You are creating a separate event page for this schedule. Keep the basics short, then open More Page Details only if needed."
+    );
     if (fieldDefinitionEyebrow) {
       fieldDefinitionEyebrow.value = String(item.type || "Event").trim() || "Event";
     }
@@ -1287,6 +1305,7 @@
       if (nextId === NEW_DEFINITION_OPTION) {
         if (entry.item) delete entry.item.eventId;
         fillDefinitionFormFromEntry(entry);
+        if (pageDetails) pageDetails.open = false;
         setDirty(true);
         setStatus("Draft", "neutral");
         return;
@@ -1306,6 +1325,9 @@
         if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = definition.primaryCtaLabel || "";
         if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = definition.primaryCtaHref || "";
       }
+      setDefinitionHelp(
+        "This schedule is using an existing event page. Changing the page fields updates every schedule linked to that page."
+      );
       setDirty(true);
       setStatus("Draft", "neutral");
     });
