@@ -833,6 +833,137 @@ async function getDestinationByIdV2(env, id) {
   return normalizeDestinationV2(parseJsonSafe(row && row.data_json, null), normalizedId);
 }
 
+async function ensureEventsV2Table(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS events_v2 (
+      calendar_key TEXT PRIMARY KEY,
+      data_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+}
+
+function normalizeEventRule(rule) {
+  if (!rule || typeof rule !== "object") return null;
+  const weekOfMonth = Number(rule.weekOfMonth);
+  const weekday = Number(rule.weekday);
+  if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return null;
+  return {
+    weekOfMonth: Math.max(1, Math.min(5, Math.trunc(weekOfMonth))),
+    weekday: Math.max(0, Math.min(6, Math.trunc(weekday))),
+  };
+}
+
+function normalizeEventEntry(item, kind = "event") {
+  if (!item || typeof item !== "object") return null;
+  const next = { ...item };
+  const id = String(next.id || "").trim().toLowerCase();
+  const title = String(next.title || "").trim();
+  if (!id || !title) return null;
+  const normalized = {
+    id,
+    title,
+    time: String(next.time || "").trim(),
+    endTime: String(next.endTime || "").trim(),
+    type: String(next.type || "Event").trim() || "Event",
+    status: String(next.status || "").trim(),
+    location: String(next.location || "").trim(),
+    summary: String(next.summary || "").trim(),
+    ctaLabel: String(next.ctaLabel || "").trim(),
+    ctaHref: String(next.ctaHref || "").trim(),
+  };
+
+  if (kind === "template") {
+    const startMonth = String(next.startMonth || "").trim();
+    if (!startMonth) return null;
+    const rule = normalizeEventRule(next.rule);
+    if (!rule) return null;
+    normalized.rule = rule;
+    normalized.startMonth = startMonth;
+    normalized.intervalMonths = Math.max(1, Math.trunc(Number(next.intervalMonths) || 1));
+    if (Array.isArray(next.months)) {
+      normalized.months = next.months
+        .map((value) => Math.trunc(Number(value)))
+        .filter((value) => Number.isFinite(value) && value >= 1 && value <= 12);
+    }
+    return normalized;
+  }
+
+  const date = String(next.date || "").trim();
+  if (!date) return null;
+  normalized.date = date;
+  return normalized;
+}
+
+function normalizeEventsPayload(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const templates = Array.isArray(payload.templates)
+    ? payload.templates.map((item) => normalizeEventEntry(item, "template")).filter(Boolean)
+    : [];
+  const events = Array.isArray(payload.events)
+    ? payload.events.map((item) => normalizeEventEntry(item, "event")).filter(Boolean)
+    : [];
+  return {
+    updated: String(payload.updated || new Date().toISOString().slice(0, 10)).trim(),
+    timezone: String(payload.timezone || "America/Chicago").trim(),
+    horizonMonths: Math.max(1, Math.min(60, Math.trunc(Number(payload.horizonMonths) || 30))),
+    previewCount: Math.max(1, Math.min(12, Math.trunc(Number(payload.previewCount) || 3))),
+    events,
+    templates,
+  };
+}
+
+async function getEventsPayloadV2(env) {
+  await ensureEventsV2Table(env);
+  const row = await env.DB.prepare("SELECT data_json FROM events_v2 WHERE calendar_key = ?")
+    .bind("primary")
+    .first();
+  if (!row) return null;
+  return normalizeEventsPayload(parseJsonSafe(row && row.data_json, null));
+}
+
+async function handleGetEventsV2(env) {
+  const payload = await getEventsPayloadV2(env);
+  if (!payload) return jsonResponse({ ok: false, error: "Not found." }, 404, { "Cache-Control": "no-store" });
+  return jsonResponse(payload, 200, {
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "CDN-Cache-Control": "no-store",
+    "Cloudflare-CDN-Cache-Control": "no-store",
+  });
+}
+
+async function handlePutEventsV2(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.payload === "object" ? body.payload : body;
+  const payload = normalizeEventsPayload(incoming);
+  if (!payload) return jsonResponse({ ok: false, error: "Invalid payload." }, 400);
+
+  await ensureEventsV2Table(env);
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT created_at FROM events_v2 WHERE calendar_key = ?")
+    .bind("primary")
+    .first();
+  const createdAt = (existing && existing.created_at) || now;
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO events_v2 (calendar_key, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  )
+    .bind("primary", JSON.stringify(payload), createdAt, now)
+    .run();
+  return jsonResponse({ ok: true, payload, updatedAt: now }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleDeleteEventsV2(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  await ensureEventsV2Table(env);
+  await env.DB.prepare("DELETE FROM events_v2 WHERE calendar_key = ?").bind("primary").run();
+  return jsonResponse({ ok: true }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleGetDestinationsV2(env) {
   const items = await listDestinationsV2(env);
   return jsonResponse(
@@ -1349,6 +1480,12 @@ export default {
       response = await handleBulkUpsert(request, env);
     } else if (pathname === "/api/admin/stream-date-sync" && request.method === "POST") {
       response = await handleStreamDateSync(request, env);
+    } else if (pathname === "/api/v2/events" && request.method === "GET") {
+      response = await handleGetEventsV2(env);
+    } else if (pathname === "/api/admin/v2/events" && request.method === "PUT") {
+      response = await handlePutEventsV2(request, env);
+    } else if (pathname === "/api/admin/v2/events" && request.method === "DELETE") {
+      response = await handleDeleteEventsV2(request, env);
     } else if (pathname === "/api/v2/destinations" && request.method === "GET") {
       response = await handleGetDestinationsV2(env);
     } else if (pathname.startsWith("/api/v2/destinations/") && request.method === "GET") {

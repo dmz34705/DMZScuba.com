@@ -51,3 +51,10 @@ CREATE TABLE IF NOT EXISTS destinations_v2 (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS events_v2 (
+  calendar_key TEXT PRIMARY KEY,
+  data_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);

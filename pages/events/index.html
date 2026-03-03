@@ -56,7 +56,7 @@
       </div>
     </section>
 
-    <main class="page-main" data-events-embed-shell>
+    <main class="page-main" data-events-embed-shell data-events-admin-page data-events-fallback="/assets/data/events.json">
       <section class="events-summary-strip" aria-label="Event calendar summary">
         <div class="events-summary-card">
           <h2>Embedded planning calendar</h2>
@@ -86,6 +86,154 @@
           </ul>
         </aside>
       </section>
+
+      <button class="events-admin-fab" type="button" aria-expanded="false" aria-controls="eventsAdminPanel">
+        Events Admin
+      </button>
+      <aside class="events-admin-panel" id="eventsAdminPanel" aria-label="Events admin controls">
+        <div class="events-admin-card" role="group" aria-label="Event calendar edit actions">
+          <div class="events-admin-head">
+            <div>
+              <span class="events-admin-title">Events Admin</span>
+              <span class="events-admin-status is-neutral" id="eventsAdminStatus">Signed out</span>
+            </div>
+            <button class="events-admin-close" type="button" aria-label="Close events admin">Close</button>
+          </div>
+          <p class="events-admin-note">Sign in with the existing DMZ admin login to add, remove, and edit recurring or one-time calendar events.</p>
+          <div class="events-admin-actions">
+            <button class="btn secondary events-admin-login" type="button">DMZ Login</button>
+            <button class="btn secondary events-admin-logout" type="button">Logout</button>
+            <button class="btn secondary events-admin-add-template" type="button">Add Recurring</button>
+            <button class="btn secondary events-admin-add-event" type="button">Add One-Time</button>
+            <button class="btn primary events-admin-save" type="button">Save Changes</button>
+            <button class="btn secondary events-admin-refresh" type="button">Reload Data</button>
+            <button class="btn secondary events-admin-clear-live" type="button">Reset to File</button>
+            <button class="btn secondary events-admin-delete" type="button">Delete Selected</button>
+          </div>
+          <div class="events-admin-validation" id="eventsAdminValidation" aria-live="polite"></div>
+          <div class="events-admin-grid">
+            <div class="events-admin-section">
+              <h3>Calendar Settings</h3>
+              <div class="events-admin-form-grid">
+                <label>
+                  Updated
+                  <input type="date" id="eventsConfigUpdated" />
+                </label>
+                <label>
+                  Timezone
+                  <input type="text" id="eventsConfigTimezone" placeholder="America/Chicago" />
+                </label>
+                <label>
+                  Horizon Months
+                  <input type="number" min="1" max="60" id="eventsConfigHorizon" />
+                </label>
+                <label>
+                  Preview Count
+                  <input type="number" min="1" max="12" id="eventsConfigPreview" />
+                </label>
+              </div>
+            </div>
+            <div class="events-admin-shell">
+              <div class="events-admin-list">
+                <label class="events-admin-search-wrap">
+                  Search
+                  <input type="search" id="eventsAdminSearch" placeholder="Search events" />
+                </label>
+                <label>
+                  Entries
+                  <select id="eventsAdminSelect" size="10" aria-label="Select event entry"></select>
+                </label>
+              </div>
+              <div class="events-admin-editor">
+                <div class="events-admin-section">
+                  <h3>Selected Entry</h3>
+                  <div class="events-admin-form-grid">
+                    <label>
+                      Entry Type
+                      <select id="eventsFieldKind">
+                        <option value="template">Recurring Template</option>
+                        <option value="event">One-Time Event</option>
+                      </select>
+                    </label>
+                    <label>
+                      ID
+                      <input type="text" id="eventsFieldId" placeholder="trip-qna" />
+                    </label>
+                    <label class="events-admin-span">
+                      Title
+                      <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
+                    </label>
+                    <label data-events-kind-only="event">
+                      Date
+                      <input type="date" id="eventsFieldDate" />
+                    </label>
+                    <label data-events-kind-only="template">
+                      Start Month
+                      <input type="month" id="eventsFieldStartMonth" />
+                    </label>
+                    <label>
+                      Start Time
+                      <input type="text" id="eventsFieldTime" placeholder="7:00 PM" />
+                    </label>
+                    <label>
+                      End Time
+                      <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
+                    </label>
+                    <label>
+                      Type
+                      <input type="text" id="eventsFieldType" placeholder="Training" />
+                    </label>
+                    <label>
+                      Status
+                      <input type="text" id="eventsFieldStatus" placeholder="Planned" />
+                    </label>
+                    <label class="events-admin-span">
+                      Location
+                      <input type="text" id="eventsFieldLocation" placeholder="La Grange, IL" />
+                    </label>
+                    <label class="events-admin-span">
+                      Summary
+                      <textarea id="eventsFieldSummary" rows="4"></textarea>
+                    </label>
+                    <label>
+                      CTA Label
+                      <input type="text" id="eventsFieldCtaLabel" placeholder="Reserve a Spot" />
+                    </label>
+                    <label>
+                      CTA Link
+                      <input type="text" id="eventsFieldCtaHref" placeholder="/pages/contact/index.html#dive-now" />
+                    </label>
+                    <label data-events-kind-only="template">
+                      Interval (Months)
+                      <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
+                    </label>
+                    <label data-events-kind-only="template">
+                      Allowed Months
+                      <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
+                    </label>
+                    <label data-events-kind-only="template">
+                      Week of Month
+                      <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
+                    </label>
+                    <label data-events-kind-only="template">
+                      Weekday
+                      <select id="eventsFieldWeekday">
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
 
       <section class="events-embed-shell-card" aria-labelledby="events-embed-title">
         <div class="events-embed-head">
@@ -125,5 +273,6 @@
 
   <script src="/js/main.js"></script>
   <script src="/js/events.js"></script>
+  <script src="/js/events-admin.js"></script>
 </body>
 </html>

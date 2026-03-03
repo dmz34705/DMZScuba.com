@@ -8,6 +8,10 @@
     (pageRoot && pageRoot.getAttribute("data-events-src")) ||
     (previewRoot && previewRoot.getAttribute("data-events-src")) ||
     "/assets/data/events.json";
+  const fallbackDataUrl =
+    (pageRoot && pageRoot.getAttribute("data-events-fallback-src")) ||
+    (previewRoot && previewRoot.getAttribute("data-events-fallback-src")) ||
+    "/assets/data/events.json";
 
   const monthFormatter = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -344,7 +348,7 @@
       empty.hidden = true;
       list.hidden = false;
       events.slice(0, previewCount).forEach((eventItem) => {
-        list.appendChild(renderEventCard(eventItem, true));
+        list.appendChild(renderEventCard(eventItem, "compact"));
       });
     }
 
@@ -822,10 +826,17 @@
   }
 
   if (pageRoot || previewRoot) {
-    fetch(dataUrl)
-      .then((response) => {
-        if (!response.ok) throw new Error(`Event data failed (${response.status})`);
-        return response.json();
+    const loadPayload = (url) =>
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Event data failed (${response.status})`);
+          return response.json();
+        });
+
+    loadPayload(dataUrl)
+      .catch((error) => {
+        if (!fallbackDataUrl || fallbackDataUrl === dataUrl) throw error;
+        return loadPayload(fallbackDataUrl);
       })
       .then((payload) => {
         const events = expandTemplateEvents(payload);
