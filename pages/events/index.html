@@ -93,10 +93,7 @@
             <h2 id="events-embed-title">Interactive DMZ Calendar</h2>
             <p class="muted">Scroll inside the calendar to move through the current event window. The agenda below stays focused on the next available dates for quick scanning.</p>
           </div>
-          <div class="events-embed-head-actions">
-            <a class="btn secondary" href="../contact/index.html#dive-now">Ask About a Date</a>
-            <button class="events-admin-trigger" type="button" aria-expanded="false" aria-controls="eventsAdminPanel">DMZ Login</button>
-          </div>
+          <a class="btn secondary" href="../contact/index.html#dive-now">Ask About a Date</a>
         </div>
         <aside class="events-admin-panel" id="eventsAdminPanel" aria-label="Events admin controls">
           <div class="events-admin-card" role="group" aria-label="Event calendar edit actions">
@@ -265,8 +262,9 @@
       </section>
     </main>
 
-    <footer class="site-footer">
+    <footer class="site-footer events-footer">
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+      <button class="events-admin-trigger events-login-button" type="button" aria-expanded="false" aria-controls="eventsAdminPanel">DMZ Login</button>
     </footer>
   </div>
 
