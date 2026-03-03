@@ -573,7 +573,8 @@
         listHost.appendChild(scrollList);
         if (firstMatch) {
           requestAnimationFrame(() => {
-            firstMatch.scrollIntoView({ block: "nearest", inline: "nearest" });
+            const targetTop = Math.max(0, firstMatch.offsetTop - scrollList.offsetTop - 8);
+            scrollList.scrollTop = targetTop;
           });
         }
       }
