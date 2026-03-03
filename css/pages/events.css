@@ -623,6 +623,13 @@
   height: 100%;
 }
 
+.event-card-agenda {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
 .event-card h3 {
   margin: 10px 0 8px;
   font-size: 22px;
@@ -682,9 +689,7 @@
 }
 
 .events-list-block .event-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
+  min-height: 0;
   padding: 12px;
   border-radius: 16px;
   border-color: rgba(255,255,255,0.09);
@@ -739,6 +744,79 @@
     0 0 0 1px rgba(85,185,255,0.2),
     0 0 0 3px rgba(85,185,255,0.07),
     0 12px 24px rgba(0,0,0,0.28);
+}
+
+.events-list-block .event-card.event-card-agenda {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.event-card-agenda-date {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  width: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 6px 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+
+.event-card-agenda-month {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(85,185,255,0.88);
+}
+
+.event-card-agenda-day {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.event-card-agenda-main {
+  min-width: 0;
+}
+
+.events-list-block .event-card-agenda .event-card-meta {
+  margin-bottom: 4px;
+}
+
+.events-list-block .event-card-agenda h3 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.event-card-agenda-schedule,
+.event-card-agenda-location {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.event-card-agenda-schedule {
+  color: rgba(234,242,255,0.9);
+  font-weight: 700;
+}
+
+.event-card-agenda-location {
+  color: var(--muted);
+}
+
+.events-list-block .event-card-agenda .event-card-actions {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.events-list-block .event-card-agenda .event-card-actions .btn {
+  min-width: 96px;
 }
 
 .event-chip {
@@ -979,6 +1057,23 @@
   }
 
   .events-list-block .event-card-actions .btn {
+    width: 100%;
+  }
+
+  .events-list-block .event-card.event-card-agenda {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .event-card-agenda-date {
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px;
+  }
+
+  .events-list-block .event-card-agenda .event-card-actions .btn {
     width: 100%;
   }
 

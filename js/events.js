@@ -17,6 +17,9 @@
     month: "short",
     day: "numeric",
   });
+  const monthShortFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+  });
   const weekdayFormatter = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
   });
@@ -213,12 +216,16 @@
       .join("");
   }
 
-  function renderEventCard(eventItem, compact = false) {
+  function renderEventCard(eventItem, variant = "default") {
+    const compact = variant === "compact";
+    const agenda = variant === "agenda";
     const article = document.createElement("article");
     const typeMeta = getEventTypeMeta(eventItem.type);
-    article.className = compact
-      ? `event-card event-card-compact ${typeMeta.className}`
-      : `event-card ${typeMeta.className}`;
+    article.className = agenda
+      ? `event-card event-card-agenda ${typeMeta.className}`
+      : compact
+        ? `event-card event-card-compact ${typeMeta.className}`
+        : `event-card ${typeMeta.className}`;
 
     const meta = document.createElement("div");
     meta.className = "event-card-meta";
@@ -254,6 +261,30 @@
     actions.className = "event-card-actions";
     const ctaLabel = compact ? "Details" : eventItem.ctaLabel || "Get Details";
     actions.innerHTML = `<a class="btn ${compact ? "secondary" : "primary"}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${ctaLabel}</a>`;
+
+    if (agenda) {
+      const dateBadge = document.createElement("div");
+      dateBadge.className = "event-card-agenda-date";
+      dateBadge.innerHTML = `
+        <span class="event-card-agenda-month">${monthShortFormatter.format(eventItem.dateObj)}</span>
+        <strong class="event-card-agenda-day">${eventItem.dateObj.getDate()}</strong>
+      `;
+
+      const content = document.createElement("div");
+      content.className = "event-card-agenda-main";
+
+      const schedule = document.createElement("p");
+      schedule.className = "event-card-agenda-schedule";
+      schedule.textContent = eventDateLabel(eventItem);
+
+      const locationLine = document.createElement("p");
+      locationLine.className = "event-card-agenda-location";
+      locationLine.textContent = eventItem.location || "Location announced soon";
+
+      content.append(meta, title, schedule, locationLine);
+      article.append(dateBadge, content, actions);
+      return article;
+    }
 
     article.append(meta, title, dateLine, location, summary, actions);
     return article;
@@ -561,7 +592,7 @@
         let firstMatch = null;
 
         listItems.forEach((eventItem) => {
-          const card = renderEventCard(eventItem, true);
+          const card = renderEventCard(eventItem, "agenda");
           card.classList.add("events-upcoming-card");
           if (eventItem.date === selectedDateKey) {
             card.classList.add("is-selected");
