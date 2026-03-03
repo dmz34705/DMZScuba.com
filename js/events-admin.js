@@ -45,7 +45,7 @@
   const fieldId = document.getElementById("eventsFieldId");
   const fieldTitle = document.getElementById("eventsFieldTitle");
   const fieldDate = document.getElementById("eventsFieldDate");
-  const fieldStartMonth = document.getElementById("eventsFieldStartMonth");
+  const fieldTemplateAnchor = document.getElementById("eventsFieldTemplateAnchorDate");
   const fieldTime = document.getElementById("eventsFieldTime");
   const fieldEndTime = document.getElementById("eventsFieldEndTime");
   const fieldType = document.getElementById("eventsFieldType");
@@ -56,8 +56,6 @@
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
   const fieldMonths = document.getElementById("eventsFieldMonths");
-  const fieldWeek = document.getElementById("eventsFieldWeekOfMonth");
-  const fieldWeekday = document.getElementById("eventsFieldWeekday");
   const kindOnlyRows = panel.querySelectorAll("[data-events-kind-only]");
 
   let payload = null;
@@ -208,6 +206,45 @@
       .filter((month) => Number.isFinite(month) && month >= 1 && month <= 12);
   }
 
+  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
+    const first = new Date(year, monthIndex, 1);
+    const shift = (7 + weekday - first.getDay()) % 7;
+    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+    const candidate = new Date(year, monthIndex, dayNumber);
+    if (candidate.getMonth() !== monthIndex) return null;
+    return candidate;
+  }
+
+  function buildSuggestedId(kind, titleValue, anchorValue) {
+    const titleBase = normalizeId(titleValue);
+    const dateChunk = String(anchorValue || "").replace(/[^0-9]/g, "").slice(0, 8);
+    const prefix = kind === "template" ? "series" : "event";
+    const base = titleBase || prefix;
+    return normalizeId(`${base}${dateChunk ? `-${dateChunk}` : `-${Date.now().toString().slice(-5)}`}`);
+  }
+
+  function deriveRuleFromDate(dateValue) {
+    const parsed = new Date(`${dateValue}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return {
+      weekOfMonth: Math.floor((parsed.getDate() - 1) / 7) + 1,
+      weekday: parsed.getDay(),
+    };
+  }
+
+  function getTemplateAnchorDate(item) {
+    if (!item || !item.startMonth || !item.rule) return "";
+    const parts = String(item.startMonth).split("-");
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return "";
+    const weekOfMonth = Number(item.rule.weekOfMonth);
+    const weekday = Number(item.rule.weekday);
+    const date = nthWeekdayOfMonth(year, month - 1, weekOfMonth, weekday);
+    if (!date) return "";
+    return date.toISOString().slice(0, 10);
+  }
+
   function getEntries() {
     if (!payload) return [];
     const templates = payload.templates.map((item, index) => ({
@@ -339,9 +376,6 @@
       const targetKind = row.getAttribute("data-events-kind-only");
       row.hidden = targetKind !== kind;
     });
-    if (advancedDetails) {
-      advancedDetails.open = kind === "template";
-    }
   }
 
   function fillConfig() {
@@ -353,11 +387,11 @@
   }
 
   function clearForm() {
-    if (fieldKind) fieldKind.value = "template";
+    if (fieldKind) fieldKind.value = "event";
     if (fieldId) fieldId.value = "";
     if (fieldTitle) fieldTitle.value = "";
     if (fieldDate) fieldDate.value = "";
-    if (fieldStartMonth) fieldStartMonth.value = "";
+    if (fieldTemplateAnchor) fieldTemplateAnchor.value = "";
     if (fieldTime) fieldTime.value = "";
     if (fieldEndTime) fieldEndTime.value = "";
     if (fieldType) fieldType.value = "Training";
@@ -368,9 +402,7 @@
     if (fieldCtaHref) fieldCtaHref.value = "";
     if (fieldInterval) fieldInterval.value = "1";
     if (fieldMonths) fieldMonths.value = "";
-    if (fieldWeek) fieldWeek.value = "1";
-    if (fieldWeekday) fieldWeekday.value = "2";
-    updateKindFields("template");
+    updateKindFields("event");
     if (advancedDetails) advancedDetails.open = false;
     resetSelectionContext();
   }
@@ -387,7 +419,7 @@
     if (fieldId) fieldId.value = item.id || "";
     if (fieldTitle) fieldTitle.value = item.title || "";
     if (fieldDate) fieldDate.value = entry.kind === "event" ? item.date || "" : "";
-    if (fieldStartMonth) fieldStartMonth.value = entry.kind === "template" ? item.startMonth || "" : "";
+    if (fieldTemplateAnchor) fieldTemplateAnchor.value = entry.kind === "template" ? getTemplateAnchorDate(item) : "";
     if (fieldTime) fieldTime.value = item.time || "";
     if (fieldEndTime) fieldEndTime.value = item.endTime || "";
     if (fieldType) fieldType.value = item.type || "Training";
@@ -398,8 +430,7 @@
     if (fieldCtaHref) fieldCtaHref.value = item.ctaHref || "";
     if (fieldInterval) fieldInterval.value = String(item.intervalMonths || 1);
     if (fieldMonths) fieldMonths.value = listToCsv(item.months);
-    if (fieldWeek) fieldWeek.value = String((item.rule && item.rule.weekOfMonth) || 1);
-    if (fieldWeekday) fieldWeekday.value = String((item.rule && item.rule.weekday) || 2);
+    if (advancedDetails) advancedDetails.open = false;
     updateKindFields(entry.kind);
     updateContextPanel(entry);
   }
@@ -413,14 +444,12 @@
   }
 
   function readFormItem(kind) {
-    const id = normalizeId(fieldId ? fieldId.value : "");
     const title = String((fieldTitle && fieldTitle.value) || "").trim();
-    if (!id || !title) {
-      throw new Error("ID and title are required.");
-    }
+    if (!title) throw new Error("A title is required.");
+
+    const explicitId = normalizeId(fieldId ? fieldId.value : "");
 
     const next = {
-      id,
       title,
       time: String((fieldTime && fieldTime.value) || "").trim(),
       endTime: String((fieldEndTime && fieldEndTime.value) || "").trim(),
@@ -435,20 +464,21 @@
     if (kind === "event") {
       const dateValue = String((fieldDate && fieldDate.value) || "").trim();
       if (!dateValue) throw new Error("A one-time event needs a date.");
+      next.id = explicitId || buildSuggestedId("event", title, dateValue);
       next.date = dateValue;
       return next;
     }
 
-    const startMonthValue = String((fieldStartMonth && fieldStartMonth.value) || "").trim();
-    if (!startMonthValue) throw new Error("A recurring template needs a start month.");
-    next.startMonth = startMonthValue;
+    const anchorValue = String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim();
+    if (!anchorValue) throw new Error("A repeating event needs a first date in the series.");
+    const rule = deriveRuleFromDate(anchorValue);
+    if (!rule) throw new Error("The first date in the series is invalid.");
+    next.id = explicitId || buildSuggestedId("template", title, anchorValue);
+    next.startMonth = anchorValue.slice(0, 7);
     next.intervalMonths = Math.max(1, Math.min(12, Number((fieldInterval && fieldInterval.value) || 1) || 1));
     const months = csvToMonthList(fieldMonths ? fieldMonths.value : "");
     if (months.length) next.months = months;
-    next.rule = {
-      weekOfMonth: Math.max(1, Math.min(5, Number((fieldWeek && fieldWeek.value) || 1) || 1)),
-      weekday: Math.max(0, Math.min(6, Number((fieldWeekday && fieldWeekday.value) || 0) || 0)),
-    };
+    next.rule = rule;
     return next;
   }
 
@@ -494,7 +524,7 @@
     entries.forEach((entry) => {
       const option = document.createElement("option");
       option.value = entry.key;
-      option.textContent = `${entry.kind === "template" ? "Recurring" : "One-Time"} | ${entry.item.title || entry.item.id}`;
+      option.textContent = `${entry.kind === "template" ? "Repeats" : "One-Time"} | ${entry.item.title || entry.item.id}`;
       if (entry.key === selectedKey) option.selected = true;
       selectEl.appendChild(option);
     });
@@ -575,6 +605,24 @@
     };
   }
 
+  function buildTemplateDraft(dateValue) {
+    const safeDate = String(dateValue || new Date().toISOString().slice(0, 10)).trim();
+    const rule = deriveRuleFromDate(safeDate) || { weekOfMonth: 1, weekday: 2 };
+    return {
+      id: buildDraftId("series", safeDate),
+      title: "New Repeating Event",
+      startMonth: safeDate.slice(0, 7),
+      intervalMonths: 1,
+      type: "Training",
+      status: "Planned",
+      location: "",
+      summary: "",
+      ctaLabel: "",
+      ctaHref: "",
+      rule,
+    };
+  }
+
   function createEntry(kind, options = {}) {
     if (!isAuthed()) {
       buildLoginModal(() => {
@@ -599,22 +647,9 @@
     let nextKey;
     if (searchInput) searchInput.value = "";
     if (kind === "template") {
-      const seedId = buildDraftId("event-template", new Date().toISOString().slice(0, 7));
-      nextItem = {
-        id: seedId,
-        title: "New Recurring Event",
-        startMonth: new Date().toISOString().slice(0, 7),
-        intervalMonths: 1,
-        type: "Training",
-        status: "Planned",
-        location: "",
-        summary: "",
-        ctaLabel: "",
-        ctaHref: "",
-        rule: { weekOfMonth: 1, weekday: 2 },
-      };
+      nextItem = options.item || buildTemplateDraft(options.date);
       payload.templates.push(nextItem);
-      nextKey = `template:${seedId}`;
+      nextKey = `template:${nextItem.id}`;
     } else {
       nextItem = options.item || buildEventDraft(options.date);
       payload.events.push(nextItem);
@@ -922,6 +957,12 @@
 
   if (fieldKind) {
     fieldKind.addEventListener("change", () => {
+      if (fieldKind.value === "template" && fieldTemplateAnchor && !fieldTemplateAnchor.value) {
+        fieldTemplateAnchor.value = (fieldDate && fieldDate.value) || new Date().toISOString().slice(0, 10);
+      }
+      if (fieldKind.value === "event" && fieldDate && !fieldDate.value) {
+        fieldDate.value = (fieldTemplateAnchor && fieldTemplateAnchor.value) || new Date().toISOString().slice(0, 10);
+      }
       updateKindFields(fieldKind.value);
       setDirty(true);
     });
@@ -935,7 +976,7 @@
     fieldId,
     fieldTitle,
     fieldDate,
-    fieldStartMonth,
+    fieldTemplateAnchor,
     fieldTime,
     fieldEndTime,
     fieldType,
@@ -946,8 +987,6 @@
     fieldCtaHref,
     fieldInterval,
     fieldMonths,
-    fieldWeek,
-    fieldWeekday,
   ].filter(Boolean);
 
   trackedFields.forEach((field) => {

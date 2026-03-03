@@ -138,35 +138,40 @@
             <button class="events-admin-close" type="button" aria-label="Close events admin">Close</button>
           </div>
           <div class="events-admin-grid">
-            <div class="events-admin-section">
-              <h3>Calendar Settings</h3>
-              <div class="events-admin-form-grid">
-                <label>
-                  Updated
-                  <input type="date" id="eventsConfigUpdated" />
-                </label>
-                <label>
-                  Timezone
-                  <input type="text" id="eventsConfigTimezone" placeholder="America/Chicago" />
-                </label>
-                <label>
-                  Horizon Months
-                  <input type="number" min="1" max="60" id="eventsConfigHorizon" />
-                </label>
-                <label>
-                  Preview Count
-                  <input type="number" min="1" max="12" id="eventsConfigPreview" />
-                </label>
+            <details class="events-admin-advanced events-admin-settings" id="eventsAdminSettings">
+              <summary>Calendar Settings</summary>
+              <div class="events-admin-advanced-body">
+                <div class="events-admin-section events-admin-detail-section">
+                  <p class="events-admin-section-note">These control the overall calendar feed. Most day-to-day event edits should not need them.</p>
+                  <div class="events-admin-form-grid">
+                    <label>
+                      Updated
+                      <input type="date" id="eventsConfigUpdated" />
+                    </label>
+                    <label>
+                      Timezone
+                      <input type="text" id="eventsConfigTimezone" placeholder="America/Chicago" />
+                    </label>
+                    <label>
+                      Horizon Months
+                      <input type="number" min="1" max="60" id="eventsConfigHorizon" />
+                    </label>
+                    <label>
+                      Preview Count
+                      <input type="number" min="1" max="12" id="eventsConfigPreview" />
+                    </label>
+                  </div>
+                </div>
               </div>
-            </div>
+            </details>
             <div class="events-admin-shell">
               <div class="events-admin-list">
                 <label class="events-admin-search-wrap">
-                  Search
-                  <input type="search" id="eventsAdminSearch" placeholder="Search events" />
+                  Search Saved Events
+                  <input type="search" id="eventsAdminSearch" placeholder="Search by title or type" />
                 </label>
                 <label>
-                  Entries
+                  Saved Events
                   <select id="eventsAdminSelect" size="10" aria-label="Select event entry"></select>
                 </label>
               </div>
@@ -186,8 +191,15 @@
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Quick Setup</h4>
-                    <p class="events-admin-section-note">Fill out the main event details first. Technical fields stay tucked away unless you need them.</p>
+                    <p class="events-admin-section-note">This matches the light event editors used by Google and Apple: title, when it happens, and the key details people see.</p>
                     <div class="events-admin-form-grid">
+                      <label>
+                        Repeats
+                        <select id="eventsFieldKind">
+                          <option value="event">Does not repeat</option>
+                          <option value="template">Repeats</option>
+                        </select>
+                      </label>
                       <label class="events-admin-span">
                         Title
                         <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
@@ -197,8 +209,8 @@
                         <input type="date" id="eventsFieldDate" />
                       </label>
                       <label data-events-kind-only="template">
-                        Start month
-                        <input type="month" id="eventsFieldStartMonth" />
+                        First date in series
+                        <input type="date" id="eventsFieldTemplateAnchorDate" />
                       </label>
                       <label>
                         Event type
@@ -216,7 +228,7 @@
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Timing</h4>
-                    <p class="events-admin-section-note">Keep this simple for visitors. Use the advanced drawer only if you need to change the recurring rule.</p>
+                    <p class="events-admin-section-note">Simple timing up front. Repeating events only need how often the series comes back.</p>
                     <div class="events-admin-form-grid">
                       <label>
                         Start Time
@@ -225,6 +237,10 @@
                       <label>
                         End Time
                         <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Repeat every (months)
+                        <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
                       </label>
                     </div>
                   </div>
@@ -247,52 +263,19 @@
                     </div>
                   </div>
                   <details class="events-admin-advanced" id="eventsAdminAdvanced">
-                    <summary>Advanced Settings</summary>
+                    <summary>More Options</summary>
                     <div class="events-admin-advanced-body">
                       <div class="events-admin-section events-admin-detail-section">
                         <h4>Internal Details</h4>
-                        <p class="events-admin-section-note">These fields help keep the feed organized, but most edits do not need them.</p>
+                        <p class="events-admin-section-note">The editor auto-builds this for you. Only change it if you need a specific internal key or seasonal filter.</p>
                         <div class="events-admin-form-grid">
-                          <label>
-                            Entry type
-                            <select id="eventsFieldKind">
-                              <option value="template">Recurring Template</option>
-                              <option value="event">One-Time Event</option>
-                            </select>
-                          </label>
                           <label>
                             Entry ID
                             <input type="text" id="eventsFieldId" placeholder="trip-qna" />
                           </label>
-                        </div>
-                      </div>
-                      <div class="events-admin-section events-admin-detail-section" data-events-kind-only="template">
-                        <h4>Recurring Rule</h4>
-                        <p class="events-admin-section-note">Changes here affect future generated dates for this template.</p>
-                        <div class="events-admin-form-grid">
-                          <label>
-                            Repeat every (months)
-                            <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
-                          </label>
-                          <label>
+                          <label data-events-kind-only="template">
                             Allowed months
                             <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
-                          </label>
-                          <label>
-                            Week of month
-                            <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
-                          </label>
-                          <label>
-                            Day of week
-                            <select id="eventsFieldWeekday">
-                              <option value="0">Sunday</option>
-                              <option value="1">Monday</option>
-                              <option value="2">Tuesday</option>
-                              <option value="3">Wednesday</option>
-                              <option value="4">Thursday</option>
-                              <option value="5">Friday</option>
-                              <option value="6">Saturday</option>
-                            </select>
                           </label>
                         </div>
                       </div>
