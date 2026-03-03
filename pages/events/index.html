@@ -185,25 +185,23 @@
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
-                    <h4>Basic Details</h4>
+                    <h4>Quick Setup</h4>
+                    <p class="events-admin-section-note">Fill out the main event details first. Technical fields stay tucked away unless you need them.</p>
                     <div class="events-admin-form-grid">
-                      <label>
-                        Entry Type
-                        <select id="eventsFieldKind">
-                          <option value="template">Recurring Template</option>
-                          <option value="event">One-Time Event</option>
-                        </select>
-                      </label>
-                      <label>
-                        ID
-                        <input type="text" id="eventsFieldId" placeholder="trip-qna" />
-                      </label>
                       <label class="events-admin-span">
                         Title
                         <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
                       </label>
+                      <label data-events-kind-only="event">
+                        Event date
+                        <input type="date" id="eventsFieldDate" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Start month
+                        <input type="month" id="eventsFieldStartMonth" />
+                      </label>
                       <label>
-                        Type
+                        Event type
                         <input type="text" id="eventsFieldType" placeholder="Training" />
                       </label>
                       <label>
@@ -217,17 +215,9 @@
                     </div>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
-                    <h4>Scheduling</h4>
-                    <p class="events-admin-section-note">One-time events use a fixed date. Recurring templates generate future dates from the rule below.</p>
+                    <h4>Timing</h4>
+                    <p class="events-admin-section-note">Keep this simple for visitors. Use the advanced drawer only if you need to change the recurring rule.</p>
                     <div class="events-admin-form-grid">
-                      <label data-events-kind-only="event">
-                        Date
-                        <input type="date" id="eventsFieldDate" />
-                      </label>
-                      <label data-events-kind-only="template">
-                        Start Month
-                        <input type="month" id="eventsFieldStartMonth" />
-                      </label>
                       <label>
                         Start Time
                         <input type="text" id="eventsFieldTime" placeholder="7:00 PM" />
@@ -236,34 +226,11 @@
                         End Time
                         <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
                       </label>
-                      <label data-events-kind-only="template">
-                        Interval (Months)
-                        <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
-                      </label>
-                      <label data-events-kind-only="template">
-                        Allowed Months
-                        <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
-                      </label>
-                      <label data-events-kind-only="template">
-                        Week of Month
-                        <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
-                      </label>
-                      <label data-events-kind-only="template">
-                        Weekday
-                        <select id="eventsFieldWeekday">
-                          <option value="0">Sunday</option>
-                          <option value="1">Monday</option>
-                          <option value="2">Tuesday</option>
-                          <option value="3">Wednesday</option>
-                          <option value="4">Thursday</option>
-                          <option value="5">Friday</option>
-                          <option value="6">Saturday</option>
-                        </select>
-                      </label>
                     </div>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Message and CTA</h4>
+                    <p class="events-admin-section-note">This is the copy your visitors will read on the calendar and action button.</p>
                     <div class="events-admin-form-grid">
                       <label class="events-admin-span">
                         Summary
@@ -279,6 +246,58 @@
                       </label>
                     </div>
                   </div>
+                  <details class="events-admin-advanced" id="eventsAdminAdvanced">
+                    <summary>Advanced Settings</summary>
+                    <div class="events-admin-advanced-body">
+                      <div class="events-admin-section events-admin-detail-section">
+                        <h4>Internal Details</h4>
+                        <p class="events-admin-section-note">These fields help keep the feed organized, but most edits do not need them.</p>
+                        <div class="events-admin-form-grid">
+                          <label>
+                            Entry type
+                            <select id="eventsFieldKind">
+                              <option value="template">Recurring Template</option>
+                              <option value="event">One-Time Event</option>
+                            </select>
+                          </label>
+                          <label>
+                            Entry ID
+                            <input type="text" id="eventsFieldId" placeholder="trip-qna" />
+                          </label>
+                        </div>
+                      </div>
+                      <div class="events-admin-section events-admin-detail-section" data-events-kind-only="template">
+                        <h4>Recurring Rule</h4>
+                        <p class="events-admin-section-note">Changes here affect future generated dates for this template.</p>
+                        <div class="events-admin-form-grid">
+                          <label>
+                            Repeat every (months)
+                            <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
+                          </label>
+                          <label>
+                            Allowed months
+                            <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
+                          </label>
+                          <label>
+                            Week of month
+                            <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
+                          </label>
+                          <label>
+                            Day of week
+                            <select id="eventsFieldWeekday">
+                              <option value="0">Sunday</option>
+                              <option value="1">Monday</option>
+                              <option value="2">Tuesday</option>
+                              <option value="3">Wednesday</option>
+                              <option value="4">Thursday</option>
+                              <option value="5">Friday</option>
+                              <option value="6">Saturday</option>
+                            </select>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>

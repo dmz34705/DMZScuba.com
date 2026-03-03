@@ -34,6 +34,7 @@
   const deleteBtn = panel.querySelector(".events-admin-delete");
   const searchInput = document.getElementById("eventsAdminSearch");
   const selectEl = document.getElementById("eventsAdminSelect");
+  const advancedDetails = document.getElementById("eventsAdminAdvanced");
 
   const fieldUpdated = document.getElementById("eventsConfigUpdated");
   const fieldTimezone = document.getElementById("eventsConfigTimezone");
@@ -338,6 +339,9 @@
       const targetKind = row.getAttribute("data-events-kind-only");
       row.hidden = targetKind !== kind;
     });
+    if (advancedDetails) {
+      advancedDetails.open = kind === "template";
+    }
   }
 
   function fillConfig() {
@@ -367,6 +371,7 @@
     if (fieldWeek) fieldWeek.value = "1";
     if (fieldWeekday) fieldWeekday.value = "2";
     updateKindFields("template");
+    if (advancedDetails) advancedDetails.open = false;
     resetSelectionContext();
   }
 

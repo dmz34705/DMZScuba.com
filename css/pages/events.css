@@ -1457,6 +1457,57 @@ body.events-admin-open .events-admin-modal {
   color: rgba(85,185,255,0.9);
 }
 
+.events-admin-editor .events-admin-form-grid label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(234,242,255,0.9);
+}
+
+.events-admin-advanced {
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  overflow: hidden;
+}
+
+.events-admin-advanced summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(234,242,255,0.84);
+}
+
+.events-admin-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.events-admin-advanced summary::after {
+  content: "+";
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(85,185,255,0.9);
+}
+
+.events-admin-advanced[open] summary::after {
+  content: "-";
+}
+
+.events-admin-advanced-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 0 14px;
+}
+
 .events-admin-search-wrap,
 .events-admin-list label,
 .events-admin-form-grid label {
