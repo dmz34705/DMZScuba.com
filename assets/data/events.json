@@ -145,7 +145,8 @@
   ],
   "templates": [
     {
-      "id": "ow-orientation",
+      "id": "template-ow-orientation",
+      "eventId": "ow-orientation",
       "title": "Open Water Orientation Night",
       "time": "6:30 PM",
       "endTime": "8:30 PM",
@@ -163,7 +164,8 @@
       "startMonth": "2026-03"
     },
     {
-      "id": "trip-qna",
+      "id": "template-trip-qna",
+      "eventId": "trip-qna",
       "title": "Trip Planning Q&A",
       "time": "7:00 PM",
       "endTime": "8:00 PM",
@@ -181,7 +183,8 @@
       "startMonth": "2026-03"
     },
     {
-      "id": "refresh-night",
+      "id": "template-refresh-night",
+      "eventId": "refresh-night",
       "title": "Skill Refresh Evening Session",
       "time": "6:00 PM",
       "endTime": "8:30 PM",
@@ -199,7 +202,8 @@
       "startMonth": "2026-03"
     },
     {
-      "id": "wreck-workshop",
+      "id": "template-wreck-workshop",
+      "eventId": "wreck-workshop",
       "title": "Wreck Readiness Workshop",
       "time": "6:30 PM",
       "endTime": "8:30 PM",
@@ -217,7 +221,8 @@
       "startMonth": "2026-04"
     },
     {
-      "id": "shore-dive",
+      "id": "template-shore-dive",
+      "eventId": "shore-dive",
       "title": "Local Shore Dive Meetup",
       "time": "8:00 AM",
       "endTime": "11:00 AM",
@@ -236,7 +241,8 @@
       "startMonth": "2026-04"
     },
     {
-      "id": "travel-briefing",
+      "id": "template-travel-briefing",
+      "eventId": "travel-briefing",
       "title": "Summer Travel Briefing Night",
       "time": "7:00 PM",
       "endTime": "8:15 PM",

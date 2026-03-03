@@ -42,6 +42,7 @@
   const fieldPreview = document.getElementById("eventsConfigPreview");
 
   const fieldKind = document.getElementById("eventsFieldKind");
+  const fieldDefinitionSelect = document.getElementById("eventsDefinitionSelect");
   const fieldDefinitionEyebrow = document.getElementById("eventsDefinitionEyebrow");
   const fieldDefinitionTitle = document.getElementById("eventsDefinitionTitle");
   const fieldDefinitionSlug = document.getElementById("eventsDefinitionSlug");
@@ -246,9 +247,15 @@
   function buildSuggestedId(kind, titleValue, anchorValue) {
     const titleBase = normalizeId(titleValue);
     const dateChunk = String(anchorValue || "").replace(/[^0-9]/g, "").slice(0, 8);
-    const prefix = kind === "template" ? "series" : "event";
+    const prefix = kind === "template" ? "series" : kind;
     const base = titleBase || prefix;
     return normalizeId(`${base}${dateChunk ? `-${dateChunk}` : `-${Date.now().toString().slice(-5)}`}`);
+  }
+
+  function buildDefinitionId(titleValue, anchorValue) {
+    const titleBase = normalizeId(titleValue);
+    if (titleBase) return titleBase;
+    return buildDraftId("eventdef", anchorValue || new Date().toISOString().slice(0, 10));
   }
 
   function deriveRuleFromDate(dateValue) {
@@ -478,6 +485,7 @@
 
   function clearForm() {
     if (fieldKind) fieldKind.value = "event";
+    if (fieldDefinitionSelect) fieldDefinitionSelect.innerHTML = "";
     if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = "";
     if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
     if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
@@ -513,15 +521,36 @@
     return String(entry.item.eventId || entry.item.id || "").trim();
   }
 
+  function renderDefinitionOptions(selectedId) {
+    if (!fieldDefinitionSelect) return;
+    const definitions = Array.isArray(payload && payload.definitions) ? payload.definitions : [];
+    fieldDefinitionSelect.innerHTML = definitions
+      .slice()
+      .sort((a, b) => {
+        const aLabel = `${(a && a.title) || ""} ${(a && a.id) || ""}`;
+        const bLabel = `${(b && b.title) || ""} ${(b && b.id) || ""}`;
+        return aLabel.localeCompare(bLabel);
+      })
+      .map((item) => {
+        const id = String((item && item.id) || "").trim();
+        if (!id) return "";
+        const label = String((item && item.title) || id).trim();
+        return `<option value="${id}">${label}</option>`;
+      })
+      .filter(Boolean)
+      .join("");
+    if (selectedId) fieldDefinitionSelect.value = selectedId;
+  }
+
   function getDefinitionById(definitionId) {
     if (!payload || !definitionId || !Array.isArray(payload.definitions)) return null;
     return payload.definitions.find((item) => item && item.id === definitionId) || null;
   }
 
-  function ensureDefinitionForEntry(entry) {
+  function ensureDefinitionForEntry(entry, options = {}) {
     if (!payload || !entry) return null;
     if (!Array.isArray(payload.definitions)) payload.definitions = [];
-    const definitionId = getDefinitionIdForEntry(entry);
+    const definitionId = String(options.definitionId || getDefinitionIdForEntry(entry)).trim();
     if (!definitionId) return null;
 
     let definition = getDefinitionById(definitionId);
@@ -550,6 +579,7 @@
 
   function fillDefinitionForm(entry) {
     if (!entry) {
+      if (fieldDefinitionSelect) fieldDefinitionSelect.innerHTML = "";
       if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = "";
       if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
       if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
@@ -566,6 +596,7 @@
 
     const definition = ensureDefinitionForEntry(entry);
     const item = entry.item || {};
+    renderDefinitionOptions(definition ? definition.id : getDefinitionIdForEntry(entry));
     if (fieldDefinitionEyebrow) {
       fieldDefinitionEyebrow.value = (definition && definition.eyebrow) || item.type || "Event";
     }
@@ -598,7 +629,17 @@
     const entry = options.entry || getSelectedEntry();
     if (!entry) return;
 
-    const definition = ensureDefinitionForEntry(entry);
+    const selectedDefinitionId = String((fieldDefinitionSelect && fieldDefinitionSelect.value) || "").trim();
+    const fallbackDefinitionId =
+      getDefinitionIdForEntry(entry) ||
+      buildDefinitionId(
+        (fieldDefinitionTitle && fieldDefinitionTitle.value) || (entry.item && entry.item.title) || "",
+        (entry.item && (entry.item.date || getTemplateAnchorDate(entry.item))) || selectionContext.requestedDate
+      );
+    const definitionId = selectedDefinitionId || fallbackDefinitionId;
+    if (entry.item) entry.item.eventId = definitionId;
+
+    const definition = ensureDefinitionForEntry(entry, { definitionId });
     if (!definition) return;
 
     definition.eyebrow =
@@ -670,8 +711,19 @@
     if (!title) throw new Error("A title is required.");
 
     const explicitId = normalizeId(fieldId ? fieldId.value : "");
+    const entry = getSelectedEntry();
+    const linkedDefinitionId =
+      String((fieldDefinitionSelect && fieldDefinitionSelect.value) || "").trim() ||
+      getDefinitionIdForEntry(entry) ||
+      buildDefinitionId(
+        (fieldDefinitionTitle && fieldDefinitionTitle.value) || title,
+        kind === "event"
+          ? String((fieldDate && fieldDate.value) || "").trim()
+          : String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim()
+      );
 
     const next = {
+      eventId: linkedDefinitionId,
       title,
       time: String((fieldTime && fieldTime.value) || "").trim(),
       endTime: String((fieldEndTime && fieldEndTime.value) || "").trim(),
@@ -686,7 +738,7 @@
     if (kind === "event") {
       const dateValue = String((fieldDate && fieldDate.value) || "").trim();
       if (!dateValue) throw new Error("A one-time event needs a date.");
-      next.id = explicitId || buildSuggestedId("event", title, dateValue);
+      next.id = explicitId || buildSuggestedId("event-item", title, dateValue);
       next.date = dateValue;
       return next;
     }
@@ -695,7 +747,7 @@
     if (!anchorValue) throw new Error("A repeating event needs a first date in the series.");
     const rule = deriveRuleFromDate(anchorValue);
     if (!rule) throw new Error("The first date in the series is invalid.");
-    next.id = explicitId || buildSuggestedId("template", title, anchorValue);
+    next.id = explicitId || buildSuggestedId("template-item", title, anchorValue);
     next.startMonth = anchorValue.slice(0, 7);
     next.intervalMonths = Math.max(1, Math.min(12, Number((fieldInterval && fieldInterval.value) || 1) || 1));
     const months = csvToMonthList(fieldMonths ? fieldMonths.value : "");
@@ -813,8 +865,10 @@
 
   function buildEventDraft(dateValue) {
     const safeDate = String(dateValue || new Date().toISOString().slice(0, 10)).trim();
+    const eventId = buildDefinitionId("New One-Time Event", safeDate);
     return {
-      id: buildDraftId("event", safeDate),
+      id: buildDraftId("eventitem", safeDate),
+      eventId,
       title: "New One-Time Event",
       date: safeDate,
       time: "",
@@ -831,8 +885,10 @@
   function buildTemplateDraft(dateValue) {
     const safeDate = String(dateValue || new Date().toISOString().slice(0, 10)).trim();
     const rule = deriveRuleFromDate(safeDate) || { weekOfMonth: 1, weekday: 2 };
+    const eventId = buildDefinitionId("New Repeating Event", safeDate);
     return {
-      id: buildDraftId("series", safeDate),
+      id: buildDraftId("templateitem", safeDate),
+      eventId,
       title: "New Repeating Event",
       startMonth: safeDate.slice(0, 7),
       intervalMonths: 1,
@@ -1192,11 +1248,37 @@
     });
   }
 
+  if (fieldDefinitionSelect) {
+    fieldDefinitionSelect.addEventListener("change", () => {
+      const entry = getSelectedEntry();
+      if (!entry || !payload) return;
+      const nextId = String(fieldDefinitionSelect.value || "").trim();
+      if (entry.item && nextId) entry.item.eventId = nextId;
+      const definition = nextId ? getDefinitionById(nextId) : null;
+      if (definition) {
+        if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = definition.eyebrow || definition.type || "Event";
+        if (fieldDefinitionTitle) fieldDefinitionTitle.value = definition.title || "";
+        if (fieldDefinitionSlug) fieldDefinitionSlug.value = definition.slug || "";
+        if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = definition.heroSummary || "";
+        if (fieldDefinitionNarrative) fieldDefinitionNarrative.value = definition.narrative || "";
+        if (fieldDefinitionExperience) fieldDefinitionExperience.value = definition.experience || "";
+        if (fieldDefinitionScheduleNote) fieldDefinitionScheduleNote.value = definition.scheduleNote || "";
+        if (fieldDefinitionWhatToExpect) fieldDefinitionWhatToExpect.value = listToLines(definition.whatToExpect);
+        if (fieldDefinitionIncluded) fieldDefinitionIncluded.value = listToLines(definition.included);
+        if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = definition.primaryCtaLabel || "";
+        if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = definition.primaryCtaHref || "";
+      }
+      setDirty(true);
+      setStatus("Draft", "neutral");
+    });
+  }
+
   const trackedFields = [
     fieldUpdated,
     fieldTimezone,
     fieldHorizon,
     fieldPreview,
+    fieldDefinitionSelect,
     fieldDefinitionEyebrow,
     fieldDefinitionTitle,
     fieldDefinitionSlug,

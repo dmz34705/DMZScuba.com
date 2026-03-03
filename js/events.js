@@ -161,7 +161,7 @@
         generated.push({
           ...template,
           id: `${template.id}-${dateKey(occurrence)}`,
-          eventId: template.id,
+          eventId: template.eventId || template.id,
           date: dateKey(occurrence),
           dateObj: occurrence,
         });
