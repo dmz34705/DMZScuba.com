@@ -324,6 +324,7 @@
 .events-day {
   padding: 10px;
   background: rgba(0,0,0,0.18);
+  overflow: hidden;
 }
 
 .events-day-selected {
@@ -367,6 +368,7 @@
   display: grid;
   width: 100%;
   min-height: 100%;
+  min-width: 0;
   justify-items: start;
   align-content: start;
   gap: 8px;
@@ -406,12 +408,21 @@
 }
 
 .events-day-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
   font-size: 11px;
   line-height: 1.2;
   color: rgba(85,185,255,0.86);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.events-day-count-number,
+.events-day-count-label {
+  line-height: 1;
 }
 
 .events-day-bar-stack {
@@ -1050,13 +1061,20 @@
   .events-day-count {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     min-height: 16px;
-    padding: 1px 5px;
+    min-width: 18px;
+    max-width: 100%;
+    padding: 1px 4px;
     border-radius: 999px;
     background: rgba(85,185,255,0.12);
     font-size: 8px;
     line-height: 1;
     letter-spacing: 0.06em;
+  }
+
+  .events-day-count-label {
+    display: none;
   }
 
   .events-day-label,
