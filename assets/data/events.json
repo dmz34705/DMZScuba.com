@@ -3,6 +3,62 @@
   "timezone": "America/Chicago",
   "horizonMonths": 30,
   "previewCount": 3,
+  "definitions": [
+    {
+      "id": "ow-orientation",
+      "slug": "open-water-orientation-night",
+      "title": "Open Water Orientation Night",
+      "type": "Training",
+      "heroSummary": "A relaxed first step for new divers who want a clear plan before starting open water training.",
+      "primaryCtaLabel": "Reserve a Spot",
+      "primaryCtaHref": "/pages/contact/index.html?interest=training#dive-now"
+    },
+    {
+      "id": "trip-qna",
+      "slug": "trip-planning-q-and-a",
+      "title": "Trip Planning Q&A",
+      "type": "Travel",
+      "heroSummary": "A practical planning session for divers comparing upcoming DMZ travel and trying to pick the right trip window.",
+      "primaryCtaLabel": "Join the Interest List",
+      "primaryCtaHref": "/pages/contact/index.html?interest=travel#dive-now"
+    },
+    {
+      "id": "refresh-night",
+      "slug": "skill-refresh-evening-session",
+      "title": "Skill Refresh Evening Session",
+      "type": "Local Dive",
+      "heroSummary": "A confidence-building session for certified divers who want a cleaner restart before the season gets busy.",
+      "primaryCtaLabel": "Book a Refresh",
+      "primaryCtaHref": "/pages/contact/index.html?interest=training#dive-now"
+    },
+    {
+      "id": "wreck-workshop",
+      "slug": "wreck-readiness-workshop",
+      "title": "Wreck Readiness Workshop",
+      "type": "Workshop",
+      "heroSummary": "A focused planning workshop for divers preparing to approach wreck training the right way.",
+      "primaryCtaLabel": "Ask About Training",
+      "primaryCtaHref": "/pages/contact/index.html?interest=training#dive-now"
+    },
+    {
+      "id": "shore-dive",
+      "slug": "local-shore-dive-meetup",
+      "title": "Local Shore Dive Meetup",
+      "type": "Community",
+      "heroSummary": "A simple local dive window for certified divers who want time in the water and stronger dive habits.",
+      "primaryCtaLabel": "Get Dive Details",
+      "primaryCtaHref": "/pages/contact/index.html?interest=custom#dive-now"
+    },
+    {
+      "id": "travel-briefing",
+      "slug": "summer-travel-briefing-night",
+      "title": "Summer Travel Briefing Night",
+      "type": "Travel",
+      "heroSummary": "A practical briefing night for divers deciding how to prepare for upcoming travel windows.",
+      "primaryCtaLabel": "Start My Dive Plan",
+      "primaryCtaHref": "/pages/contact/index.html?interest=travel#dive-now"
+    }
+  ],
   "templates": [
     {
       "id": "ow-orientation",

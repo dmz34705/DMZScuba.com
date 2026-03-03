@@ -179,6 +179,9 @@
       timezone: String((input && input.timezone) || "America/Chicago").trim(),
       horizonMonths: Math.max(1, Number((input && input.horizonMonths) || 30) || 30),
       previewCount: Math.max(1, Number((input && input.previewCount) || 3) || 3),
+      definitions: Array.isArray(input && input.definitions)
+        ? input.definitions.map((item) => ({ ...item }))
+        : [],
       events: Array.isArray(input && input.events) ? input.events.map((item) => ({ ...item })) : [],
       templates: Array.isArray(input && input.templates) ? input.templates.map((item) => ({ ...item })) : [],
     };

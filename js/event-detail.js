@@ -27,6 +27,15 @@
   const requestedId = String(params.get("id") || "").trim();
   const requestedDate = String(params.get("date") || "").trim();
 
+  function findDefinition(payload, idValue) {
+    const definitions = Array.isArray(payload && payload.definitions) ? payload.definitions : [];
+    const needle = String(idValue || "").trim();
+    if (!needle) return null;
+    return (
+      definitions.find((item) => item && (item.id === needle || item.slug === needle)) || null
+    );
+  }
+
   function dateKey(date) {
     return [
       date.getFullYear(),
@@ -203,16 +212,23 @@
     }
 
     const instances = buildInstances(scheduleData);
-    const instance = findBestInstance(instances, requestedId, requestedDate);
-    const extra = (Array.isArray(expandedData) ? expandedData : []).find((item) => item && item.id === requestedId) || {};
+    const definition = findDefinition(scheduleData, requestedId);
+    const resolvedId = definition ? definition.id : requestedId;
+    const instance = findBestInstance(instances, resolvedId, requestedDate);
+    const extra =
+      (Array.isArray(expandedData) ? expandedData : []).find((item) => item && item.id === resolvedId) || {};
 
-    if (!instance && !extra.id) {
+    if (!instance && !extra.id && !definition) {
       showError("We could not find that event.");
       return;
     }
 
-    const title = extra.title || (instance && instance.title) || "Event";
-    const heroSummary = extra.heroSummary || (instance && instance.summary) || "Event details are loading.";
+    const title = extra.title || (definition && definition.title) || (instance && instance.title) || "Event";
+    const heroSummary =
+      extra.heroSummary ||
+      (definition && definition.heroSummary) ||
+      (instance && instance.summary) ||
+      "Event details are loading.";
     const summary = (instance && instance.summary) || extra.heroSummary || "";
     const scheduleLine = instance ? formatScheduleLine(instance) : "Schedule will be posted soon";
     const timeLine = instance && instance.time
@@ -223,7 +239,10 @@
 
     document.title = `DMZ Scuba | ${title}`;
     setText(titleEl, title);
-    setText(eyebrowEl, extra.eyebrow || (instance && instance.type) || "DMZ Event");
+    setText(
+      eyebrowEl,
+      extra.eyebrow || (definition && definition.type) || (instance && instance.type) || "DMZ Event"
+    );
     setText(heroSummaryEl, heroSummary);
     setText(scheduleChipEl, scheduleLine);
     setText(
@@ -243,8 +262,16 @@
     setList(includedEl, extra.included);
 
     if (primaryLinkEl) {
-      primaryLinkEl.textContent = extra.primaryCtaLabel || (instance && instance.ctaLabel) || "Contact DMZ";
-      primaryLinkEl.href = extra.primaryCtaHref || (instance && instance.ctaHref) || "/pages/contact/index.html#dive-now";
+      primaryLinkEl.textContent =
+        extra.primaryCtaLabel ||
+        (definition && definition.primaryCtaLabel) ||
+        (instance && instance.ctaLabel) ||
+        "Contact DMZ";
+      primaryLinkEl.href =
+        extra.primaryCtaHref ||
+        (definition && definition.primaryCtaHref) ||
+        (instance && instance.ctaHref) ||
+        "/pages/contact/index.html#dive-now";
     }
 
     backLinks.forEach((link) => {
