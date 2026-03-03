@@ -33,6 +33,8 @@
   const clearLiveBtn = adminBar.querySelector(".events-admin-clear-live");
   const deleteBtn = panel.querySelector(".events-admin-delete");
   const searchInput = document.getElementById("eventsAdminSearch");
+  const searchClearBtn = document.getElementById("eventsAdminSearchClear");
+  const searchStatusEl = document.getElementById("eventsAdminSearchStatus");
   const selectEl = document.getElementById("eventsAdminSelect");
   const advancedDetails = document.getElementById("eventsAdminAdvanced");
   const pageDetails = document.getElementById("eventsAdminPageDetails");
@@ -533,6 +535,34 @@
     return String(entry.item.eventId || entry.item.id || "").trim();
   }
 
+  function getEntryDisplayLabel(entry) {
+    if (!entry) return "";
+    const item = entry.item || {};
+    const definition = getDefinitionById(getDefinitionIdForEntry(entry));
+    const kindLabel = entry.kind === "template" ? "Repeats" : "One Date";
+    const typeLabel = String(item.type || "Event").trim() || "Event";
+    const titleLabel = String(item.title || item.id || "Untitled").trim();
+    const whenLabel =
+      entry.kind === "template"
+        ? (() => {
+            const anchor = getTemplateAnchorDate(item);
+            return anchor ? `starts ${formatDateLabel(anchor)}` : "repeat schedule";
+          })()
+        : item.date
+          ? formatDateLabel(item.date)
+          : "date needed";
+    const pageLabel =
+      definition && definition.title && definition.title !== titleLabel
+        ? ` | page: ${definition.title}`
+        : "";
+    return `${kindLabel} | ${titleLabel} | ${typeLabel} | ${whenLabel}${pageLabel}`;
+  }
+
+  function setSearchStatus(text) {
+    if (!searchStatusEl) return;
+    searchStatusEl.textContent = text || "Showing all saved items.";
+  }
+
   function renderDefinitionOptions(selectedId) {
     if (!fieldDefinitionSelect) return;
     const definitions = Array.isArray(payload && payload.definitions) ? payload.definitions : [];
@@ -832,32 +862,72 @@
   function renderList(filterText = "") {
     if (!selectEl) return;
     const filter = String(filterText || "").trim().toLowerCase();
-    const entries = getEntries()
-      .filter((entry) => {
-        if (!filter) return true;
-        const hay = `${entry.item.id || ""} ${entry.item.title || ""} ${entry.item.type || ""}`.toLowerCase();
-        return hay.includes(filter);
-      })
+    const allEntries = getEntries()
       .sort((a, b) => {
         const aLabel = `${a.kind} ${a.item.title || a.item.id || ""}`;
         const bLabel = `${b.kind} ${b.item.title || b.item.id || ""}`;
         return aLabel.localeCompare(bLabel);
       });
+    const entries = allEntries.filter((entry) => {
+      if (!filter) return true;
+      const definition = getDefinitionById(getDefinitionIdForEntry(entry));
+      const hay = [
+        entry.item.id || "",
+        entry.item.eventId || "",
+        entry.item.title || "",
+        entry.item.type || "",
+        entry.kind === "template" ? "repeats" : "one date",
+        definition && definition.title ? definition.title : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(filter);
+    });
 
     selectEl.innerHTML = "";
+    const selectedVisible = entries.some((entry) => entry.key === selectedKey);
     entries.forEach((entry) => {
       const option = document.createElement("option");
       option.value = entry.key;
-      option.textContent = `${entry.kind === "template" ? "Repeats" : "One-Time"} | ${entry.item.title || entry.item.id}`;
-      if (entry.key === selectedKey) option.selected = true;
+      option.textContent = getEntryDisplayLabel(entry);
+      if (entry.key === selectedKey && selectedVisible) option.selected = true;
       selectEl.appendChild(option);
     });
 
-    if (!entries.some((entry) => entry.key === selectedKey)) {
-      setSelectionContext();
-      selectedKey = entries[0] ? entries[0].key : "";
+    if (searchClearBtn) searchClearBtn.hidden = !filter;
+
+    if (!entries.length) {
+      const option = document.createElement("option");
+      option.disabled = true;
+      option.textContent = filter ? "No saved schedules match this search." : "No saved schedules yet.";
+      selectEl.appendChild(option);
+      selectEl.selectedIndex = -1;
+      setSearchStatus(
+        filter
+          ? "No matches. Your current editor stays where it is until you pick a different saved item."
+          : "No saved schedules yet."
+      );
+      fillForm(getSelectedEntry());
+      syncAuthUi();
+      return;
     }
-    if (selectEl.value !== selectedKey) selectEl.value = selectedKey;
+
+    if (!selectedVisible) {
+      selectEl.selectedIndex = -1;
+    } else if (selectEl.value !== selectedKey) {
+      selectEl.value = selectedKey;
+    }
+
+    if (filter) {
+      setSearchStatus(
+        selectedVisible
+          ? `Showing ${entries.length} match${entries.length === 1 ? "" : "es"}.`
+          : `Showing ${entries.length} match${entries.length === 1 ? "" : "es"}. Pick one to switch the editor.`
+      );
+    } else {
+      setSearchStatus(`Showing all ${entries.length} saved schedule${entries.length === 1 ? "" : "s"}.`);
+    }
+
     fillForm(getSelectedEntry());
     syncAuthUi();
   }
@@ -1280,6 +1350,14 @@
   if (searchInput) {
     searchInput.addEventListener("input", () => {
       renderList(searchInput.value);
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener("click", () => {
+      if (searchInput) searchInput.value = "";
+      renderList("");
+      if (searchInput) searchInput.focus();
     });
   }
 

@@ -167,12 +167,16 @@
             <div class="events-admin-shell">
               <div class="events-admin-list">
                 <label class="events-admin-search-wrap">
-                  Search Saved Events
-                  <input type="search" id="eventsAdminSearch" placeholder="Search by title or type" />
+                  Find A Saved Item
+                  <div class="events-admin-search-row">
+                    <input type="search" id="eventsAdminSearch" placeholder="Search by event name, category, or schedule type" />
+                    <button class="btn secondary events-admin-search-clear" type="button" id="eventsAdminSearchClear" hidden>Clear</button>
+                  </div>
+                  <p class="events-admin-search-status" id="eventsAdminSearchStatus">Showing all saved items.</p>
                 </label>
                 <label>
-                  Saved Events
-                  <select id="eventsAdminSelect" size="10" aria-label="Select event entry"></select>
+                  Saved Schedules
+                  <select id="eventsAdminSelect" size="12" aria-label="Select event entry"></select>
                 </label>
               </div>
               <div class="events-admin-editor">

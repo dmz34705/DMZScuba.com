@@ -1527,6 +1527,29 @@ body.events-admin-open .events-admin-modal {
   color: rgba(234,242,255,0.78);
 }
 
+.events-admin-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.events-admin-search-clear {
+  min-width: 72px;
+  justify-content: center;
+  padding: 10px 12px;
+}
+
+.events-admin-search-status {
+  margin: 0;
+  color: rgba(234,242,255,0.68);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+}
+
 .events-admin-search-wrap input,
 .events-admin-list select,
 .events-admin-form-grid input,
@@ -1654,6 +1677,10 @@ body.events-admin-open .events-admin-modal {
   }
 
   .events-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .events-admin-search-row {
     grid-template-columns: 1fr;
   }
 
