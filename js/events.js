@@ -541,15 +541,6 @@
         if (upcomingItems.length >= 18) break;
       }
       const listItems = upcomingItems.slice(0, 18);
-      const agendaHead = document.createElement("div");
-      agendaHead.className = "events-agenda-head";
-      agendaHead.innerHTML = `
-        <div class="events-agenda-kicker">Next Up</div>
-        <h3>${listItems.length ? "Upcoming Events" : "No Upcoming Events"}</h3>
-        <p>${listItems.length ? "Listed in chronological order with the soonest event at the top." : "No future events are scheduled in the current rolling window."}</p>
-      `;
-      listHost.appendChild(agendaHead);
-
       if (!listItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
