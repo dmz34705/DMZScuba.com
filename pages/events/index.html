@@ -176,86 +176,108 @@
                     <h3>Selected Entry</h3>
                     <button class="btn secondary events-admin-delete" type="button">Delete Selected</button>
                   </div>
-                  <div class="events-admin-form-grid">
-                    <label>
-                      Entry Type
-                      <select id="eventsFieldKind">
-                        <option value="template">Recurring Template</option>
-                        <option value="event">One-Time Event</option>
-                      </select>
-                    </label>
-                    <label>
-                      ID
-                      <input type="text" id="eventsFieldId" placeholder="trip-qna" />
-                    </label>
-                    <label class="events-admin-span">
-                      Title
-                      <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
-                    </label>
-                    <label data-events-kind-only="event">
-                      Date
-                      <input type="date" id="eventsFieldDate" />
-                    </label>
-                    <label data-events-kind-only="template">
-                      Start Month
-                      <input type="month" id="eventsFieldStartMonth" />
-                    </label>
-                    <label>
-                      Start Time
-                      <input type="text" id="eventsFieldTime" placeholder="7:00 PM" />
-                    </label>
-                    <label>
-                      End Time
-                      <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
-                    </label>
-                    <label>
-                      Type
-                      <input type="text" id="eventsFieldType" placeholder="Training" />
-                    </label>
-                    <label>
-                      Status
-                      <input type="text" id="eventsFieldStatus" placeholder="Planned" />
-                    </label>
-                    <label class="events-admin-span">
-                      Location
-                      <input type="text" id="eventsFieldLocation" placeholder="La Grange, IL" />
-                    </label>
-                    <label class="events-admin-span">
-                      Summary
-                      <textarea id="eventsFieldSummary" rows="4"></textarea>
-                    </label>
-                    <label>
-                      CTA Label
-                      <input type="text" id="eventsFieldCtaLabel" placeholder="Reserve a Spot" />
-                    </label>
-                    <label>
-                      CTA Link
-                      <input type="text" id="eventsFieldCtaHref" placeholder="/pages/contact/index.html#dive-now" />
-                    </label>
-                    <label data-events-kind-only="template">
-                      Interval (Months)
-                      <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
-                    </label>
-                    <label data-events-kind-only="template">
-                      Allowed Months
-                      <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
-                    </label>
-                    <label data-events-kind-only="template">
-                      Week of Month
-                      <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
-                    </label>
-                    <label data-events-kind-only="template">
-                      Weekday
-                      <select id="eventsFieldWeekday">
-                        <option value="0">Sunday</option>
-                        <option value="1">Monday</option>
-                        <option value="2">Tuesday</option>
-                        <option value="3">Wednesday</option>
-                        <option value="4">Thursday</option>
-                        <option value="5">Friday</option>
-                        <option value="6">Saturday</option>
-                      </select>
-                    </label>
+                  <div class="events-admin-context" id="eventsAdminContext">
+                    <div class="events-admin-context-head">
+                      <span class="events-admin-context-badge" id="eventsAdminContextBadge">No Selection</span>
+                      <span class="events-admin-context-meta" id="eventsAdminContextMeta">Choose a saved entry or click a date in edit mode.</span>
+                    </div>
+                    <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
+                    <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
+                  </div>
+                  <div class="events-admin-section events-admin-detail-section">
+                    <h4>Basic Details</h4>
+                    <div class="events-admin-form-grid">
+                      <label>
+                        Entry Type
+                        <select id="eventsFieldKind">
+                          <option value="template">Recurring Template</option>
+                          <option value="event">One-Time Event</option>
+                        </select>
+                      </label>
+                      <label>
+                        ID
+                        <input type="text" id="eventsFieldId" placeholder="trip-qna" />
+                      </label>
+                      <label class="events-admin-span">
+                        Title
+                        <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
+                      </label>
+                      <label>
+                        Type
+                        <input type="text" id="eventsFieldType" placeholder="Training" />
+                      </label>
+                      <label>
+                        Status
+                        <input type="text" id="eventsFieldStatus" placeholder="Planned" />
+                      </label>
+                      <label class="events-admin-span">
+                        Location
+                        <input type="text" id="eventsFieldLocation" placeholder="La Grange, IL" />
+                      </label>
+                    </div>
+                  </div>
+                  <div class="events-admin-section events-admin-detail-section">
+                    <h4>Scheduling</h4>
+                    <p class="events-admin-section-note">One-time events use a fixed date. Recurring templates generate future dates from the rule below.</p>
+                    <div class="events-admin-form-grid">
+                      <label data-events-kind-only="event">
+                        Date
+                        <input type="date" id="eventsFieldDate" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Start Month
+                        <input type="month" id="eventsFieldStartMonth" />
+                      </label>
+                      <label>
+                        Start Time
+                        <input type="text" id="eventsFieldTime" placeholder="7:00 PM" />
+                      </label>
+                      <label>
+                        End Time
+                        <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Interval (Months)
+                        <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Allowed Months
+                        <input type="text" id="eventsFieldMonths" placeholder="4, 5, 6, 7" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Week of Month
+                        <input type="number" min="1" max="5" id="eventsFieldWeekOfMonth" />
+                      </label>
+                      <label data-events-kind-only="template">
+                        Weekday
+                        <select id="eventsFieldWeekday">
+                          <option value="0">Sunday</option>
+                          <option value="1">Monday</option>
+                          <option value="2">Tuesday</option>
+                          <option value="3">Wednesday</option>
+                          <option value="4">Thursday</option>
+                          <option value="5">Friday</option>
+                          <option value="6">Saturday</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="events-admin-section events-admin-detail-section">
+                    <h4>Message and CTA</h4>
+                    <div class="events-admin-form-grid">
+                      <label class="events-admin-span">
+                        Summary
+                        <textarea id="eventsFieldSummary" rows="4"></textarea>
+                      </label>
+                      <label>
+                        CTA Label
+                        <input type="text" id="eventsFieldCtaLabel" placeholder="Reserve a Spot" />
+                      </label>
+                      <label>
+                        CTA Link
+                        <input type="text" id="eventsFieldCtaHref" placeholder="/pages/contact/index.html#dive-now" />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
