@@ -288,6 +288,45 @@
     return article;
   }
 
+  function renderAgendaRow(eventItem) {
+    const article = document.createElement("article");
+    const typeMeta = getEventTypeMeta(eventItem.type);
+    article.className = `event-card event-card-agenda-row ${typeMeta.className}`;
+
+    const meta = document.createElement("div");
+    meta.className = "event-card-meta";
+    meta.innerHTML = `
+      <span class="event-chip">
+        <span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>
+        <span>${eventItem.type || "Event"}</span>
+      </span>
+    `;
+
+    const title = document.createElement("h3");
+    title.textContent = eventItem.title;
+
+    const infoLine = document.createElement("p");
+    infoLine.className = "event-card-agenda-info";
+    const timeText = eventItem.time
+      ? eventItem.endTime
+        ? `${eventItem.time} - ${eventItem.endTime}`
+        : eventItem.time
+      : "Time announced soon";
+    const locationText = eventItem.location || "Location announced soon";
+    infoLine.textContent = `${timeText} | ${locationText}`;
+
+    const content = document.createElement("div");
+    content.className = "event-card-agenda-main";
+    content.append(meta, title, infoLine);
+
+    const actions = document.createElement("div");
+    actions.className = "event-card-actions";
+    actions.innerHTML = `<a class="btn secondary" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">View</a>`;
+
+    article.append(content, actions);
+    return article;
+  }
+
   function renderPreview(events, payload) {
     if (!previewRoot) return;
     const list = previewRoot.querySelector("[data-events-preview-list]");
@@ -576,9 +615,7 @@
         upcomingItems.push(...monthItems);
         if (upcomingItems.length >= agendaLimit) break;
       }
-      const selectedMatches = upcomingItems.filter((eventItem) => eventItem.date === selectedDateKey);
-      const remainingItems = upcomingItems.filter((eventItem) => eventItem.date !== selectedDateKey);
-      const listItems = [...selectedMatches, ...remainingItems].slice(0, agendaLimit);
+      const listItems = upcomingItems.slice(0, agendaLimit);
       if (!listItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
@@ -589,14 +626,37 @@
         scrollList.className = "events-upcoming-scroll";
         let firstMatch = null;
 
+        const agendaGroups = new Map();
         listItems.forEach((eventItem) => {
-          const card = renderEventCard(eventItem, "agenda");
-          card.classList.add("events-upcoming-card");
-          if (eventItem.date === selectedDateKey) {
-            card.classList.add("is-selected");
-            if (!firstMatch) firstMatch = card;
+          const items = agendaGroups.get(eventItem.date) || [];
+          items.push(eventItem);
+          agendaGroups.set(eventItem.date, items);
+        });
+
+        agendaGroups.forEach((items, dateValue) => {
+          const group = document.createElement("section");
+          group.className = "events-agenda-group";
+          if (dateValue === selectedDateKey) {
+            group.classList.add("is-selected");
+            if (!firstMatch) firstMatch = group;
           }
-          scrollList.appendChild(card);
+
+          const heading = document.createElement("div");
+          heading.className = "events-agenda-date-head";
+          const headingDate = parseDateKey(dateValue) || items[0].dateObj;
+          heading.innerHTML = `
+            <strong>${weekdayLongFormatter.format(headingDate)}</strong>
+            <span>${items.length} event${items.length === 1 ? "" : "s"}</span>
+          `;
+          group.appendChild(heading);
+
+          items.forEach((eventItem) => {
+            const row = renderAgendaRow(eventItem);
+            row.classList.add("events-upcoming-card");
+            group.appendChild(row);
+          });
+
+          scrollList.appendChild(group);
         });
 
         listHost.appendChild(scrollList);
