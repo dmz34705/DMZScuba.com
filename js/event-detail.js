@@ -229,7 +229,11 @@
       extra.heroSummary ||
       (instance && instance.summary) ||
       "Event details are loading.";
-    const summary = (instance && instance.summary) || extra.heroSummary || "";
+    const summary =
+      (instance && instance.summary) ||
+      (definition && definition.heroSummary) ||
+      extra.heroSummary ||
+      "";
     const scheduleLine = instance ? formatScheduleLine(instance) : "Schedule will be posted soon";
     const timeLine = instance && instance.time
       ? instance.endTime
@@ -241,7 +245,11 @@
     setText(titleEl, title);
     setText(
       eyebrowEl,
-      extra.eyebrow || (definition && definition.type) || (instance && instance.type) || "DMZ Event"
+      (definition && definition.eyebrow) ||
+      extra.eyebrow ||
+      (definition && definition.type) ||
+      (instance && instance.type) ||
+      "DMZ Event"
     );
     setText(heroSummaryEl, heroSummary);
     setText(scheduleChipEl, scheduleLine);
@@ -251,15 +259,26 @@
         ? `${instance.type || "Event"} | ${instance.status}`
         : (instance && instance.type) || "Event"
     );
-    setText(narrativeEl, extra.narrative || summary || "Full event detail content will appear here.");
-    setText(experienceEl, extra.experience || "Experience guidance for this event will be added here.");
-    setText(scheduleNoteEl, extra.scheduleNote || "This event will support both recurring templates and one-time date overrides.");
+    setText(
+      narrativeEl,
+      (definition && definition.narrative) || extra.narrative || summary || "Full event detail content will appear here."
+    );
+    setText(
+      experienceEl,
+      (definition && definition.experience) || extra.experience || "Experience guidance for this event will be added here."
+    );
+    setText(
+      scheduleNoteEl,
+      (definition && definition.scheduleNote) ||
+        extra.scheduleNote ||
+        "This event will support both recurring templates and one-time date overrides."
+    );
     setText(metaDateEl, instance ? scheduleLine : "Schedule will be posted soon");
     setText(metaTimeEl, timeLine);
     setText(metaLocationEl, (instance && instance.location) || "Location announced soon");
     setText(summaryEl, summary || "The event summary will appear here once the schedule is finalized.");
-    setList(whatToExpectEl, extra.whatToExpect);
-    setList(includedEl, extra.included);
+    setList(whatToExpectEl, (definition && definition.whatToExpect) || extra.whatToExpect);
+    setList(includedEl, (definition && definition.included) || extra.included);
 
     if (primaryLinkEl) {
       primaryLinkEl.textContent =

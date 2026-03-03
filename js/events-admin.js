@@ -42,9 +42,15 @@
   const fieldPreview = document.getElementById("eventsConfigPreview");
 
   const fieldKind = document.getElementById("eventsFieldKind");
+  const fieldDefinitionEyebrow = document.getElementById("eventsDefinitionEyebrow");
   const fieldDefinitionTitle = document.getElementById("eventsDefinitionTitle");
   const fieldDefinitionSlug = document.getElementById("eventsDefinitionSlug");
   const fieldDefinitionHeroSummary = document.getElementById("eventsDefinitionHeroSummary");
+  const fieldDefinitionNarrative = document.getElementById("eventsDefinitionNarrative");
+  const fieldDefinitionExperience = document.getElementById("eventsDefinitionExperience");
+  const fieldDefinitionScheduleNote = document.getElementById("eventsDefinitionScheduleNote");
+  const fieldDefinitionWhatToExpect = document.getElementById("eventsDefinitionWhatToExpect");
+  const fieldDefinitionIncluded = document.getElementById("eventsDefinitionIncluded");
   const fieldDefinitionCtaLabel = document.getElementById("eventsDefinitionCtaLabel");
   const fieldDefinitionCtaHref = document.getElementById("eventsDefinitionCtaHref");
   const fieldId = document.getElementById("eventsFieldId");
@@ -212,6 +218,20 @@
       .split(",")
       .map((part) => Math.trunc(Number(part.trim())))
       .filter((month) => Number.isFinite(month) && month >= 1 && month <= 12);
+  }
+
+  function listToLines(list) {
+    return (Array.isArray(list) ? list : [])
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  function linesToList(value) {
+    return String(value || "")
+      .split(/\r?\n/)
+      .map((part) => part.trim())
+      .filter(Boolean);
   }
 
   function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
@@ -458,9 +478,15 @@
 
   function clearForm() {
     if (fieldKind) fieldKind.value = "event";
+    if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = "";
     if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
     if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
     if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = "";
+    if (fieldDefinitionNarrative) fieldDefinitionNarrative.value = "";
+    if (fieldDefinitionExperience) fieldDefinitionExperience.value = "";
+    if (fieldDefinitionScheduleNote) fieldDefinitionScheduleNote.value = "";
+    if (fieldDefinitionWhatToExpect) fieldDefinitionWhatToExpect.value = "";
+    if (fieldDefinitionIncluded) fieldDefinitionIncluded.value = "";
     if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = "";
     if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = "";
     if (fieldId) fieldId.value = "";
@@ -506,7 +532,13 @@
         slug: definitionId,
         title: item.title || "Untitled Event",
         type: item.type || "Event",
+        eyebrow: item.type || "Event",
         heroSummary: item.summary || "",
+        narrative: "",
+        experience: "",
+        scheduleNote: "",
+        whatToExpect: [],
+        included: [],
         primaryCtaLabel: item.ctaLabel || "",
         primaryCtaHref: item.ctaHref || "",
       };
@@ -518,9 +550,15 @@
 
   function fillDefinitionForm(entry) {
     if (!entry) {
+      if (fieldDefinitionEyebrow) fieldDefinitionEyebrow.value = "";
       if (fieldDefinitionTitle) fieldDefinitionTitle.value = "";
       if (fieldDefinitionSlug) fieldDefinitionSlug.value = "";
       if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = "";
+      if (fieldDefinitionNarrative) fieldDefinitionNarrative.value = "";
+      if (fieldDefinitionExperience) fieldDefinitionExperience.value = "";
+      if (fieldDefinitionScheduleNote) fieldDefinitionScheduleNote.value = "";
+      if (fieldDefinitionWhatToExpect) fieldDefinitionWhatToExpect.value = "";
+      if (fieldDefinitionIncluded) fieldDefinitionIncluded.value = "";
       if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = "";
       if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = "";
       return;
@@ -528,10 +566,24 @@
 
     const definition = ensureDefinitionForEntry(entry);
     const item = entry.item || {};
+    if (fieldDefinitionEyebrow) {
+      fieldDefinitionEyebrow.value = (definition && definition.eyebrow) || item.type || "Event";
+    }
     if (fieldDefinitionTitle) fieldDefinitionTitle.value = (definition && definition.title) || item.title || "";
     if (fieldDefinitionSlug) fieldDefinitionSlug.value = (definition && definition.slug) || "";
     if (fieldDefinitionHeroSummary) {
       fieldDefinitionHeroSummary.value = (definition && definition.heroSummary) || item.summary || "";
+    }
+    if (fieldDefinitionNarrative) fieldDefinitionNarrative.value = (definition && definition.narrative) || "";
+    if (fieldDefinitionExperience) fieldDefinitionExperience.value = (definition && definition.experience) || "";
+    if (fieldDefinitionScheduleNote) {
+      fieldDefinitionScheduleNote.value = (definition && definition.scheduleNote) || "";
+    }
+    if (fieldDefinitionWhatToExpect) {
+      fieldDefinitionWhatToExpect.value = listToLines(definition && definition.whatToExpect);
+    }
+    if (fieldDefinitionIncluded) {
+      fieldDefinitionIncluded.value = listToLines(definition && definition.included);
     }
     if (fieldDefinitionCtaLabel) {
       fieldDefinitionCtaLabel.value = (definition && definition.primaryCtaLabel) || item.ctaLabel || "";
@@ -549,6 +601,10 @@
     const definition = ensureDefinitionForEntry(entry);
     if (!definition) return;
 
+    definition.eyebrow =
+      String((fieldDefinitionEyebrow && fieldDefinitionEyebrow.value) || "").trim() ||
+      String((fieldType && fieldType.value) || (entry.item && entry.item.type) || "Event").trim() ||
+      "Event";
     definition.title =
       String((fieldDefinitionTitle && fieldDefinitionTitle.value) || "").trim() ||
       String((entry.item && entry.item.title) || "").trim() ||
@@ -558,6 +614,11 @@
       definition.slug ||
       definition.id;
     definition.heroSummary = String((fieldDefinitionHeroSummary && fieldDefinitionHeroSummary.value) || "").trim();
+    definition.narrative = String((fieldDefinitionNarrative && fieldDefinitionNarrative.value) || "").trim();
+    definition.experience = String((fieldDefinitionExperience && fieldDefinitionExperience.value) || "").trim();
+    definition.scheduleNote = String((fieldDefinitionScheduleNote && fieldDefinitionScheduleNote.value) || "").trim();
+    definition.whatToExpect = linesToList(fieldDefinitionWhatToExpect ? fieldDefinitionWhatToExpect.value : "");
+    definition.included = linesToList(fieldDefinitionIncluded ? fieldDefinitionIncluded.value : "");
     definition.primaryCtaLabel = String((fieldDefinitionCtaLabel && fieldDefinitionCtaLabel.value) || "").trim();
     definition.primaryCtaHref = String((fieldDefinitionCtaHref && fieldDefinitionCtaHref.value) || "").trim();
     definition.type =
@@ -1136,9 +1197,15 @@
     fieldTimezone,
     fieldHorizon,
     fieldPreview,
+    fieldDefinitionEyebrow,
     fieldDefinitionTitle,
     fieldDefinitionSlug,
     fieldDefinitionHeroSummary,
+    fieldDefinitionNarrative,
+    fieldDefinitionExperience,
+    fieldDefinitionScheduleNote,
+    fieldDefinitionWhatToExpect,
+    fieldDefinitionIncluded,
     fieldDefinitionCtaLabel,
     fieldDefinitionCtaHref,
     fieldId,
