@@ -79,6 +79,7 @@
     openedFromDate: false,
     resolvedFromTemplate: false,
   };
+  const NEW_DEFINITION_OPTION = "__new__";
 
   function getToken() {
     return window.sessionStorage.getItem(tokenStorageKey) || "";
@@ -524,7 +525,7 @@
   function renderDefinitionOptions(selectedId) {
     if (!fieldDefinitionSelect) return;
     const definitions = Array.isArray(payload && payload.definitions) ? payload.definitions : [];
-    fieldDefinitionSelect.innerHTML = definitions
+    const optionMarkup = definitions
       .slice()
       .sort((a, b) => {
         const aLabel = `${(a && a.title) || ""} ${(a && a.id) || ""}`;
@@ -539,7 +540,12 @@
       })
       .filter(Boolean)
       .join("");
-    if (selectedId) fieldDefinitionSelect.value = selectedId;
+    fieldDefinitionSelect.innerHTML =
+      `<option value="${NEW_DEFINITION_OPTION}">Create New Event Page</option>${optionMarkup}`;
+    fieldDefinitionSelect.value =
+      selectedId && definitions.some((item) => item && item.id === selectedId)
+        ? selectedId
+        : NEW_DEFINITION_OPTION;
   }
 
   function getDefinitionById(definitionId) {
@@ -624,6 +630,28 @@
     }
   }
 
+  function fillDefinitionFormFromEntry(entry) {
+    const item = entry && entry.item ? entry.item : {};
+    if (fieldDefinitionEyebrow) {
+      fieldDefinitionEyebrow.value = String(item.type || "Event").trim() || "Event";
+    }
+    if (fieldDefinitionTitle) fieldDefinitionTitle.value = item.title || "";
+    if (fieldDefinitionSlug) {
+      fieldDefinitionSlug.value = buildDefinitionId(
+        item.title || "event",
+        item.date || getTemplateAnchorDate(item)
+      );
+    }
+    if (fieldDefinitionHeroSummary) fieldDefinitionHeroSummary.value = item.summary || "";
+    if (fieldDefinitionNarrative) fieldDefinitionNarrative.value = "";
+    if (fieldDefinitionExperience) fieldDefinitionExperience.value = "";
+    if (fieldDefinitionScheduleNote) fieldDefinitionScheduleNote.value = "";
+    if (fieldDefinitionWhatToExpect) fieldDefinitionWhatToExpect.value = "";
+    if (fieldDefinitionIncluded) fieldDefinitionIncluded.value = "";
+    if (fieldDefinitionCtaLabel) fieldDefinitionCtaLabel.value = item.ctaLabel || "";
+    if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = item.ctaHref || "";
+  }
+
   function commitDefinitionForm(options = {}) {
     if (!payload || !selectedKey) return;
     const entry = options.entry || getSelectedEntry();
@@ -636,7 +664,10 @@
         (fieldDefinitionTitle && fieldDefinitionTitle.value) || (entry.item && entry.item.title) || "",
         (entry.item && (entry.item.date || getTemplateAnchorDate(entry.item))) || selectionContext.requestedDate
       );
-    const definitionId = selectedDefinitionId || fallbackDefinitionId;
+    const definitionId =
+      !selectedDefinitionId || selectedDefinitionId === NEW_DEFINITION_OPTION
+        ? fallbackDefinitionId
+        : selectedDefinitionId;
     if (entry.item) entry.item.eventId = definitionId;
 
     const definition = ensureDefinitionForEntry(entry, { definitionId });
@@ -1253,6 +1284,13 @@
       const entry = getSelectedEntry();
       if (!entry || !payload) return;
       const nextId = String(fieldDefinitionSelect.value || "").trim();
+      if (nextId === NEW_DEFINITION_OPTION) {
+        if (entry.item) delete entry.item.eventId;
+        fillDefinitionFormFromEntry(entry);
+        setDirty(true);
+        setStatus("Draft", "neutral");
+        return;
+      }
       if (entry.item && nextId) entry.item.eventId = nextId;
       const definition = nextId ? getDefinitionById(nextId) : null;
       if (definition) {
