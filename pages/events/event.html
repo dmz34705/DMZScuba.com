@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>DMZ Scuba | Event</title>
+  <meta name="description" content="See DMZ Scuba event details, schedule notes, and next steps for upcoming training, travel, and community events." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://www.dmzscuba.com/pages/events/event.html" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/event-detail.css?v=1.0" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+</head>
+<body class="event-detail-page">
+  <div class="page">
+    <header class="site-header">
+      <div class="nav-container">
+        <a class="logo" href="../../index.html" aria-label="DMZ Scuba Home">
+          <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+        </a>
+        <div class="site-name">DMZ Scuba</div>
+        <nav class="main-nav" aria-label="Primary navigation">
+          <a href="../../index.html">Home</a>
+          <a href="../training/index.html">Training</a>
+          <a href="../travel/index.html">Travel</a>
+          <a href="./index.html" class="is-active">Events</a>
+          <a href="../media/index.html">Media</a>
+          <a href="../contact/index.html">Contact</a>
+          <a href="/pages/about/index.html">About</a>
+          <a class="nav-cta" href="../contact/index.html#dive-now">Dive Now</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page" data-event-detail-page data-events-src="/assets/data/events.json" data-events-expanded-src="/assets/data/events-expanded.json">
+      <section class="page-hero event-detail-hero">
+        <div class="page-hero-inner">
+          <div class="page-hero-copy">
+            <p class="event-detail-kicker" id="eventDetailEyebrow">DMZ Event</p>
+            <h1 id="eventDetailTitle">Event</h1>
+            <p class="page-hero-sub" id="eventDetailHeroSummary">Event details are loading.</p>
+            <div class="event-detail-status-row">
+              <span class="event-detail-chip" id="eventDetailScheduleChip">Schedule loading</span>
+              <span class="event-detail-chip" id="eventDetailTypeChip">Type loading</span>
+            </div>
+            <div class="event-detail-actions">
+              <a class="btn primary" id="eventDetailPrimaryLink" href="/pages/contact/index.html#dive-now">Contact DMZ</a>
+              <a class="btn secondary" data-event-back-link href="/pages/events/index.html">Back to Events</a>
+            </div>
+          </div>
+          <div class="page-hero-card">
+            <h2>Upcoming Session</h2>
+            <p class="event-detail-copy" id="eventDetailSummary">Summary loading.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="page-main">
+        <section class="content-section">
+          <p class="event-detail-empty" id="eventDetailError" hidden></p>
+          <div class="event-detail-layout">
+            <div class="event-detail-card">
+              <h2>What This Event Is</h2>
+              <p class="event-detail-copy" id="eventDetailNarrative">Details loading.</p>
+            </div>
+            <div class="event-detail-card">
+              <h3>Schedule Snapshot</h3>
+              <div class="event-detail-meta-list">
+                <div class="event-detail-meta-row">
+                  <span>Date</span>
+                  <strong id="eventDetailMetaDate">Schedule loading</strong>
+                </div>
+                <div class="event-detail-meta-row">
+                  <span>Time</span>
+                  <strong id="eventDetailMetaTime">Time loading</strong>
+                </div>
+                <div class="event-detail-meta-row">
+                  <span>Location</span>
+                  <strong id="eventDetailMetaLocation">Location loading</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-section">
+          <div class="event-detail-layout">
+            <div class="event-detail-card">
+              <h2>What To Expect</h2>
+              <ul class="event-detail-list" id="eventDetailWhatToExpect"></ul>
+            </div>
+            <div class="event-detail-card">
+              <h2>Included</h2>
+              <ul class="event-detail-list" id="eventDetailIncluded"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-section">
+          <div class="event-detail-layout">
+            <div class="event-detail-card">
+              <h2>Who This Fits</h2>
+              <p class="event-detail-copy" id="eventDetailExperience">Experience guidance loading.</p>
+            </div>
+            <div class="event-detail-card">
+              <h2>Schedule Logic</h2>
+              <p class="event-detail-copy" id="eventDetailScheduleNote">Schedule note loading.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <p>&copy; 2026 DMZ Scuba. Built for real divers, real progress, and better time in the water.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/js/nav.js"></script>
+  <script src="/js/event-detail.js"></script>
+</body>
+</html>

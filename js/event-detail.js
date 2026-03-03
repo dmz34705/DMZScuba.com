@@ -1,0 +1,261 @@
+(() => {
+  const root = document.querySelector("[data-event-detail-page]");
+  if (!root) return;
+
+  const scheduleUrl = root.getAttribute("data-events-src") || "/assets/data/events.json";
+  const expandedUrl = root.getAttribute("data-events-expanded-src") || "/assets/data/events-expanded.json";
+
+  const titleEl = document.getElementById("eventDetailTitle");
+  const eyebrowEl = document.getElementById("eventDetailEyebrow");
+  const heroSummaryEl = document.getElementById("eventDetailHeroSummary");
+  const scheduleChipEl = document.getElementById("eventDetailScheduleChip");
+  const typeChipEl = document.getElementById("eventDetailTypeChip");
+  const narrativeEl = document.getElementById("eventDetailNarrative");
+  const experienceEl = document.getElementById("eventDetailExperience");
+  const scheduleNoteEl = document.getElementById("eventDetailScheduleNote");
+  const whatToExpectEl = document.getElementById("eventDetailWhatToExpect");
+  const includedEl = document.getElementById("eventDetailIncluded");
+  const metaDateEl = document.getElementById("eventDetailMetaDate");
+  const metaTimeEl = document.getElementById("eventDetailMetaTime");
+  const metaLocationEl = document.getElementById("eventDetailMetaLocation");
+  const summaryEl = document.getElementById("eventDetailSummary");
+  const primaryLinkEl = document.getElementById("eventDetailPrimaryLink");
+  const backLinks = document.querySelectorAll("[data-event-back-link]");
+  const errorEl = document.getElementById("eventDetailError");
+
+  const params = new URLSearchParams(window.location.search);
+  const requestedId = String(params.get("id") || "").trim();
+  const requestedDate = String(params.get("date") || "").trim();
+
+  function dateKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function startOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
+  function addMonths(date, count) {
+    return new Date(date.getFullYear(), date.getMonth() + count, 1);
+  }
+
+  function parseMonthAnchor(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("-");
+    if (parts.length !== 2) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+    return new Date(year, month - 1, 1);
+  }
+
+  function monthsBetween(a, b) {
+    return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth());
+  }
+
+  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
+    const first = new Date(year, monthIndex, 1);
+    const shift = (7 + weekday - first.getDay()) % 7;
+    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+    const candidate = new Date(year, monthIndex, dayNumber);
+    if (candidate.getMonth() !== monthIndex) return null;
+    return candidate;
+  }
+
+  function parseEventDate(value) {
+    const parsed = new Date(`${value}T12:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function formatScheduleLine(item) {
+    if (!item || !item.date) return "Date coming soon";
+    const date = parseEventDate(item.date);
+    if (!date) return item.date;
+    const parts = [
+      date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    ];
+    if (item.time) {
+      parts.push(item.endTime ? `${item.time} - ${item.endTime}` : item.time);
+    }
+    return parts.join(" | ");
+  }
+
+  function setList(el, items) {
+    if (!el) return;
+    el.innerHTML = "";
+    (Array.isArray(items) ? items : []).forEach((value) => {
+      const text = String(value || "").trim();
+      if (!text) return;
+      const li = document.createElement("li");
+      li.textContent = text;
+      el.appendChild(li);
+    });
+    if (!el.children.length) {
+      const li = document.createElement("li");
+      li.textContent = "Details will be added here.";
+      el.appendChild(li);
+    }
+  }
+
+  function buildInstances(payload) {
+    const today = startOfDay(new Date());
+    const currentMonth = startOfMonth(today);
+    const horizonMonths = Math.max(1, Number(payload && payload.horizonMonths) || 30);
+    const items = [];
+
+    (Array.isArray(payload && payload.events) ? payload.events : []).forEach((eventItem) => {
+      if (!eventItem || !eventItem.id || !eventItem.date) return;
+      const parsedDate = parseEventDate(eventItem.date);
+      if (!parsedDate || parsedDate < today) return;
+      items.push({
+        ...eventItem,
+        eventId: eventItem.eventId || eventItem.id,
+      });
+    });
+
+    (Array.isArray(payload && payload.templates) ? payload.templates : []).forEach((template) => {
+      if (!template || !template.id || !template.rule) return;
+      const anchor = parseMonthAnchor(template.startMonth) || currentMonth;
+      const intervalMonths = Math.max(1, Number(template.intervalMonths) || 1);
+      const allowedMonths = Array.isArray(template.months) ? template.months : null;
+      const weekOfMonth = Number(template.rule.weekOfMonth);
+      const weekday = Number(template.rule.weekday);
+      if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return;
+
+      for (let offset = 0; offset < horizonMonths; offset += 1) {
+        const monthDate = addMonths(currentMonth, offset);
+        if (monthDate < anchor) continue;
+        if (allowedMonths && !allowedMonths.includes(monthDate.getMonth() + 1)) continue;
+        if (monthsBetween(monthDate, anchor) % intervalMonths !== 0) continue;
+
+        const occurrence = nthWeekdayOfMonth(
+          monthDate.getFullYear(),
+          monthDate.getMonth(),
+          weekOfMonth,
+          weekday
+        );
+        if (!occurrence || occurrence < today) continue;
+
+        items.push({
+          ...template,
+          id: `${template.id}-${dateKey(occurrence)}`,
+          eventId: template.id,
+          date: dateKey(occurrence),
+        });
+      }
+    });
+
+    return items.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  }
+
+  function findBestInstance(instances, idValue, dateValue) {
+    if (!idValue) return null;
+    if (dateValue) {
+      const exact = instances.find((item) => item.eventId === idValue && item.date === dateValue);
+      if (exact) return exact;
+    }
+    return instances.find((item) => item.eventId === idValue) || null;
+  }
+
+  function setText(el, value) {
+    if (el) el.textContent = String(value || "");
+  }
+
+  function showError(message) {
+    if (!errorEl) return;
+    errorEl.hidden = false;
+    errorEl.textContent = message;
+  }
+
+  async function loadJson(url) {
+    const resp = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+    if (!resp || !resp.ok) return null;
+    return resp.json().catch(() => null);
+  }
+
+  async function init() {
+    if (!requestedId) {
+      showError("No event was selected.");
+      return;
+    }
+
+    const [scheduleData, expandedData] = await Promise.all([
+      loadJson(scheduleUrl),
+      loadJson(expandedUrl),
+    ]);
+
+    if (!scheduleData) {
+      showError("The event schedule could not be loaded.");
+      return;
+    }
+
+    const instances = buildInstances(scheduleData);
+    const instance = findBestInstance(instances, requestedId, requestedDate);
+    const extra = (Array.isArray(expandedData) ? expandedData : []).find((item) => item && item.id === requestedId) || {};
+
+    if (!instance && !extra.id) {
+      showError("We could not find that event.");
+      return;
+    }
+
+    const title = extra.title || (instance && instance.title) || "Event";
+    const heroSummary = extra.heroSummary || (instance && instance.summary) || "Event details are loading.";
+    const summary = (instance && instance.summary) || extra.heroSummary || "";
+    const scheduleLine = instance ? formatScheduleLine(instance) : "Schedule will be posted soon";
+    const timeLine = instance && instance.time
+      ? instance.endTime
+        ? `${instance.time} - ${instance.endTime}`
+        : instance.time
+      : "Time announced soon";
+
+    document.title = `DMZ Scuba | ${title}`;
+    setText(titleEl, title);
+    setText(eyebrowEl, extra.eyebrow || (instance && instance.type) || "DMZ Event");
+    setText(heroSummaryEl, heroSummary);
+    setText(scheduleChipEl, scheduleLine);
+    setText(
+      typeChipEl,
+      instance && instance.status
+        ? `${instance.type || "Event"} | ${instance.status}`
+        : (instance && instance.type) || "Event"
+    );
+    setText(narrativeEl, extra.narrative || summary || "Full event detail content will appear here.");
+    setText(experienceEl, extra.experience || "Experience guidance for this event will be added here.");
+    setText(scheduleNoteEl, extra.scheduleNote || "This event will support both recurring templates and one-time date overrides.");
+    setText(metaDateEl, instance ? scheduleLine : "Schedule will be posted soon");
+    setText(metaTimeEl, timeLine);
+    setText(metaLocationEl, (instance && instance.location) || "Location announced soon");
+    setText(summaryEl, summary || "The event summary will appear here once the schedule is finalized.");
+    setList(whatToExpectEl, extra.whatToExpect);
+    setList(includedEl, extra.included);
+
+    if (primaryLinkEl) {
+      primaryLinkEl.textContent = extra.primaryCtaLabel || (instance && instance.ctaLabel) || "Contact DMZ";
+      primaryLinkEl.href = extra.primaryCtaHref || (instance && instance.ctaHref) || "/pages/contact/index.html#dive-now";
+    }
+
+    backLinks.forEach((link) => {
+      link.setAttribute(
+        "href",
+        requestedDate
+          ? `/pages/events/index.html?date=${encodeURIComponent(requestedDate)}`
+          : "/pages/events/index.html"
+      );
+    });
+  }
+
+  init();
+})();

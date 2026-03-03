@@ -129,6 +129,7 @@
       if (!dateObj || dateObj < today) return;
       generated.push({
         ...eventItem,
+        eventId: eventItem.eventId || eventItem.id,
         dateObj,
       });
     });
@@ -160,6 +161,7 @@
         generated.push({
           ...template,
           id: `${template.id}-${dateKey(occurrence)}`,
+          eventId: template.id,
           date: dateKey(occurrence),
           dateObj: occurrence,
         });
@@ -204,6 +206,16 @@
 
   function getEventTypeMeta(type) {
     return EVENT_TYPE_META[type] || EVENT_TYPE_META.Event;
+  }
+
+  function buildEventDetailHref(eventItem) {
+    const eventId = String((eventItem && (eventItem.eventId || eventItem.id)) || "").trim();
+    if (!eventId) {
+      return eventItem && eventItem.ctaHref ? eventItem.ctaHref : "/pages/contact/index.html#dive-now";
+    }
+    const params = new URLSearchParams({ id: eventId });
+    if (eventItem && eventItem.date) params.set("date", eventItem.date);
+    return `/pages/events/event.html?${params.toString()}`;
   }
 
   function buildLegendMarkup() {
@@ -263,9 +275,9 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    const ctaLabel = compact ? "Details" : agenda ? "View" : eventItem.ctaLabel || "Get Details";
+    const ctaLabel = compact ? "Details" : agenda ? "View" : "Event Details";
     const ctaClass = compact || agenda ? "secondary" : "primary";
-    actions.innerHTML = `<a class="btn ${ctaClass}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${ctaLabel}</a>`;
+    actions.innerHTML = `<a class="btn ${ctaClass}" href="${buildEventDetailHref(eventItem)}">${ctaLabel}</a>`;
 
     if (agenda) {
       const dateBadge = document.createElement("div");
@@ -325,7 +337,7 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    actions.innerHTML = `<a class="btn secondary" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">View</a>`;
+    actions.innerHTML = `<a class="btn secondary" href="${buildEventDetailHref(eventItem)}">View</a>`;
 
     article.append(content, actions);
     return article;

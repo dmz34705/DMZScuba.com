@@ -378,6 +378,68 @@
     });
   }
 
+  function getDraftPreviewEntry() {
+    const entry = getSelectedEntry();
+    if (!entry) return null;
+
+    const previewKind =
+      String((fieldKind && fieldKind.value) || entry.kind).trim() === "template" ? "template" : "event";
+    const currentItem = entry.item || {};
+    const previewItem = {
+      ...currentItem,
+      id: normalizeId(fieldId ? fieldId.value : "") || currentItem.id || "",
+      title: String((fieldTitle && fieldTitle.value) || "").trim() || currentItem.title || "",
+      time: String((fieldTime && fieldTime.value) || "").trim(),
+      endTime: String((fieldEndTime && fieldEndTime.value) || "").trim(),
+      type: String((fieldType && fieldType.value) || "Event").trim() || "Event",
+      status: String((fieldStatus && fieldStatus.value) || "").trim(),
+      location: String((fieldLocation && fieldLocation.value) || "").trim(),
+      summary: String((fieldSummary && fieldSummary.value) || "").trim(),
+      ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
+      ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
+    };
+
+    if (previewKind === "event") {
+      previewItem.date =
+        String((fieldDate && fieldDate.value) || "").trim() ||
+        (entry.kind === "event" ? String(currentItem.date || "").trim() : "") ||
+        String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
+        selectionContext.requestedDate;
+      delete previewItem.startMonth;
+      delete previewItem.intervalMonths;
+      delete previewItem.months;
+      delete previewItem.rule;
+    } else {
+      const anchorValue =
+        String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
+        (entry.kind === "template" ? getTemplateAnchorDate(currentItem) : "") ||
+        String((fieldDate && fieldDate.value) || "").trim() ||
+        selectionContext.requestedDate;
+      previewItem.startMonth = anchorValue ? anchorValue.slice(0, 7) : "";
+      previewItem.intervalMonths = Math.max(
+        1,
+        Math.min(12, Number((fieldInterval && fieldInterval.value) || currentItem.intervalMonths || 1) || 1)
+      );
+      const months = csvToMonthList(
+        fieldMonths && fieldMonths.value ? fieldMonths.value : listToCsv(currentItem.months)
+      );
+      if (months.length) previewItem.months = months;
+      else delete previewItem.months;
+      const rule = deriveRuleFromDate(anchorValue);
+      if (rule) previewItem.rule = rule;
+    }
+
+    return {
+      ...entry,
+      kind: previewKind,
+      item: previewItem,
+    };
+  }
+
+  function refreshContextPanel() {
+    updateContextPanel(getDraftPreviewEntry() || getSelectedEntry());
+  }
+
   function fillConfig() {
     if (!payload) return;
     if (fieldUpdated) fieldUpdated.value = payload.updated || "";
@@ -964,6 +1026,7 @@
         fieldDate.value = (fieldTemplateAnchor && fieldTemplateAnchor.value) || new Date().toISOString().slice(0, 10);
       }
       updateKindFields(fieldKind.value);
+      refreshContextPanel();
       setDirty(true);
     });
   }
@@ -991,6 +1054,7 @@
 
   trackedFields.forEach((field) => {
     const markDirty = () => {
+      refreshContextPanel();
       setDirty(true);
       setStatus("Draft", "neutral");
     };
