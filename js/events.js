@@ -67,6 +67,25 @@
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
+  function parseDateKey(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    const parsed = new Date(year, month - 1, day);
+    if (
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return null;
+    }
+    return parsed;
+  }
+
   function parseMonthAnchor(value) {
     if (!value || typeof value !== "string") return null;
     const parts = value.split("-");
@@ -301,7 +320,40 @@
       return group.events[0] ? group.events[0].date : "";
     }
 
-    let selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]);
+    function fallbackSelectedKey(group) {
+      if (!group) return todayKey;
+      return defaultSelectedKey(group) || dateKey(group.monthDate);
+    }
+
+    function buildSelectedSummaryMarkup(group, selectedItems) {
+      const selectedDate = parseDateKey(selectedDateKey) || group.monthDate;
+      if (selectedItems.length) {
+        const labels = selectedItems
+          .slice(0, 2)
+          .map((item) => item.title)
+          .join(" | ");
+        const moreCount = Math.max(0, selectedItems.length - 2);
+        return `
+          <div class="events-selected-summary-kicker">Selected Date</div>
+          <strong>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</strong>
+          <span>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled${moreCount ? ` | ${labels} + ${moreCount} more` : ` | ${labels}`}</span>
+        `;
+      }
+      if (selectedDateKey === todayKey) {
+        return `
+          <div class="events-selected-summary-kicker">Selected Date</div>
+          <strong>${weekdayLongFormatter.format(today)}</strong>
+          <span>No scheduled events today. Use the month controls to browse what is coming next.</span>
+        `;
+      }
+      return `
+        <div class="events-selected-summary-kicker">Selected Date</div>
+        <strong>${weekdayLongFormatter.format(selectedDate)}</strong>
+        <span>No scheduled events on this date. Use the upcoming list below to scan nearby options.</span>
+      `;
+    }
+
+    let selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
 
     function notifyParentHeight() {
       if (window.parent === window) return;
@@ -332,7 +384,7 @@
       });
 
       if (!selectedDateKey || (!eventMap.has(selectedDateKey) && selectedDateKey !== todayKey)) {
-        selectedDateKey = defaultSelectedKey(group) || todayKey;
+        selectedDateKey = fallbackSelectedKey(group);
       }
 
       const card = document.createElement("section");
@@ -393,6 +445,11 @@
       legend.className = "events-legend";
       legend.setAttribute("aria-label", "Event type key");
       legend.innerHTML = buildLegendMarkup();
+
+      const selectedItems = eventMap.get(selectedDateKey) || [];
+      const selectedSummary = document.createElement("div");
+      selectedSummary.className = "events-selected-summary";
+      selectedSummary.innerHTML = buildSelectedSummaryMarkup(group, selectedItems);
 
       const grid = document.createElement("div");
       grid.className = "events-month-grid";
@@ -473,8 +530,7 @@
         grid.appendChild(cell);
       }
 
-      card.append(head, grid);
-      card.insertBefore(legend, grid);
+      card.append(head, selectedSummary, legend, grid);
       monthHost.appendChild(card);
 
       const upcomingItems = [];
@@ -484,7 +540,6 @@
         if (upcomingItems.length >= 18) break;
       }
       const listItems = upcomingItems.slice(0, 18);
-      const selectedItems = eventMap.get(selectedDateKey) || [];
       const agendaHead = document.createElement("div");
       agendaHead.className = "events-agenda-head";
       agendaHead.innerHTML = `
@@ -493,34 +548,6 @@
         <p>${listItems.length ? "Listed in chronological order with the soonest event at the top." : "No future events are scheduled in the current rolling window."}</p>
       `;
       listHost.appendChild(agendaHead);
-
-      const selectedSummary = document.createElement("div");
-      selectedSummary.className = "events-selected-summary";
-      if (selectedItems.length) {
-        const labels = selectedItems
-          .slice(0, 2)
-          .map((item) => item.title)
-          .join(" | ");
-        const moreCount = Math.max(0, selectedItems.length - 2);
-        selectedSummary.innerHTML = `
-          <div class="events-selected-summary-kicker">Selected Date</div>
-          <strong>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</strong>
-          <span>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} on this date${moreCount ? ` | ${labels} + ${moreCount} more` : ` | ${labels}`}</span>
-        `;
-      } else if (selectedDateKey === todayKey) {
-        selectedSummary.innerHTML = `
-          <div class="events-selected-summary-kicker">Selected Date</div>
-          <strong>${weekdayLongFormatter.format(today)}</strong>
-          <span>No scheduled events today. Use the month controls to browse what is coming next.</span>
-        `;
-      } else {
-        selectedSummary.innerHTML = `
-          <div class="events-selected-summary-kicker">Selected Date</div>
-          <strong>${monthFormatter.format(group.monthDate)}</strong>
-          <span>No scheduled events on the current selected date.</span>
-        `;
-      }
-      listHost.appendChild(selectedSummary);
 
       if (!listItems.length) {
         const emptyItem = document.createElement("div");
@@ -564,7 +591,7 @@
         );
         if (targetIndex < 0) return false;
         activeMonthIndex = targetIndex;
-        selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+        selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
         renderMonth();
         return true;
       }
@@ -579,7 +606,7 @@
           );
           if (fallback < 0) return;
           activeMonthIndex = fallback;
-          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
       }
@@ -598,7 +625,7 @@
             0,
             monthGroups.findIndex((item) => item.key === currentMonthKey)
           );
-          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
       }
@@ -607,7 +634,7 @@
         prevButton.addEventListener("click", () => {
           if (activeMonthIndex <= 0) return;
           activeMonthIndex -= 1;
-          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
       }
@@ -616,7 +643,7 @@
         nextButton.addEventListener("click", () => {
           if (activeMonthIndex >= monthGroups.length - 1) return;
           activeMonthIndex += 1;
-          selectedDateKey = defaultSelectedKey(monthGroups[activeMonthIndex]) || todayKey;
+          selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
       }
