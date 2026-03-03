@@ -487,41 +487,42 @@
         if (isSelected) cell.className += " events-day-selected";
         if (isPast) cell.className += " events-day-past";
 
-        if (!items.length) {
-          cell.innerHTML = `
-            <span class="events-day-number">${day}</span>
-            ${isToday ? '<span class="events-day-label">Today</span>' : ""}
-          `;
-          grid.appendChild(cell);
-          continue;
-        }
-
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "events-day-button";
+        button.className = items.length ? "events-day-button" : "events-day-button events-day-button-empty";
         button.setAttribute("aria-pressed", isSelected ? "true" : "false");
         button.setAttribute(
           "aria-label",
-          `${weekdayLongFormatter.format(currentDate)} with ${items.length} event${items.length === 1 ? "" : "s"}`
+          items.length
+            ? `${weekdayLongFormatter.format(currentDate)} with ${items.length} event${items.length === 1 ? "" : "s"}`
+            : `${weekdayLongFormatter.format(currentDate)} with no scheduled events`
         );
-        const uniqueTypes = Array.from(
-          new Set(items.map((item) => (item.type || "Event")))
-        )
-          .slice(0, 4)
-          .map((type) => {
-            const meta = getEventTypeMeta(type);
-            return `<span class="events-day-bar ${meta.className}" title="${type}" aria-hidden="true"></span>`;
-          })
-          .join("");
+        if (items.length) {
+          const uniqueTypes = Array.from(
+            new Set(items.map((item) => (item.type || "Event")))
+          )
+            .slice(0, 4)
+            .map((type) => {
+              const meta = getEventTypeMeta(type);
+              return `<span class="events-day-bar ${meta.className}" title="${type}" aria-hidden="true"></span>`;
+            })
+            .join("");
 
-        button.innerHTML = `
-          <span class="events-day-number">${day}</span>
-          ${isToday ? '<span class="events-day-label">Today</span>' : ""}
-          <span class="events-day-count">${items.length} scheduled</span>
-          <span class="events-day-bar-stack">${uniqueTypes}</span>
-          ${items.length === 1 ? `<span class="events-day-preview">${items[0].title}</span>` : ""}
-          ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}
-        `;
+          button.innerHTML = `
+            <span class="events-day-number">${day}</span>
+            ${isToday ? '<span class="events-day-label">Today</span>' : ""}
+            <span class="events-day-count">${items.length} scheduled</span>
+            <span class="events-day-bar-stack">${uniqueTypes}</span>
+            ${items.length === 1 ? `<span class="events-day-preview">${items[0].title}</span>` : ""}
+            ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}
+          `;
+        } else {
+          button.innerHTML = `
+            <span class="events-day-number">${day}</span>
+            ${isToday ? '<span class="events-day-label">Today</span>' : ""}
+            <span class="events-day-empty-copy">Select date</span>
+          `;
+        }
         button.addEventListener("click", () => {
           selectedDateKey = currentKey;
           renderMonth();

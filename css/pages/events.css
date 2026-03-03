@@ -378,8 +378,17 @@
   cursor: pointer;
 }
 
+.events-day-button:focus-visible {
+  outline: 2px solid rgba(127, 230, 255, 0.7);
+  outline-offset: 4px;
+}
+
 .events-day-button[aria-pressed="true"] .events-day-number {
   background: rgba(85,185,255,0.2);
+}
+
+.events-day-button-empty {
+  align-content: space-between;
 }
 
 .events-day-label {
@@ -438,6 +447,21 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.events-day-empty-copy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: rgba(234,242,255,0.68);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .events-day-list {
