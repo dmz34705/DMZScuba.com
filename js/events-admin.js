@@ -8,6 +8,7 @@
   const loginUrl = apiRoot ? `${apiRoot}/api/admin/login` : "/api/admin/login";
   const fallbackUrl = adminRoot.getAttribute("data-events-fallback") || "/assets/data/events.json";
   const tokenStorageKey = "dmzMediaToken";
+  const uiStateStorageKey = "dmzEventsAdminUiState";
 
   const adminBar = document.getElementById("eventsAdminBar");
   const panel = document.getElementById("eventsAdminPanel");
@@ -85,6 +86,36 @@
   };
   const NEW_DEFINITION_OPTION = "__new__";
 
+  function getStoredUiState() {
+    try {
+      const raw = window.sessionStorage.getItem(uiStateStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function persistUiState() {
+    try {
+      window.sessionStorage.setItem(
+        uiStateStorageKey,
+        JSON.stringify({
+          editMode: Boolean(editMode),
+          panelOpen: document.body.classList.contains("events-admin-open"),
+          selectedKey: String(selectedKey || ""),
+        })
+      );
+    } catch (_error) {
+      // ignore storage errors
+    }
+  }
+
+  function clearUiState() {
+    window.sessionStorage.removeItem(uiStateStorageKey);
+  }
+
   function getToken() {
     return window.sessionStorage.getItem(tokenStorageKey) || "";
   }
@@ -92,6 +123,7 @@
   function setToken(token) {
     if (!token) {
       window.sessionStorage.removeItem(tokenStorageKey);
+      clearUiState();
       return;
     }
     window.sessionStorage.setItem(tokenStorageKey, token);
@@ -156,12 +188,14 @@
     adminBar.hidden = !editMode;
     if (!editMode) toggleOpen(false);
     syncAuthUi();
+    persistUiState();
   }
 
   function toggleOpen(next) {
     const shouldOpen = Boolean(next) && isAuthed() && editMode;
     document.body.classList.toggle("events-admin-open", shouldOpen);
     panel.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+    persistUiState();
   }
 
   function syncAuthUi() {
@@ -909,6 +943,7 @@
       );
       fillForm(getSelectedEntry());
       syncAuthUi();
+      persistUiState();
       return;
     }
 
@@ -930,6 +965,7 @@
 
     fillForm(getSelectedEntry());
     syncAuthUi();
+    persistUiState();
   }
 
   function reloadEmbed() {
@@ -974,6 +1010,20 @@
     renderList(searchInput ? searchInput.value : "");
     setDirty(false);
     setStatus(isAuthed() ? "Ready" : "Signed out", isAuthed() ? "ready" : "neutral");
+
+    const storedUiState = getStoredUiState();
+    if (storedUiState && isAuthed()) {
+      if (storedUiState.selectedKey && getEntryByKey(storedUiState.selectedKey)) {
+        selectedKey = storedUiState.selectedKey;
+        renderList(searchInput ? searchInput.value : "");
+      }
+      if (storedUiState.editMode) {
+        setEditMode(true);
+      }
+      if (storedUiState.panelOpen && storedUiState.editMode && getSelectedEntry()) {
+        toggleOpen(true);
+      }
+    }
   }
 
   function buildDraftId(prefix, dateValue) {
