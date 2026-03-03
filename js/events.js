@@ -447,6 +447,20 @@
       }
     }
 
+    function notifyParentSelection(selectedDate, selectedItems) {
+      if (window.parent === window || !selectedDate) return;
+      window.parent.postMessage(
+        {
+          type: "dmzEventsDateSelected",
+          date: selectedDate,
+          eventIds: Array.isArray(selectedItems)
+            ? selectedItems.map((item) => item.id).filter(Boolean)
+            : [],
+        },
+        "*"
+      );
+    }
+
     function renderMonth() {
       const group = monthGroups[activeMonthIndex];
       if (!group) return;
@@ -753,6 +767,7 @@
         total.textContent = String(events.length);
       }
 
+      notifyParentSelection(selectedDateKey, selectedItems);
       notifyParentHeight();
     }
 

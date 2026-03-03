@@ -1163,35 +1163,75 @@
   color: rgba(234,242,255,0.86);
 }
 
-.events-admin-panel {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    max-height 220ms ease,
-    opacity 160ms ease,
-    margin-bottom 180ms ease;
-  margin-bottom: 0;
-  pointer-events: none;
+.events-admin-bar {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(320px 180px at 0% 0%, rgba(85,185,255,0.08), rgba(85,185,255,0)),
+    rgba(7, 19, 37, 0.82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-body.events-admin-open .events-admin-panel {
-  max-height: 1200px;
-  opacity: 1;
-  margin-bottom: 14px;
-  pointer-events: auto;
+.events-admin-bar-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.events-admin-bar-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.events-admin-bar-title {
+  color: rgba(85,185,255,0.92);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.events-admin-focus {
+  color: rgba(234,242,255,0.92);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .events-admin-card {
   display: grid;
   gap: 14px;
   padding: 18px;
+  width: min(1080px, 100%);
+  max-height: min(860px, calc(100vh - 48px));
+  overflow: auto;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background:
     radial-gradient(340px 200px at 0% 0%, rgba(85,185,255,0.08), rgba(85,185,255,0)),
     rgba(7, 19, 37, 0.9);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.events-admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5,11,20,0.72);
+}
+
+body.events-admin-open .events-admin-modal {
+  display: flex;
 }
 
 .events-footer {
@@ -1226,9 +1266,15 @@ body.events-admin-open .events-admin-panel {
   font-weight: 800;
 }
 
+.events-admin-modal-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .events-admin-status {
   display: inline-flex;
-  margin-top: 4px;
   font-size: 12px;
   color: var(--muted);
 }
@@ -1247,10 +1293,13 @@ body.events-admin-open .events-admin-panel {
 }
 
 .events-admin-close {
-  border: 0;
-  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
   color: rgba(234,242,255,0.82);
   font-weight: 700;
+  min-height: 36px;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
@@ -1261,6 +1310,25 @@ body.events-admin-open .events-admin-panel {
   line-height: 1.5;
 }
 
+.events-admin-warning {
+  min-height: 18px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.events-admin-warning.is-clean {
+  background: rgba(30, 201, 167, 0.08);
+  color: rgba(202, 255, 242, 0.92);
+}
+
+.events-admin-warning.is-dirty {
+  background: rgba(255, 166, 77, 0.1);
+  color: rgba(255, 231, 204, 0.94);
+}
+
 .events-admin-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1269,6 +1337,10 @@ body.events-admin-open .events-admin-panel {
 
 .events-admin-actions .btn {
   min-height: 36px;
+}
+
+.events-admin-actions-bar {
+  align-items: center;
 }
 
 .events-admin-validation {
@@ -1285,6 +1357,13 @@ body.events-admin-open .events-admin-panel {
   display: grid;
   gap: 14px;
   min-height: 0;
+}
+
+.events-admin-subhead {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .events-admin-shell {
@@ -1417,6 +1496,10 @@ body.events-admin-open .events-admin-panel {
 }
 
 @media (max-width: 980px) {
+  .events-admin-modal {
+    padding: 18px;
+  }
+
   .events-admin-shell {
     grid-template-columns: 1fr;
   }
@@ -1438,6 +1521,7 @@ body.events-admin-open .events-admin-panel {
 
   .events-admin-card {
     padding: 14px;
+    max-height: calc(100vh - 24px);
   }
 
   .events-admin-actions {
@@ -1451,6 +1535,26 @@ body.events-admin-open .events-admin-panel {
 
   .events-admin-list select {
     min-height: 160px;
+  }
+
+  .events-admin-modal {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .events-admin-bar {
+    padding: 12px;
+  }
+
+  .events-admin-focus,
+  .events-admin-modal-note,
+  .events-admin-note {
+    font-size: 12px;
+  }
+
+  .events-admin-subhead {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .events-auth-card {
