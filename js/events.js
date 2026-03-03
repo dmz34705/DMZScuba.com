@@ -222,13 +222,16 @@
 
     const meta = document.createElement("div");
     meta.className = "event-card-meta";
-    meta.innerHTML = `
+    const metaParts = [`
       <span class="event-chip">
         <span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>
         <span>${eventItem.type || "Event"}</span>
       </span>
-      <span class="event-status">${eventItem.status || "Planned"}</span>
-    `;
+    `];
+    if (!compact || (eventItem.status && eventItem.status !== "Planned")) {
+      metaParts.push(`<span class="event-status">${eventItem.status || "Planned"}</span>`);
+    }
+    meta.innerHTML = metaParts.join("");
 
     const title = document.createElement("h3");
     title.textContent = eventItem.title;
@@ -243,11 +246,14 @@
 
     const summary = document.createElement("p");
     summary.className = "event-card-summary";
-    summary.textContent = eventItem.summary || "";
+    const summaryText = eventItem.summary || "";
+    summary.textContent =
+      compact && summaryText.length > 110 ? `${summaryText.slice(0, 107).trimEnd()}...` : summaryText;
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    actions.innerHTML = `<a class="btn ${compact ? "secondary" : "primary"}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${eventItem.ctaLabel || "Get Details"}</a>`;
+    const ctaLabel = compact ? "Details" : eventItem.ctaLabel || "Get Details";
+    actions.innerHTML = `<a class="btn ${compact ? "secondary" : "primary"}" href="${eventItem.ctaHref || "/pages/contact/index.html#dive-now"}">${ctaLabel}</a>`;
 
     article.append(meta, title, dateLine, location, summary, actions);
     return article;
@@ -535,12 +541,15 @@
       monthHost.appendChild(card);
 
       const upcomingItems = [];
+      const agendaLimit = 8;
       for (let monthIndex = activeMonthIndex; monthIndex < monthGroups.length; monthIndex += 1) {
         const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.dateObj >= today);
         upcomingItems.push(...monthItems);
-        if (upcomingItems.length >= 18) break;
+        if (upcomingItems.length >= agendaLimit) break;
       }
-      const listItems = upcomingItems.slice(0, 18);
+      const selectedMatches = upcomingItems.filter((eventItem) => eventItem.date === selectedDateKey);
+      const remainingItems = upcomingItems.filter((eventItem) => eventItem.date !== selectedDateKey);
+      const listItems = [...selectedMatches, ...remainingItems].slice(0, agendaLimit);
       if (!listItems.length) {
         const emptyItem = document.createElement("div");
         emptyItem.className = "events-agenda-empty";
