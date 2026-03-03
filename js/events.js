@@ -585,7 +585,7 @@
           button.innerHTML = `
             <span class="events-day-number">${day}</span>
             ${isToday ? '<span class="events-day-label">Today</span>' : ""}
-            <span class="events-day-count">${items.length} scheduled</span>
+            <span class="events-day-count">${items.length} event${items.length === 1 ? "" : "s"}</span>
             <span class="events-day-bar-stack">${uniqueTypes}</span>
             ${items.length === 1 ? `<span class="events-day-preview">${items[0].title}</span>` : ""}
             ${items.length > 4 ? `<span class="events-day-more-count">+${items.length - 4} more</span>` : ""}

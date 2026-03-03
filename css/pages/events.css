@@ -920,11 +920,11 @@
 
 @media (max-width: 760px) {
   .events-page-layout-embed {
-    padding: 12px;
+    padding: 8px;
   }
 
   .events-month-card {
-    padding: 12px;
+    padding: 10px;
   }
 
   .events-list-block {
@@ -994,29 +994,85 @@
   }
 
   .events-embed-frame {
-    min-height: 1320px;
+    min-height: 1160px;
   }
 
   .events-upcoming-scroll {
     gap: 10px;
   }
 
-  .events-month-grid {
+  .events-legend {
     gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .events-legend-item {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  .events-legend-swatch {
+    min-width: 18px;
+    height: 14px;
+    font-size: 7px;
+  }
+
+  .events-month-grid {
+    gap: 4px;
   }
 
   .events-weekday {
-    padding: 8px 4px;
-    font-size: 11px;
+    padding: 6px 2px;
+    min-height: auto;
+    border-radius: 10px;
+    font-size: 9px;
   }
 
   .events-day {
-    min-height: 110px;
-    padding: 8px;
+    min-height: 58px;
+    padding: 4px;
+    border-radius: 10px;
+  }
+
+  .events-day-button,
+  .events-day-button-empty {
+    justify-items: center;
+    align-content: start;
+    gap: 3px;
+  }
+
+  .events-day-number {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
   }
 
   .events-day-count {
-    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 16px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: rgba(85,185,255,0.12);
+    font-size: 8px;
+    line-height: 1;
+    letter-spacing: 0.06em;
+  }
+
+  .events-day-label,
+  .events-day-preview,
+  .events-day-more-count,
+  .events-day-empty-copy {
+    display: none;
+  }
+
+  .events-day-bar-stack {
+    gap: 2px;
+    margin-top: 0;
+  }
+
+  .events-day-bar {
+    height: 5px;
   }
 
   .events-day-pill,
@@ -1060,8 +1116,8 @@
   .events-list-block .event-card.event-card-agenda-row {
     grid-template-columns: 1fr;
     align-items: start;
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px;
   }
 
   .events-list-block .event-card-agenda-row .event-card-actions .btn {
