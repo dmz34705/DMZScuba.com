@@ -54,6 +54,10 @@
     return new Date(date.getFullYear(), date.getMonth() + count, 1);
   }
 
+  function addDays(date, count) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+  }
+
   function dateKey(date) {
     return [
       date.getFullYear(),
@@ -116,6 +120,53 @@
     return candidate;
   }
 
+  function normalizeEventInstance(eventItem) {
+    if (!eventItem || !eventItem.date) return null;
+    const dateObj = parseEventDate(eventItem);
+    if (!dateObj) return null;
+    const durationDays = Math.max(1, Number(eventItem.durationDays) || 1);
+    const explicitEndDate = String(eventItem.endDate || "").trim();
+    const explicitEndDateObj = explicitEndDate ? parseDateKey(explicitEndDate) : null;
+    const endDateObj =
+      explicitEndDateObj && explicitEndDateObj >= dateObj
+        ? explicitEndDateObj
+        : durationDays > 1
+          ? addDays(dateObj, durationDays - 1)
+          : dateObj;
+    return {
+      ...eventItem,
+      date: dateKey(dateObj),
+      endDate: endDateObj > dateObj ? dateKey(endDateObj) : "",
+      dateObj,
+      endDateObj,
+      sourceId: eventItem.sourceId || eventItem.id || "",
+    };
+  }
+
+  function eventLastDateKey(eventItem) {
+    return String((eventItem && (eventItem.endDate || eventItem.date)) || "").trim();
+  }
+
+  function eventCoversDateKey(eventItem, targetKey) {
+    const start = String((eventItem && eventItem.date) || "").trim();
+    const end = eventLastDateKey(eventItem);
+    return Boolean(start && targetKey && start <= targetKey && end >= targetKey);
+  }
+
+  function eventOverlapsMonth(eventItem, monthDate) {
+    if (!eventItem || !monthDate) return false;
+    const monthStart = dateKey(monthDate);
+    const monthEnd = dateKey(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0));
+    return String(eventItem.date || "") <= monthEnd && eventLastDateKey(eventItem) >= monthStart;
+  }
+
+  function firstVisibleDateKeyForMonth(eventItem, monthDate) {
+    if (!eventItem || !monthDate) return "";
+    const monthStart = dateKey(monthDate);
+    if (eventCoversDateKey(eventItem, monthStart)) return monthStart;
+    return String(eventItem.date || "").trim();
+  }
+
   function expandTemplateEvents(payload) {
     const today = startOfDay(new Date());
     const currentMonth = startOfMonth(today);
@@ -125,13 +176,13 @@
     const generated = [];
 
     explicitEvents.forEach((eventItem) => {
-      const dateObj = parseEventDate(eventItem);
-      if (!dateObj || dateObj < today) return;
-      generated.push({
+      const normalized = normalizeEventInstance({
         ...eventItem,
         eventId: eventItem.eventId || eventItem.id,
-        dateObj,
+        sourceId: eventItem.id || "",
       });
+      if (!normalized || normalized.endDateObj < today) return;
+      generated.push(normalized);
     });
 
     templates.forEach((template) => {
@@ -144,7 +195,7 @@
       const weekday = Number(rule.weekday);
       if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return;
 
-      for (let offset = 0; offset < horizonMonths; offset += 1) {
+      for (let offset = -1; offset < horizonMonths; offset += 1) {
         const monthDate = addMonths(currentMonth, offset);
         if (monthDate < anchor) continue;
         if (allowedMonths && !allowedMonths.includes(monthDate.getMonth() + 1)) continue;
@@ -156,15 +207,17 @@
           weekOfMonth,
           weekday
         );
-        if (!occurrence || occurrence < today) continue;
+        if (!occurrence) continue;
 
-        generated.push({
+        const normalized = normalizeEventInstance({
           ...template,
           id: `${template.id}-${dateKey(occurrence)}`,
           eventId: template.eventId || template.id,
           date: dateKey(occurrence),
-          dateObj: occurrence,
+          sourceId: template.id || "",
         });
+        if (!normalized || normalized.endDateObj < today) continue;
+        generated.push(normalized);
       }
     });
 
@@ -189,16 +242,20 @@
     }
 
     events.forEach((eventItem) => {
-      const group = groupsByKey.get(monthKey(eventItem.dateObj));
-      if (group) group.events.push(eventItem);
+      months.forEach((group) => {
+        if (eventOverlapsMonth(eventItem, group.monthDate)) group.events.push(eventItem);
+      });
     });
 
     return months;
   }
 
-  function eventDateLabel(eventItem) {
+  function eventDateLabel(eventItem, options = {}) {
     const parts = [dayFormatter.format(eventItem.dateObj)];
-    if (eventItem.time) {
+    if (eventItem.endDateObj && eventItem.endDateObj > eventItem.dateObj) {
+      parts[0] = `${parts[0]} - ${dayFormatter.format(eventItem.endDateObj)}`;
+    }
+    if (options.includeTime !== false && eventItem.time) {
       parts.push(eventItem.endTime ? `${eventItem.time} - ${eventItem.endTime}` : eventItem.time);
     }
     return parts.join(" | ");
@@ -323,13 +380,18 @@
 
     const infoLine = document.createElement("p");
     infoLine.className = "event-card-agenda-info";
-    const timeText = eventItem.time
-      ? eventItem.endTime
-        ? `${eventItem.time} - ${eventItem.endTime}`
-        : eventItem.time
-      : "Time announced soon";
     const locationText = eventItem.location || "Location announced soon";
-    infoLine.textContent = `${timeText} | ${locationText}`;
+    const infoParts = [];
+    if (eventItem.endDateObj && eventItem.endDateObj > eventItem.dateObj) {
+      infoParts.push(eventDateLabel(eventItem, { includeTime: false }));
+    }
+    if (eventItem.time) {
+      infoParts.push(eventItem.endTime ? `${eventItem.time} - ${eventItem.endTime}` : eventItem.time);
+    } else if (!infoParts.length) {
+      infoParts.push("Time announced soon");
+    }
+    infoParts.push(locationText);
+    infoLine.textContent = infoParts.join(" | ");
 
     const content = document.createElement("div");
     content.className = "event-card-agenda-main";
@@ -405,9 +467,9 @@
 
     function defaultSelectedKey(group) {
       if (!group) return "";
-      const todayItem = group.events.find((eventItem) => eventItem.date === todayKey);
-      if (todayItem) return todayItem.date;
-      return group.events[0] ? group.events[0].date : "";
+      const todayItem = group.events.find((eventItem) => eventCoversDateKey(eventItem, todayKey));
+      if (todayItem) return todayKey;
+      return group.events[0] ? firstVisibleDateKeyForMonth(group.events[0], group.monthDate) : "";
     }
 
     function fallbackSelectedKey(group) {
@@ -425,7 +487,7 @@
         const moreCount = Math.max(0, selectedItems.length - 2);
         return `
           <div class="events-selected-summary-kicker">Selected Date</div>
-          <strong>${weekdayLongFormatter.format(selectedItems[0].dateObj)}</strong>
+          <strong>${weekdayLongFormatter.format(selectedDate)}</strong>
           <span>${selectedItems.length} event${selectedItems.length === 1 ? "" : "s"} scheduled${moreCount ? ` | ${labels} + ${moreCount} more` : ` | ${labels}`}</span>
         `;
       }
@@ -466,7 +528,7 @@
           type: "dmzEventsDateSelected",
           date: selectedDate,
           eventIds: Array.isArray(selectedItems)
-            ? selectedItems.map((item) => item.id).filter(Boolean)
+            ? selectedItems.map((item) => item.sourceId || item.id).filter(Boolean)
             : [],
         },
         "*"
@@ -481,10 +543,18 @@
       listHost.innerHTML = "";
 
       const eventMap = new Map();
+      const monthStart = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), 1);
+      const monthEnd = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth() + 1, 0);
       group.events.forEach((eventItem) => {
-        const items = eventMap.get(eventItem.date) || [];
-        items.push(eventItem);
-        eventMap.set(eventItem.date, items);
+        let cursor = eventItem.dateObj > monthStart ? eventItem.dateObj : monthStart;
+        const lastVisibleDate = eventItem.endDateObj < monthEnd ? eventItem.endDateObj : monthEnd;
+        while (cursor <= lastVisibleDate) {
+          const currentDateKey = dateKey(cursor);
+          const items = eventMap.get(currentDateKey) || [];
+          items.push(eventItem);
+          eventMap.set(currentDateKey, items);
+          cursor = addDays(cursor, 1);
+        }
       });
 
       if (!selectedDateKey || (!eventMap.has(selectedDateKey) && selectedDateKey !== todayKey)) {
@@ -566,8 +636,8 @@
         grid.appendChild(header);
       }
 
-      const firstOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth(), 1);
-      const lastOfMonth = new Date(group.monthDate.getFullYear(), group.monthDate.getMonth() + 1, 0);
+      const firstOfMonth = monthStart;
+      const lastOfMonth = monthEnd;
       const offset = firstOfMonth.getDay();
       const totalDays = lastOfMonth.getDate();
 
@@ -642,10 +712,16 @@
       monthHost.appendChild(card);
 
       const upcomingItems = [];
+      const seenUpcomingIds = new Set();
       const agendaLimit = 6;
       for (let monthIndex = activeMonthIndex; monthIndex < monthGroups.length; monthIndex += 1) {
-        const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.dateObj >= today);
-        upcomingItems.push(...monthItems);
+        const monthItems = monthGroups[monthIndex].events.filter((eventItem) => eventItem.endDateObj >= today);
+        monthItems.forEach((eventItem) => {
+          const dedupeKey = String(eventItem.id || `${eventItem.eventId}-${eventItem.date}`);
+          if (seenUpcomingIds.has(dedupeKey)) return;
+          seenUpcomingIds.add(dedupeKey);
+          upcomingItems.push(eventItem);
+        });
         if (upcomingItems.length >= agendaLimit) break;
       }
       const listItems = upcomingItems.slice(0, agendaLimit);
@@ -669,7 +745,7 @@
         agendaGroups.forEach((items, dateValue) => {
           const group = document.createElement("section");
           group.className = "events-agenda-group";
-          if (dateValue === selectedDateKey) {
+          if (items.some((item) => eventCoversDateKey(item, selectedDateKey))) {
             group.classList.add("is-selected");
             if (!firstMatch) firstMatch = group;
           }

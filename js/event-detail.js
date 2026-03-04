@@ -56,6 +56,10 @@
     return new Date(date.getFullYear(), date.getMonth() + count, 1);
   }
 
+  function addDays(date, count) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+  }
+
   function parseMonthAnchor(value) {
     if (!value || typeof value !== "string") return null;
     const parts = value.split("-");
@@ -84,9 +88,31 @@
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
+  function normalizeInstance(item) {
+    if (!item || !item.date) return null;
+    const dateObj = parseEventDate(item.date);
+    if (!dateObj) return null;
+    const durationDays = Math.max(1, Number(item.durationDays) || 1);
+    const explicitEndDate = String(item.endDate || "").trim();
+    const explicitEndDateObj = explicitEndDate ? parseEventDate(explicitEndDate) : null;
+    const endDateObj =
+      explicitEndDateObj && explicitEndDateObj >= dateObj
+        ? explicitEndDateObj
+        : durationDays > 1
+          ? addDays(dateObj, durationDays - 1)
+          : dateObj;
+    return {
+      ...item,
+      date: dateKey(dateObj),
+      endDate: endDateObj > dateObj ? dateKey(endDateObj) : "",
+      dateObj,
+      endDateObj,
+    };
+  }
+
   function formatScheduleLine(item) {
     if (!item || !item.date) return "Date coming soon";
-    const date = parseEventDate(item.date);
+    const date = item.dateObj || parseEventDate(item.date);
     if (!date) return item.date;
     const parts = [
       date.toLocaleDateString("en-US", {
@@ -96,6 +122,14 @@
         year: "numeric",
       }),
     ];
+    if (item.endDateObj && item.endDateObj > date) {
+      parts[0] = `${parts[0]} - ${item.endDateObj.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    }
     if (item.time) {
       parts.push(item.endTime ? `${item.time} - ${item.endTime}` : item.time);
     }
@@ -127,12 +161,12 @@
 
     (Array.isArray(payload && payload.events) ? payload.events : []).forEach((eventItem) => {
       if (!eventItem || !eventItem.id || !eventItem.date) return;
-      const parsedDate = parseEventDate(eventItem.date);
-      if (!parsedDate || parsedDate < today) return;
-      items.push({
+      const normalized = normalizeInstance({
         ...eventItem,
         eventId: eventItem.eventId || eventItem.id,
       });
+      if (!normalized || normalized.endDateObj < today) return;
+      items.push(normalized);
     });
 
     (Array.isArray(payload && payload.templates) ? payload.templates : []).forEach((template) => {
@@ -144,7 +178,7 @@
       const weekday = Number(template.rule.weekday);
       if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return;
 
-      for (let offset = 0; offset < horizonMonths; offset += 1) {
+      for (let offset = -1; offset < horizonMonths; offset += 1) {
         const monthDate = addMonths(currentMonth, offset);
         if (monthDate < anchor) continue;
         if (allowedMonths && !allowedMonths.includes(monthDate.getMonth() + 1)) continue;
@@ -156,14 +190,16 @@
           weekOfMonth,
           weekday
         );
-        if (!occurrence || occurrence < today) continue;
+        if (!occurrence) continue;
 
-        items.push({
+        const normalized = normalizeInstance({
           ...template,
           id: `${template.id}-${dateKey(occurrence)}`,
           eventId: template.eventId || template.id,
           date: dateKey(occurrence),
         });
+        if (!normalized || normalized.endDateObj < today) continue;
+        items.push(normalized);
       }
     });
 
@@ -175,6 +211,11 @@
     if (dateValue) {
       const exact = instances.find((item) => item.eventId === idValue && item.date === dateValue);
       if (exact) return exact;
+      const inRange = instances.find((item) => {
+        const endDate = String(item.endDate || item.date || "").trim();
+        return item.eventId === idValue && item.date <= dateValue && endDate >= dateValue;
+      });
+      if (inRange) return inRange;
     }
     return instances.find((item) => item.eventId === idValue) || null;
   }

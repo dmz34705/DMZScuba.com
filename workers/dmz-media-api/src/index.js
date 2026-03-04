@@ -873,6 +873,7 @@ function normalizeEventEntry(item, kind = "event") {
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
   };
+  const endDate = String(next.endDate || "").trim();
 
   if (kind === "template") {
     const startMonth = String(next.startMonth || "").trim();
@@ -882,6 +883,8 @@ function normalizeEventEntry(item, kind = "event") {
     normalized.rule = rule;
     normalized.startMonth = startMonth;
     normalized.intervalMonths = Math.max(1, Math.trunc(Number(next.intervalMonths) || 1));
+    const durationDays = Math.max(1, Math.trunc(Number(next.durationDays) || 1));
+    if (durationDays > 1) normalized.durationDays = durationDays;
     if (Array.isArray(next.months)) {
       normalized.months = next.months
         .map((value) => Math.trunc(Number(value)))
@@ -893,6 +896,7 @@ function normalizeEventEntry(item, kind = "event") {
   const date = String(next.date || "").trim();
   if (!date) return null;
   normalized.date = date;
+  if (endDate && endDate >= date) normalized.endDate = endDate;
   return normalized;
 }
 

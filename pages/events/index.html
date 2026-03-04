@@ -237,7 +237,7 @@
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>When It Happens</h4>
-                    <p class="events-admin-section-note">Set the time first. Only repeating events need the extra repeat settings.</p>
+                    <p class="events-admin-section-note">Set the time first. Use Last Day only when a trip or event spans more than one day. Only repeating events need the extra repeat settings.</p>
                     <div class="events-admin-form-grid">
                       <label>
                         Start Time
@@ -246,6 +246,10 @@
                       <label>
                         End Time
                         <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
+                      </label>
+                      <label>
+                        Last Day (Optional)
+                        <input type="date" id="eventsFieldEndDate" />
                       </label>
                       <label data-events-kind-only="template">
                         Repeat Every (Months)

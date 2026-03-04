@@ -65,6 +65,7 @@
   const fieldTemplateAnchor = document.getElementById("eventsFieldTemplateAnchorDate");
   const fieldTime = document.getElementById("eventsFieldTime");
   const fieldEndTime = document.getElementById("eventsFieldEndTime");
+  const fieldEndDate = document.getElementById("eventsFieldEndDate");
   const fieldType = document.getElementById("eventsFieldType");
   const fieldStatus = document.getElementById("eventsFieldStatus");
   const fieldLocation = document.getElementById("eventsFieldLocation");
@@ -290,6 +291,25 @@
     return candidate;
   }
 
+  function addDays(date, count) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+  }
+
+  function parseDateValue(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    const parsed = new Date(`${raw}T12:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function formatDateKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
   function buildSuggestedId(kind, titleValue, anchorValue) {
     const titleBase = normalizeId(titleValue);
     const dateChunk = String(anchorValue || "").replace(/[^0-9]/g, "").slice(0, 8);
@@ -324,6 +344,27 @@
     const date = nthWeekdayOfMonth(year, month - 1, weekOfMonth, weekday);
     if (!date) return "";
     return date.toISOString().slice(0, 10);
+  }
+
+  function getTemplateOccurrenceEndDate(item) {
+    const anchor = getTemplateAnchorDate(item);
+    if (!anchor) return "";
+    const anchorDate = parseDateValue(anchor);
+    const durationDays = Math.max(1, Number(item && item.durationDays) || 1);
+    if (!anchorDate || durationDays <= 1) return "";
+    return formatDateKey(addDays(anchorDate, durationDays - 1));
+  }
+
+  function getEventLastDate(item) {
+    if (!item) return "";
+    return String(item.endDate || "").trim();
+  }
+
+  function itemCoversDate(item, dateValue) {
+    if (!item || !item.date || !dateValue) return false;
+    const start = String(item.date || "").trim();
+    const end = String(item.endDate || start).trim() || start;
+    return start <= dateValue && end >= dateValue;
   }
 
   function getEntries() {
@@ -479,6 +520,7 @@
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
+    const formEndDate = String((fieldEndDate && fieldEndDate.value) || "").trim();
 
     if (previewKind === "event") {
       previewItem.date =
@@ -486,8 +528,11 @@
         (entry.kind === "event" ? String(currentItem.date || "").trim() : "") ||
         String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
         selectionContext.requestedDate;
+      if (formEndDate && previewItem.date && formEndDate >= previewItem.date) previewItem.endDate = formEndDate;
+      else delete previewItem.endDate;
       delete previewItem.startMonth;
       delete previewItem.intervalMonths;
+      delete previewItem.durationDays;
       delete previewItem.months;
       delete previewItem.rule;
     } else {
@@ -508,6 +553,19 @@
       else delete previewItem.months;
       const rule = deriveRuleFromDate(anchorValue);
       if (rule) previewItem.rule = rule;
+      if (formEndDate && anchorValue && formEndDate >= anchorValue) {
+        const anchorDate = parseDateValue(anchorValue);
+        const lastDate = parseDateValue(formEndDate);
+        const durationDays =
+          anchorDate && lastDate
+            ? Math.max(1, Math.round((lastDate.getTime() - anchorDate.getTime()) / 86400000) + 1)
+            : 1;
+        if (durationDays > 1) previewItem.durationDays = durationDays;
+        else delete previewItem.durationDays;
+      } else {
+        delete previewItem.durationDays;
+      }
+      delete previewItem.endDate;
     }
 
     return {
@@ -550,6 +608,7 @@
     if (fieldTemplateAnchor) fieldTemplateAnchor.value = "";
     if (fieldTime) fieldTime.value = "";
     if (fieldEndTime) fieldEndTime.value = "";
+    if (fieldEndDate) fieldEndDate.value = "";
     if (fieldType) fieldType.value = "Training";
     if (fieldStatus) fieldStatus.value = "Planned";
     if (fieldLocation) fieldLocation.value = "";
@@ -797,6 +856,9 @@
     if (fieldTemplateAnchor) fieldTemplateAnchor.value = entry.kind === "template" ? getTemplateAnchorDate(item) : "";
     if (fieldTime) fieldTime.value = item.time || "";
     if (fieldEndTime) fieldEndTime.value = item.endTime || "";
+    if (fieldEndDate) {
+      fieldEndDate.value = entry.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
+    }
     if (fieldType) fieldType.value = item.type || "Training";
     if (fieldStatus) fieldStatus.value = item.status || "Planned";
     if (fieldLocation) fieldLocation.value = item.location || "";
@@ -847,22 +909,39 @@
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
+    const lastDayValue = String((fieldEndDate && fieldEndDate.value) || "").trim();
 
     if (kind === "event") {
       const dateValue = String((fieldDate && fieldDate.value) || "").trim();
       if (!dateValue) throw new Error("A one-time event needs a date.");
+      if (lastDayValue && lastDayValue < dateValue) {
+        throw new Error("The last day cannot be before the event date.");
+      }
       next.id = explicitId || buildSuggestedId("event-item", title, dateValue);
       next.date = dateValue;
+      if (lastDayValue && lastDayValue > dateValue) next.endDate = lastDayValue;
       return next;
     }
 
     const anchorValue = String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim();
     if (!anchorValue) throw new Error("A repeating event needs a first date in the series.");
+    if (lastDayValue && lastDayValue < anchorValue) {
+      throw new Error("The last day cannot be before the first date in the series.");
+    }
     const rule = deriveRuleFromDate(anchorValue);
     if (!rule) throw new Error("The first date in the series is invalid.");
     next.id = explicitId || buildSuggestedId("template-item", title, anchorValue);
     next.startMonth = anchorValue.slice(0, 7);
     next.intervalMonths = Math.max(1, Math.min(12, Number((fieldInterval && fieldInterval.value) || 1) || 1));
+    if (lastDayValue && lastDayValue > anchorValue) {
+      const anchorDate = parseDateValue(anchorValue);
+      const lastDate = parseDateValue(lastDayValue);
+      if (!anchorDate || !lastDate) throw new Error("The last day is invalid.");
+      next.durationDays = Math.max(
+        1,
+        Math.round((lastDate.getTime() - anchorDate.getTime()) / 86400000) + 1
+      );
+    }
     const months = csvToMonthList(fieldMonths ? fieldMonths.value : "");
     if (months.length) next.months = months;
     next.rule = rule;
@@ -1040,6 +1119,7 @@
       eventId,
       title: "New One-Time Event",
       date: safeDate,
+      endDate: "",
       time: "",
       endTime: "",
       type: "Event",
@@ -1060,6 +1140,7 @@
       eventId,
       title: "New Repeating Event",
       startMonth: safeDate.slice(0, 7),
+      durationDays: 1,
       intervalMonths: 1,
       type: "Training",
       status: "Planned",
@@ -1116,7 +1197,7 @@
 
   function findTemplateKeyForDate(dateValue, eventIds) {
     if (!payload || !dateValue || !Array.isArray(eventIds) || !eventIds.length) return "";
-    const match = payload.templates.find((item) => eventIds.includes(`${item.id}-${dateValue}`));
+    const match = payload.templates.find((item) => eventIds.includes(item.id));
     return match ? `template:${match.id}` : "";
   }
 
@@ -1133,7 +1214,7 @@
       return;
     }
 
-    const oneTimeEvent = payload.events.find((item) => item.date === dateValue);
+    const oneTimeEvent = payload.events.find((item) => itemCoversDate(item, dateValue));
     if (oneTimeEvent) {
       if (searchInput) searchInput.value = "";
       setSelectionContext({
@@ -1484,6 +1565,7 @@
     fieldTemplateAnchor,
     fieldTime,
     fieldEndTime,
+    fieldEndDate,
     fieldType,
     fieldStatus,
     fieldLocation,
