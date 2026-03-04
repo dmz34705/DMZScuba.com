@@ -9,6 +9,13 @@
   const fallbackUrl = adminRoot.getAttribute("data-events-fallback") || "/assets/data/events.json";
   const tokenStorageKey = "dmzMediaToken";
   const uiStateStorageKey = "dmzEventsAdminUiState";
+  const TIME_OPTIONS = Array.from({ length: 48 }, (_unused, index) => {
+    const hour24 = Math.floor(index / 2);
+    const minute = index % 2 === 0 ? "00" : "30";
+    const meridiem = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minute} ${meridiem}`;
+  });
 
   const adminBar = document.getElementById("eventsAdminBar");
   const panel = document.getElementById("eventsAdminPanel");
@@ -336,6 +343,26 @@
     return ["week", "month", "year"].includes(unit) ? unit : "month";
   }
 
+  function buildTimeOptionsMarkup(selectedValue, placeholder = "Select time") {
+    const safeValue = String(selectedValue || "").trim();
+    const options = [
+      `<option value="">${escapeHtml(placeholder)}</option>`,
+      ...TIME_OPTIONS.map(
+        (value) =>
+          `<option value="${value}"${value === safeValue ? " selected" : ""}>${value}</option>`
+      ),
+    ];
+    return options.join("");
+  }
+
+  function populateTimeSelect(selectEl, selectedValue, placeholder) {
+    if (!selectEl) return;
+    selectEl.innerHTML = buildTimeOptionsMarkup(selectedValue, placeholder);
+    selectEl.value = TIME_OPTIONS.includes(String(selectedValue || "").trim())
+      ? String(selectedValue || "").trim()
+      : "";
+  }
+
   function addDays(date, count) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
   }
@@ -642,11 +669,15 @@
                 </label>
                 <label>
                   <span>Start Time</span>
-                  <input type="text" data-events-inline-field="time" data-events-inline-key="${key}" value="${escapeHtml(timeValue)}" placeholder="Add time" />
+                  <select data-events-inline-field="time" data-events-inline-key="${key}">
+                    ${buildTimeOptionsMarkup(timeValue, "Select time")}
+                  </select>
                 </label>
                 <label>
                   <span>End Time</span>
-                  <input type="text" data-events-inline-field="endTime" data-events-inline-key="${key}" value="${escapeHtml(endTimeValue)}" placeholder="End time" />
+                  <select data-events-inline-field="endTime" data-events-inline-key="${key}">
+                    ${buildTimeOptionsMarkup(endTimeValue, "Select time")}
+                  </select>
                 </label>
                 <label>
                   <span>End Date</span>
@@ -947,8 +978,8 @@
     if (fieldTitle) fieldTitle.value = "";
     if (fieldDate) fieldDate.value = "";
     if (fieldTemplateAnchor) fieldTemplateAnchor.value = "";
-    if (fieldTime) fieldTime.value = "";
-    if (fieldEndTime) fieldEndTime.value = "";
+    populateTimeSelect(fieldTime, "", "Select time");
+    populateTimeSelect(fieldEndTime, "", "Select time");
     if (fieldEndDate) fieldEndDate.value = "";
     if (fieldType) fieldType.value = "Training";
     if (fieldStatus) fieldStatus.value = "Planned";
@@ -1199,8 +1230,8 @@
     if (fieldTitle) fieldTitle.value = item.title || "";
     if (fieldDate) fieldDate.value = entry.kind === "event" ? item.date || "" : "";
     if (fieldTemplateAnchor) fieldTemplateAnchor.value = entry.kind === "template" ? getTemplateAnchorDate(item) : "";
-    if (fieldTime) fieldTime.value = item.time || "";
-    if (fieldEndTime) fieldEndTime.value = item.endTime || "";
+    populateTimeSelect(fieldTime, item.time || "", "Select time");
+    populateTimeSelect(fieldEndTime, item.endTime || "", "Select time");
     if (fieldEndDate) {
       fieldEndDate.value =
         entry.kind === "event"
@@ -2288,6 +2319,8 @@
     }
   });
 
+  populateTimeSelect(fieldTime, "", "Select time");
+  populateTimeSelect(fieldEndTime, "", "Select time");
   clearForm();
   setDirty(false);
   syncAuthUi();
