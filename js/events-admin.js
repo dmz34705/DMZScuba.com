@@ -604,6 +604,10 @@
           : item.endDate && item.endDate > item.date && selectionContext.requestedDate && selectionContext.requestedDate !== item.date
             ? `This multi-day event spans across the selected date ${selectedDateLabel}.`
             : "This event is attached to the selected date.";
+      const scheduleMeta =
+        candidate.kind === "template"
+          ? `Repeats every ${Math.max(1, Number(item.intervalMonths) || 1)} month${Math.max(1, Number(item.intervalMonths) || 1) === 1 ? "" : "s"}`
+          : "Does not repeat";
       details.innerHTML = `
         <summary>
           <div class="events-admin-date-item-main">
@@ -613,44 +617,62 @@
           <span class="events-admin-date-item-badge">${escapeHtml(kindLabel)}</span>
         </summary>
         <div class="events-admin-date-item-body">
-          <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
-          <div class="events-admin-date-inline-grid">
-            <label class="events-admin-date-inline-span">
-              Event Name
-              <input type="text" data-events-inline-field="title" data-events-inline-key="${key}" value="${escapeHtml(titleValue)}" />
-            </label>
-            <label ${candidate.kind === "template" ? 'hidden' : ""}>
-              Event Date
-              <input type="date" data-events-inline-field="date" data-events-inline-key="${key}" value="${escapeHtml(eventDateValue)}" />
-            </label>
-            <label ${candidate.kind === "template" ? "" : 'hidden'}>
-              First Date In Series
-              <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
-            </label>
-            <label>
-              Start Time
-              <input type="text" data-events-inline-field="time" data-events-inline-key="${key}" value="${escapeHtml(timeValue)}" />
-            </label>
-            <label>
-              End Time
-              <input type="text" data-events-inline-field="endTime" data-events-inline-key="${key}" value="${escapeHtml(endTimeValue)}" />
-            </label>
-            <label>
-              Last Day (Optional)
-              <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
-            </label>
-            <label ${candidate.kind === "template" ? "" : 'hidden'}>
-              Repeat Every (Months)
-              <input type="number" min="1" max="12" data-events-inline-field="intervalMonths" data-events-inline-key="${key}" value="${escapeHtml(intervalValue)}" />
-            </label>
-            <label class="events-admin-date-inline-span">
-              Location
-              <input type="text" data-events-inline-field="location" data-events-inline-key="${key}" value="${escapeHtml(locationValue)}" />
-            </label>
-            <label class="events-admin-date-inline-span">
-              Short Description
-              <textarea rows="3" data-events-inline-field="summary" data-events-inline-key="${key}">${escapeHtml(summaryValue)}</textarea>
-            </label>
+          <div class="events-admin-date-dialog">
+            <input
+              class="events-admin-date-title-input"
+              type="text"
+              data-events-inline-field="title"
+              data-events-inline-key="${key}"
+              value="${escapeHtml(titleValue)}"
+              placeholder="Add title"
+            />
+            <div class="events-admin-date-schedule">
+              <div class="events-admin-date-schedule-grid">
+                <label ${candidate.kind === "template" ? 'hidden' : ""}>
+                  <span>Date</span>
+                  <input type="date" data-events-inline-field="date" data-events-inline-key="${key}" value="${escapeHtml(eventDateValue)}" />
+                </label>
+                <label ${candidate.kind === "template" ? "" : 'hidden'}>
+                  <span>First Date</span>
+                  <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
+                </label>
+                <label>
+                  <span>Start Time</span>
+                  <input type="text" data-events-inline-field="time" data-events-inline-key="${key}" value="${escapeHtml(timeValue)}" placeholder="Add time" />
+                </label>
+                <label>
+                  <span>End Time</span>
+                  <input type="text" data-events-inline-field="endTime" data-events-inline-key="${key}" value="${escapeHtml(endTimeValue)}" placeholder="End time" />
+                </label>
+                <label>
+                  <span>Last Day</span>
+                  <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
+                </label>
+              </div>
+              <p class="events-admin-date-item-note">${escapeHtml(scheduleMeta)}</p>
+            </div>
+            <input
+              type="text"
+              data-events-inline-field="location"
+              data-events-inline-key="${key}"
+              value="${escapeHtml(locationValue)}"
+              placeholder="Add location"
+            />
+            <textarea
+              rows="3"
+              data-events-inline-field="summary"
+              data-events-inline-key="${key}"
+              placeholder="Add description"
+            >${escapeHtml(summaryValue)}</textarea>
+            ${candidate.kind === "template" ? `
+            <div class="events-admin-date-repeat-row">
+              <label>
+                <span>Repeat Every</span>
+                <input type="number" min="1" max="12" data-events-inline-field="intervalMonths" data-events-inline-key="${key}" value="${escapeHtml(intervalValue)}" />
+              </label>
+              <span class="events-admin-date-repeat-copy">month${intervalValue === "1" ? "" : "s"}</span>
+            </div>` : ""}
+            <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
           </div>
           <div class="events-admin-date-item-actions">
             <button class="btn secondary" type="button" data-events-date-delete="${key}">Delete This Event</button>

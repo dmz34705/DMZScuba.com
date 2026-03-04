@@ -1538,6 +1538,76 @@ body.events-admin-date-mode #eventsAdminPageDetails {
   grid-column: 1 / -1;
 }
 
+.events-admin-date-dialog {
+  display: grid;
+  gap: 12px;
+}
+
+.events-admin-date-dialog input,
+.events-admin-date-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.22);
+  color: rgba(234,242,255,0.94);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.events-admin-date-title-input {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.events-admin-date-schedule {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+}
+
+.events-admin-date-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.events-admin-date-schedule-grid label,
+.events-admin-date-repeat-row label {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(234,242,255,0.72);
+}
+
+.events-admin-date-schedule-grid span,
+.events-admin-date-repeat-row span {
+  display: block;
+}
+
+.events-admin-date-repeat-row {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.events-admin-date-repeat-row label {
+  min-width: 120px;
+}
+
+.events-admin-date-repeat-copy {
+  color: rgba(234,242,255,0.72);
+  font-size: 12px;
+  line-height: 1.4;
+  padding-bottom: 10px;
+}
+
 .events-admin-date-item-note {
   margin: 0;
   color: rgba(234,242,255,0.74);
