@@ -668,6 +668,10 @@
                   <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
                 </label>
                 <label>
+                  <span>End Date</span>
+                  <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
+                </label>
+                <label>
                   <span>Start Time</span>
                   <select data-events-inline-field="time" data-events-inline-key="${key}">
                     ${buildTimeOptionsMarkup(timeValue, "Select time")}
@@ -678,10 +682,6 @@
                   <select data-events-inline-field="endTime" data-events-inline-key="${key}">
                     ${buildTimeOptionsMarkup(endTimeValue, "Select time")}
                   </select>
-                </label>
-                <label>
-                  <span>End Date</span>
-                  <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
                 </label>
               </div>
               <p class="events-admin-date-item-note">${escapeHtml(scheduleMeta)}</p>
