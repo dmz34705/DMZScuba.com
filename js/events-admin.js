@@ -25,9 +25,8 @@
   const contextTitleEl = document.getElementById("eventsAdminContextTitle");
   const contextMetaEl = document.getElementById("eventsAdminContextMeta");
   const contextHintEl = document.getElementById("eventsAdminContextHint");
-  const datePickerWrapEl = document.getElementById("eventsAdminDatePickerWrap");
-  const datePickerEl = document.getElementById("eventsAdminDatePicker");
-  const dateActionsEl = document.getElementById("eventsAdminDateActions");
+  const dateBrowserEl = document.getElementById("eventsAdminDateBrowser");
+  const dateTreeEl = document.getElementById("eventsAdminDateTree");
   const addForDateBtn = document.getElementById("eventsAdminAddForDate");
   const contextActionsEl = document.getElementById("eventsAdminContextActions");
   const contextActionsNoteEl = document.getElementById("eventsAdminContextActionsNote");
@@ -488,7 +487,7 @@
     };
   }
 
-  function getDatePickerLabel(entry, dateValue) {
+  function getDateCandidateLabel(entry, dateValue) {
     if (!entry) return "";
     const item = entry.item || {};
     const title = String(item.title || item.id || "Untitled").trim();
@@ -518,15 +517,26 @@
     return keys;
   }
 
+  function getDateCandidateMeta(entry, dateValue) {
+    if (!entry) return "";
+    const item = entry.item || {};
+    if (entry.kind === "template") {
+      return describeTemplateRule(item);
+    }
+    if (item.date && item.endDate && item.endDate > item.date) {
+      return `${formatDateLabel(item.date)} to ${formatDateLabel(item.endDate)}`;
+    }
+    if (item.date) return formatDateLabel(item.date);
+    return dateValue ? formatDateLabel(dateValue) : "Date needed";
+  }
+
   function updateDatePicker(entry) {
     const candidateKeys = Array.isArray(selectionContext.candidateKeys) ? selectionContext.candidateKeys : [];
     const hasSelectedDate = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate);
-    const showPicker = Boolean(hasSelectedDate && candidateKeys.length);
+    const selectedDateLabel = hasSelectedDate ? formatDateLabel(selectionContext.requestedDate) : "";
     const addLabel = hasSelectedDate
-      ? `Add Event To ${formatDateLabel(selectionContext.requestedDate)}`
+      ? `Add Event To ${selectedDateLabel}`
       : "Select A Date First";
-    datePickerWrapEl.hidden = !showPicker;
-    if (dateActionsEl) dateActionsEl.hidden = false;
     if (addForDateBtn) {
       addForDateBtn.textContent = addLabel;
       addForDateBtn.disabled = !hasSelectedDate;
@@ -535,26 +545,50 @@
       addEventBtn.textContent = addLabel;
       addEventBtn.disabled = !hasSelectedDate;
     }
-    if (!datePickerWrapEl || !datePickerEl) return;
-    if (!showPicker) {
-      datePickerEl.innerHTML = "";
+    if (!dateBrowserEl || !dateTreeEl) return;
+    dateBrowserEl.hidden = !hasSelectedDate;
+    if (!hasSelectedDate) {
+      dateTreeEl.innerHTML = "";
       return;
     }
-
-    datePickerEl.innerHTML = "";
+    if (!candidateKeys.length) {
+      dateTreeEl.innerHTML = `<div class="events-admin-date-empty">No events are scheduled for ${selectedDateLabel}. Use the button above to add the first one.</div>`;
+      return;
+    }
+    dateTreeEl.innerHTML = "";
     candidateKeys.forEach((key) => {
       const candidate = getEntryByKey(key);
       if (!candidate) return;
-      const option = document.createElement("option");
-      option.value = key;
-      option.textContent = getDatePickerLabel(candidate, selectionContext.requestedDate);
-      if (key === (entry && entry.key)) option.selected = true;
-      datePickerEl.appendChild(option);
+      const item = candidate.item || {};
+      const details = document.createElement("details");
+      details.className = "events-admin-date-item";
+      if (entry && key === entry.key) details.open = true;
+      const kindLabel = candidate.kind === "template" ? "Repeats" : "One-Time";
+      const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
+      const metaText = getDateCandidateMeta(candidate, selectionContext.requestedDate);
+      const occurrenceNote =
+        candidate.kind === "template" && selectionContext.requestedDate
+          ? `This repeating event is generating the selected date ${selectedDateLabel}.`
+          : item.endDate && item.endDate > item.date && selectionContext.requestedDate && selectionContext.requestedDate !== item.date
+            ? `This multi-day event spans across the selected date ${selectedDateLabel}.`
+            : "This event is attached to the selected date.";
+      details.innerHTML = `
+        <summary>
+          <div class="events-admin-date-item-main">
+            <span class="events-admin-date-item-title">${summaryText}</span>
+            <span class="events-admin-date-item-meta">${metaText}</span>
+          </div>
+          <span class="events-admin-date-item-badge">${kindLabel}</span>
+        </summary>
+        <div class="events-admin-date-item-body">
+          <p class="events-admin-date-item-note">${occurrenceNote}</p>
+          <div class="events-admin-date-item-actions">
+            <button class="btn secondary" type="button" data-events-date-edit="${key}">Edit This Event</button>
+          </div>
+        </div>
+      `;
+      dateTreeEl.appendChild(details);
     });
-
-    if (entry && candidateKeys.includes(entry.key)) {
-      datePickerEl.value = entry.key;
-    }
   }
 
   function hasTemplateOccurrenceContext(entry) {
@@ -1816,15 +1850,16 @@
     });
   }
 
-  if (datePickerEl) {
-    datePickerEl.addEventListener("change", () => {
-      const nextKey = String(datePickerEl.value || "").trim();
+  if (dateTreeEl) {
+    dateTreeEl.addEventListener("click", (event) => {
+      const editButton = event.target.closest("[data-events-date-edit]");
+      if (!editButton) return;
+      const nextKey = String(editButton.getAttribute("data-events-date-edit") || "").trim();
       if (!nextKey || nextKey === selectedKey) return;
       try {
         commitSelectedForm({ skipDirty: true });
       } catch (error) {
-        showValidation(error && error.message ? error.message : "Fix the current entry before switching dates.", true);
-        datePickerEl.value = selectedKey;
+        showValidation(error && error.message ? error.message : "Fix the current entry before switching events.", true);
         return;
       }
       selectedKey = nextKey;
