@@ -165,24 +165,10 @@
               </div>
             </details>
             <div class="events-admin-shell">
-              <div class="events-admin-list">
-                <label class="events-admin-search-wrap">
-                  Find A Saved Item
-                  <div class="events-admin-search-row">
-                    <input type="search" id="eventsAdminSearch" placeholder="Search by event name, category, or schedule type" />
-                    <button class="btn secondary events-admin-search-clear" type="button" id="eventsAdminSearchClear" hidden>Clear</button>
-                  </div>
-                  <p class="events-admin-search-status" id="eventsAdminSearchStatus">Showing all saved items.</p>
-                </label>
-                <label>
-                  Saved Schedules
-                  <select id="eventsAdminSelect" size="12" aria-label="Select event entry"></select>
-                </label>
-              </div>
               <div class="events-admin-editor">
                 <div class="events-admin-section">
                   <div class="events-admin-subhead">
-                    <h3>Editing This Schedule</h3>
+                    <h3>Selected Date Editor</h3>
                   </div>
                   <div class="events-admin-context" id="eventsAdminContext">
                     <div class="events-admin-context-head">
@@ -193,6 +179,9 @@
                       <span>Edit Event On This Date</span>
                       <select id="eventsAdminDatePicker" aria-label="Select event on chosen calendar date"></select>
                     </label>
+                    <div class="events-admin-date-actions" id="eventsAdminDateActions" hidden>
+                      <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add Another Event On This Date</button>
+                    </div>
                     <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
                     <div class="events-admin-context-actions" id="eventsAdminContextActions" hidden>
@@ -204,14 +193,13 @@
                     </p>
                   </div>
                   <div class="events-admin-flow">
-                    <strong class="events-admin-flow-title">Quick Flow</strong>
-                    <p class="events-admin-flow-step">1. Use One-Time for single dates or date ranges like trips, and Repeats for the standing schedule.</p>
-                    <p class="events-admin-flow-step">2. When a repeating date needs a one-off change, click that calendar date and use Edit Only This Date or Cancel This Repeating Date.</p>
-                    <p class="events-admin-flow-step">3. Publish when the date window, short description, and button look right.</p>
+                    <strong class="events-admin-flow-title">Editing Flow</strong>
+                    <p class="events-admin-flow-step">Click a date in the calendar first. Then use the date event picker above to switch between every event attached to that date.</p>
+                    <p class="events-admin-flow-step">Use Add Another Event On This Date for stacked same-day events, or Edit Only This Date when a repeating date needs its own one-time version.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Basic Event Setup</h4>
-                    <p class="events-admin-section-note">Start here: name the event, choose whether it is a one-time date or repeating, then set the time and location.</p>
+                    <p class="events-admin-section-note">Start here: name the current event, choose one-time or repeating, then set the timing and location.</p>
                     <div class="events-admin-form-grid">
                       <label>
                         Schedule Type
@@ -379,6 +367,26 @@
                   </details>
                 </div>
               </div>
+              <details class="events-admin-advanced events-admin-library" id="eventsAdminLibrary">
+                <summary>Schedule Library</summary>
+                <div class="events-admin-advanced-body">
+                  <div class="events-admin-section events-admin-list">
+                    <p class="events-admin-section-note">Use the library only when you need to jump to a saved schedule without clicking a calendar date first.</p>
+                    <label class="events-admin-search-wrap">
+                      Find A Saved Item
+                      <div class="events-admin-search-row">
+                        <input type="search" id="eventsAdminSearch" placeholder="Search by event name, category, or schedule type" />
+                        <button class="btn secondary events-admin-search-clear" type="button" id="eventsAdminSearchClear" hidden>Clear</button>
+                      </div>
+                      <p class="events-admin-search-status" id="eventsAdminSearchStatus">Showing all saved items.</p>
+                    </label>
+                    <label>
+                      Saved Schedules
+                      <select id="eventsAdminSelect" size="12" aria-label="Select event entry"></select>
+                    </label>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
         </div>
