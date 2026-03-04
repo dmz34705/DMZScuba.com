@@ -555,6 +555,73 @@
     return `${title} | One-Time`;
   }
 
+  function addRepeatInterval(date, interval, repeatUnit) {
+    const safeDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (repeatUnit === "week") return addDays(safeDate, interval * 7);
+    if (repeatUnit === "year") {
+      safeDate.setFullYear(safeDate.getFullYear() + interval);
+      return safeDate;
+    }
+    safeDate.setMonth(safeDate.getMonth() + interval);
+    return safeDate;
+  }
+
+  function templateCoversDate(item, dateValue) {
+    const targetDate = parseDateValue(dateValue);
+    const anchorValue = getTemplateAnchorDate(item);
+    const anchorDate = parseDateValue(anchorValue);
+    if (!targetDate || !anchorDate || targetDate < anchorDate) return false;
+
+    const repeatInterval = Math.max(1, Number(item && (item.repeatInterval || item.intervalMonths)) || 1);
+    const repeatUnit = normalizeRepeatUnit(item && item.repeatUnit);
+    const excludedDates = getExcludedDates(item);
+    const monthList = Array.isArray(item && item.months) ? item.months.map((value) => Number(value)) : [];
+    const templateEndValue = getTemplateOccurrenceEndDate(item) || anchorValue;
+    const templateEndDate = parseDateValue(templateEndValue);
+    const durationDays =
+      templateEndDate && templateEndDate >= anchorDate
+        ? Math.max(1, Math.round((templateEndDate.getTime() - anchorDate.getTime()) / 86400000) + 1)
+        : 1;
+
+    let occurrenceDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate());
+    let guard = 0;
+    while (occurrenceDate <= targetDate && guard < 500) {
+      const occurrenceKey = formatDateKey(occurrenceDate);
+      const inAllowedMonth = !monthList.length || monthList.includes(occurrenceDate.getMonth() + 1);
+      if (inAllowedMonth && !excludedDates.includes(occurrenceKey)) {
+        const occurrenceEndKey = formatDateKey(addDays(occurrenceDate, durationDays - 1));
+        if (occurrenceKey <= dateValue && occurrenceEndKey >= dateValue) return true;
+      }
+      occurrenceDate = addRepeatInterval(occurrenceDate, repeatInterval, repeatUnit);
+      guard += 1;
+    }
+
+    return false;
+  }
+
+  function refreshDateSelectionCandidates(preferredKey = "") {
+    if (!isDateFocusedMode() || !selectionContext.requestedDate) return;
+    const candidateKeys = getDateCandidateKeys(selectionContext.requestedDate).filter((key) => {
+      const entry = getEntryByKey(key);
+      if (!entry) return false;
+      if (entry.kind === "template") return templateCoversDate(entry.item, selectionContext.requestedDate);
+      return itemCoversDate(entry.item, selectionContext.requestedDate);
+    });
+    const desiredKey =
+      (preferredKey && candidateKeys.includes(preferredKey) && preferredKey) ||
+      (selectedKey && candidateKeys.includes(selectedKey) && selectedKey) ||
+      candidateKeys[0] ||
+      "";
+    const nextEntry = getEntryByKey(desiredKey);
+    setSelectionContext({
+      requestedDate: selectionContext.requestedDate,
+      openedFromDate: true,
+      resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
+      candidateKeys,
+    });
+    selectedKey = desiredKey;
+  }
+
   function getDateCandidateKeys(dateValue, eventIds = []) {
     if (!payload || !dateValue) return [];
     const seen = new Set();
@@ -564,7 +631,10 @@
       (item) => String(item && item.date || "").trim() !== dateValue && itemCoversDate(item, dateValue)
     );
     const templateKeys = payload.templates
-      .filter((item) => eventIds.includes(String(item && item.id || "").trim()))
+      .filter((item) => {
+        const templateId = String(item && item.id || "").trim();
+        return eventIds.includes(templateId) || templateCoversDate(item, dateValue);
+      })
       .map((item) => `template:${item.id}`);
     [...exactEvents.map((item) => `event:${item.id}`), ...rangedEvents.map((item) => `event:${item.id}`), ...templateKeys].forEach((key) => {
       if (!key || seen.has(key) || !getEntryByKey(key)) return;
@@ -645,8 +715,10 @@
       const endTimeValue = String(item.endTime || "").trim();
       const locationValue = String(item.location || "").trim();
       const summaryValue = String(item.summary || "").trim();
-      const eventDateValue = candidate.kind === "event" ? String(item.date || "").trim() : "";
-      const anchorValue = candidate.kind === "template" ? getTemplateAnchorDate(item) : "";
+      const startDateValue =
+        candidate.kind === "template"
+          ? getTemplateAnchorDate(item)
+          : String(item.date || "").trim();
       const endDateValue =
         candidate.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
       const intervalValue = candidate.kind === "template" ? String(item.repeatInterval || item.intervalMonths || 1) : "";
@@ -681,13 +753,14 @@
             />
             <div class="events-admin-date-schedule">
               <div class="events-admin-date-schedule-grid">
-                <label ${candidate.kind === "template" ? 'hidden' : ""}>
+                <label>
                   <span>Start Date</span>
-                  <input type="date" data-events-inline-field="date" data-events-inline-key="${key}" value="${escapeHtml(eventDateValue)}" />
-                </label>
-                <label ${candidate.kind === "template" ? "" : 'hidden'}>
-                  <span>Start Date</span>
-                  <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
+                  <input
+                    type="date"
+                    data-events-inline-field="${candidate.kind === "template" ? "anchorDate" : "date"}"
+                    data-events-inline-key="${key}"
+                    value="${escapeHtml(startDateValue)}"
+                  />
                 </label>
                 <label>
                   <span>End Date</span>
@@ -979,7 +1052,7 @@
     if (fieldPreview) fieldPreview.value = String(payload.previewCount || 3);
   }
 
-  function clearForm() {
+  function clearForm(options = {}) {
     if (fieldKind) fieldKind.value = "event";
     if (fieldDefinitionSelect) fieldDefinitionSelect.innerHTML = "";
     setDefinitionHelp();
@@ -1013,7 +1086,7 @@
     updateKindFields("event");
     if (advancedDetails) advancedDetails.open = false;
     if (pageDetails) pageDetails.open = false;
-    resetSelectionContext();
+    if (!options.preserveSelectionContext) resetSelectionContext();
   }
 
   function getDefinitionIdForEntry(entry) {
@@ -1238,7 +1311,7 @@
 
   function fillForm(entry) {
     if (!entry) {
-      clearForm();
+      clearForm({ preserveSelectionContext: isDateFocusedMode() });
       updateContextPanel(null);
       return;
     }
@@ -1445,8 +1518,11 @@
   function reloadEmbed() {
     const frame = document.querySelector("[data-events-embed-frame]");
     if (!frame) return;
-    const src = frame.getAttribute("src") || "";
-    frame.setAttribute("src", src);
+    const currentSrc = frame.getAttribute("src") || "";
+    if (!currentSrc) return;
+    const nextUrl = new URL(currentSrc, window.location.href);
+    nextUrl.searchParams.set("t", String(Date.now()));
+    frame.setAttribute("src", `${nextUrl.pathname}${nextUrl.search}`);
   }
 
   async function loadPayload(options = {}) {
@@ -1725,13 +1801,8 @@
     if (!window.confirm(`Delete ${entry.item.title || entry.item.id}?`)) return;
     const targetList = entry.kind === "template" ? payload.templates : payload.events;
     targetList.splice(entry.index, 1);
-    selectionContext.candidateKeys = (Array.isArray(selectionContext.candidateKeys) ? selectionContext.candidateKeys : [])
-      .filter((candidateKey) => candidateKey && candidateKey !== key);
-    if (selectedKey === key) {
-      selectedKey = selectionContext.candidateKeys[0] || "";
-    }
+    refreshDateSelectionCandidates(selectedKey === key ? "" : selectedKey);
     setDirty(true);
-    updateDatePicker(getSelectedEntry());
     renderList(searchInput ? searchInput.value : "");
     showValidation("Event removed from this date. Publish when you are ready.");
     setStatus("Draft", "neutral");
@@ -1780,6 +1851,7 @@
     }
     setSelectionContext(nextContext);
     selectedKey = nextKey;
+    refreshDateSelectionCandidates(nextKey);
     renderList(searchInput ? searchInput.value : "");
     setEditMode(true);
     toggleOpen(true);
@@ -1907,17 +1979,17 @@
       return;
     }
 
-    createEntry("event", {
-      date: dateValue,
-      item: buildEventDraft(dateValue),
-      context: {
-        requestedDate: dateValue,
-        openedFromDate: true,
-        resolvedFromTemplate: false,
-        candidateKeys: [],
-      },
-      message: `No saved event matched ${dateValue}. A new one-time draft was created for that date.`,
+    setSelectionContext({
+      requestedDate: dateValue,
+      openedFromDate: true,
+      resolvedFromTemplate: false,
+      candidateKeys: [],
     });
+    selectedKey = "";
+    renderList(searchInput ? searchInput.value : "");
+    toggleOpen(true);
+    showValidation("");
+    setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
   }
 
   function deleteSelected() {
@@ -1932,10 +2004,14 @@
 
     const targetList = entry.kind === "template" ? payload.templates : payload.events;
     targetList.splice(entry.index, 1);
-    selectedKey = "";
+    if (isDateFocusedMode()) {
+      refreshDateSelectionCandidates(selectedKey === entry.key ? "" : selectedKey);
+    } else {
+      selectedKey = "";
+    }
     renderList(searchInput ? searchInput.value : "");
     setDirty(true);
-    toggleOpen(Boolean(getEntries().length));
+    toggleOpen(isDateFocusedMode() || Boolean(getEntries().length));
     showValidation("Item removed from draft. Publish when you are ready.");
     setStatus("Draft", "neutral");
   }
@@ -1975,6 +2051,7 @@
 
     const json = await resp.json().catch(() => ({}));
     payload = clonePayload(json && json.payload ? json.payload : payload);
+    refreshDateSelectionCandidates();
     renderList(searchInput ? searchInput.value : "");
     fillConfig();
     reloadEmbed();
