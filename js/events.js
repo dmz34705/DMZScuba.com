@@ -948,6 +948,20 @@
   }
 
   if (pageRoot || previewRoot) {
+    const applyPayload = (payload) => {
+      const safePayload = payload && typeof payload === "object" ? payload : {};
+      const events = expandTemplateEvents(safePayload);
+      renderPreview(events, safePayload);
+      renderCalendar(events, safePayload);
+      resizeEmbedFrame();
+    };
+
+    window.addEventListener("message", (event) => {
+      const data = event && event.data;
+      if (!data || data.type !== "dmzEventsPayloadPreview" || !data.payload) return;
+      applyPayload(data.payload);
+    });
+
     const loadPayload = (url) =>
       fetch(url)
         .then((response) => {
@@ -961,10 +975,7 @@
         return loadPayload(fallbackDataUrl);
       })
       .then((payload) => {
-        const events = expandTemplateEvents(payload);
-        renderPreview(events, payload);
-        renderCalendar(events, payload);
-        resizeEmbedFrame();
+        applyPayload(payload);
       })
       .catch(() => {
         renderError();

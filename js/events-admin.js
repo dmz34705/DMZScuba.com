@@ -1525,6 +1525,24 @@
     frame.setAttribute("src", `${nextUrl.pathname}${nextUrl.search}`);
   }
 
+  function syncEmbedPreview() {
+    const frame = document.querySelector("[data-events-embed-frame]");
+    if (!frame || !payload) return;
+    try {
+      const frameWindow = frame.contentWindow;
+      if (!frameWindow) return;
+      frameWindow.postMessage(
+        {
+          type: "dmzEventsPayloadPreview",
+          payload: clonePayload(payload),
+        },
+        window.location.origin
+      );
+    } catch (_error) {
+      // Ignore preview sync errors and leave the iframe on its last rendered state.
+    }
+  }
+
   async function loadPayload(options = {}) {
     setStatus("Loading...", "saving");
     showValidation("");
@@ -1558,6 +1576,7 @@
     }
 
     renderList(searchInput ? searchInput.value : "");
+    syncEmbedPreview();
     setDirty(false);
     setStatus(isAuthed() ? "Ready" : "Signed out", isAuthed() ? "ready" : "neutral");
 
@@ -1804,6 +1823,7 @@
     refreshDateSelectionCandidates(selectedKey === key ? "" : selectedKey);
     setDirty(true);
     renderList(searchInput ? searchInput.value : "");
+    syncEmbedPreview();
     showValidation("Event removed from this date. Publish when you are ready.");
     setStatus("Draft", "neutral");
   }
@@ -1856,6 +1876,7 @@
     setEditMode(true);
     toggleOpen(true);
     setDirty(true);
+    syncEmbedPreview();
     setStatus("Draft", "neutral");
     showValidation(options.message || "New draft item added. Publish when you are ready.");
   }
@@ -1896,6 +1917,7 @@
     }
     toggleOpen(true);
     setDirty(true);
+    syncEmbedPreview();
     setStatus("Draft", "neutral");
     showValidation(`The repeating date ${dateValue} was removed from this series. Publish when you are ready.`);
   }
@@ -1938,6 +1960,7 @@
     renderList(searchInput ? searchInput.value : "");
     toggleOpen(true);
     setDirty(true);
+    syncEmbedPreview();
     setStatus("Draft", "neutral");
     showValidation(`A one-time override draft was created for ${dateValue}. The repeating series will skip that date once you publish.`);
   }
@@ -2012,6 +2035,7 @@
     renderList(searchInput ? searchInput.value : "");
     setDirty(true);
     toggleOpen(isDateFocusedMode() || Boolean(getEntries().length));
+    syncEmbedPreview();
     showValidation("Item removed from draft. Publish when you are ready.");
     setStatus("Draft", "neutral");
   }
@@ -2054,6 +2078,7 @@
     refreshDateSelectionCandidates();
     renderList(searchInput ? searchInput.value : "");
     fillConfig();
+    syncEmbedPreview();
     reloadEmbed();
     setDirty(false, "Published changes are live.");
     setStatus("Saved", "saved");
