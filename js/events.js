@@ -107,10 +107,6 @@
     return new Date(year, month - 1, 1);
   }
 
-  function monthsBetween(a, b) {
-    return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth());
-  }
-
   function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
     const first = new Date(year, monthIndex, 1);
     const shift = (7 + weekday - first.getDay()) % 7;
@@ -120,13 +116,41 @@
     return candidate;
   }
 
+  function getLegacyTemplateStartDate(template) {
+    if (!template || !template.startMonth || !template.rule) return null;
+    const anchor = parseMonthAnchor(template.startMonth);
+    if (!anchor) return null;
+    const weekOfMonth = Number(template.rule.weekOfMonth);
+    const weekday = Number(template.rule.weekday);
+    if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return null;
+    return nthWeekdayOfMonth(anchor.getFullYear(), anchor.getMonth(), weekOfMonth, weekday);
+  }
+
+  function addRepeatInterval(date, count, unit) {
+    const interval = Math.max(1, Number(count) || 1);
+    if (unit === "week") return addDays(date, interval * 7);
+    if (unit === "year") return new Date(date.getFullYear() + interval, date.getMonth(), date.getDate());
+    return new Date(date.getFullYear(), date.getMonth() + interval, date.getDate());
+  }
+
+  function getTemplateStartDate(template) {
+    const explicitStart = parseDateKey(String((template && template.startDate) || "").trim());
+    if (explicitStart) return explicitStart;
+    return getLegacyTemplateStartDate(template);
+  }
+
   function normalizeEventInstance(eventItem) {
     if (!eventItem || !eventItem.date) return null;
     const dateObj = parseEventDate(eventItem);
     if (!dateObj) return null;
-    const durationDays = Math.max(1, Number(eventItem.durationDays) || 1);
+    const anchorStartObj = parseDateKey(String(eventItem.startDate || eventItem.date || "").trim());
     const explicitEndDate = String(eventItem.endDate || "").trim();
     const explicitEndDateObj = explicitEndDate ? parseDateKey(explicitEndDate) : null;
+    const derivedDurationDays =
+      anchorStartObj && explicitEndDateObj && explicitEndDateObj >= anchorStartObj
+        ? Math.max(1, Math.round((explicitEndDateObj.getTime() - anchorStartObj.getTime()) / 86400000) + 1)
+        : 1;
+    const durationDays = Math.max(1, Number(eventItem.durationDays) || derivedDurationDays);
     const endDateObj =
       explicitEndDateObj && explicitEndDateObj >= dateObj
         ? explicitEndDateObj
@@ -191,28 +215,17 @@
     });
 
     templates.forEach((template) => {
-      const rule = template && template.rule ? template.rule : null;
-      if (!rule) return;
-      const anchor = parseMonthAnchor(template.startMonth) || currentMonth;
-      const intervalMonths = Math.max(1, Number(template.intervalMonths) || 1);
+      const anchor = getTemplateStartDate(template);
+      if (!anchor) return;
+      const repeatInterval = Math.max(1, Number(template.repeatInterval || template.intervalMonths) || 1);
+      const repeatUnit = ["week", "month", "year"].includes(String(template.repeatUnit || "").trim())
+        ? String(template.repeatUnit || "").trim()
+        : "month";
       const allowedMonths = Array.isArray(template.months) ? template.months : null;
-      const weekOfMonth = Number(rule.weekOfMonth);
-      const weekday = Number(rule.weekday);
-      if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return;
+      const coverageEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + horizonMonths, 0);
 
-      for (let offset = -1; offset < horizonMonths; offset += 1) {
-        const monthDate = addMonths(currentMonth, offset);
-        if (monthDate < anchor) continue;
-        if (allowedMonths && !allowedMonths.includes(monthDate.getMonth() + 1)) continue;
-        if (monthsBetween(monthDate, anchor) % intervalMonths !== 0) continue;
-
-        const occurrence = nthWeekdayOfMonth(
-          monthDate.getFullYear(),
-          monthDate.getMonth(),
-          weekOfMonth,
-          weekday
-        );
-        if (!occurrence) continue;
+      for (let occurrence = new Date(anchor); occurrence <= coverageEnd; occurrence = addRepeatInterval(occurrence, repeatInterval, repeatUnit)) {
+        if (allowedMonths && !allowedMonths.includes(occurrence.getMonth() + 1)) continue;
         if (isTemplateDateExcluded(template, occurrence)) continue;
 
         const normalized = normalizeEventInstance({

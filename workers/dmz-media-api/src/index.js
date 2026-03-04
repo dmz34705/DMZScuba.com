@@ -855,6 +855,27 @@ function normalizeEventRule(rule) {
   };
 }
 
+function isValidRepeatUnit(value) {
+  return value === "week" || value === "month" || value === "year";
+}
+
+function deriveLegacyTemplateStartDate(item) {
+  if (!item || !item.startMonth || !item.rule) return "";
+  const parts = String(item.startMonth).split("-");
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return "";
+  const weekOfMonth = Number(item.rule.weekOfMonth);
+  const weekday = Number(item.rule.weekday);
+  if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return "";
+  const first = new Date(year, month - 1, 1);
+  const shift = (7 + weekday - first.getDay()) % 7;
+  const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+  const candidate = new Date(year, month - 1, dayNumber);
+  if (candidate.getMonth() !== month - 1) return "";
+  return candidate.toISOString().slice(0, 10);
+}
+
 function normalizeEventDefinition(item) {
   if (!item || typeof item !== "object") return null;
   const id = String(item.id || "").trim().toLowerCase();
@@ -902,15 +923,23 @@ function normalizeEventEntry(item, kind = "event") {
   const endDate = String(next.endDate || "").trim();
 
   if (kind === "template") {
-    const startMonth = String(next.startMonth || "").trim();
-    if (!startMonth) return null;
-    const rule = normalizeEventRule(next.rule);
-    if (!rule) return null;
-    normalized.rule = rule;
-    normalized.startMonth = startMonth;
-    normalized.intervalMonths = Math.max(1, Math.trunc(Number(next.intervalMonths) || 1));
-    const durationDays = Math.max(1, Math.trunc(Number(next.durationDays) || 1));
-    if (durationDays > 1) normalized.durationDays = durationDays;
+    const startDate = String(next.startDate || deriveLegacyTemplateStartDate(next) || "").trim();
+    if (!startDate) return null;
+    normalized.startDate = startDate;
+    normalized.repeatInterval = Math.max(
+      1,
+      Math.trunc(Number(next.repeatInterval || next.intervalMonths) || 1)
+    );
+    normalized.repeatUnit = isValidRepeatUnit(String(next.repeatUnit || "").trim())
+      ? String(next.repeatUnit || "").trim()
+      : "month";
+    const explicitEndDate = String(next.endDate || "").trim();
+    if (explicitEndDate && explicitEndDate >= startDate) {
+      normalized.endDate = explicitEndDate;
+    } else {
+      const durationDays = Math.max(1, Math.trunc(Number(next.durationDays) || 1));
+      if (durationDays > 1) normalized.durationDays = durationDays;
+    }
     if (Array.isArray(next.excludedDates)) {
       normalized.excludedDates = Array.from(
         new Set(

@@ -1544,6 +1544,7 @@ body.events-admin-date-mode #eventsAdminPageDetails {
 }
 
 .events-admin-date-dialog input,
+.events-admin-date-dialog select,
 .events-admin-date-dialog textarea {
   width: 100%;
   min-width: 0;
@@ -1601,12 +1602,6 @@ body.events-admin-date-mode #eventsAdminPageDetails {
   min-width: 120px;
 }
 
-.events-admin-date-repeat-copy {
-  color: rgba(234,242,255,0.72);
-  font-size: 12px;
-  line-height: 1.4;
-  padding-bottom: 10px;
-}
 
 .events-admin-date-item-note {
   margin: 0;

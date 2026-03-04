@@ -83,6 +83,7 @@
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
+  const fieldRepeatUnit = document.getElementById("eventsFieldRepeatUnit");
   const fieldExcludedDates = document.getElementById("eventsFieldExcludedDates");
   const fieldMonths = document.getElementById("eventsFieldMonths");
   const kindOnlyRows = panel.querySelectorAll("[data-events-kind-only]");
@@ -330,13 +331,9 @@
     ).sort();
   }
 
-  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
-    const first = new Date(year, monthIndex, 1);
-    const shift = (7 + weekday - first.getDay()) % 7;
-    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
-    const candidate = new Date(year, monthIndex, dayNumber);
-    if (candidate.getMonth() !== monthIndex) return null;
-    return candidate;
+  function normalizeRepeatUnit(value) {
+    const unit = String(value || "").trim().toLowerCase();
+    return ["week", "month", "year"].includes(unit) ? unit : "month";
   }
 
   function addDays(date, count) {
@@ -372,16 +369,16 @@
     return buildDraftId("eventdef", anchorValue || new Date().toISOString().slice(0, 10));
   }
 
-  function deriveRuleFromDate(dateValue) {
-    const parsed = new Date(`${dateValue}T12:00:00`);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return {
-      weekOfMonth: Math.floor((parsed.getDate() - 1) / 7) + 1,
-      weekday: parsed.getDay(),
-    };
+  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
+    const first = new Date(year, monthIndex, 1);
+    const shift = (7 + weekday - first.getDay()) % 7;
+    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+    const candidate = new Date(year, monthIndex, dayNumber);
+    if (candidate.getMonth() !== monthIndex) return null;
+    return candidate;
   }
 
-  function getTemplateAnchorDate(item) {
+  function getLegacyTemplateAnchorDate(item) {
     if (!item || !item.startMonth || !item.rule) return "";
     const parts = String(item.startMonth).split("-");
     const year = Number(parts[0]);
@@ -394,12 +391,18 @@
     return date.toISOString().slice(0, 10);
   }
 
+  function getTemplateAnchorDate(item) {
+    return String((item && (item.startDate || getLegacyTemplateAnchorDate(item))) || "").trim();
+  }
+
   function getTemplateOccurrenceEndDate(item) {
     const anchor = getTemplateAnchorDate(item);
     if (!anchor) return "";
+    const explicitEnd = String((item && item.endDate) || "").trim();
+    if (explicitEnd && explicitEnd >= anchor) return explicitEnd;
     const anchorDate = parseDateValue(anchor);
     const durationDays = Math.max(1, Number(item && item.durationDays) || 1);
-    if (!anchorDate || durationDays <= 1) return "";
+    if (!anchorDate || durationDays <= 1) return anchor;
     return formatDateKey(addDays(anchorDate, durationDays - 1));
   }
 
@@ -597,7 +600,8 @@
       const anchorValue = candidate.kind === "template" ? getTemplateAnchorDate(item) : "";
       const endDateValue =
         candidate.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
-      const intervalValue = candidate.kind === "template" ? String(item.intervalMonths || 1) : "";
+      const intervalValue = candidate.kind === "template" ? String(item.repeatInterval || item.intervalMonths || 1) : "";
+      const repeatUnitValue = candidate.kind === "template" ? normalizeRepeatUnit(item.repeatUnit || "month") : "month";
       const occurrenceNote =
         candidate.kind === "template" && selectionContext.requestedDate
           ? `This repeating event is generating the selected date ${selectedDateLabel}.`
@@ -606,7 +610,7 @@
             : "This event is attached to the selected date.";
       const scheduleMeta =
         candidate.kind === "template"
-          ? `Repeats every ${Math.max(1, Number(item.intervalMonths) || 1)} month${Math.max(1, Number(item.intervalMonths) || 1) === 1 ? "" : "s"}`
+          ? `Repeats every ${Math.max(1, Number(item.repeatInterval || item.intervalMonths) || 1)} ${repeatUnitValue}${Math.max(1, Number(item.repeatInterval || item.intervalMonths) || 1) === 1 ? "" : "s"}`
           : "Does not repeat";
       details.innerHTML = `
         <summary>
@@ -629,11 +633,11 @@
             <div class="events-admin-date-schedule">
               <div class="events-admin-date-schedule-grid">
                 <label ${candidate.kind === "template" ? 'hidden' : ""}>
-                  <span>Date</span>
+                  <span>Start Date</span>
                   <input type="date" data-events-inline-field="date" data-events-inline-key="${key}" value="${escapeHtml(eventDateValue)}" />
                 </label>
                 <label ${candidate.kind === "template" ? "" : 'hidden'}>
-                  <span>First Date</span>
+                  <span>Start Date</span>
                   <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
                 </label>
                 <label>
@@ -645,7 +649,7 @@
                   <input type="text" data-events-inline-field="endTime" data-events-inline-key="${key}" value="${escapeHtml(endTimeValue)}" placeholder="End time" />
                 </label>
                 <label>
-                  <span>Last Day</span>
+                  <span>End Date</span>
                   <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
                 </label>
               </div>
@@ -670,7 +674,14 @@
                 <span>Repeat Every</span>
                 <input type="number" min="1" max="12" data-events-inline-field="intervalMonths" data-events-inline-key="${key}" value="${escapeHtml(intervalValue)}" />
               </label>
-              <span class="events-admin-date-repeat-copy">month${intervalValue === "1" ? "" : "s"}</span>
+              <label>
+                <span>Unit</span>
+                <select data-events-inline-field="repeatUnit" data-events-inline-key="${key}">
+                  <option value="week" ${repeatUnitValue === "week" ? "selected" : ""}>Week</option>
+                  <option value="month" ${repeatUnitValue === "month" ? "selected" : ""}>Month</option>
+                  <option value="year" ${repeatUnitValue === "year" ? "selected" : ""}>Year</option>
+                </select>
+              </label>
             </div>` : ""}
             <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
           </div>
@@ -734,23 +745,27 @@
 
   function describeTemplateRule(item) {
     if (!item) return "Recurring schedule";
-    const rule = item.rule || {};
-    const weekPart = `${ordinal(rule.weekOfMonth)} ${getWeekdayName(rule.weekday)}`;
-    const interval = Math.max(1, Number(item.intervalMonths) || 1);
-    const intervalPart = interval === 1 ? "every month" : `every ${interval} months`;
-    const startPart = item.startMonth ? `starting ${item.startMonth}` : "with no start month yet";
+    const interval = Math.max(1, Number(item.repeatInterval || item.intervalMonths) || 1);
+    const repeatUnit = normalizeRepeatUnit(item.repeatUnit || "month");
+    const intervalPart = `every ${interval} ${repeatUnit}${interval === 1 ? "" : "s"}`;
+    const startPart = getTemplateAnchorDate(item)
+      ? `starting ${getTemplateAnchorDate(item)}`
+      : "with no start date yet";
     const durationPart =
-      Math.max(1, Number(item.durationDays) || 1) > 1
-        ? `lasting ${Math.max(1, Number(item.durationDays) || 1)} days`
-        : "single-day occurrence";
+      (() => {
+        const start = getTemplateAnchorDate(item);
+        const end = getTemplateOccurrenceEndDate(item);
+        if (start && end && end > start) return `running through ${end}`;
+        return "single-day occurrence";
+      })();
     const skippedDates = getExcludedDates(item);
     const skipPart = skippedDates.length
       ? `${skippedDates.length} skipped date${skippedDates.length === 1 ? "" : "s"}`
       : "no skipped dates";
     if (Array.isArray(item.months) && item.months.length) {
-      return `${weekPart}, ${intervalPart}, ${durationPart}, limited to months ${item.months.join(", ")}, ${startPart}, ${skipPart}.`;
+      return `${intervalPart}, ${durationPart}, limited to months ${item.months.join(", ")}, ${startPart}, ${skipPart}.`;
     }
-    return `${weekPart}, ${intervalPart}, ${durationPart}, ${startPart}, ${skipPart}.`;
+    return `${intervalPart}, ${durationPart}, ${startPart}, ${skipPart}.`;
   }
 
   function updateContextPanel(entry) {
@@ -850,8 +865,12 @@
         String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
         selectionContext.requestedDate;
       if (formEndDate && previewItem.date && formEndDate >= previewItem.date) previewItem.endDate = formEndDate;
+      else if (previewItem.date) previewItem.endDate = previewItem.date;
       else delete previewItem.endDate;
       delete previewItem.startMonth;
+      delete previewItem.startDate;
+      delete previewItem.repeatInterval;
+      delete previewItem.repeatUnit;
       delete previewItem.intervalMonths;
       delete previewItem.durationDays;
       delete previewItem.excludedDates;
@@ -863,11 +882,16 @@
         (entry.kind === "template" ? getTemplateAnchorDate(currentItem) : "") ||
         String((fieldDate && fieldDate.value) || "").trim() ||
         selectionContext.requestedDate;
-      previewItem.startMonth = anchorValue ? anchorValue.slice(0, 7) : "";
-      previewItem.intervalMonths = Math.max(
+      previewItem.startDate = anchorValue;
+      previewItem.repeatInterval = Math.max(
         1,
-        Math.min(12, Number((fieldInterval && fieldInterval.value) || currentItem.intervalMonths || 1) || 1)
+        Math.min(12, Number((fieldInterval && fieldInterval.value) || currentItem.repeatInterval || currentItem.intervalMonths || 1) || 1)
       );
+      previewItem.repeatUnit = normalizeRepeatUnit(
+        (fieldRepeatUnit && fieldRepeatUnit.value) || currentItem.repeatUnit || "month"
+      );
+      delete previewItem.startMonth;
+      delete previewItem.intervalMonths;
       const months = csvToMonthList(fieldMonths ? fieldMonths.value : listToCsv(currentItem.months));
       if (months.length) previewItem.months = months;
       else delete previewItem.months;
@@ -876,21 +900,13 @@
       );
       if (excludedDates.length) previewItem.excludedDates = excludedDates;
       else delete previewItem.excludedDates;
-      const rule = deriveRuleFromDate(anchorValue);
-      if (rule) previewItem.rule = rule;
       if (formEndDate && anchorValue && formEndDate >= anchorValue) {
-        const anchorDate = parseDateValue(anchorValue);
-        const lastDate = parseDateValue(formEndDate);
-        const durationDays =
-          anchorDate && lastDate
-            ? Math.max(1, Math.round((lastDate.getTime() - anchorDate.getTime()) / 86400000) + 1)
-            : 1;
-        if (durationDays > 1) previewItem.durationDays = durationDays;
-        else delete previewItem.durationDays;
+        previewItem.endDate = formEndDate;
       } else {
-        delete previewItem.durationDays;
+        previewItem.endDate = anchorValue;
       }
-      delete previewItem.endDate;
+      delete previewItem.rule;
+      delete previewItem.durationDays;
     }
 
     return {
@@ -941,6 +957,7 @@
     if (fieldCtaLabel) fieldCtaLabel.value = "";
     if (fieldCtaHref) fieldCtaHref.value = "";
     if (fieldInterval) fieldInterval.value = "1";
+    if (fieldRepeatUnit) fieldRepeatUnit.value = "month";
     if (fieldExcludedDates) fieldExcludedDates.value = "";
     if (fieldMonths) fieldMonths.value = "";
     updateKindFields("event");
@@ -1185,7 +1202,10 @@
     if (fieldTime) fieldTime.value = item.time || "";
     if (fieldEndTime) fieldEndTime.value = item.endTime || "";
     if (fieldEndDate) {
-      fieldEndDate.value = entry.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
+      fieldEndDate.value =
+        entry.kind === "event"
+          ? (getEventLastDate(item) || item.date || "")
+          : (getTemplateOccurrenceEndDate(item) || getTemplateAnchorDate(item) || "");
     }
     if (fieldType) fieldType.value = item.type || "Training";
     if (fieldStatus) fieldStatus.value = item.status || "Planned";
@@ -1193,7 +1213,8 @@
     if (fieldSummary) fieldSummary.value = item.summary || "";
     if (fieldCtaLabel) fieldCtaLabel.value = item.ctaLabel || "";
     if (fieldCtaHref) fieldCtaHref.value = item.ctaHref || "";
-    if (fieldInterval) fieldInterval.value = String(item.intervalMonths || 1);
+    if (fieldInterval) fieldInterval.value = String(item.repeatInterval || item.intervalMonths || 1);
+    if (fieldRepeatUnit) fieldRepeatUnit.value = normalizeRepeatUnit(item.repeatUnit || "month");
     if (fieldExcludedDates) fieldExcludedDates.value = listToLines(getExcludedDates(item));
     if (fieldMonths) fieldMonths.value = listToCsv(item.months);
     if (advancedDetails) advancedDetails.open = false;
@@ -1244,38 +1265,28 @@
       const dateValue = String((fieldDate && fieldDate.value) || "").trim();
       if (!dateValue) throw new Error("A one-time event needs a date.");
       if (lastDayValue && lastDayValue < dateValue) {
-        throw new Error("The last day cannot be before the event date.");
+        throw new Error("The end date cannot be before the start date.");
       }
       next.id = explicitId || buildSuggestedId("event-item", title, dateValue);
       next.date = dateValue;
-      if (lastDayValue && lastDayValue > dateValue) next.endDate = lastDayValue;
+      next.endDate = lastDayValue && lastDayValue >= dateValue ? lastDayValue : dateValue;
       return next;
     }
 
     const anchorValue = String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim();
-    if (!anchorValue) throw new Error("A repeating event needs a first date in the series.");
+    if (!anchorValue) throw new Error("A repeating event needs a start date.");
     if (lastDayValue && lastDayValue < anchorValue) {
-      throw new Error("The last day cannot be before the first date in the series.");
+      throw new Error("The end date cannot be before the start date.");
     }
-    const rule = deriveRuleFromDate(anchorValue);
-    if (!rule) throw new Error("The first date in the series is invalid.");
     next.id = explicitId || buildSuggestedId("template-item", title, anchorValue);
-    next.startMonth = anchorValue.slice(0, 7);
-    next.intervalMonths = Math.max(1, Math.min(12, Number((fieldInterval && fieldInterval.value) || 1) || 1));
-    if (lastDayValue && lastDayValue > anchorValue) {
-      const anchorDate = parseDateValue(anchorValue);
-      const lastDate = parseDateValue(lastDayValue);
-      if (!anchorDate || !lastDate) throw new Error("The last day is invalid.");
-      next.durationDays = Math.max(
-        1,
-        Math.round((lastDate.getTime() - anchorDate.getTime()) / 86400000) + 1
-      );
-    }
+    next.startDate = anchorValue;
+    next.endDate = lastDayValue && lastDayValue >= anchorValue ? lastDayValue : anchorValue;
+    next.repeatInterval = Math.max(1, Math.min(12, Number((fieldInterval && fieldInterval.value) || 1) || 1));
+    next.repeatUnit = normalizeRepeatUnit(fieldRepeatUnit ? fieldRepeatUnit.value : "month");
     const excludedDates = linesToDateList(fieldExcludedDates ? fieldExcludedDates.value : "");
     if (excludedDates.length) next.excludedDates = excludedDates;
     const months = csvToMonthList(fieldMonths ? fieldMonths.value : "");
     if (months.length) next.months = months;
-    next.rule = rule;
     return next;
   }
 
@@ -1456,7 +1467,7 @@
       eventId,
       title: "New One-Time Event",
       date: safeDate,
-      endDate: "",
+      endDate: safeDate,
       time: "",
       endTime: "",
       type: "Event",
@@ -1470,22 +1481,21 @@
 
   function buildTemplateDraft(dateValue) {
     const safeDate = String(dateValue || new Date().toISOString().slice(0, 10)).trim();
-    const rule = deriveRuleFromDate(safeDate) || { weekOfMonth: 1, weekday: 2 };
     const eventId = buildDefinitionId("New Repeating Event", safeDate);
     return {
       id: buildDraftId("templateitem", safeDate),
       eventId,
       title: "New Repeating Event",
-      startMonth: safeDate.slice(0, 7),
-      durationDays: 1,
-      intervalMonths: 1,
+      startDate: safeDate,
+      endDate: safeDate,
+      repeatInterval: 1,
+      repeatUnit: "month",
       type: "Training",
       status: "Planned",
       location: "",
       summary: "",
       ctaLabel: "",
       ctaHref: "",
-      rule,
     };
   }
 
@@ -1514,10 +1524,16 @@
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
     };
-    const durationDays = Math.max(1, Number(templateItem && templateItem.durationDays) || 1);
-    if (durationDays > 1) {
-      const startDate = parseDateValue(safeDate);
-      if (startDate) override.endDate = formatDateKey(addDays(startDate, durationDays - 1));
+    const templateStart = getTemplateAnchorDate(templateItem);
+    const templateEnd = getTemplateOccurrenceEndDate(templateItem) || templateStart;
+    const startDate = parseDateValue(safeDate);
+    const baseStart = parseDateValue(templateStart);
+    const baseEnd = parseDateValue(templateEnd);
+    if (startDate && baseStart && baseEnd && baseEnd >= baseStart) {
+      const durationDays = Math.max(1, Math.round((baseEnd.getTime() - baseStart.getTime()) / 86400000) + 1);
+      override.endDate = formatDateKey(addDays(startDate, durationDays - 1));
+    } else {
+      override.endDate = safeDate;
     }
     return override;
   }
@@ -1579,17 +1595,17 @@
       if (field === "date") {
         if (!parseDateValue(value)) return false;
         item.date = value;
-        if (item.endDate && item.endDate < item.date) delete item.endDate;
+        if (item.endDate && item.endDate < item.date) item.endDate = item.date;
         return true;
       }
       if (field === "endDate") {
         if (!value) {
-          delete item.endDate;
+          item.endDate = String(item.date || "").trim();
           return true;
         }
         if (!parseDateValue(value) || value < String(item.date || "").trim()) return false;
         item.endDate = value > String(item.date || "").trim() ? value : "";
-        if (!item.endDate) delete item.endDate;
+        if (!item.endDate) item.endDate = String(item.date || "").trim();
         return true;
       }
       return false;
@@ -1597,27 +1613,26 @@
 
     if (field === "anchorDate") {
       if (!parseDateValue(value)) return false;
-      const rule = deriveRuleFromDate(value);
-      if (!rule) return false;
-      item.startMonth = value.slice(0, 7);
-      item.rule = rule;
+      item.startDate = value;
+      if (item.endDate && item.endDate < item.startDate) item.endDate = item.startDate;
       return true;
     }
     if (field === "intervalMonths") {
-      item.intervalMonths = Math.max(1, Math.min(12, Number(value || 1) || 1));
+      item.repeatInterval = Math.max(1, Math.min(12, Number(value || 1) || 1));
+      return true;
+    }
+    if (field === "repeatUnit") {
+      item.repeatUnit = normalizeRepeatUnit(value);
       return true;
     }
     if (field === "endDate") {
       if (!value) {
-        delete item.durationDays;
+        item.endDate = getTemplateAnchorDate(item);
         return true;
       }
-      const anchorDate = parseDateValue(getTemplateAnchorDate(item));
-      const endDate = parseDateValue(value);
-      if (!anchorDate || !endDate || value < formatDateKey(anchorDate)) return false;
-      const durationDays = Math.max(1, Math.round((endDate.getTime() - anchorDate.getTime()) / 86400000) + 1);
-      if (durationDays > 1) item.durationDays = durationDays;
-      else delete item.durationDays;
+      const anchorDate = getTemplateAnchorDate(item);
+      if (!parseDateValue(value) || !anchorDate || value < anchorDate) return false;
+      item.endDate = value;
       return true;
     }
     return false;
@@ -2246,6 +2261,7 @@
     fieldCtaLabel,
     fieldCtaHref,
     fieldInterval,
+    fieldRepeatUnit,
     fieldExcludedDates,
     fieldMonths,
   ].filter(Boolean);

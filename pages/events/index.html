@@ -214,11 +214,11 @@
                         <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
                       </label>
                       <label data-events-kind-only="event">
-                        Event Date
+                        Start Date
                         <input type="date" id="eventsFieldDate" />
                       </label>
                       <label data-events-kind-only="template">
-                        First Date In Series
+                        Start Date
                         <input type="date" id="eventsFieldTemplateAnchorDate" />
                       </label>
                       <label>
@@ -237,8 +237,12 @@
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>When It Happens</h4>
-                    <p class="events-admin-section-note">Set the time first. Use Last Day only when a trip or event spans more than one day. Only repeating events need the extra repeat settings.</p>
+                    <p class="events-admin-section-note">Use start and end dates for both single-day events and multi-day trips. Repeating schedules also use the same start/end window.</p>
                     <div class="events-admin-form-grid">
+                      <label>
+                        End Date
+                        <input type="date" id="eventsFieldEndDate" />
+                      </label>
                       <label>
                         Start Time
                         <input type="text" id="eventsFieldTime" placeholder="7:00 PM" />
@@ -247,13 +251,17 @@
                         End Time
                         <input type="text" id="eventsFieldEndTime" placeholder="8:00 PM" />
                       </label>
-                      <label>
-                        Last Day (Optional)
-                        <input type="date" id="eventsFieldEndDate" />
+                      <label data-events-kind-only="template">
+                        Repeat Every
+                        <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
                       </label>
                       <label data-events-kind-only="template">
-                        Repeat Every (Months)
-                        <input type="number" min="1" max="12" id="eventsFieldIntervalMonths" />
+                        Repeat Unit
+                        <select id="eventsFieldRepeatUnit">
+                          <option value="week">Week</option>
+                          <option value="month" selected>Month</option>
+                          <option value="year">Year</option>
+                        </select>
                       </label>
                     </div>
                   </div>
