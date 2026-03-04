@@ -1402,6 +1402,23 @@ body.events-admin-open .events-admin-modal {
     rgba(0,0,0,0.18);
 }
 
+.events-admin-date-picker {
+  display: grid;
+  gap: 6px;
+}
+
+.events-admin-date-picker span {
+  color: rgba(234,242,255,0.82);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.events-admin-date-picker select {
+  min-height: 42px;
+}
+
 .events-admin-flow {
   display: grid;
   gap: 6px;

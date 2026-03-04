@@ -25,6 +25,8 @@
   const contextTitleEl = document.getElementById("eventsAdminContextTitle");
   const contextMetaEl = document.getElementById("eventsAdminContextMeta");
   const contextHintEl = document.getElementById("eventsAdminContextHint");
+  const datePickerWrapEl = document.getElementById("eventsAdminDatePickerWrap");
+  const datePickerEl = document.getElementById("eventsAdminDatePicker");
   const contextActionsEl = document.getElementById("eventsAdminContextActions");
   const contextActionsNoteEl = document.getElementById("eventsAdminContextActionsNote");
   const makeOverrideBtn = document.getElementById("eventsAdminMakeOverride");
@@ -89,6 +91,7 @@
     requestedDate: "",
     openedFromDate: false,
     resolvedFromTemplate: false,
+    candidateKeys: [],
   };
   const NEW_DEFINITION_OPTION = "__new__";
 
@@ -468,6 +471,7 @@
       requestedDate: "",
       openedFromDate: false,
       resolvedFromTemplate: false,
+      candidateKeys: [],
     };
   }
 
@@ -476,7 +480,66 @@
       requestedDate: String(next.requestedDate || "").trim(),
       openedFromDate: Boolean(next.openedFromDate),
       resolvedFromTemplate: Boolean(next.resolvedFromTemplate),
+      candidateKeys: Array.isArray(next.candidateKeys)
+        ? next.candidateKeys.map((value) => String(value || "").trim()).filter(Boolean)
+        : [],
     };
+  }
+
+  function getDatePickerLabel(entry, dateValue) {
+    if (!entry) return "";
+    const item = entry.item || {};
+    const title = String(item.title || item.id || "Untitled").trim();
+    if (entry.kind === "template") return `${title} | Repeats`;
+    if (item.endDate && item.endDate > item.date && dateValue && dateValue !== item.date) {
+      return `${title} | Multi-day`;
+    }
+    return `${title} | One-Time`;
+  }
+
+  function getDateCandidateKeys(dateValue, eventIds = []) {
+    if (!payload || !dateValue) return [];
+    const seen = new Set();
+    const keys = [];
+    const exactEvents = payload.events.filter((item) => String(item && item.date || "").trim() === dateValue);
+    const rangedEvents = payload.events.filter(
+      (item) => String(item && item.date || "").trim() !== dateValue && itemCoversDate(item, dateValue)
+    );
+    const templateKeys = payload.templates
+      .filter((item) => eventIds.includes(String(item && item.id || "").trim()))
+      .map((item) => `template:${item.id}`);
+    [...exactEvents.map((item) => `event:${item.id}`), ...rangedEvents.map((item) => `event:${item.id}`), ...templateKeys].forEach((key) => {
+      if (!key || seen.has(key) || !getEntryByKey(key)) return;
+      seen.add(key);
+      keys.push(key);
+    });
+    return keys;
+  }
+
+  function updateDatePicker(entry) {
+    if (!datePickerWrapEl || !datePickerEl) return;
+    const candidateKeys = Array.isArray(selectionContext.candidateKeys) ? selectionContext.candidateKeys : [];
+    const showPicker = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate && candidateKeys.length);
+    datePickerWrapEl.hidden = !showPicker;
+    if (!showPicker) {
+      datePickerEl.innerHTML = "";
+      return;
+    }
+
+    datePickerEl.innerHTML = "";
+    candidateKeys.forEach((key) => {
+      const candidate = getEntryByKey(key);
+      if (!candidate) return;
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = getDatePickerLabel(candidate, selectionContext.requestedDate);
+      if (key === (entry && entry.key)) option.selected = true;
+      datePickerEl.appendChild(option);
+    });
+
+    if (entry && candidateKeys.includes(entry.key)) {
+      datePickerEl.value = entry.key;
+    }
   }
 
   function hasTemplateOccurrenceContext(entry) {
@@ -555,6 +618,7 @@
       contextHintEl.textContent = "Date-picked recurring items will call out that changes affect future generated dates.";
       setFocus(editMode ? "Select a date in the calendar to edit it." : "Sign in to enable calendar editing.");
       setModalNote();
+      updateDatePicker(null);
       updateOccurrenceActions(null);
       return;
     }
@@ -573,6 +637,7 @@
       contextHintEl.textContent = "Changes apply only to this event date.";
       setFocus(`Editing ${item.date || activeDate || "new date draft"}`);
       setModalNote(activeDate ? `Editing the one-time event scheduled for ${formatDateLabel(activeDate)}.` : "Editing the selected one-time event.");
+      updateDatePicker(entry);
       updateOccurrenceActions(entry);
       return;
     }
@@ -589,6 +654,7 @@
     setModalNote(selectionContext.requestedDate
       ? `The selected date ${formatDateLabel(selectionContext.requestedDate)} maps to this recurring template.`
       : `Editing the recurring template "${item.title || item.id || "untitled"}".`);
+    updateDatePicker(entry);
     updateOccurrenceActions(entry);
   }
 
@@ -1356,6 +1422,12 @@
     const entry = getSelectedEntry();
     if (!entry || entry.kind !== "template") return;
     addExcludedDate(entry.item, dateValue);
+    setSelectionContext({
+      requestedDate: dateValue,
+      openedFromDate: true,
+      resolvedFromTemplate: true,
+      candidateKeys: [],
+    });
     fillForm(entry);
     renderList(searchInput ? searchInput.value : "");
     toggleOpen(true);
@@ -1395,6 +1467,7 @@
       requestedDate: dateValue,
       openedFromDate: true,
       resolvedFromTemplate: false,
+      candidateKeys: [`event:${overrideItem.id}`, entry.key],
     });
     selectedKey = `event:${overrideItem.id}`;
     renderList(searchInput ? searchInput.value : "");
@@ -1423,35 +1496,18 @@
       return;
     }
 
-    const exactOneTimeEvent = payload.events.find((item) => String(item.date || "").trim() === dateValue);
-    const rangedOneTimeEvent = payload.events.find(
-      (item) => String(item.date || "").trim() !== dateValue && itemCoversDate(item, dateValue)
-    );
-    const oneTimeEvent = exactOneTimeEvent || rangedOneTimeEvent;
-    if (oneTimeEvent) {
+    const candidateKeys = getDateCandidateKeys(dateValue, eventIds);
+    const firstCandidateKey = candidateKeys[0] || "";
+    if (firstCandidateKey) {
+      const firstEntry = getEntryByKey(firstCandidateKey);
       if (searchInput) searchInput.value = "";
       setSelectionContext({
         requestedDate: dateValue,
         openedFromDate: true,
-        resolvedFromTemplate: false,
+        resolvedFromTemplate: Boolean(firstEntry && firstEntry.kind === "template"),
+        candidateKeys,
       });
-      selectedKey = `event:${oneTimeEvent.id}`;
-      renderList(searchInput ? searchInput.value : "");
-      toggleOpen(true);
-      showValidation("");
-      setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
-      return;
-    }
-
-    const templateKey = findTemplateKeyForDate(dateValue, eventIds);
-    if (templateKey) {
-      if (searchInput) searchInput.value = "";
-      setSelectionContext({
-        requestedDate: dateValue,
-        openedFromDate: true,
-        resolvedFromTemplate: true,
-      });
-      selectedKey = templateKey;
+      selectedKey = firstCandidateKey;
       renderList(searchInput ? searchInput.value : "");
       toggleOpen(true);
       showValidation("");
@@ -1466,6 +1522,7 @@
         requestedDate: dateValue,
         openedFromDate: true,
         resolvedFromTemplate: false,
+        candidateKeys: [],
       },
       message: `No saved event matched ${dateValue}. A new one-time draft was created for that date.`,
     });
@@ -1690,6 +1747,34 @@
       fillForm(getSelectedEntry());
       syncAuthUi();
       toggleOpen(true);
+    });
+  }
+
+  if (datePickerEl) {
+    datePickerEl.addEventListener("change", () => {
+      const nextKey = String(datePickerEl.value || "").trim();
+      if (!nextKey || nextKey === selectedKey) return;
+      try {
+        commitSelectedForm({ skipDirty: true });
+      } catch (error) {
+        showValidation(error && error.message ? error.message : "Fix the current entry before switching dates.", true);
+        datePickerEl.value = selectedKey;
+        return;
+      }
+      selectedKey = nextKey;
+      const nextEntry = getSelectedEntry();
+      setSelectionContext({
+        requestedDate: selectionContext.requestedDate,
+        openedFromDate: true,
+        resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
+        candidateKeys: selectionContext.candidateKeys,
+      });
+      fillForm(nextEntry);
+      renderList(searchInput ? searchInput.value : "");
+      syncAuthUi();
+      toggleOpen(true);
+      showValidation("");
+      setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
     });
   }
 
