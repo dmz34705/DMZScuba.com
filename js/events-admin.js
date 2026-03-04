@@ -585,7 +585,6 @@
       const details = document.createElement("details");
       details.className = "events-admin-date-item";
       details.setAttribute("data-events-date-key", key);
-      if (entry && key === entry.key) details.open = true;
       const kindLabel = candidate.kind === "template" ? "Repeats" : "One-Time";
       const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
       const metaText = getDateCandidateMeta(candidate, selectionContext.requestedDate);
