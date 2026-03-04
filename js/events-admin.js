@@ -47,6 +47,7 @@
   const searchStatusEl = document.getElementById("eventsAdminSearchStatus");
   const selectEl = document.getElementById("eventsAdminSelect");
   const advancedDetails = document.getElementById("eventsAdminAdvanced");
+  const libraryDetails = document.getElementById("eventsAdminLibrary");
   const pageDetails = document.getElementById("eventsAdminPageDetails");
 
   const fieldUpdated = document.getElementById("eventsConfigUpdated");
@@ -555,9 +556,13 @@
     if (addEventBtn) {
       addEventBtn.textContent = addLabel;
       addEventBtn.disabled = !hasSelectedDate;
+      addEventBtn.hidden = hasSelectedDate;
     }
     if (dateFocusedEl) dateFocusedEl.hidden = !hasSelectedDate;
     if (standardEditorEl) standardEditorEl.hidden = hasSelectedDate;
+    if (libraryDetails) libraryDetails.hidden = hasSelectedDate;
+    if (advancedDetails) advancedDetails.hidden = hasSelectedDate;
+    if (pageDetails) pageDetails.hidden = hasSelectedDate;
     if (dateFocusTitleEl) {
       dateFocusTitleEl.textContent = hasSelectedDate ? `Events On ${selectedDateLabel}` : "Events On This Date";
     }
@@ -577,6 +582,7 @@
       const item = candidate.item || {};
       const details = document.createElement("details");
       details.className = "events-admin-date-item";
+      details.setAttribute("data-events-date-key", key);
       if (entry && key === entry.key) details.open = true;
       const kindLabel = candidate.kind === "template" ? "Repeats" : "One-Time";
       const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
@@ -656,10 +662,7 @@
             </label>
           </div>
           <div class="events-admin-date-item-actions">
-            <button class="btn secondary" type="button" data-events-date-open-library="${key}">Open Full Editor</button>
             <button class="btn secondary" type="button" data-events-date-delete="${key}">Delete This Event</button>
-            ${candidate.kind === "template" ? `<button class="btn secondary" type="button" data-events-date-override="${key}">Edit Only This Date</button>
-            <button class="btn secondary" type="button" data-events-date-skip="${key}">Cancel This Repeating Date</button>` : ""}
           </div>
         </div>
       `;
@@ -747,6 +750,9 @@
       contextHintEl.textContent = "Date-picked recurring items will call out that changes affect future generated dates.";
       setFocus(editMode ? "Select a date in the calendar to edit it." : "Sign in to enable calendar editing.");
       setModalNote();
+      if (libraryDetails) libraryDetails.hidden = false;
+      if (advancedDetails) advancedDetails.hidden = false;
+      if (pageDetails) pageDetails.hidden = false;
       updateDatePicker(null);
       updateOccurrenceActions(null);
       return;
@@ -2080,6 +2086,23 @@
     dateTreeEl.addEventListener("click", (event) => {
       const field = event.target.closest("[data-events-inline-field]");
       if (field) return;
+      const summary = event.target.closest("summary");
+      if (summary) {
+        const details = summary.closest("[data-events-date-key]");
+        const key = String(details && details.getAttribute("data-events-date-key") || "").trim();
+        if (key) {
+          selectedKey = key;
+          const nextEntry = getSelectedEntry();
+          setSelectionContext({
+            requestedDate: selectionContext.requestedDate,
+            openedFromDate: true,
+            resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
+            candidateKeys: selectionContext.candidateKeys,
+          });
+          showValidation("");
+        }
+        return;
+      }
       const editButton = event.target.closest("[data-events-date-edit]");
       if (editButton) {
         const nextKey = String(editButton.getAttribute("data-events-date-edit") || "").trim();
@@ -2107,35 +2130,10 @@
         return;
       }
 
-      const openLibraryButton = event.target.closest("[data-events-date-open-library]");
-      if (openLibraryButton) {
-        openFullEditorForKey(String(openLibraryButton.getAttribute("data-events-date-open-library") || "").trim());
-        return;
-      }
-
       const deleteButton = event.target.closest("[data-events-date-delete]");
       if (deleteButton) {
         deleteDateTreeEntry(String(deleteButton.getAttribute("data-events-date-delete") || "").trim());
         return;
-      }
-
-      const overrideButton = event.target.closest("[data-events-date-override]");
-      if (overrideButton) {
-        const key = String(overrideButton.getAttribute("data-events-date-override") || "").trim();
-        if (!key) return;
-        selectedKey = key;
-        selectionContext.resolvedFromTemplate = true;
-        makeSelectedOccurrenceOverride();
-        return;
-      }
-
-      const skipButton = event.target.closest("[data-events-date-skip]");
-      if (skipButton) {
-        const key = String(skipButton.getAttribute("data-events-date-skip") || "").trim();
-        if (!key) return;
-        selectedKey = key;
-        selectionContext.resolvedFromTemplate = true;
-        skipSelectedOccurrence();
       }
     });
   }

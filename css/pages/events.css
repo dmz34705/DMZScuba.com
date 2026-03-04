@@ -1414,9 +1414,7 @@ body.events-admin-open .events-admin-modal {
 
 .events-admin-date-browser-head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 
