@@ -108,7 +108,7 @@
           </div>
           <div class="events-admin-actions events-admin-actions-bar">
             <button class="btn secondary events-admin-add-template" type="button">Add Recurring</button>
-            <button class="btn secondary events-admin-add-event" type="button">Add One-Time</button>
+            <button class="btn secondary events-admin-add-event" type="button">Add Event To Selected Date</button>
             <button class="btn primary events-admin-save" type="button">Publish</button>
             <button class="btn secondary events-admin-refresh" type="button">Reload</button>
             <button class="btn secondary events-admin-clear-live" type="button">Reset to File</button>
@@ -179,7 +179,7 @@
                       <span>Edit Event On This Date</span>
                       <select id="eventsAdminDatePicker" aria-label="Select event on chosen calendar date"></select>
                     </label>
-                    <div class="events-admin-date-actions" id="eventsAdminDateActions" hidden>
+                    <div class="events-admin-date-actions" id="eventsAdminDateActions">
                       <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add Another Event On This Date</button>
                     </div>
                     <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
@@ -195,7 +195,7 @@
                   <div class="events-admin-flow">
                     <strong class="events-admin-flow-title">Editing Flow</strong>
                     <p class="events-admin-flow-step">Click a date in the calendar first. Then use the date event picker above to switch between every event attached to that date.</p>
-                    <p class="events-admin-flow-step">Use Add Another Event On This Date for stacked same-day events, or Edit Only This Date when a repeating date needs its own one-time version.</p>
+                    <p class="events-admin-flow-step">Use Add Event To Selected Date for stacked same-day events, or Edit Only This Date when a repeating date needs its own one-time version.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Basic Event Setup</h4>

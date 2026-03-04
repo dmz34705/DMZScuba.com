@@ -519,13 +519,23 @@
   }
 
   function updateDatePicker(entry) {
-    if (!datePickerWrapEl || !datePickerEl) return;
     const candidateKeys = Array.isArray(selectionContext.candidateKeys) ? selectionContext.candidateKeys : [];
-    const showPicker = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate && candidateKeys.length);
+    const hasSelectedDate = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate);
+    const showPicker = Boolean(hasSelectedDate && candidateKeys.length);
+    const addLabel = hasSelectedDate
+      ? `Add Event To ${formatDateLabel(selectionContext.requestedDate)}`
+      : "Select A Date First";
     datePickerWrapEl.hidden = !showPicker;
-    if (dateActionsEl) {
-      dateActionsEl.hidden = !(selectionContext.openedFromDate && selectionContext.requestedDate);
+    if (dateActionsEl) dateActionsEl.hidden = false;
+    if (addForDateBtn) {
+      addForDateBtn.textContent = addLabel;
+      addForDateBtn.disabled = !hasSelectedDate;
     }
+    if (addEventBtn) {
+      addEventBtn.textContent = addLabel;
+      addEventBtn.disabled = !hasSelectedDate;
+    }
+    if (!datePickerWrapEl || !datePickerEl) return;
     if (!showPicker) {
       datePickerEl.innerHTML = "";
       return;
