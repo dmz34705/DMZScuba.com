@@ -1234,6 +1234,13 @@ body.events-admin-open .events-admin-modal {
   display: flex;
 }
 
+body.events-admin-date-mode #eventsAdminStandardEditor,
+body.events-admin-date-mode #eventsAdminLibrary,
+body.events-admin-date-mode #eventsAdminAdvanced,
+body.events-admin-date-mode #eventsAdminPageDetails {
+  display: none !important;
+}
+
 .events-footer {
   display: flex;
   align-items: center;

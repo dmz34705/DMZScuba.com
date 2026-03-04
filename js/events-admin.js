@@ -549,6 +549,7 @@
     const addLabel = hasSelectedDate
       ? `Add Event To ${selectedDateLabel}`
       : "Select A Date First";
+    document.body.classList.toggle("events-admin-date-mode", hasSelectedDate);
     if (addForDateBtn) {
       addForDateBtn.textContent = addLabel;
       addForDateBtn.disabled = !hasSelectedDate;
@@ -558,6 +559,7 @@
       addEventBtn.disabled = !hasSelectedDate;
       addEventBtn.hidden = hasSelectedDate;
     }
+    if (addTemplateBtn) addTemplateBtn.hidden = hasSelectedDate;
     if (dateFocusedEl) dateFocusedEl.hidden = !hasSelectedDate;
     if (standardEditorEl) standardEditorEl.hidden = hasSelectedDate;
     if (libraryDetails) libraryDetails.hidden = hasSelectedDate;
@@ -588,8 +590,6 @@
       const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
       const metaText = getDateCandidateMeta(candidate, selectionContext.requestedDate);
       const titleValue = String(item.title || "").trim();
-      const typeValue = String(item.type || "").trim();
-      const statusValue = String(item.status || "").trim();
       const timeValue = String(item.time || "").trim();
       const endTimeValue = String(item.endTime || "").trim();
       const locationValue = String(item.location || "").trim();
@@ -619,14 +619,6 @@
             <label class="events-admin-date-inline-span">
               Event Name
               <input type="text" data-events-inline-field="title" data-events-inline-key="${key}" value="${escapeHtml(titleValue)}" />
-            </label>
-            <label>
-              Category
-              <input type="text" data-events-inline-field="type" data-events-inline-key="${key}" value="${escapeHtml(typeValue)}" />
-            </label>
-            <label>
-              Status
-              <input type="text" data-events-inline-field="status" data-events-inline-key="${key}" value="${escapeHtml(statusValue)}" />
             </label>
             <label ${candidate.kind === "template" ? 'hidden' : ""}>
               Event Date
