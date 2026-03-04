@@ -175,7 +175,10 @@
                       <span class="events-admin-date-browser-label" id="eventsAdminDateFocusTitle">Events On This Date</span>
                     </div>
                     <div class="events-admin-date-tree" id="eventsAdminDateTree" aria-live="polite"></div>
-                    <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add Event To This Date</button>
+                    <div class="events-admin-actions">
+                      <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add One-Time Event</button>
+                      <button class="btn secondary" type="button" id="eventsAdminAddRepeatingForDate">Add Repeating Event</button>
+                    </div>
                   </div>
                   <div class="events-admin-standard-editor" id="eventsAdminStandardEditor">
                   <div class="events-admin-context" id="eventsAdminContext">
@@ -231,13 +234,9 @@
                     <h4>When It Happens</h4>
                     <p class="events-admin-section-note">Use start and end dates for both single-day events and multi-day trips. Repeating schedules also use the same start/end window.</p>
                     <div class="events-admin-form-grid">
-                      <label data-events-kind-only="event">
+                      <label>
                         Start Date
                         <input type="date" id="eventsFieldDate" />
-                      </label>
-                      <label data-events-kind-only="template">
-                        Start Date
-                        <input type="date" id="eventsFieldTemplateAnchorDate" />
                       </label>
                       <label>
                         End Date

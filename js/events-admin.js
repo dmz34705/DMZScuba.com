@@ -37,6 +37,7 @@
   const dateTreeEl = document.getElementById("eventsAdminDateTree");
   const standardEditorEl = document.getElementById("eventsAdminStandardEditor");
   const addForDateBtn = document.getElementById("eventsAdminAddForDate");
+  const addRepeatingForDateBtn = document.getElementById("eventsAdminAddRepeatingForDate");
   const contextActionsEl = document.getElementById("eventsAdminContextActions");
   const contextActionsNoteEl = document.getElementById("eventsAdminContextActionsNote");
   const makeOverrideBtn = document.getElementById("eventsAdminMakeOverride");
@@ -363,6 +364,20 @@
       : "";
   }
 
+  function getFormStartDateValue() {
+    return String(
+      (fieldDate && fieldDate.value) ||
+      (fieldTemplateAnchor && fieldTemplateAnchor.value) ||
+      ""
+    ).trim();
+  }
+
+  function setFormStartDateValue(value) {
+    const nextValue = String(value || "").trim();
+    if (fieldDate) fieldDate.value = nextValue;
+    if (fieldTemplateAnchor && fieldTemplateAnchor !== fieldDate) fieldTemplateAnchor.value = nextValue;
+  }
+
   function addDays(date, count) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
   }
@@ -577,15 +592,22 @@
     const hasSelectedDate = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate);
     const selectedDateLabel = hasSelectedDate ? formatDateLabel(selectionContext.requestedDate) : "";
     const addLabel = hasSelectedDate
-      ? `Add Event To ${selectedDateLabel}`
+      ? `Add One-Time Event On ${selectedDateLabel}`
+      : "Select A Date First";
+    const addRepeatingLabel = hasSelectedDate
+      ? `Add Repeating Event From ${selectedDateLabel}`
       : "Select A Date First";
     document.body.classList.toggle("events-admin-date-mode", hasSelectedDate);
     if (addForDateBtn) {
       addForDateBtn.textContent = addLabel;
       addForDateBtn.disabled = !hasSelectedDate;
     }
+    if (addRepeatingForDateBtn) {
+      addRepeatingForDateBtn.textContent = addRepeatingLabel;
+      addRepeatingForDateBtn.disabled = !hasSelectedDate;
+    }
     if (addEventBtn) {
-      addEventBtn.textContent = addLabel;
+      addEventBtn.textContent = hasSelectedDate ? `Add Event On ${selectedDateLabel}` : "Select A Date First";
       addEventBtn.disabled = !hasSelectedDate;
       addEventBtn.hidden = hasSelectedDate;
     }
@@ -604,7 +626,7 @@
       return;
     }
     if (!candidateKeys.length) {
-      dateTreeEl.innerHTML = `<div class="events-admin-date-empty">No events are scheduled for ${selectedDateLabel}. Use the button above to add the first one.</div>`;
+      dateTreeEl.innerHTML = `<div class="events-admin-date-empty">No events are scheduled for ${selectedDateLabel}. Use the buttons below to add the first one.</div>`;
       return;
     }
     dateTreeEl.innerHTML = "";
@@ -891,9 +913,8 @@
 
     if (previewKind === "event") {
       previewItem.date =
-        String((fieldDate && fieldDate.value) || "").trim() ||
+        getFormStartDateValue() ||
         (entry.kind === "event" ? String(currentItem.date || "").trim() : "") ||
-        String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
         selectionContext.requestedDate;
       if (formEndDate && previewItem.date && formEndDate >= previewItem.date) previewItem.endDate = formEndDate;
       else if (previewItem.date) previewItem.endDate = previewItem.date;
@@ -909,9 +930,8 @@
       delete previewItem.rule;
     } else {
       const anchorValue =
-        String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim() ||
+        getFormStartDateValue() ||
         (entry.kind === "template" ? getTemplateAnchorDate(currentItem) : "") ||
-        String((fieldDate && fieldDate.value) || "").trim() ||
         selectionContext.requestedDate;
       previewItem.startDate = anchorValue;
       previewItem.repeatInterval = Math.max(
@@ -976,8 +996,7 @@
     if (fieldDefinitionCtaHref) fieldDefinitionCtaHref.value = "";
     if (fieldId) fieldId.value = "";
     if (fieldTitle) fieldTitle.value = "";
-    if (fieldDate) fieldDate.value = "";
-    if (fieldTemplateAnchor) fieldTemplateAnchor.value = "";
+    setFormStartDateValue("");
     populateTimeSelect(fieldTime, "", "Select time");
     populateTimeSelect(fieldEndTime, "", "Select time");
     if (fieldEndDate) fieldEndDate.value = "";
@@ -1228,8 +1247,7 @@
     if (fieldKind) fieldKind.value = entry.kind;
     if (fieldId) fieldId.value = item.id || "";
     if (fieldTitle) fieldTitle.value = item.title || "";
-    if (fieldDate) fieldDate.value = entry.kind === "event" ? item.date || "" : "";
-    if (fieldTemplateAnchor) fieldTemplateAnchor.value = entry.kind === "template" ? getTemplateAnchorDate(item) : "";
+    setFormStartDateValue(entry.kind === "template" ? getTemplateAnchorDate(item) : item.date || "");
     populateTimeSelect(fieldTime, item.time || "", "Select time");
     populateTimeSelect(fieldEndTime, item.endTime || "", "Select time");
     if (fieldEndDate) {
@@ -1273,9 +1291,7 @@
       getDefinitionIdForEntry(entry) ||
       buildDefinitionId(
         (fieldDefinitionTitle && fieldDefinitionTitle.value) || title,
-        kind === "event"
-          ? String((fieldDate && fieldDate.value) || "").trim()
-          : String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim()
+        getFormStartDateValue()
       );
 
     const next = {
@@ -1293,7 +1309,7 @@
     const lastDayValue = String((fieldEndDate && fieldEndDate.value) || "").trim();
 
     if (kind === "event") {
-      const dateValue = String((fieldDate && fieldDate.value) || "").trim();
+      const dateValue = getFormStartDateValue();
       if (!dateValue) throw new Error("A one-time event needs a date.");
       if (lastDayValue && lastDayValue < dateValue) {
         throw new Error("The end date cannot be before the start date.");
@@ -1304,7 +1320,7 @@
       return next;
     }
 
-    const anchorValue = String((fieldTemplateAnchor && fieldTemplateAnchor.value) || "").trim();
+    const anchorValue = getFormStartDateValue();
     if (!anchorValue) throw new Error("A repeating event needs a start date.");
     if (lastDayValue && lastDayValue < anchorValue) {
       throw new Error("The end date cannot be before the start date.");
@@ -1584,6 +1600,24 @@
         candidateKeys: selectionContext.candidateKeys,
       },
       message: `A new one-time draft was created for ${selectionContext.requestedDate}.`,
+    });
+  }
+
+  function addRepeatingForSelectedDate() {
+    if (!selectionContext.requestedDate) {
+      createEntry("template", { context: { openedFromDate: false, resolvedFromTemplate: false } });
+      return;
+    }
+    createEntry("template", {
+      date: selectionContext.requestedDate,
+      item: buildTemplateDraft(selectionContext.requestedDate),
+      context: {
+        requestedDate: selectionContext.requestedDate,
+        openedFromDate: true,
+        resolvedFromTemplate: false,
+        candidateKeys: selectionContext.candidateKeys,
+      },
+      message: `A new repeating draft was created starting ${selectionContext.requestedDate}.`,
     });
   }
 
@@ -2072,8 +2106,12 @@
     addEventBtn.addEventListener("click", addEventForSelectedDate);
   }
 
-  if (addForDateBtn) {
-    addForDateBtn.addEventListener("click", addEventForSelectedDate);
+    if (addForDateBtn) {
+      addForDateBtn.addEventListener("click", addEventForSelectedDate);
+    }
+
+  if (addRepeatingForDateBtn) {
+    addRepeatingForDateBtn.addEventListener("click", addRepeatingForSelectedDate);
   }
 
   if (saveBtn) saveBtn.addEventListener("click", saveAll);
@@ -2213,11 +2251,8 @@
 
   if (fieldKind) {
     fieldKind.addEventListener("change", () => {
-      if (fieldKind.value === "template" && fieldTemplateAnchor && !fieldTemplateAnchor.value) {
-        fieldTemplateAnchor.value = (fieldDate && fieldDate.value) || new Date().toISOString().slice(0, 10);
-      }
-      if (fieldKind.value === "event" && fieldDate && !fieldDate.value) {
-        fieldDate.value = (fieldTemplateAnchor && fieldTemplateAnchor.value) || new Date().toISOString().slice(0, 10);
+      if (!getFormStartDateValue()) {
+        setFormStartDateValue(getFormStartDateValue() || new Date().toISOString().slice(0, 10));
       }
       updateKindFields(fieldKind.value);
       refreshContextPanel();
