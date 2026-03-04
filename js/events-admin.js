@@ -25,8 +25,10 @@
   const contextTitleEl = document.getElementById("eventsAdminContextTitle");
   const contextMetaEl = document.getElementById("eventsAdminContextMeta");
   const contextHintEl = document.getElementById("eventsAdminContextHint");
-  const dateBrowserEl = document.getElementById("eventsAdminDateBrowser");
+  const dateFocusedEl = document.getElementById("eventsAdminDateFocused");
+  const dateFocusTitleEl = document.getElementById("eventsAdminDateFocusTitle");
   const dateTreeEl = document.getElementById("eventsAdminDateTree");
+  const standardEditorEl = document.getElementById("eventsAdminStandardEditor");
   const addForDateBtn = document.getElementById("eventsAdminAddForDate");
   const contextActionsEl = document.getElementById("eventsAdminContextActions");
   const contextActionsNoteEl = document.getElementById("eventsAdminContextActionsNote");
@@ -280,6 +282,15 @@
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function listToCsv(list) {
@@ -545,8 +556,12 @@
       addEventBtn.textContent = addLabel;
       addEventBtn.disabled = !hasSelectedDate;
     }
-    if (!dateBrowserEl || !dateTreeEl) return;
-    dateBrowserEl.hidden = !hasSelectedDate;
+    if (dateFocusedEl) dateFocusedEl.hidden = !hasSelectedDate;
+    if (standardEditorEl) standardEditorEl.hidden = hasSelectedDate;
+    if (dateFocusTitleEl) {
+      dateFocusTitleEl.textContent = hasSelectedDate ? `Events On ${selectedDateLabel}` : "Events On This Date";
+    }
+    if (!dateFocusedEl || !dateTreeEl) return;
     if (!hasSelectedDate) {
       dateTreeEl.innerHTML = "";
       return;
@@ -566,6 +581,18 @@
       const kindLabel = candidate.kind === "template" ? "Repeats" : "One-Time";
       const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
       const metaText = getDateCandidateMeta(candidate, selectionContext.requestedDate);
+      const titleValue = String(item.title || "").trim();
+      const typeValue = String(item.type || "").trim();
+      const statusValue = String(item.status || "").trim();
+      const timeValue = String(item.time || "").trim();
+      const endTimeValue = String(item.endTime || "").trim();
+      const locationValue = String(item.location || "").trim();
+      const summaryValue = String(item.summary || "").trim();
+      const eventDateValue = candidate.kind === "event" ? String(item.date || "").trim() : "";
+      const anchorValue = candidate.kind === "template" ? getTemplateAnchorDate(item) : "";
+      const endDateValue =
+        candidate.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
+      const intervalValue = candidate.kind === "template" ? String(item.intervalMonths || 1) : "";
       const occurrenceNote =
         candidate.kind === "template" && selectionContext.requestedDate
           ? `This repeating event is generating the selected date ${selectedDateLabel}.`
@@ -575,15 +602,64 @@
       details.innerHTML = `
         <summary>
           <div class="events-admin-date-item-main">
-            <span class="events-admin-date-item-title">${summaryText}</span>
-            <span class="events-admin-date-item-meta">${metaText}</span>
+            <span class="events-admin-date-item-title">${escapeHtml(summaryText)}</span>
+            <span class="events-admin-date-item-meta">${escapeHtml(metaText)}</span>
           </div>
-          <span class="events-admin-date-item-badge">${kindLabel}</span>
+          <span class="events-admin-date-item-badge">${escapeHtml(kindLabel)}</span>
         </summary>
         <div class="events-admin-date-item-body">
-          <p class="events-admin-date-item-note">${occurrenceNote}</p>
+          <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
+          <div class="events-admin-date-inline-grid">
+            <label class="events-admin-date-inline-span">
+              Event Name
+              <input type="text" data-events-inline-field="title" data-events-inline-key="${key}" value="${escapeHtml(titleValue)}" />
+            </label>
+            <label>
+              Category
+              <input type="text" data-events-inline-field="type" data-events-inline-key="${key}" value="${escapeHtml(typeValue)}" />
+            </label>
+            <label>
+              Status
+              <input type="text" data-events-inline-field="status" data-events-inline-key="${key}" value="${escapeHtml(statusValue)}" />
+            </label>
+            <label ${candidate.kind === "template" ? 'hidden' : ""}>
+              Event Date
+              <input type="date" data-events-inline-field="date" data-events-inline-key="${key}" value="${escapeHtml(eventDateValue)}" />
+            </label>
+            <label ${candidate.kind === "template" ? "" : 'hidden'}>
+              First Date In Series
+              <input type="date" data-events-inline-field="anchorDate" data-events-inline-key="${key}" value="${escapeHtml(anchorValue)}" />
+            </label>
+            <label>
+              Start Time
+              <input type="text" data-events-inline-field="time" data-events-inline-key="${key}" value="${escapeHtml(timeValue)}" />
+            </label>
+            <label>
+              End Time
+              <input type="text" data-events-inline-field="endTime" data-events-inline-key="${key}" value="${escapeHtml(endTimeValue)}" />
+            </label>
+            <label>
+              Last Day (Optional)
+              <input type="date" data-events-inline-field="endDate" data-events-inline-key="${key}" value="${escapeHtml(endDateValue)}" />
+            </label>
+            <label ${candidate.kind === "template" ? "" : 'hidden'}>
+              Repeat Every (Months)
+              <input type="number" min="1" max="12" data-events-inline-field="intervalMonths" data-events-inline-key="${key}" value="${escapeHtml(intervalValue)}" />
+            </label>
+            <label class="events-admin-date-inline-span">
+              Location
+              <input type="text" data-events-inline-field="location" data-events-inline-key="${key}" value="${escapeHtml(locationValue)}" />
+            </label>
+            <label class="events-admin-date-inline-span">
+              Short Description
+              <textarea rows="3" data-events-inline-field="summary" data-events-inline-key="${key}">${escapeHtml(summaryValue)}</textarea>
+            </label>
+          </div>
           <div class="events-admin-date-item-actions">
-            <button class="btn secondary" type="button" data-events-date-edit="${key}">Edit This Event</button>
+            <button class="btn secondary" type="button" data-events-date-open-library="${key}">Open Full Editor</button>
+            <button class="btn secondary" type="button" data-events-date-delete="${key}">Delete This Event</button>
+            ${candidate.kind === "template" ? `<button class="btn secondary" type="button" data-events-date-override="${key}">Edit Only This Date</button>
+            <button class="btn secondary" type="button" data-events-date-skip="${key}">Cancel This Repeating Date</button>` : ""}
           </div>
         </div>
       `;
@@ -598,6 +674,10 @@
       selectionContext.resolvedFromTemplate &&
       selectionContext.requestedDate
     );
+  }
+
+  function isDateFocusedMode() {
+    return Boolean(selectionContext.openedFromDate && selectionContext.requestedDate);
   }
 
   function updateOccurrenceActions(entry) {
@@ -1392,7 +1472,9 @@
 
   function syncCurrentDraftOrThrow() {
     if (!payload) payload = clonePayload({});
-    commitSelectedForm({ skipDirty: true });
+    if (!isDateFocusedMode()) {
+      commitSelectedForm({ skipDirty: true });
+    }
     commitConfig();
   }
 
@@ -1439,6 +1521,123 @@
     });
   }
 
+  function applyInlineFieldChange(key, field, rawValue) {
+    const entry = getEntryByKey(key);
+    if (!entry || !entry.item) return false;
+    const item = entry.item;
+    const value = String(rawValue || "").trim();
+
+    if (field === "title") {
+      item.title = value;
+      return true;
+    }
+    if (field === "type") {
+      item.type = value || "Event";
+      return true;
+    }
+    if (field === "status") {
+      item.status = value;
+      return true;
+    }
+    if (field === "time") {
+      item.time = value;
+      return true;
+    }
+    if (field === "endTime") {
+      item.endTime = value;
+      return true;
+    }
+    if (field === "location") {
+      item.location = value;
+      return true;
+    }
+    if (field === "summary") {
+      item.summary = value;
+      return true;
+    }
+
+    if (entry.kind === "event") {
+      if (field === "date") {
+        if (!parseDateValue(value)) return false;
+        item.date = value;
+        if (item.endDate && item.endDate < item.date) delete item.endDate;
+        return true;
+      }
+      if (field === "endDate") {
+        if (!value) {
+          delete item.endDate;
+          return true;
+        }
+        if (!parseDateValue(value) || value < String(item.date || "").trim()) return false;
+        item.endDate = value > String(item.date || "").trim() ? value : "";
+        if (!item.endDate) delete item.endDate;
+        return true;
+      }
+      return false;
+    }
+
+    if (field === "anchorDate") {
+      if (!parseDateValue(value)) return false;
+      const rule = deriveRuleFromDate(value);
+      if (!rule) return false;
+      item.startMonth = value.slice(0, 7);
+      item.rule = rule;
+      return true;
+    }
+    if (field === "intervalMonths") {
+      item.intervalMonths = Math.max(1, Math.min(12, Number(value || 1) || 1));
+      return true;
+    }
+    if (field === "endDate") {
+      if (!value) {
+        delete item.durationDays;
+        return true;
+      }
+      const anchorDate = parseDateValue(getTemplateAnchorDate(item));
+      const endDate = parseDateValue(value);
+      if (!anchorDate || !endDate || value < formatDateKey(anchorDate)) return false;
+      const durationDays = Math.max(1, Math.round((endDate.getTime() - anchorDate.getTime()) / 86400000) + 1);
+      if (durationDays > 1) item.durationDays = durationDays;
+      else delete item.durationDays;
+      return true;
+    }
+    return false;
+  }
+
+  function openFullEditorForKey(key) {
+    const entry = getEntryByKey(key);
+    if (!entry) return;
+    selectedKey = key;
+    setSelectionContext({
+      requestedDate: "",
+      openedFromDate: false,
+      resolvedFromTemplate: false,
+      candidateKeys: [],
+    });
+    renderList(searchInput ? searchInput.value : "");
+    toggleOpen(true);
+    showValidation("");
+    setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
+  }
+
+  function deleteDateTreeEntry(key) {
+    const entry = getEntryByKey(key);
+    if (!entry || !payload) return;
+    if (!window.confirm(`Delete ${entry.item.title || entry.item.id}?`)) return;
+    const targetList = entry.kind === "template" ? payload.templates : payload.events;
+    targetList.splice(entry.index, 1);
+    selectionContext.candidateKeys = (Array.isArray(selectionContext.candidateKeys) ? selectionContext.candidateKeys : [])
+      .filter((candidateKey) => candidateKey && candidateKey !== key);
+    if (selectedKey === key) {
+      selectedKey = selectionContext.candidateKeys[0] || "";
+    }
+    setDirty(true);
+    updateDatePicker(getSelectedEntry());
+    renderList(searchInput ? searchInput.value : "");
+    showValidation("Event removed from this date. Publish when you are ready.");
+    setStatus("Draft", "neutral");
+  }
+
   function createEntry(kind, options = {}) {
     if (!isAuthed()) {
       buildLoginModal(() => {
@@ -1451,8 +1650,7 @@
     if (!payload) payload = clonePayload({});
 
     try {
-      commitSelectedForm({ skipDirty: true });
-      commitConfig();
+      syncCurrentDraftOrThrow();
     } catch (error) {
       showValidation(error && error.message ? error.message : "Current entry is invalid.", true);
       setStatus("Draft blocked", "error");
@@ -1584,8 +1782,7 @@
     if (!payload) payload = clonePayload({});
 
     try {
-      commitSelectedForm({ skipDirty: true });
-      commitConfig();
+      syncCurrentDraftOrThrow();
     } catch (error) {
       showValidation(error && error.message ? error.message : "Fix the current draft before changing dates.", true);
       setStatus("Draft blocked", "error");
@@ -1652,8 +1849,7 @@
     if (!payload) return;
 
     try {
-      commitSelectedForm({ skipDirty: true });
-      commitConfig();
+      syncCurrentDraftOrThrow();
     } catch (error) {
       showValidation(error && error.message ? error.message : "Fix the selected item before publishing.", true);
       setStatus("Save blocked", "error");
@@ -1836,7 +2032,7 @@
     selectEl.addEventListener("change", () => {
       const nextKey = selectEl.value;
       try {
-        commitSelectedForm({ skipDirty: true });
+        syncCurrentDraftOrThrow();
       } catch (error) {
         showValidation(error && error.message ? error.message : "Fix the current entry before switching.", true);
         selectEl.value = selectedKey;
@@ -1851,31 +2047,96 @@
   }
 
   if (dateTreeEl) {
-    dateTreeEl.addEventListener("click", (event) => {
-      const editButton = event.target.closest("[data-events-date-edit]");
-      if (!editButton) return;
-      const nextKey = String(editButton.getAttribute("data-events-date-edit") || "").trim();
-      if (!nextKey || nextKey === selectedKey) return;
-      try {
-        commitSelectedForm({ skipDirty: true });
-      } catch (error) {
-        showValidation(error && error.message ? error.message : "Fix the current entry before switching events.", true);
+    dateTreeEl.addEventListener("input", (event) => {
+      const field = event.target.closest("[data-events-inline-field]");
+      if (!field) return;
+      const key = String(field.getAttribute("data-events-inline-key") || "").trim();
+      const name = String(field.getAttribute("data-events-inline-field") || "").trim();
+      if (!key || !name) return;
+      if (!applyInlineFieldChange(key, name, field.value)) return;
+      setDirty(true);
+      setStatus("Draft", "neutral");
+    });
+
+    dateTreeEl.addEventListener("change", (event) => {
+      const field = event.target.closest("[data-events-inline-field]");
+      if (!field) return;
+      const key = String(field.getAttribute("data-events-inline-key") || "").trim();
+      const name = String(field.getAttribute("data-events-inline-field") || "").trim();
+      if (!key || !name) return;
+      if (!applyInlineFieldChange(key, name, field.value)) {
+        showValidation("That date change is invalid.", true);
+        updateDatePicker(getSelectedEntry());
         return;
       }
-      selectedKey = nextKey;
-      const nextEntry = getSelectedEntry();
-      setSelectionContext({
-        requestedDate: selectionContext.requestedDate,
-        openedFromDate: true,
-        resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
-        candidateKeys: selectionContext.candidateKeys,
-      });
-      fillForm(nextEntry);
-      renderList(searchInput ? searchInput.value : "");
-      syncAuthUi();
-      toggleOpen(true);
+      selectedKey = key;
+      setDirty(true);
+      setStatus("Draft", "neutral");
       showValidation("");
-      setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
+      updateDatePicker(getSelectedEntry());
+      renderList(searchInput ? searchInput.value : "");
+    });
+
+    dateTreeEl.addEventListener("click", (event) => {
+      const field = event.target.closest("[data-events-inline-field]");
+      if (field) return;
+      const editButton = event.target.closest("[data-events-date-edit]");
+      if (editButton) {
+        const nextKey = String(editButton.getAttribute("data-events-date-edit") || "").trim();
+        if (!nextKey || nextKey === selectedKey) return;
+        try {
+          syncCurrentDraftOrThrow();
+        } catch (error) {
+          showValidation(error && error.message ? error.message : "Fix the current entry before switching events.", true);
+          return;
+        }
+        selectedKey = nextKey;
+        const nextEntry = getSelectedEntry();
+        setSelectionContext({
+          requestedDate: selectionContext.requestedDate,
+          openedFromDate: true,
+          resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
+          candidateKeys: selectionContext.candidateKeys,
+        });
+        updateDatePicker(nextEntry);
+        renderList(searchInput ? searchInput.value : "");
+        syncAuthUi();
+        toggleOpen(true);
+        showValidation("");
+        setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
+        return;
+      }
+
+      const openLibraryButton = event.target.closest("[data-events-date-open-library]");
+      if (openLibraryButton) {
+        openFullEditorForKey(String(openLibraryButton.getAttribute("data-events-date-open-library") || "").trim());
+        return;
+      }
+
+      const deleteButton = event.target.closest("[data-events-date-delete]");
+      if (deleteButton) {
+        deleteDateTreeEntry(String(deleteButton.getAttribute("data-events-date-delete") || "").trim());
+        return;
+      }
+
+      const overrideButton = event.target.closest("[data-events-date-override]");
+      if (overrideButton) {
+        const key = String(overrideButton.getAttribute("data-events-date-override") || "").trim();
+        if (!key) return;
+        selectedKey = key;
+        selectionContext.resolvedFromTemplate = true;
+        makeSelectedOccurrenceOverride();
+        return;
+      }
+
+      const skipButton = event.target.closest("[data-events-date-skip]");
+      if (skipButton) {
+        const key = String(skipButton.getAttribute("data-events-date-skip") || "").trim();
+        if (!key) return;
+        selectedKey = key;
+        selectionContext.resolvedFromTemplate = true;
+        skipSelectedOccurrence();
+      }
     });
   }
 

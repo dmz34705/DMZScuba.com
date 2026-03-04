@@ -1390,6 +1390,12 @@ body.events-admin-open .events-admin-modal {
   gap: 12px;
 }
 
+.events-admin-date-focused,
+.events-admin-standard-editor {
+  display: grid;
+  gap: 12px;
+}
+
 .events-admin-context {
   display: grid;
   gap: 8px;
@@ -1493,6 +1499,38 @@ body.events-admin-open .events-admin-modal {
   display: grid;
   gap: 8px;
   padding: 0 14px 14px;
+}
+
+.events-admin-date-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.events-admin-date-inline-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(234,242,255,0.78);
+}
+
+.events-admin-date-inline-grid input,
+.events-admin-date-inline-grid textarea {
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.22);
+  color: rgba(234,242,255,0.94);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.events-admin-date-inline-span {
+  grid-column: 1 / -1;
 }
 
 .events-admin-date-item-note {
@@ -1846,6 +1884,10 @@ body.events-admin-open .events-admin-modal {
   }
 
   .events-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .events-admin-date-inline-grid {
     grid-template-columns: 1fr;
   }
 

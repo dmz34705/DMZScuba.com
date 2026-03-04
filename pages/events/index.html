@@ -168,19 +168,20 @@
               <div class="events-admin-editor">
                 <div class="events-admin-section">
                   <div class="events-admin-subhead">
-                    <h3>Selected Date Editor</h3>
+                    <h3>Date Editor</h3>
                   </div>
+                  <div class="events-admin-date-focused" id="eventsAdminDateFocused" hidden>
+                    <div class="events-admin-date-browser-head">
+                      <span class="events-admin-date-browser-label" id="eventsAdminDateFocusTitle">Events On This Date</span>
+                      <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add Event To This Date</button>
+                    </div>
+                    <div class="events-admin-date-tree" id="eventsAdminDateTree" aria-live="polite"></div>
+                  </div>
+                  <div class="events-admin-standard-editor" id="eventsAdminStandardEditor">
                   <div class="events-admin-context" id="eventsAdminContext">
                     <div class="events-admin-context-head">
                       <span class="events-admin-context-badge" id="eventsAdminContextBadge">No Selection</span>
                       <span class="events-admin-context-meta" id="eventsAdminContextMeta">Choose a saved entry or click a date in edit mode.</span>
-                    </div>
-                    <div class="events-admin-date-browser" id="eventsAdminDateBrowser" hidden>
-                      <div class="events-admin-date-browser-head">
-                        <span class="events-admin-date-browser-label">Events On This Date</span>
-                        <button class="btn secondary" type="button" id="eventsAdminAddForDate">Add Event To This Date</button>
-                      </div>
-                      <div class="events-admin-date-tree" id="eventsAdminDateTree" aria-live="polite"></div>
                     </div>
                     <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
@@ -365,6 +366,7 @@
                       </div>
                     </div>
                   </details>
+                  </div>
                 </div>
               </div>
               <details class="events-admin-advanced events-admin-library" id="eventsAdminLibrary">
