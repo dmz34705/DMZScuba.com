@@ -191,12 +191,19 @@
                     </div>
                     <strong class="events-admin-context-title" id="eventsAdminContextTitle">Select an event to start editing.</strong>
                     <p class="events-admin-context-hint" id="eventsAdminContextHint">Date-picked recurring items will call out that changes affect future generated dates.</p>
+                    <div class="events-admin-context-actions" id="eventsAdminContextActions" hidden>
+                      <button class="btn secondary" type="button" id="eventsAdminMakeOverride">Edit Only This Date</button>
+                      <button class="btn secondary" type="button" id="eventsAdminSkipOccurrence">Cancel This Repeating Date</button>
+                    </div>
+                    <p class="events-admin-context-actions-note" id="eventsAdminContextActionsNote" hidden>
+                      Use these when one repeating occurrence needs its own one-time edit or needs to be removed without changing the whole series.
+                    </p>
                   </div>
                   <div class="events-admin-flow">
                     <strong class="events-admin-flow-title">Quick Flow</strong>
-                    <p class="events-admin-flow-step">1. Start with the basic event setup and timing.</p>
-                    <p class="events-admin-flow-step">2. Use Event Page only if visitors need a page for this date or series.</p>
-                    <p class="events-admin-flow-step">3. Publish when the date, short description, and button look right.</p>
+                    <p class="events-admin-flow-step">1. Use One-Time for single dates or date ranges like trips, and Repeats for the standing schedule.</p>
+                    <p class="events-admin-flow-step">2. When a repeating date needs a one-off change, click that calendar date and use Edit Only This Date or Cancel This Repeating Date.</p>
+                    <p class="events-admin-flow-step">3. Publish when the date window, short description, and button look right.</p>
                   </div>
                   <div class="events-admin-section events-admin-detail-section">
                     <h4>Basic Event Setup</h4>
@@ -205,7 +212,7 @@
                       <label>
                         Schedule Type
                         <select id="eventsFieldKind">
-                          <option value="event">One date only</option>
+                          <option value="event">One-time date or range</option>
                           <option value="template">Repeats</option>
                         </select>
                       </label>
@@ -350,6 +357,10 @@
                           <label>
                             Schedule Entry ID
                             <input type="text" id="eventsFieldId" placeholder="trip-qna" />
+                          </label>
+                          <label class="events-admin-span" data-events-kind-only="template">
+                            Skipped Repeating Dates
+                            <textarea id="eventsFieldExcludedDates" rows="4" placeholder="One date per line, like 2026-03-18"></textarea>
                           </label>
                           <label data-events-kind-only="template">
                             Allowed months

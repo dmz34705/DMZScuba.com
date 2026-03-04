@@ -1413,6 +1413,23 @@ body.events-admin-open .events-admin-modal {
     rgba(255,255,255,0.02);
 }
 
+.events-admin-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.events-admin-context-actions .btn {
+  min-height: 34px;
+}
+
+.events-admin-context-actions-note {
+  margin: 0;
+  color: rgba(234,242,255,0.72);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .events-admin-flow-title {
   color: rgba(245,248,255,0.94);
   font-size: 12px;

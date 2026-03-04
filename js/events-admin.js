@@ -25,6 +25,10 @@
   const contextTitleEl = document.getElementById("eventsAdminContextTitle");
   const contextMetaEl = document.getElementById("eventsAdminContextMeta");
   const contextHintEl = document.getElementById("eventsAdminContextHint");
+  const contextActionsEl = document.getElementById("eventsAdminContextActions");
+  const contextActionsNoteEl = document.getElementById("eventsAdminContextActionsNote");
+  const makeOverrideBtn = document.getElementById("eventsAdminMakeOverride");
+  const skipOccurrenceBtn = document.getElementById("eventsAdminSkipOccurrence");
 
   const logoutBtn = adminBar.querySelector(".events-admin-logout");
   const addTemplateBtn = adminBar.querySelector(".events-admin-add-template");
@@ -73,6 +77,7 @@
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
+  const fieldExcludedDates = document.getElementById("eventsFieldExcludedDates");
   const fieldMonths = document.getElementById("eventsFieldMonths");
   const kindOnlyRows = panel.querySelectorAll("[data-events-kind-only]");
 
@@ -227,8 +232,12 @@
       setFocus("Sign in to enable calendar editing.");
       setModalNote();
       setStatus("Signed out", "neutral");
+      updateOccurrenceActions(null);
     } else if (!editMode) {
       setFocus("Edit mode is ready. Use the footer button to turn it on.");
+      updateOccurrenceActions(getSelectedEntry());
+    } else {
+      updateOccurrenceActions(getSelectedEntry());
     }
   }
 
@@ -239,10 +248,25 @@
       horizonMonths: Math.max(1, Number((input && input.horizonMonths) || 30) || 30),
       previewCount: Math.max(1, Number((input && input.previewCount) || 3) || 3),
       definitions: Array.isArray(input && input.definitions)
-        ? input.definitions.map((item) => ({ ...item }))
+        ? input.definitions.map((item) => ({
+            ...item,
+            whatToExpect: Array.isArray(item && item.whatToExpect) ? [...item.whatToExpect] : [],
+            included: Array.isArray(item && item.included) ? [...item.included] : [],
+          }))
         : [],
-      events: Array.isArray(input && input.events) ? input.events.map((item) => ({ ...item })) : [],
-      templates: Array.isArray(input && input.templates) ? input.templates.map((item) => ({ ...item })) : [],
+      events: Array.isArray(input && input.events)
+        ? input.events.map((item) => ({ ...item }))
+        : [],
+      templates: Array.isArray(input && input.templates)
+        ? input.templates.map((item) => ({
+            ...item,
+            rule: item && item.rule ? { ...item.rule } : item.rule,
+            months: Array.isArray(item && item.months) ? [...item.months] : item && item.months,
+            excludedDates: Array.isArray(item && item.excludedDates)
+              ? [...item.excludedDates]
+              : item && item.excludedDates,
+          }))
+        : [],
     };
   }
 
@@ -280,6 +304,14 @@
       .split(/\r?\n/)
       .map((part) => part.trim())
       .filter(Boolean);
+  }
+
+  function linesToDateList(value) {
+    return Array.from(
+      new Set(
+        linesToList(value).filter((item) => Boolean(parseDateValue(item)))
+      )
+    ).sort();
   }
 
   function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
@@ -355,6 +387,45 @@
     return formatDateKey(addDays(anchorDate, durationDays - 1));
   }
 
+  function getExcludedDates(item) {
+    return Array.isArray(item && item.excludedDates)
+      ? item.excludedDates
+          .map((value) => String(value || "").trim())
+          .filter((value) => Boolean(parseDateValue(value)))
+          .sort()
+      : [];
+  }
+
+  function setExcludedDates(item, values) {
+    if (!item) return [];
+    const next = Array.from(
+      new Set(
+        (Array.isArray(values) ? values : [])
+          .map((value) => String(value || "").trim())
+          .filter((value) => Boolean(parseDateValue(value)))
+      )
+    ).sort();
+    if (next.length) item.excludedDates = next;
+    else delete item.excludedDates;
+    return next;
+  }
+
+  function addExcludedDate(item, value) {
+    const next = getExcludedDates(item);
+    const dateValue = String(value || "").trim();
+    if (!parseDateValue(dateValue)) return next;
+    if (!next.includes(dateValue)) next.push(dateValue);
+    return setExcludedDates(item, next);
+  }
+
+  function removeExcludedDate(item, value) {
+    const dateValue = String(value || "").trim();
+    return setExcludedDates(
+      item,
+      getExcludedDates(item).filter((entry) => entry !== dateValue)
+    );
+  }
+
   function getEventLastDate(item) {
     if (!item) return "";
     return String(item.endDate || "").trim();
@@ -408,6 +479,23 @@
     };
   }
 
+  function hasTemplateOccurrenceContext(entry) {
+    return Boolean(
+      entry &&
+      entry.kind === "template" &&
+      selectionContext.resolvedFromTemplate &&
+      selectionContext.requestedDate
+    );
+  }
+
+  function updateOccurrenceActions(entry) {
+    const showActions = hasTemplateOccurrenceContext(entry);
+    if (contextActionsEl) contextActionsEl.hidden = !showActions;
+    if (contextActionsNoteEl) contextActionsNoteEl.hidden = !showActions;
+    if (makeOverrideBtn) makeOverrideBtn.disabled = !showActions;
+    if (skipOccurrenceBtn) skipOccurrenceBtn.disabled = !showActions;
+  }
+
   function formatDateLabel(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -443,10 +531,18 @@
     const interval = Math.max(1, Number(item.intervalMonths) || 1);
     const intervalPart = interval === 1 ? "every month" : `every ${interval} months`;
     const startPart = item.startMonth ? `starting ${item.startMonth}` : "with no start month yet";
+    const durationPart =
+      Math.max(1, Number(item.durationDays) || 1) > 1
+        ? `lasting ${Math.max(1, Number(item.durationDays) || 1)} days`
+        : "single-day occurrence";
+    const skippedDates = getExcludedDates(item);
+    const skipPart = skippedDates.length
+      ? `${skippedDates.length} skipped date${skippedDates.length === 1 ? "" : "s"}`
+      : "no skipped dates";
     if (Array.isArray(item.months) && item.months.length) {
-      return `${weekPart}, ${intervalPart}, limited to months ${item.months.join(", ")}, ${startPart}.`;
+      return `${weekPart}, ${intervalPart}, ${durationPart}, limited to months ${item.months.join(", ")}, ${startPart}, ${skipPart}.`;
     }
-    return `${weekPart}, ${intervalPart}, ${startPart}.`;
+    return `${weekPart}, ${intervalPart}, ${durationPart}, ${startPart}, ${skipPart}.`;
   }
 
   function updateContextPanel(entry) {
@@ -459,6 +555,7 @@
       contextHintEl.textContent = "Date-picked recurring items will call out that changes affect future generated dates.";
       setFocus(editMode ? "Select a date in the calendar to edit it." : "Sign in to enable calendar editing.");
       setModalNote();
+      updateOccurrenceActions(null);
       return;
     }
 
@@ -476,6 +573,7 @@
       contextHintEl.textContent = "Changes apply only to this event date.";
       setFocus(`Editing ${item.date || activeDate || "new date draft"}`);
       setModalNote(activeDate ? `Editing the one-time event scheduled for ${formatDateLabel(activeDate)}.` : "Editing the selected one-time event.");
+      updateOccurrenceActions(entry);
       return;
     }
 
@@ -491,6 +589,7 @@
     setModalNote(selectionContext.requestedDate
       ? `The selected date ${formatDateLabel(selectionContext.requestedDate)} maps to this recurring template.`
       : `Editing the recurring template "${item.title || item.id || "untitled"}".`);
+    updateOccurrenceActions(entry);
   }
 
   function updateKindFields(kind) {
@@ -533,6 +632,7 @@
       delete previewItem.startMonth;
       delete previewItem.intervalMonths;
       delete previewItem.durationDays;
+      delete previewItem.excludedDates;
       delete previewItem.months;
       delete previewItem.rule;
     } else {
@@ -546,11 +646,14 @@
         1,
         Math.min(12, Number((fieldInterval && fieldInterval.value) || currentItem.intervalMonths || 1) || 1)
       );
-      const months = csvToMonthList(
-        fieldMonths && fieldMonths.value ? fieldMonths.value : listToCsv(currentItem.months)
-      );
+      const months = csvToMonthList(fieldMonths ? fieldMonths.value : listToCsv(currentItem.months));
       if (months.length) previewItem.months = months;
       else delete previewItem.months;
+      const excludedDates = linesToDateList(
+        fieldExcludedDates ? fieldExcludedDates.value : listToLines(getExcludedDates(currentItem))
+      );
+      if (excludedDates.length) previewItem.excludedDates = excludedDates;
+      else delete previewItem.excludedDates;
       const rule = deriveRuleFromDate(anchorValue);
       if (rule) previewItem.rule = rule;
       if (formEndDate && anchorValue && formEndDate >= anchorValue) {
@@ -616,6 +719,7 @@
     if (fieldCtaLabel) fieldCtaLabel.value = "";
     if (fieldCtaHref) fieldCtaHref.value = "";
     if (fieldInterval) fieldInterval.value = "1";
+    if (fieldExcludedDates) fieldExcludedDates.value = "";
     if (fieldMonths) fieldMonths.value = "";
     updateKindFields("event");
     if (advancedDetails) advancedDetails.open = false;
@@ -642,7 +746,9 @@
             return anchor ? `starts ${formatDateLabel(anchor)}` : "repeat schedule";
           })()
         : item.date
-          ? formatDateLabel(item.date)
+          ? item.endDate && item.endDate > item.date
+            ? `${formatDateLabel(item.date)} to ${formatDateLabel(item.endDate)}`
+            : formatDateLabel(item.date)
           : "date needed";
     const pageLabel =
       definition && definition.title && definition.title !== titleLabel
@@ -866,6 +972,7 @@
     if (fieldCtaLabel) fieldCtaLabel.value = item.ctaLabel || "";
     if (fieldCtaHref) fieldCtaHref.value = item.ctaHref || "";
     if (fieldInterval) fieldInterval.value = String(item.intervalMonths || 1);
+    if (fieldExcludedDates) fieldExcludedDates.value = listToLines(getExcludedDates(item));
     if (fieldMonths) fieldMonths.value = listToCsv(item.months);
     if (advancedDetails) advancedDetails.open = false;
     fillDefinitionForm(entry);
@@ -942,6 +1049,8 @@
         Math.round((lastDate.getTime() - anchorDate.getTime()) / 86400000) + 1
       );
     }
+    const excludedDates = linesToDateList(fieldExcludedDates ? fieldExcludedDates.value : "");
+    if (excludedDates.length) next.excludedDates = excludedDates;
     const months = csvToMonthList(fieldMonths ? fieldMonths.value : "");
     if (months.length) next.months = months;
     next.rule = rule;
@@ -1152,6 +1261,37 @@
     };
   }
 
+  function syncCurrentDraftOrThrow() {
+    if (!payload) payload = clonePayload({});
+    commitSelectedForm({ skipDirty: true });
+    commitConfig();
+  }
+
+  function buildOverrideFromTemplate(templateItem, dateValue) {
+    const safeDate = String(dateValue || "").trim();
+    const eventId = String((templateItem && templateItem.eventId) || (templateItem && templateItem.id) || "").trim();
+    const override = {
+      id: buildSuggestedId("event-item", (templateItem && templateItem.title) || "event", safeDate),
+      eventId: eventId || buildDefinitionId((templateItem && templateItem.title) || "event", safeDate),
+      title: String((templateItem && templateItem.title) || "One-Time Event").trim(),
+      date: safeDate,
+      time: String((templateItem && templateItem.time) || "").trim(),
+      endTime: String((templateItem && templateItem.endTime) || "").trim(),
+      type: String((templateItem && templateItem.type) || "Event").trim() || "Event",
+      status: String((templateItem && templateItem.status) || "").trim(),
+      location: String((templateItem && templateItem.location) || "").trim(),
+      summary: String((templateItem && templateItem.summary) || "").trim(),
+      ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
+      ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
+    };
+    const durationDays = Math.max(1, Number(templateItem && templateItem.durationDays) || 1);
+    if (durationDays > 1) {
+      const startDate = parseDateValue(safeDate);
+      if (startDate) override.endDate = formatDateKey(addDays(startDate, durationDays - 1));
+    }
+    return override;
+  }
+
   function createEntry(kind, options = {}) {
     if (!isAuthed()) {
       buildLoginModal(() => {
@@ -1195,6 +1335,75 @@
     showValidation(options.message || "New draft item added. Publish when you are ready.");
   }
 
+  function skipSelectedOccurrence() {
+    if (!isAuthed()) {
+      buildLoginModal(skipSelectedOccurrence);
+      return;
+    }
+
+    const dateValue = String(selectionContext.requestedDate || "").trim();
+    const currentEntry = getSelectedEntry();
+    if (!dateValue || !currentEntry || currentEntry.kind !== "template") return;
+
+    try {
+      syncCurrentDraftOrThrow();
+    } catch (error) {
+      showValidation(error && error.message ? error.message : "Fix the current template before changing this date.", true);
+      setStatus("Draft blocked", "error");
+      return;
+    }
+
+    const entry = getSelectedEntry();
+    if (!entry || entry.kind !== "template") return;
+    addExcludedDate(entry.item, dateValue);
+    fillForm(entry);
+    renderList(searchInput ? searchInput.value : "");
+    toggleOpen(true);
+    setDirty(true);
+    setStatus("Draft", "neutral");
+    showValidation(`The repeating date ${dateValue} was removed from this series. Publish when you are ready.`);
+  }
+
+  function makeSelectedOccurrenceOverride() {
+    if (!isAuthed()) {
+      buildLoginModal(makeSelectedOccurrenceOverride);
+      return;
+    }
+
+    const dateValue = String(selectionContext.requestedDate || "").trim();
+    const currentEntry = getSelectedEntry();
+    if (!dateValue || !currentEntry || currentEntry.kind !== "template") return;
+
+    try {
+      syncCurrentDraftOrThrow();
+    } catch (error) {
+      showValidation(error && error.message ? error.message : "Fix the current template before creating a one-time override.", true);
+      setStatus("Draft blocked", "error");
+      return;
+    }
+
+    const entry = getSelectedEntry();
+    if (!entry || entry.kind !== "template") return;
+
+    removeExcludedDate(entry.item, dateValue);
+    addExcludedDate(entry.item, dateValue);
+    const overrideItem = buildOverrideFromTemplate(entry.item, dateValue);
+    payload.events.push(overrideItem);
+
+    if (searchInput) searchInput.value = "";
+    setSelectionContext({
+      requestedDate: dateValue,
+      openedFromDate: true,
+      resolvedFromTemplate: false,
+    });
+    selectedKey = `event:${overrideItem.id}`;
+    renderList(searchInput ? searchInput.value : "");
+    toggleOpen(true);
+    setDirty(true);
+    setStatus("Draft", "neutral");
+    showValidation(`A one-time override draft was created for ${dateValue}. The repeating series will skip that date once you publish.`);
+  }
+
   function findTemplateKeyForDate(dateValue, eventIds) {
     if (!payload || !dateValue || !Array.isArray(eventIds) || !eventIds.length) return "";
     const match = payload.templates.find((item) => eventIds.includes(item.id));
@@ -1214,7 +1423,11 @@
       return;
     }
 
-    const oneTimeEvent = payload.events.find((item) => itemCoversDate(item, dateValue));
+    const exactOneTimeEvent = payload.events.find((item) => String(item.date || "").trim() === dateValue);
+    const rangedOneTimeEvent = payload.events.find(
+      (item) => String(item.date || "").trim() !== dateValue && itemCoversDate(item, dateValue)
+    );
+    const oneTimeEvent = exactOneTimeEvent || rangedOneTimeEvent;
     if (oneTimeEvent) {
       if (searchInput) searchInput.value = "";
       setSelectionContext({
@@ -1459,6 +1672,8 @@
 
   if (clearLiveBtn) clearLiveBtn.addEventListener("click", clearLiveData);
   if (deleteBtn) deleteBtn.addEventListener("click", deleteSelected);
+  if (makeOverrideBtn) makeOverrideBtn.addEventListener("click", makeSelectedOccurrenceOverride);
+  if (skipOccurrenceBtn) skipOccurrenceBtn.addEventListener("click", skipSelectedOccurrence);
 
   if (selectEl) {
     selectEl.addEventListener("change", () => {
@@ -1573,6 +1788,7 @@
     fieldCtaLabel,
     fieldCtaHref,
     fieldInterval,
+    fieldExcludedDates,
     fieldMonths,
   ].filter(Boolean);
 

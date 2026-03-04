@@ -855,6 +855,32 @@ function normalizeEventRule(rule) {
   };
 }
 
+function normalizeEventDefinition(item) {
+  if (!item || typeof item !== "object") return null;
+  const id = String(item.id || "").trim().toLowerCase();
+  const title = String(item.title || "").trim();
+  if (!id || !title) return null;
+  return {
+    id,
+    slug: String(item.slug || id).trim().toLowerCase(),
+    title,
+    type: String(item.type || "Event").trim() || "Event",
+    eyebrow: String(item.eyebrow || "").trim(),
+    heroSummary: String(item.heroSummary || "").trim(),
+    narrative: String(item.narrative || "").trim(),
+    experience: String(item.experience || "").trim(),
+    scheduleNote: String(item.scheduleNote || "").trim(),
+    whatToExpect: Array.isArray(item.whatToExpect)
+      ? item.whatToExpect.map((value) => String(value || "").trim()).filter(Boolean)
+      : [],
+    included: Array.isArray(item.included)
+      ? item.included.map((value) => String(value || "").trim()).filter(Boolean)
+      : [],
+    primaryCtaLabel: String(item.primaryCtaLabel || "").trim(),
+    primaryCtaHref: String(item.primaryCtaHref || "").trim(),
+  };
+}
+
 function normalizeEventEntry(item, kind = "event") {
   if (!item || typeof item !== "object") return null;
   const next = { ...item };
@@ -885,6 +911,15 @@ function normalizeEventEntry(item, kind = "event") {
     normalized.intervalMonths = Math.max(1, Math.trunc(Number(next.intervalMonths) || 1));
     const durationDays = Math.max(1, Math.trunc(Number(next.durationDays) || 1));
     if (durationDays > 1) normalized.durationDays = durationDays;
+    if (Array.isArray(next.excludedDates)) {
+      normalized.excludedDates = Array.from(
+        new Set(
+          next.excludedDates
+            .map((value) => String(value || "").trim())
+            .filter(Boolean)
+        )
+      ).sort();
+    }
     if (Array.isArray(next.months)) {
       normalized.months = next.months
         .map((value) => Math.trunc(Number(value)))
@@ -902,6 +937,9 @@ function normalizeEventEntry(item, kind = "event") {
 
 function normalizeEventsPayload(payload) {
   if (!payload || typeof payload !== "object") return null;
+  const definitions = Array.isArray(payload.definitions)
+    ? payload.definitions.map((item) => normalizeEventDefinition(item)).filter(Boolean)
+    : [];
   const templates = Array.isArray(payload.templates)
     ? payload.templates.map((item) => normalizeEventEntry(item, "template")).filter(Boolean)
     : [];
@@ -913,6 +951,7 @@ function normalizeEventsPayload(payload) {
     timezone: String(payload.timezone || "America/Chicago").trim(),
     horizonMonths: Math.max(1, Math.min(60, Math.trunc(Number(payload.horizonMonths) || 30))),
     previewCount: Math.max(1, Math.min(12, Math.trunc(Number(payload.previewCount) || 3))),
+    definitions,
     events,
     templates,
   };

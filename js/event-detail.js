@@ -110,6 +110,11 @@
     };
   }
 
+  function isTemplateDateExcluded(template, occurrenceDate) {
+    const dateValue = occurrenceDate instanceof Date ? dateKey(occurrenceDate) : String(occurrenceDate || "").trim();
+    return Array.isArray(template && template.excludedDates) && template.excludedDates.includes(dateValue);
+  }
+
   function formatScheduleLine(item) {
     if (!item || !item.date) return "Date coming soon";
     const date = item.dateObj || parseEventDate(item.date);
@@ -191,6 +196,7 @@
           weekday
         );
         if (!occurrence) continue;
+        if (isTemplateDateExcluded(template, occurrence)) continue;
 
         const normalized = normalizeInstance({
           ...template,
