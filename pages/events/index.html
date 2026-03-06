@@ -217,10 +217,6 @@
                         <input type="text" id="eventsFieldTitle" placeholder="Trip Planning Q&amp;A" />
                       </label>
                       <label>
-                        Category
-                        <input type="text" id="eventsFieldType" placeholder="Training" />
-                      </label>
-                      <label>
                         Status
                         <input type="text" id="eventsFieldStatus" placeholder="Planned" />
                       </label>
@@ -249,6 +245,16 @@
                       <label>
                         End Time
                         <select id="eventsFieldEndTime"></select>
+                      </label>
+                      <label>
+                        Tag
+                        <select id="eventsFieldType">
+                          <option value="Training">Training</option>
+                          <option value="Travel">Travel</option>
+                          <option value="Local Dive">Local Dive</option>
+                          <option value="Workshop">Workshop</option>
+                          <option value="Community">Community</option>
+                        </select>
                       </label>
                       <label data-events-kind-only="template">
                         Repeat Every

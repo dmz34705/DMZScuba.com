@@ -207,7 +207,6 @@
   function setEditMode(next) {
     editMode = Boolean(next) && isAuthed();
     document.body.classList.toggle("events-admin-enabled", editMode);
-    adminBar.hidden = !editMode;
     if (!editMode) toggleOpen(false);
     syncAuthUi();
     persistUiState();
@@ -223,9 +222,9 @@
   function syncAuthUi() {
     const authed = isAuthed();
     document.body.classList.toggle("events-authenticated", authed);
+    adminBar.hidden = !authed;
     if (!authed) {
       editMode = false;
-      adminBar.hidden = true;
       document.body.classList.remove("events-admin-enabled", "events-admin-open");
       panel.setAttribute("aria-hidden", "true");
     }
