@@ -16,6 +16,7 @@
     const hour12 = hour24 % 12 || 12;
     return `${hour12}:${minute} ${meridiem}`;
   });
+  const EVENT_TAG_OPTIONS = ["Training", "Travel", "Local Dive", "Workshop", "Community"];
 
   const adminBar = document.getElementById("eventsAdminBar");
   const panel = document.getElementById("eventsAdminPanel");
@@ -207,6 +208,7 @@
   function setEditMode(next) {
     editMode = Boolean(next) && isAuthed();
     document.body.classList.toggle("events-admin-enabled", editMode);
+    adminBar.hidden = !(isAuthed() && editMode);
     if (!editMode) toggleOpen(false);
     syncAuthUi();
     persistUiState();
@@ -222,7 +224,7 @@
   function syncAuthUi() {
     const authed = isAuthed();
     document.body.classList.toggle("events-authenticated", authed);
-    adminBar.hidden = !authed;
+    adminBar.hidden = !(authed && editMode);
     if (!authed) {
       editMode = false;
       document.body.classList.remove("events-admin-enabled", "events-admin-open");
@@ -343,6 +345,12 @@
     return ["week", "month", "year"].includes(unit) ? unit : "month";
   }
 
+  function normalizeEventType(value) {
+    const raw = String(value || "").trim().toLowerCase();
+    const match = EVENT_TAG_OPTIONS.find((option) => option.toLowerCase() === raw);
+    return match || "Training";
+  }
+
   function buildTimeOptionsMarkup(selectedValue, placeholder = "Select time") {
     const safeValue = String(selectedValue || "").trim();
     const options = [
@@ -361,6 +369,13 @@
     selectEl.value = TIME_OPTIONS.includes(String(selectedValue || "").trim())
       ? String(selectedValue || "").trim()
       : "";
+  }
+
+  function buildTypeOptionsMarkup(selectedValue) {
+    const safeValue = normalizeEventType(selectedValue);
+    return EVENT_TAG_OPTIONS.map(
+      (value) => `<option value="${value}"${value === safeValue ? " selected" : ""}>${value}</option>`
+    ).join("");
   }
 
   function getFormStartDateValue() {
@@ -722,6 +737,7 @@
         candidate.kind === "event" ? getEventLastDate(item) : getTemplateOccurrenceEndDate(item);
       const intervalValue = candidate.kind === "template" ? String(item.repeatInterval || item.intervalMonths || 1) : "";
       const repeatUnitValue = candidate.kind === "template" ? normalizeRepeatUnit(item.repeatUnit || "month") : "month";
+      const typeValue = normalizeEventType(item.type || "Training");
       const occurrenceNote =
         candidate.kind === "template" && selectionContext.requestedDate
           ? `This repeating event is generating the selected date ${selectedDateLabel}.`
@@ -775,6 +791,12 @@
                   <span>End Time</span>
                   <select data-events-inline-field="endTime" data-events-inline-key="${key}">
                     ${buildTimeOptionsMarkup(endTimeValue, "Select time")}
+                  </select>
+                </label>
+                <label>
+                  <span>Tag</span>
+                  <select data-events-inline-field="type" data-events-inline-key="${key}">
+                    ${buildTypeOptionsMarkup(typeValue)}
                   </select>
                 </label>
               </div>
@@ -974,7 +996,7 @@
       title: String((fieldTitle && fieldTitle.value) || "").trim() || currentItem.title || "",
       time: String((fieldTime && fieldTime.value) || "").trim(),
       endTime: String((fieldEndTime && fieldEndTime.value) || "").trim(),
-      type: String((fieldType && fieldType.value) || "Event").trim() || "Event",
+      type: normalizeEventType((fieldType && fieldType.value) || "Training"),
       status: String((fieldStatus && fieldStatus.value) || "").trim(),
       location: String((fieldLocation && fieldLocation.value) || "").trim(),
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
@@ -1283,8 +1305,7 @@
 
     definition.eyebrow =
       String((fieldDefinitionEyebrow && fieldDefinitionEyebrow.value) || "").trim() ||
-      String((fieldType && fieldType.value) || (entry.item && entry.item.type) || "Event").trim() ||
-      "Event";
+      normalizeEventType((fieldType && fieldType.value) || (entry.item && entry.item.type) || "Training");
     definition.title =
       String((fieldDefinitionTitle && fieldDefinitionTitle.value) || "").trim() ||
       String((entry.item && entry.item.title) || "").trim() ||
@@ -1302,8 +1323,7 @@
     definition.primaryCtaLabel = String((fieldDefinitionCtaLabel && fieldDefinitionCtaLabel.value) || "").trim();
     definition.primaryCtaHref = String((fieldDefinitionCtaHref && fieldDefinitionCtaHref.value) || "").trim();
     definition.type =
-      String((fieldType && fieldType.value) || (entry.item && entry.item.type) || definition.type || "Event").trim() ||
-      "Event";
+      normalizeEventType((fieldType && fieldType.value) || (entry.item && entry.item.type) || definition.type || "Training");
 
     if (!options.skipDirty) setDirty(true);
   }
@@ -1328,7 +1348,7 @@
           ? (getEventLastDate(item) || item.date || "")
           : (getTemplateOccurrenceEndDate(item) || getTemplateAnchorDate(item) || "");
     }
-    if (fieldType) fieldType.value = item.type || "Training";
+    if (fieldType) fieldType.value = normalizeEventType(item.type || "Training");
     if (fieldStatus) fieldStatus.value = item.status || "Planned";
     if (fieldLocation) fieldLocation.value = item.location || "";
     if (fieldSummary) fieldSummary.value = item.summary || "";
@@ -1371,7 +1391,7 @@
       title,
       time: String((fieldTime && fieldTime.value) || "").trim(),
       endTime: String((fieldEndTime && fieldEndTime.value) || "").trim(),
-      type: String((fieldType && fieldType.value) || "Event").trim() || "Event",
+      type: normalizeEventType((fieldType && fieldType.value) || "Training"),
       status: String((fieldStatus && fieldStatus.value) || "").trim(),
       location: String((fieldLocation && fieldLocation.value) || "").trim(),
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
@@ -1611,7 +1631,7 @@
       endDate: safeDate,
       time: "",
       endTime: "",
-      type: "Event",
+      type: "Training",
       status: "Planned",
       location: "",
       summary: "",
@@ -1658,7 +1678,7 @@
       date: safeDate,
       time: String((templateItem && templateItem.time) || "").trim(),
       endTime: String((templateItem && templateItem.endTime) || "").trim(),
-      type: String((templateItem && templateItem.type) || "Event").trim() || "Event",
+      type: normalizeEventType((templateItem && templateItem.type) || "Training"),
       status: String((templateItem && templateItem.status) || "").trim(),
       location: String((templateItem && templateItem.location) || "").trim(),
       summary: String((templateItem && templateItem.summary) || "").trim(),
@@ -1726,7 +1746,7 @@
       return true;
     }
     if (field === "type") {
-      item.type = value || "Event";
+      item.type = normalizeEventType(value);
       return true;
     }
     if (field === "status") {
