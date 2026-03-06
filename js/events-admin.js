@@ -156,6 +156,21 @@
     return Boolean(getToken());
   }
 
+  async function validateStoredToken() {
+    const token = getToken();
+    if (!token) return false;
+    const resp = await apiFetch(`${adminUrl}?t=${Date.now()}`, {
+      method: "GET",
+      cache: "no-store",
+    }).catch(() => null);
+    if (resp && resp.ok) return true;
+    if (resp && (resp.status === 401 || resp.status === 403)) {
+      setToken("");
+      return false;
+    }
+    return Boolean(getToken());
+  }
+
   async function apiFetch(url, options = {}) {
     const headers = options.headers ? { ...options.headers } : {};
     const token = getToken();
@@ -1994,12 +2009,11 @@
     if (!isAuthed() || !editMode) return;
     if (!payload) payload = clonePayload({});
 
+    let draftError = "";
     try {
       syncCurrentDraftOrThrow();
     } catch (error) {
-      showValidation(error && error.message ? error.message : "Fix the current draft before changing dates.", true);
-      setStatus("Draft blocked", "error");
-      return;
+      draftError = error && error.message ? error.message : "The current draft has validation issues.";
     }
 
     const candidateKeys = getDateCandidateKeys(dateValue, eventIds);
@@ -2016,7 +2030,11 @@
       selectedKey = firstCandidateKey;
       renderList(searchInput ? searchInput.value : "");
       toggleOpen(true);
-      showValidation("");
+      showValidation(
+        draftError
+          ? `${draftError} You can still switch dates; publish remains blocked until fixed.`
+          : ""
+      );
       setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
       return;
     }
@@ -2030,7 +2048,11 @@
     selectedKey = "";
     renderList(searchInput ? searchInput.value : "");
     toggleOpen(true);
-    showValidation("");
+    showValidation(
+      draftError
+        ? `${draftError} You can still switch dates; publish remains blocked until fixed.`
+        : ""
+    );
     setStatus(isDirty ? "Draft" : "Ready", isDirty ? "neutral" : "ready");
   }
 
@@ -2479,6 +2501,9 @@
   populateTimeSelect(fieldEndTime, "", "Select time");
   clearForm();
   setDirty(false);
-  syncAuthUi();
-  loadPayload();
+  (async () => {
+    await validateStoredToken();
+    syncAuthUi();
+    await loadPayload();
+  })();
 })();
