@@ -804,7 +804,7 @@
         }
       });
 
-      if (!selectedDateKey || (!eventMap.has(selectedDateKey) && selectedDateKey !== todayKey)) {
+      if (!selectedDateKey) {
         selectedDateKey = fallbackSelectedKey(group);
       }
 

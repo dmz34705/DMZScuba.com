@@ -164,11 +164,8 @@
       cache: "no-store",
     }).catch(() => null);
     if (resp && resp.ok) return true;
-    if (resp && (resp.status === 401 || resp.status === 403)) {
-      setToken("");
-      return false;
-    }
-    return Boolean(getToken());
+    setToken("");
+    return false;
   }
 
   async function apiFetch(url, options = {}) {
@@ -224,6 +221,7 @@
     editMode = Boolean(next) && isAuthed();
     document.body.classList.toggle("events-admin-enabled", editMode);
     adminBar.hidden = !(isAuthed() && editMode);
+    adminBar.style.display = adminBar.hidden ? "none" : "";
     if (!editMode) toggleOpen(false);
     syncAuthUi();
     persistUiState();
@@ -240,10 +238,13 @@
     const authed = isAuthed();
     document.body.classList.toggle("events-authenticated", authed);
     adminBar.hidden = !(authed && editMode);
+    adminBar.style.display = adminBar.hidden ? "none" : "";
     if (!authed) {
       editMode = false;
       document.body.classList.remove("events-admin-enabled", "events-admin-open");
       panel.setAttribute("aria-hidden", "true");
+      adminBar.hidden = true;
+      adminBar.style.display = "none";
     }
 
     if (triggerBtn) {
