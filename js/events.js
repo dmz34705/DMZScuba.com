@@ -41,6 +41,11 @@
     Community: { icon: "CM", className: "event-type-community" },
     Event: { icon: "EV", className: "event-type-default" },
   };
+  const state = {
+    payload: {},
+    eventsById: new Map(),
+    publicModal: null,
+  };
 
   function startOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -284,14 +289,234 @@
     return EVENT_TYPE_META[type] || EVENT_TYPE_META.Event;
   }
 
-  function buildEventDetailHref(eventItem) {
-    const eventId = String((eventItem && (eventItem.eventId || eventItem.id)) || "").trim();
-    if (!eventId) {
-      return eventItem && eventItem.ctaHref ? eventItem.ctaHref : "/pages/contact/index.html#dive-now";
-    }
-    const params = new URLSearchParams({ id: eventId });
-    if (eventItem && eventItem.date) params.set("date", eventItem.date);
-    return `/pages/events/event.html?${params.toString()}`;
+  function normalizeText(value) {
+    return String(value || "").trim();
+  }
+
+  function normalizeList(value) {
+    return Array.isArray(value)
+      ? value.map((item) => normalizeText(item)).filter(Boolean)
+      : [];
+  }
+
+  function getEventDefinition(eventItem) {
+    if (!eventItem || !state.payload || !Array.isArray(state.payload.definitions)) return null;
+    const eventId = normalizeText(eventItem.eventId || eventItem.id);
+    if (!eventId) return null;
+    return state.payload.definitions.find((item) => normalizeText(item && item.id) === eventId) || null;
+  }
+
+  function createDetailTrigger(eventItem, label, tone = "secondary") {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `btn ${tone}`;
+    button.textContent = label;
+    button.setAttribute("data-events-open-detail", normalizeText(eventItem && eventItem.id));
+    return button;
+  }
+
+  function ensurePublicModal() {
+    if (state.publicModal) return state.publicModal;
+    const modal = document.createElement("div");
+    modal.className = "events-public-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+      <div class="events-public-modal-card" role="dialog" aria-modal="true" aria-label="Event details">
+        <div class="events-public-modal-head">
+          <div class="events-public-modal-copy">
+            <span class="events-public-modal-kicker" data-events-modal-kicker></span>
+            <h3 data-events-modal-title></h3>
+            <p data-events-modal-subtitle></p>
+          </div>
+          <button class="events-public-modal-close" type="button" aria-label="Close event details">Close</button>
+        </div>
+        <div class="events-public-modal-body" data-events-modal-body></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const close = () => {
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("events-public-modal-open");
+    };
+    const closeBtn = modal.querySelector(".events-public-modal-close");
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) close();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.getAttribute("aria-hidden") === "false") close();
+    });
+    state.publicModal = {
+      root: modal,
+      body: modal.querySelector("[data-events-modal-body]"),
+      kicker: modal.querySelector("[data-events-modal-kicker]"),
+      title: modal.querySelector("[data-events-modal-title]"),
+      subtitle: modal.querySelector("[data-events-modal-subtitle]"),
+    };
+    return state.publicModal;
+  }
+
+  function openPublicModal({ kicker, title, subtitle, bodyBuilder }) {
+    const modal = ensurePublicModal();
+    if (!modal || !modal.body || !modal.kicker || !modal.title || !modal.subtitle) return;
+    modal.kicker.textContent = normalizeText(kicker);
+    modal.title.textContent = normalizeText(title);
+    modal.subtitle.textContent = normalizeText(subtitle);
+    modal.body.innerHTML = "";
+    if (typeof bodyBuilder === "function") bodyBuilder(modal.body);
+    modal.root.setAttribute("aria-hidden", "false");
+    document.body.classList.add("events-public-modal-open");
+  }
+
+  function openDateEventsModal(dateValue, items) {
+    const selectedDate = parseDateKey(dateValue) || new Date();
+    const eventItems = Array.isArray(items) ? items : [];
+    openPublicModal({
+      kicker: "Selected Date",
+      title: weekdayLongFormatter.format(selectedDate),
+      subtitle: eventItems.length
+        ? `${eventItems.length} event${eventItems.length === 1 ? "" : "s"} on this date`
+        : "No events on this date",
+      bodyBuilder: (body) => {
+        if (!eventItems.length) {
+          const empty = document.createElement("p");
+          empty.className = "events-public-empty";
+          empty.textContent = "There are no published events for this date yet.";
+          body.appendChild(empty);
+          return;
+        }
+        const list = document.createElement("div");
+        list.className = "events-public-day-list";
+        eventItems.forEach((eventItem) => {
+          const row = renderAgendaRow(eventItem);
+          row.classList.add("events-public-day-row");
+          list.appendChild(row);
+        });
+        body.appendChild(list);
+      },
+    });
+  }
+
+  function openEventDetailModalById(eventKey) {
+    const key = normalizeText(eventKey);
+    if (!key) return;
+    const eventItem = state.eventsById.get(key);
+    if (!eventItem) return;
+    const definition = getEventDefinition(eventItem);
+    const typeMeta = getEventTypeMeta(eventItem.type);
+    const summary = normalizeText(eventItem.summary || (definition && definition.heroSummary));
+    const narrative = normalizeText((definition && definition.narrative) || summary);
+    const locationText = normalizeText(eventItem.location) || "Location announced soon";
+    const whenText = eventDateLabel(eventItem);
+    const ctaLabel = normalizeText(
+      eventItem.ctaLabel ||
+        (definition && definition.primaryCtaLabel) ||
+        "Reserve a Spot"
+    );
+    const ctaHref = normalizeText(
+      eventItem.ctaHref ||
+        (definition && definition.primaryCtaHref) ||
+        "/pages/contact/index.html#dive-now"
+    );
+    const whatToExpect = normalizeList(definition && definition.whatToExpect);
+    const included = normalizeList(definition && definition.included);
+
+    openPublicModal({
+      kicker: eventItem.type || "Event",
+      title: normalizeText((definition && definition.title) || eventItem.title || "Event"),
+      subtitle: `${whenText} | ${locationText}`,
+      bodyBuilder: (body) => {
+        const meta = document.createElement("div");
+        meta.className = "events-public-meta";
+        meta.innerHTML = `
+          <span class="event-chip">
+            <span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>
+            <span>${eventItem.type || "Event"}</span>
+          </span>
+          ${eventItem.status ? `<span class="event-status">${eventItem.status}</span>` : ""}
+        `;
+        body.appendChild(meta);
+
+        if (summary) {
+          const intro = document.createElement("p");
+          intro.className = "events-public-summary";
+          intro.textContent = summary;
+          body.appendChild(intro);
+        }
+
+        if (narrative) {
+          const details = document.createElement("p");
+          details.className = "events-public-copy";
+          details.textContent = narrative;
+          body.appendChild(details);
+        }
+
+        if (whatToExpect.length) {
+          const title = document.createElement("h4");
+          title.className = "events-public-list-title";
+          title.textContent = "What To Expect";
+          body.appendChild(title);
+          const list = document.createElement("ul");
+          list.className = "events-public-list";
+          whatToExpect.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+          });
+          body.appendChild(list);
+        }
+
+        if (included.length) {
+          const title = document.createElement("h4");
+          title.className = "events-public-list-title";
+          title.textContent = "Highlights";
+          body.appendChild(title);
+          const list = document.createElement("ul");
+          list.className = "events-public-list";
+          included.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+          });
+          body.appendChild(list);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "events-public-actions";
+        const actionLink = document.createElement("a");
+        actionLink.className = "btn primary";
+        actionLink.href = ctaHref;
+        actionLink.textContent = ctaLabel || "Reserve a Spot";
+        actions.appendChild(actionLink);
+        body.appendChild(actions);
+      },
+    });
+  }
+
+  function indexEvents(events, payload) {
+    state.payload = payload && typeof payload === "object" ? payload : {};
+    state.eventsById.clear();
+    (Array.isArray(events) ? events : []).forEach((eventItem) => {
+      const key = normalizeText(eventItem && eventItem.id);
+      if (key) state.eventsById.set(key, eventItem);
+    });
+  }
+
+  function bindDetailTriggers(host) {
+    if (!host || host.dataset.eventsDetailBound === "true") return;
+    host.dataset.eventsDetailBound = "true";
+    host.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-events-open-detail]");
+      if (!trigger) return;
+      event.preventDefault();
+      openEventDetailModalById(trigger.getAttribute("data-events-open-detail"));
+    });
+  }
+
+  function closePublicModal() {
+    if (!state.publicModal) return;
+    state.publicModal.root.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("events-public-modal-open");
   }
 
   function buildLegendMarkup() {
@@ -306,7 +531,7 @@
         `;
       })
       .join("");
-  }
+    }
 
   function renderEventCard(eventItem, variant = "default") {
     const compact = variant === "compact";
@@ -353,7 +578,7 @@
     actions.className = "event-card-actions";
     const ctaLabel = compact ? "Details" : agenda ? "View" : "Event Details";
     const ctaClass = compact || agenda ? "secondary" : "primary";
-    actions.innerHTML = `<a class="btn ${ctaClass}" href="${buildEventDetailHref(eventItem)}">${ctaLabel}</a>`;
+    actions.appendChild(createDetailTrigger(eventItem, ctaLabel, ctaClass));
 
     if (agenda) {
       const dateBadge = document.createElement("div");
@@ -418,7 +643,7 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    actions.innerHTML = `<a class="btn secondary" href="${buildEventDetailHref(eventItem)}">View</a>`;
+    actions.appendChild(createDetailTrigger(eventItem, "View", "secondary"));
 
     article.append(content, actions);
     return article;
@@ -426,6 +651,7 @@
 
   function renderPreview(events, payload) {
     if (!previewRoot) return;
+    bindDetailTriggers(previewRoot);
     const list = previewRoot.querySelector("[data-events-preview-list]");
     const empty = previewRoot.querySelector("[data-events-preview-empty]");
     const stamp = previewRoot.querySelector("[data-events-updated]");
@@ -525,6 +751,8 @@
     }
 
     let selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
+    let pendingDateModal = "";
+    let pendingDateItems = [];
 
     function notifyParentHeight() {
       if (window.parent === window) return;
@@ -721,6 +949,8 @@
         }
         button.addEventListener("click", () => {
           selectedDateKey = currentKey;
+          pendingDateModal = currentKey;
+          pendingDateItems = items;
           renderMonth();
         });
         cell.appendChild(button);
@@ -876,8 +1106,17 @@
 
       notifyParentSelection(selectedDateKey, selectedItems);
       notifyParentHeight();
+      if (pendingDateModal) {
+        const modalDate = pendingDateModal;
+        const modalItems = pendingDateItems;
+        pendingDateModal = "";
+        pendingDateItems = [];
+        openDateEventsModal(modalDate, modalItems);
+      }
     }
 
+    bindDetailTriggers(monthHost);
+    bindDetailTriggers(listHost);
     renderMonth();
   }
 
@@ -948,9 +1187,12 @@
   }
 
   if (pageRoot || previewRoot) {
+    bindDetailTriggers(document.body);
     const applyPayload = (payload) => {
       const safePayload = payload && typeof payload === "object" ? payload : {};
       const events = expandTemplateEvents(safePayload);
+      indexEvents(events, safePayload);
+      closePublicModal();
       renderPreview(events, safePayload);
       renderCalendar(events, safePayload);
       resizeEmbedFrame();
