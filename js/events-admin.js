@@ -274,6 +274,7 @@
     } else {
       updateOccurrenceActions(getSelectedEntry());
     }
+    syncEmbedAdminState();
   }
 
   function clonePayload(input) {
@@ -656,12 +657,23 @@
 
   function getDateCandidateKeys(dateValue, eventIds = []) {
     if (!payload || !dateValue) return [];
+    const preferredIds = Array.isArray(eventIds)
+      ? eventIds.map((value) => String(value || "").trim()).filter(Boolean)
+      : [];
+    const priorityOf = (item) => {
+      const itemId = String(item && item.id || "").trim();
+      const sourceId = String(item && item.sourceId || "").trim();
+      if (preferredIds.includes(itemId) || preferredIds.includes(sourceId)) return 0;
+      return 1;
+    };
     const seen = new Set();
     const keys = [];
-    const exactEvents = payload.events.filter((item) => String(item && item.date || "").trim() === dateValue);
+    const exactEvents = payload.events
+      .filter((item) => String(item && item.date || "").trim() === dateValue)
+      .sort((a, b) => priorityOf(a) - priorityOf(b));
     const rangedEvents = payload.events.filter(
       (item) => String(item && item.date || "").trim() !== dateValue && itemCoversDate(item, dateValue)
-    );
+    ).sort((a, b) => priorityOf(a) - priorityOf(b));
     const templateKeys = payload.templates
       .filter((item) => {
         const templateId = String(item && item.id || "").trim();
@@ -1595,6 +1607,24 @@
     if (anchorDate) nextUrl.searchParams.set("date", anchorDate);
     nextUrl.searchParams.set("t", String(Date.now()));
     frame.setAttribute("src", `${nextUrl.pathname}${nextUrl.search}`);
+  }
+
+  function syncEmbedAdminState() {
+    const frame = document.querySelector("[data-events-embed-frame]");
+    if (!frame) return;
+    try {
+      const frameWindow = frame.contentWindow;
+      if (!frameWindow) return;
+      frameWindow.postMessage(
+        {
+          type: "dmzEventsAdminState",
+          canEditDate: Boolean(isAuthed() && editMode),
+        },
+        window.location.origin
+      );
+    } catch (_error) {
+      // Ignore embed state sync errors if frame is not ready yet.
+    }
   }
 
   function syncEmbedPreview() {
@@ -2562,8 +2592,10 @@
 
   window.addEventListener("message", (event) => {
     const data = event && event.data;
-    if (!data || data.type !== "dmzEventsDateSelected" || !data.date) return;
-    openEditorForDate(data.date, Array.isArray(data.eventIds) ? data.eventIds : []);
+    if (!data || !data.type) return;
+    if (data.type === "dmzEventsAdminEditDate" && data.date) {
+      openEditorForDate(data.date, Array.isArray(data.eventIds) ? data.eventIds : []);
+    }
   });
 
   document.addEventListener("keydown", (event) => {
@@ -2576,6 +2608,12 @@
   populateTimeSelect(fieldEndTime, "", "Select time");
   clearForm();
   setDirty(false);
+  const embedFrameEl = document.querySelector("[data-events-embed-frame]");
+  if (embedFrameEl) {
+    embedFrameEl.addEventListener("load", () => {
+      syncEmbedAdminState();
+    });
+  }
   (async () => {
     await validateStoredToken();
     syncAuthUi();

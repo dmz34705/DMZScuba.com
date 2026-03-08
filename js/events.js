@@ -48,6 +48,7 @@
     publicModal: null,
     registrationSnapshotByKey: new Map(),
     lastDateModalContext: null,
+    adminCanEditDate: false,
     calendarView: {
       activeMonthKey: "",
       selectedDateKey: "",
@@ -463,6 +464,30 @@
         eventItems.forEach((eventItem) => {
           const row = renderAgendaRow(eventItem);
           row.classList.add("events-public-day-row");
+          if (state.adminCanEditDate) {
+            const actions = row.querySelector(".event-card-actions");
+            if (actions) {
+              const editBtn = document.createElement("button");
+              editBtn.type = "button";
+              editBtn.className = "btn secondary";
+              editBtn.textContent = "Edit";
+              editBtn.addEventListener("click", () => {
+                const sourceId = getRegistrationSourceId(eventItem);
+                if (window.parent !== window) {
+                  window.parent.postMessage(
+                    {
+                      type: "dmzEventsAdminEditDate",
+                      date: dateKey(selectedDate),
+                      eventIds: sourceId ? [sourceId] : [],
+                    },
+                    "*"
+                  );
+                }
+                closePublicModal();
+              });
+              actions.appendChild(editBtn);
+            }
+          }
           list.appendChild(row);
           if (isRegistrationEnabled(eventItem)) {
             const sourceId = getRegistrationSourceId(eventItem);
@@ -1529,8 +1554,14 @@
 
     window.addEventListener("message", (event) => {
       const data = event && event.data;
-      if (!data || data.type !== "dmzEventsPayloadPreview" || !data.payload) return;
-      applyPayload(data.payload);
+      if (!data || !data.type) return;
+      if (data.type === "dmzEventsPayloadPreview" && data.payload) {
+        applyPayload(data.payload);
+        return;
+      }
+      if (data.type === "dmzEventsAdminState") {
+        state.adminCanEditDate = Boolean(data.canEditDate);
+      }
     });
 
     const loadPayload = (url) =>
