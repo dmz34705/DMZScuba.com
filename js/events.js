@@ -999,6 +999,7 @@
     let pendingDateModal = "";
     let pendingDateItems = [];
     let selectedRegistrationRequestId = 0;
+    let shouldNotifyParentSelection = false;
 
     async function renderSelectedDateRegistration(items, host) {
       if (!host) return;
@@ -1274,6 +1275,7 @@
           selectedDateKey = currentKey;
           pendingDateModal = currentKey;
           pendingDateItems = items;
+          shouldNotifyParentSelection = true;
           renderMonth();
         });
         cell.appendChild(button);
@@ -1428,7 +1430,10 @@
         total.textContent = String(events.length);
       }
 
-      notifyParentSelection(selectedDateKey, selectedItems);
+      if (shouldNotifyParentSelection) {
+        notifyParentSelection(selectedDateKey, selectedItems);
+        shouldNotifyParentSelection = false;
+      }
       notifyParentHeight();
       if (pendingDateModal) {
         const modalDate = pendingDateModal;
