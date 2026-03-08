@@ -299,6 +299,10 @@
       : [];
   }
 
+  function normalizeCompareText(value) {
+    return normalizeText(value).replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
   function getEventDefinition(eventItem) {
     if (!eventItem || !state.payload || !Array.isArray(state.payload.definitions)) return null;
     const eventId = normalizeText(eventItem.eventId || eventItem.id);
@@ -405,7 +409,7 @@
     const definition = getEventDefinition(eventItem);
     const typeMeta = getEventTypeMeta(eventItem.type);
     const summary = normalizeText(eventItem.summary || (definition && definition.heroSummary));
-    const narrative = normalizeText((definition && definition.narrative) || summary);
+    const narrative = normalizeText((definition && definition.narrative) || "");
     const locationText = normalizeText(eventItem.location) || "Location announced soon";
     const whenText = eventDateLabel(eventItem);
     const ctaLabel = normalizeText(
@@ -444,7 +448,7 @@
           body.appendChild(intro);
         }
 
-        if (narrative) {
+        if (narrative && normalizeCompareText(narrative) !== normalizeCompareText(summary)) {
           const details = document.createElement("p");
           details.className = "events-public-copy";
           details.textContent = narrative;

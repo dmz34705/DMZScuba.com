@@ -682,6 +682,7 @@
 .event-card-summary {
   margin: 0;
   color: var(--muted);
+  white-space: pre-wrap;
 }
 
 .event-card-actions {
@@ -1001,6 +1002,7 @@ body.events-public-modal-open {
   margin: 0;
   color: rgba(234,242,255,0.9);
   line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 .events-public-copy {
