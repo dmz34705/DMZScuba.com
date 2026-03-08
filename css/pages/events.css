@@ -1617,6 +1617,23 @@ body.events-admin-date-mode #eventsAdminPageDetails {
   cursor: pointer;
 }
 
+.events-admin-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.events-admin-back {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(234,242,255,0.82);
+  font-weight: 700;
+  min-height: 36px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
 .events-admin-note {
   margin: 0;
   color: var(--muted);

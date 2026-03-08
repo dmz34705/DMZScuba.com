@@ -49,6 +49,7 @@
     registrationSnapshotByKey: new Map(),
     lastDateModalContext: null,
     adminCanEditDate: false,
+    openDateModalRequestKey: "",
     calendarView: {
       activeMonthKey: "",
       selectedDateKey: "",
@@ -965,8 +966,14 @@
     const requestedDateObj = parseDateKey(requestedDateFromUrl);
     const requestedDateKey = requestedDateObj ? dateKey(requestedDateObj) : "";
     const requestedMonthKey = requestedDateObj ? monthKey(startOfMonth(requestedDateObj)) : "";
+    const requestedModalDateKey = parseDateKey(String(state.openDateModalRequestKey || "").trim())
+      ? dateKey(parseDateKey(String(state.openDateModalRequestKey || "").trim()))
+      : "";
+    const requestedModalMonthKey = requestedModalDateKey
+      ? monthKey(startOfMonth(parseDateKey(requestedModalDateKey)))
+      : "";
     const savedMonthKey = String((state.calendarView && state.calendarView.activeMonthKey) || "").trim();
-    const initialMonthKey = savedMonthKey || requestedMonthKey || currentMonthKey;
+    const initialMonthKey = requestedModalMonthKey || savedMonthKey || requestedMonthKey || currentMonthKey;
     let activeMonthIndex = monthGroups.findIndex((group) => group.key === initialMonthKey);
     if (activeMonthIndex < 0) {
       activeMonthIndex = Math.max(
@@ -1017,11 +1024,12 @@
 
     const savedSelectedDateKey = String((state.calendarView && state.calendarView.selectedDateKey) || "").trim();
     const initialSelectedDateKey =
+      (requestedModalDateKey && parseDateKey(requestedModalDateKey) && requestedModalDateKey) ||
       (savedSelectedDateKey && parseDateKey(savedSelectedDateKey) && savedSelectedDateKey) ||
       (requestedDateKey && parseDateKey(requestedDateKey) && requestedDateKey) ||
       "";
     let selectedDateKey = initialSelectedDateKey || fallbackSelectedKey(monthGroups[activeMonthIndex]);
-    let pendingDateModal = "";
+    let pendingDateModal = requestedModalDateKey || "";
     let pendingDateItems = [];
     let selectedRegistrationRequestId = 0;
     let shouldNotifyParentSelection = false;
@@ -1151,6 +1159,9 @@
 
       if (!selectedDateKey) {
         selectedDateKey = fallbackSelectedKey(group);
+      }
+      if (pendingDateModal && pendingDateModal.slice(0, 7) === group.key && !pendingDateItems.length) {
+        pendingDateItems = eventMap.get(pendingDateModal) || [];
       }
 
       const card = document.createElement("section");
@@ -1465,6 +1476,7 @@
         const modalItems = pendingDateItems;
         pendingDateModal = "";
         pendingDateItems = [];
+        state.openDateModalRequestKey = "";
         openDateEventsModal(modalDate, modalItems);
       }
     }
@@ -1561,6 +1573,13 @@
       }
       if (data.type === "dmzEventsAdminState") {
         state.adminCanEditDate = Boolean(data.canEditDate);
+        return;
+      }
+      if (data.type === "dmzEventsOpenDateModal" && data.date) {
+        state.openDateModalRequestKey = String(data.date || "").trim();
+        if (state.payload && typeof state.payload === "object") {
+          applyPayload(state.payload);
+        }
       }
     });
 

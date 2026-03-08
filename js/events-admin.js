@@ -23,6 +23,7 @@
   if (!adminBar || !panel) return;
 
   const triggerBtn = document.querySelector(".events-admin-trigger");
+  const backBtn = panel.querySelector(".events-admin-back");
   const closeBtn = panel.querySelector(".events-admin-close");
   const statusEl = document.getElementById("eventsAdminStatus");
   const focusEl = document.getElementById("eventsAdminFocus");
@@ -1627,6 +1628,39 @@
     }
   }
 
+  function openSelectedDateListInEmbed(dateValue) {
+    const frame = document.querySelector("[data-events-embed-frame]");
+    if (!frame || !dateValue) return;
+    try {
+      const frameWindow = frame.contentWindow;
+      if (!frameWindow) return;
+      frameWindow.postMessage(
+        {
+          type: "dmzEventsOpenDateModal",
+          date: String(dateValue || "").trim(),
+        },
+        window.location.origin
+      );
+    } catch (_error) {
+      // Ignore embed message errors if frame is not ready.
+    }
+  }
+
+  function backToSelectedDateList() {
+    const selectedEntry = getSelectedEntry();
+    const fallbackDate =
+      (selectedEntry && selectedEntry.kind === "event" && selectedEntry.item && selectedEntry.item.date) ||
+      (selectedEntry && selectedEntry.kind === "template" && selectedEntry.item && getTemplateAnchorDate(selectedEntry.item)) ||
+      "";
+    const dateValue = String(selectionContext.requestedDate || fallbackDate || "").trim();
+    if (!dateValue) {
+      toggleOpen(false);
+      return;
+    }
+    toggleOpen(false);
+    openSelectedDateListInEmbed(dateValue);
+  }
+
   function syncEmbedPreview() {
     const frame = document.querySelector("[data-events-embed-frame]");
     if (!frame || !payload) return;
@@ -2325,6 +2359,10 @@
 
   if (closeBtn) {
     closeBtn.addEventListener("click", () => toggleOpen(false));
+  }
+
+  if (backBtn) {
+    backBtn.addEventListener("click", backToSelectedDateList);
   }
 
   panel.addEventListener("click", (event) => {
