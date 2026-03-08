@@ -1029,7 +1029,68 @@ body.events-public-modal-open {
 .events-public-actions {
   display: flex;
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-top: 4px;
+}
+
+.events-registration {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+}
+
+.events-registration-meta,
+.events-registration-feedback {
+  margin: 0;
+  color: rgba(234,242,255,0.82);
+  font-size: 13px;
+}
+
+.events-registration-form {
+  display: grid;
+  gap: 8px;
+}
+
+.events-registration-form label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(234,242,255,0.86);
+}
+
+.events-registration-form input,
+.events-registration-form select {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(7,19,37,0.88);
+  color: #eaf2ff;
+  padding: 8px 10px;
+}
+
+.events-registration-actions {
+  padding-top: 4px;
+}
+
+.events-registration-list-wrap h5 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(85,185,255,0.92);
+}
+
+.events-registration-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  color: rgba(234,242,255,0.9);
 }
 
 @media (max-width: 980px) {

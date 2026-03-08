@@ -917,6 +917,8 @@ function normalizeEventEntry(item, kind = "event") {
     status: String(next.status || "").trim(),
     location: String(next.location || "").trim(),
     summary: String(next.summary || "").trim(),
+    registrationEnabled: Boolean(next.registrationEnabled),
+    registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
   };
@@ -1034,6 +1036,187 @@ async function handleDeleteEventsV2(request, env) {
   await ensureEventsV2Table(env);
   await env.DB.prepare("DELETE FROM events_v2 WHERE calendar_key = ?").bind("primary").run();
   return jsonResponse({ ok: true }, 200, { "Cache-Control": "no-store" });
+}
+
+async function ensureEventRegistrationsV2Table(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS event_registrations_v2 (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL,
+      event_date TEXT NOT NULL,
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      cert_level TEXT NOT NULL,
+      additional_guests INTEGER NOT NULL DEFAULT 0,
+      party_size INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL
+    )`
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_event_regs_source_date ON event_registrations_v2(source_id, event_date)"
+  ).run();
+}
+
+function normalizeRegistrationText(value, maxLen = 120) {
+  return String(value || "").trim().slice(0, maxLen);
+}
+
+function buildRegistrantLabel(firstName, lastName) {
+  const first = normalizeRegistrationText(firstName, 40);
+  const last = normalizeRegistrationText(lastName, 40);
+  const initial = last ? `${last[0].toUpperCase()}.` : "";
+  return [first, initial].filter(Boolean).join(" ");
+}
+
+function resolveRegistrationConfig(payload, sourceId, eventDate) {
+  if (!payload || !sourceId || !eventDate) return null;
+  const events = Array.isArray(payload.events) ? payload.events : [];
+  const templates = Array.isArray(payload.templates) ? payload.templates : [];
+  const eventMatch = events.find((item) => item && item.id === sourceId && item.date === eventDate);
+  if (eventMatch) {
+    return {
+      sourceId,
+      eventDate,
+      title: String(eventMatch.title || "").trim(),
+      registrationEnabled: Boolean(eventMatch.registrationEnabled),
+      registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
+    };
+  }
+  const templateMatch = templates.find((item) => item && item.id === sourceId);
+  if (!templateMatch) return null;
+  return {
+    sourceId,
+    eventDate,
+    title: String(templateMatch.title || "").trim(),
+    registrationEnabled: Boolean(templateMatch.registrationEnabled),
+    registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
+  };
+}
+
+async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
+  await ensureEventRegistrationsV2Table(env);
+  const rows = await env.DB.prepare(
+    `SELECT first_name, last_name, additional_guests, party_size, created_at
+     FROM event_registrations_v2
+     WHERE source_id = ? AND event_date = ?
+     ORDER BY created_at ASC`
+  )
+    .bind(sourceId, eventDate)
+    .all();
+  const list = (rows.results || []).map((row) => ({
+    name: buildRegistrantLabel(row && row.first_name, row && row.last_name),
+    additionalGuests: Math.max(0, Number((row && row.additional_guests) || 0) || 0),
+    partySize: Math.max(1, Number((row && row.party_size) || 1) || 1),
+    createdAt: String((row && row.created_at) || ""),
+  }));
+  const usedSpots = list.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
+  const capacity = Math.max(0, Number((config && config.registrationCapacity) || 0) || 0);
+  const remainingSpots = capacity > 0 ? Math.max(0, capacity - usedSpots) : 0;
+  return {
+    sourceId,
+    eventDate,
+    registrationEnabled: Boolean(config && config.registrationEnabled),
+    registrationCapacity: capacity,
+    usedSpots,
+    remainingSpots,
+    registrants: list,
+  };
+}
+
+async function handleGetEventRegistrationsV2(request, env, sourceId) {
+  const url = new URL(request.url);
+  const eventDate = String(url.searchParams.get("date") || "").trim();
+  if (!sourceId || !eventDate) {
+    return jsonResponse({ ok: false, error: "Missing source id or date." }, 400, { "Cache-Control": "no-store" });
+  }
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, sourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+  const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  return jsonResponse({ ok: true, ...snapshot }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleCreateEventRegistrationV2(request, env, sourceId) {
+  const body = await request.json().catch(() => ({}));
+  const eventDate = normalizeRegistrationText(body && body.eventDate, 20);
+  if (!sourceId || !eventDate) {
+    return jsonResponse({ ok: false, error: "Missing source id or date." }, 400, { "Cache-Control": "no-store" });
+  }
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, sourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+  if (!config.registrationEnabled || config.registrationCapacity <= 0) {
+    return jsonResponse({ ok: false, error: "Registration is not enabled for this event." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const firstName = normalizeRegistrationText(body && body.firstName, 60);
+  const lastName = normalizeRegistrationText(body && body.lastName, 60);
+  const email = normalizeRegistrationText(body && body.email, 160).toLowerCase();
+  const phone = normalizeRegistrationText(body && body.phone, 40);
+  const certLevel = normalizeRegistrationText(body && body.certificationLevel, 80);
+  const additionalGuests = Math.max(0, Math.min(20, Math.trunc(Number((body && body.additionalGuests) || 0) || 0)));
+  const partySize = 1 + additionalGuests;
+
+  if (!firstName || !lastName || !email || !phone || !certLevel) {
+    return jsonResponse({ ok: false, error: "Missing required registration fields." }, 400, { "Cache-Control": "no-store" });
+  }
+  if (!email.includes("@")) {
+    return jsonResponse({ ok: false, error: "Email address is invalid." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const snapshotBefore = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  if (snapshotBefore.remainingSpots < partySize) {
+    return jsonResponse(
+      { ok: false, error: "Not enough spots remaining for that party size.", remainingSpots: snapshotBefore.remainingSpots },
+      409,
+      { "Cache-Control": "no-store" }
+    );
+  }
+
+  const now = new Date().toISOString();
+  const registrationId = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO event_registrations_v2
+     (id, source_id, event_date, first_name, last_name, email, phone, cert_level, additional_guests, party_size, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      registrationId,
+      sourceId,
+      eventDate,
+      firstName,
+      lastName,
+      email,
+      phone,
+      certLevel,
+      additionalGuests,
+      partySize,
+      now
+    )
+    .run();
+
+  const snapshotAfter = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  return jsonResponse(
+    {
+      ok: true,
+      registration: {
+        id: registrationId,
+        name: buildRegistrantLabel(firstName, lastName),
+        additionalGuests,
+        partySize,
+        createdAt: now,
+      },
+      ...snapshotAfter,
+    },
+    201,
+    { "Cache-Control": "no-store" }
+  );
 }
 
 async function handleGetDestinationsV2(env) {
@@ -1554,6 +1737,12 @@ export default {
       response = await handleStreamDateSync(request, env);
     } else if (pathname === "/api/v2/events" && request.method === "GET") {
       response = await handleGetEventsV2(env);
+    } else if (pathname.startsWith("/api/v2/events/") && pathname.endsWith("/registrations") && request.method === "GET") {
+      const sourceId = decodeURIComponent(pathname.split("/")[4] || "").trim().toLowerCase();
+      response = await handleGetEventRegistrationsV2(request, env, sourceId);
+    } else if (pathname.startsWith("/api/v2/events/") && pathname.endsWith("/registrations") && request.method === "POST") {
+      const sourceId = decodeURIComponent(pathname.split("/")[4] || "").trim().toLowerCase();
+      response = await handleCreateEventRegistrationV2(request, env, sourceId);
     } else if (pathname === "/api/admin/v2/events" && request.method === "PUT") {
       response = await handlePutEventsV2(request, env);
     } else if (pathname === "/api/admin/v2/events" && request.method === "DELETE") {

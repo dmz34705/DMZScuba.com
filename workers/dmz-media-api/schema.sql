@@ -58,3 +58,20 @@ CREATE TABLE IF NOT EXISTS events_v2 (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS event_registrations_v2 (
+  id TEXT PRIMARY KEY,
+  source_id TEXT NOT NULL,
+  event_date TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  cert_level TEXT NOT NULL,
+  additional_guests INTEGER NOT NULL DEFAULT 0,
+  party_size INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_regs_source_date
+  ON event_registrations_v2(source_id, event_date);

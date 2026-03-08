@@ -89,6 +89,8 @@
   const fieldStatus = document.getElementById("eventsFieldStatus");
   const fieldLocation = document.getElementById("eventsFieldLocation");
   const fieldSummary = document.getElementById("eventsFieldSummary");
+  const fieldRegistrationEnabled = document.getElementById("eventsFieldRegistrationEnabled");
+  const fieldRegistrationCapacity = document.getElementById("eventsFieldRegistrationCapacity");
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
@@ -746,6 +748,8 @@
       const endTimeValue = String(item.endTime || "").trim();
       const locationValue = String(item.location || "").trim();
       const summaryValue = String(item.summary || "").trim();
+      const registrationEnabledValue = Boolean(item.registrationEnabled);
+      const registrationCapacityValue = String(Math.max(0, Number(item.registrationCapacity) || 0));
       const startDateValue =
         candidate.kind === "template"
           ? getTemplateAnchorDate(item)
@@ -832,6 +836,19 @@
               data-events-inline-key="${key}"
               placeholder="Add description"
             >${escapeHtml(summaryValue)}</textarea>
+            <div class="events-admin-date-repeat-row">
+              <label>
+                <span>Enable Registration</span>
+                <select data-events-inline-field="registrationEnabled" data-events-inline-key="${key}">
+                  <option value="false" ${registrationEnabledValue ? "" : "selected"}>Off</option>
+                  <option value="true" ${registrationEnabledValue ? "selected" : ""}>On</option>
+                </select>
+              </label>
+              <label>
+                <span>Spots Available</span>
+                <input type="number" min="0" data-events-inline-field="registrationCapacity" data-events-inline-key="${key}" value="${escapeHtml(registrationCapacityValue)}" />
+              </label>
+            </div>
             ${candidate.kind === "template" ? `
             <div class="events-admin-date-repeat-row">
               <label>
@@ -1018,6 +1035,8 @@
       status: String((fieldStatus && fieldStatus.value) || "").trim(),
       location: String((fieldLocation && fieldLocation.value) || "").trim(),
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
+      registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
+      registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
@@ -1116,6 +1135,8 @@
     if (fieldStatus) fieldStatus.value = "Planned";
     if (fieldLocation) fieldLocation.value = "";
     if (fieldSummary) fieldSummary.value = "";
+    if (fieldRegistrationEnabled) fieldRegistrationEnabled.checked = false;
+    if (fieldRegistrationCapacity) fieldRegistrationCapacity.value = "0";
     if (fieldCtaLabel) fieldCtaLabel.value = "";
     if (fieldCtaHref) fieldCtaHref.value = "";
     if (fieldInterval) fieldInterval.value = "1";
@@ -1370,6 +1391,10 @@
     if (fieldStatus) fieldStatus.value = item.status || "Planned";
     if (fieldLocation) fieldLocation.value = item.location || "";
     if (fieldSummary) fieldSummary.value = item.summary || "";
+    if (fieldRegistrationEnabled) fieldRegistrationEnabled.checked = Boolean(item.registrationEnabled);
+    if (fieldRegistrationCapacity) {
+      fieldRegistrationCapacity.value = String(Math.max(0, Number(item.registrationCapacity) || 0));
+    }
     if (fieldCtaLabel) fieldCtaLabel.value = item.ctaLabel || "";
     if (fieldCtaHref) fieldCtaHref.value = item.ctaHref || "";
     if (fieldInterval) fieldInterval.value = String(item.repeatInterval || item.intervalMonths || 1);
@@ -1413,6 +1438,8 @@
       status: String((fieldStatus && fieldStatus.value) || "").trim(),
       location: String((fieldLocation && fieldLocation.value) || "").trim(),
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
+      registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
+      registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
@@ -1653,6 +1680,8 @@
       status: "Planned",
       location: "",
       summary: "",
+      registrationEnabled: false,
+      registrationCapacity: 0,
       ctaLabel: "",
       ctaHref: "",
     };
@@ -1673,6 +1702,8 @@
       status: "Planned",
       location: "",
       summary: "",
+      registrationEnabled: false,
+      registrationCapacity: 0,
       ctaLabel: "",
       ctaHref: "",
     };
@@ -1700,6 +1731,8 @@
       status: String((templateItem && templateItem.status) || "").trim(),
       location: String((templateItem && templateItem.location) || "").trim(),
       summary: String((templateItem && templateItem.summary) || "").trim(),
+      registrationEnabled: Boolean(templateItem && templateItem.registrationEnabled),
+      registrationCapacity: Math.max(0, Number((templateItem && templateItem.registrationCapacity) || 0) || 0),
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
     };
@@ -1785,6 +1818,16 @@
     }
     if (field === "summary") {
       item.summary = value;
+      return true;
+    }
+    if (field === "registrationEnabled") {
+      item.registrationEnabled = value === "true" || value === "1";
+      if (!item.registrationEnabled) item.registrationCapacity = 0;
+      return true;
+    }
+    if (field === "registrationCapacity") {
+      item.registrationCapacity = Math.max(0, Number(value || 0) || 0);
+      if (item.registrationCapacity > 0) item.registrationEnabled = true;
       return true;
     }
 
@@ -2489,6 +2532,8 @@
     fieldStatus,
     fieldLocation,
     fieldSummary,
+    fieldRegistrationEnabled,
+    fieldRegistrationCapacity,
     fieldCtaLabel,
     fieldCtaHref,
     fieldInterval,

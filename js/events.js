@@ -12,6 +12,7 @@
     (pageRoot && pageRoot.getAttribute("data-events-fallback-src")) ||
     (previewRoot && previewRoot.getAttribute("data-events-fallback-src")) ||
     "/assets/data/events.json";
+  const registrationApiRoot = "/api/v2/events";
 
   const monthFormatter = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -303,6 +304,42 @@
     return normalizeText(value).replace(/\s+/g, " ").trim().toLowerCase();
   }
 
+  function getRegistrationSourceId(eventItem) {
+    return normalizeText(eventItem && (eventItem.sourceId || eventItem.id)).toLowerCase();
+  }
+
+  function getRegistrationDateKey(eventItem) {
+    return normalizeText(eventItem && eventItem.date);
+  }
+
+  function isRegistrationEnabled(eventItem) {
+    const enabled = Boolean(eventItem && eventItem.registrationEnabled);
+    const capacity = Math.max(0, Number((eventItem && eventItem.registrationCapacity) || 0) || 0);
+    return enabled && capacity > 0;
+  }
+
+  async function fetchRegistrationSnapshot(sourceId, eventDate) {
+    const url = `${registrationApiRoot}/${encodeURIComponent(sourceId)}/registrations?date=${encodeURIComponent(eventDate)}`;
+    const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+    if (!resp || !resp.ok) return null;
+    return resp.json().catch(() => null);
+  }
+
+  async function submitRegistration(sourceId, payload) {
+    const url = `${registrationApiRoot}/${encodeURIComponent(sourceId)}/registrations`;
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => null);
+    if (!resp) return { ok: false, error: "Network error." };
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || !json || !json.ok) {
+      return { ok: false, error: (json && json.error) || "Registration failed." };
+    }
+    return json;
+  }
+
   function getEventDefinition(eventItem) {
     if (!eventItem || !state.payload || !Array.isArray(state.payload.definitions)) return null;
     const eventId = normalizeText(eventItem.eventId || eventItem.id);
@@ -492,7 +529,130 @@
         actionLink.href = ctaHref;
         actionLink.textContent = ctaLabel || "Reserve a Spot";
         actions.appendChild(actionLink);
+        let registerBtn = null;
+        const registrationEnabled = isRegistrationEnabled(eventItem);
+        if (registrationEnabled) {
+          registerBtn = document.createElement("button");
+          registerBtn.type = "button";
+          registerBtn.className = "btn secondary";
+          registerBtn.textContent = "Register For Event";
+          actions.appendChild(registerBtn);
+        }
         body.appendChild(actions);
+
+        if (isRegistrationEnabled(eventItem)) {
+          const sourceId = getRegistrationSourceId(eventItem);
+          const eventDate = getRegistrationDateKey(eventItem);
+          if (sourceId && eventDate) {
+            const regWrap = document.createElement("section");
+            regWrap.className = "events-registration";
+            regWrap.hidden = true;
+            regWrap.innerHTML = `
+              <h4 class="events-public-list-title">Event Registration</h4>
+              <p class="events-registration-meta" data-events-registration-meta>Loading registration status...</p>
+              <form class="events-registration-form" data-events-registration-form>
+                <label><span>First Name</span><input type="text" name="firstName" required /></label>
+                <label><span>Last Name</span><input type="text" name="lastName" required /></label>
+                <label><span>Email</span><input type="email" name="email" required /></label>
+                <label><span>Phone</span><input type="tel" name="phone" required /></label>
+                <label><span>Certification Level</span>
+                  <select name="certificationLevel" required>
+                    <option value="">Select one</option>
+                    <option value="Open Water">Open Water</option>
+                    <option value="Advanced Open Water">Advanced Open Water</option>
+                    <option value="Rescue Diver">Rescue Diver</option>
+                    <option value="Divemaster">Divemaster</option>
+                    <option value="Instructor">Instructor</option>
+                    <option value="Not Certified Yet">Not Certified Yet</option>
+                  </select>
+                </label>
+                <label><span>Additional Guests</span><input type="number" min="0" max="20" name="additionalGuests" value="0" /></label>
+                <div class="events-registration-actions">
+                  <button class="btn primary" type="submit">Submit Registration</button>
+                </div>
+              </form>
+              <p class="events-registration-feedback" data-events-registration-feedback aria-live="polite"></p>
+              <div class="events-registration-list-wrap">
+                <h5>Currently Registered</h5>
+                <ul class="events-registration-list" data-events-registration-list></ul>
+              </div>
+            `;
+            body.appendChild(regWrap);
+
+            const metaEl = regWrap.querySelector("[data-events-registration-meta]");
+            const feedbackEl = regWrap.querySelector("[data-events-registration-feedback]");
+            const listEl = regWrap.querySelector("[data-events-registration-list]");
+            const formEl = regWrap.querySelector("[data-events-registration-form]");
+
+            const renderSnapshot = (snapshot) => {
+              if (!snapshot || !metaEl || !listEl) return;
+              const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
+              const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
+              metaEl.textContent = `${remaining} of ${capacity} spots remaining`;
+              const registrants = Array.isArray(snapshot.registrants) ? snapshot.registrants : [];
+              listEl.innerHTML = "";
+              if (!registrants.length) {
+                const li = document.createElement("li");
+                li.textContent = "No registrations yet.";
+                listEl.appendChild(li);
+                return;
+              }
+              registrants.forEach((entry) => {
+                const li = document.createElement("li");
+                li.textContent = entry && entry.name ? entry.name : "Registered diver";
+                listEl.appendChild(li);
+              });
+            };
+
+            const loadSnapshot = async () => {
+              const snapshot = await fetchRegistrationSnapshot(sourceId, eventDate);
+              if (!snapshot || !snapshot.ok) {
+                if (metaEl) metaEl.textContent = "Registration status is unavailable right now.";
+                return null;
+              }
+              renderSnapshot(snapshot);
+              return snapshot;
+            };
+
+            if (formEl) {
+              formEl.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (feedbackEl) feedbackEl.textContent = "";
+                const formData = new FormData(formEl);
+                const requestBody = {
+                  eventDate,
+                  firstName: String(formData.get("firstName") || "").trim(),
+                  lastName: String(formData.get("lastName") || "").trim(),
+                  email: String(formData.get("email") || "").trim(),
+                  phone: String(formData.get("phone") || "").trim(),
+                  certificationLevel: String(formData.get("certificationLevel") || "").trim(),
+                  additionalGuests: Math.max(0, Number(formData.get("additionalGuests") || 0) || 0),
+                };
+                const result = await submitRegistration(sourceId, requestBody);
+                if (!result || !result.ok) {
+                  if (feedbackEl) feedbackEl.textContent = (result && result.error) || "Registration failed.";
+                  return;
+                }
+                if (feedbackEl) feedbackEl.textContent = "Registration received. You are on the list.";
+                formEl.reset();
+                const guestsInput = formEl.querySelector("input[name='additionalGuests']");
+                if (guestsInput) guestsInput.value = "0";
+                renderSnapshot(result);
+              });
+            }
+
+            if (registerBtn) {
+              registerBtn.addEventListener("click", () => {
+                regWrap.hidden = false;
+                regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+                const firstInput = formEl && formEl.querySelector("input[name='firstName']");
+                if (firstInput) firstInput.focus();
+              });
+            }
+
+            loadSnapshot();
+          }
+        }
       },
     });
   }
