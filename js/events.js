@@ -917,6 +917,78 @@
     let selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
     let pendingDateModal = "";
     let pendingDateItems = [];
+    let selectedRegistrationRequestId = 0;
+
+    async function renderSelectedDateRegistration(items, host) {
+      if (!host) return;
+      const registrationItems = (Array.isArray(items) ? items : [])
+        .filter((item) => isRegistrationEnabled(item))
+        .filter((item, index, list) => {
+          const sourceId = getRegistrationSourceId(item);
+          const dateValue = getRegistrationDateKey(item);
+          return Boolean(
+            sourceId &&
+            dateValue &&
+            list.findIndex((entry) =>
+              getRegistrationSourceId(entry) === sourceId &&
+              getRegistrationDateKey(entry) === dateValue
+            ) === index
+          );
+        });
+
+      if (!registrationItems.length) {
+        host.hidden = true;
+        host.innerHTML = "";
+        return;
+      }
+
+      host.hidden = false;
+      host.innerHTML = `<p class="events-selected-registration-note">Checking open spots...</p>`;
+      const requestId = ++selectedRegistrationRequestId;
+
+      const rows = await Promise.all(
+        registrationItems.map(async (item) => {
+          const sourceId = getRegistrationSourceId(item);
+          const dateValue = getRegistrationDateKey(item);
+          const fallbackCapacity = Math.max(0, Number(item.registrationCapacity) || 0);
+          const snapshot = await fetchRegistrationSnapshot(sourceId, dateValue);
+          if (snapshot && snapshot.ok) {
+            return {
+              title: item.title || "Event",
+              remaining: Math.max(0, Number(snapshot.remainingSpots) || 0),
+              capacity: Math.max(0, Number(snapshot.registrationCapacity) || 0),
+            };
+          }
+          return {
+            title: item.title || "Event",
+            remaining: -1,
+            capacity: fallbackCapacity,
+          };
+        })
+      );
+
+      if (requestId !== selectedRegistrationRequestId) return;
+      host.innerHTML = "";
+
+      const label = document.createElement("p");
+      label.className = "events-selected-registration-label";
+      label.textContent = "Open Spots";
+      host.appendChild(label);
+
+      const list = document.createElement("ul");
+      list.className = "events-selected-registration-list";
+      rows.forEach((row) => {
+        const li = document.createElement("li");
+        li.className = "events-selected-registration-item";
+        const countText =
+          row.remaining >= 0
+            ? `${row.remaining}/${row.capacity} open`
+            : `${row.capacity} spots configured`;
+        li.textContent = `${row.title}: ${countText}`;
+        list.appendChild(li);
+      });
+      host.appendChild(list);
+    }
 
     function notifyParentHeight() {
       if (window.parent === window) return;
@@ -1036,6 +1108,10 @@
       selectedSummary.className = "events-selected-summary";
       selectedSummary.innerHTML = buildSelectedSummaryMarkup(group, selectedItems);
 
+      const selectedRegistration = document.createElement("div");
+      selectedRegistration.className = "events-selected-registration";
+      selectedRegistration.hidden = true;
+
       const grid = document.createElement("div");
       grid.className = "events-month-grid";
 
@@ -1121,8 +1197,9 @@
         grid.appendChild(cell);
       }
 
-      card.append(head, selectedSummary, legend, grid);
+      card.append(head, selectedSummary, selectedRegistration, legend, grid);
       monthHost.appendChild(card);
+      renderSelectedDateRegistration(selectedItems, selectedRegistration);
 
       const upcomingItems = [];
       const seenUpcomingIds = new Set();
