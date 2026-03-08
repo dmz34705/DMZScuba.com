@@ -849,6 +849,7 @@
             <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
           </div>
           <div class="events-admin-date-item-actions">
+            <button class="btn primary" type="button" data-events-date-done="${key}">Done</button>
             <button class="btn secondary" type="button" data-events-date-delete="${key}">Delete This Event</button>
           </div>
         </div>
@@ -1863,6 +1864,21 @@
     setStatus("Draft", "neutral");
   }
 
+  function finalizeDateTreeEntryEdits(key) {
+    const entry = getEntryByKey(key);
+    if (!entry) return;
+    selectedKey = key;
+    if (isDateFocusedMode()) {
+      refreshDateSelectionCandidates(key);
+    }
+    renderList(searchInput ? searchInput.value : "");
+    toggleOpen(true);
+    syncEmbedPreview();
+    setDirty(true);
+    setStatus("Draft", "neutral");
+    showValidation("Draft updates saved in the editor. Click Publish to make them live.");
+  }
+
   function createEntry(kind, options = {}) {
     if (!isAuthed()) {
       buildLoginModal(() => {
@@ -2301,6 +2317,8 @@
       const name = String(field.getAttribute("data-events-inline-field") || "").trim();
       if (!key || !name) return;
       if (!applyInlineFieldChange(key, name, field.value)) return;
+      selectedKey = key;
+      refreshContextPanel();
       setDirty(true);
       setStatus("Draft", "neutral");
     });
@@ -2313,15 +2331,13 @@
       if (!key || !name) return;
       if (!applyInlineFieldChange(key, name, field.value)) {
         showValidation("That date change is invalid.", true);
-        updateDatePicker(getSelectedEntry());
         return;
       }
       selectedKey = key;
       setDirty(true);
       setStatus("Draft", "neutral");
       showValidation("");
-      updateDatePicker(getSelectedEntry());
-      renderList(searchInput ? searchInput.value : "");
+      refreshContextPanel();
     });
 
     dateTreeEl.addEventListener("click", (event) => {
@@ -2374,6 +2390,12 @@
       const deleteButton = event.target.closest("[data-events-date-delete]");
       if (deleteButton) {
         deleteDateTreeEntry(String(deleteButton.getAttribute("data-events-date-delete") || "").trim());
+        return;
+      }
+
+      const doneButton = event.target.closest("[data-events-date-done]");
+      if (doneButton) {
+        finalizeDateTreeEntryEdits(String(doneButton.getAttribute("data-events-date-done") || "").trim());
         return;
       }
     });
