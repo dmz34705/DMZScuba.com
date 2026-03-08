@@ -1584,7 +1584,15 @@
     if (!frame) return;
     const currentSrc = frame.getAttribute("src") || "";
     if (!currentSrc) return;
+    const selectedEntry = getSelectedEntry();
+    const anchorDate = String(
+      selectionContext.requestedDate ||
+      (selectedEntry && selectedEntry.kind === "event" && selectedEntry.item && selectedEntry.item.date) ||
+      (selectedEntry && selectedEntry.kind === "template" && selectedEntry.item && getTemplateAnchorDate(selectedEntry.item)) ||
+      ""
+    ).trim();
     const nextUrl = new URL(currentSrc, window.location.href);
+    if (anchorDate) nextUrl.searchParams.set("date", anchorDate);
     nextUrl.searchParams.set("t", String(Date.now()));
     frame.setAttribute("src", `${nextUrl.pathname}${nextUrl.search}`);
   }

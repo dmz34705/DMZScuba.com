@@ -48,6 +48,10 @@
     publicModal: null,
     registrationSnapshotByKey: new Map(),
     lastDateModalContext: null,
+    calendarView: {
+      activeMonthKey: "",
+      selectedDateKey: "",
+    },
   };
 
   function startOfDay(date) {
@@ -931,10 +935,20 @@
     const today = startOfDay(new Date());
     const todayKey = dateKey(today);
     const currentMonthKey = monthKey(today);
-    let activeMonthIndex = Math.max(
-      0,
-      monthGroups.findIndex((group) => group.key === currentMonthKey)
-    );
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedDateFromUrl = String(urlParams.get("date") || "").trim();
+    const requestedDateObj = parseDateKey(requestedDateFromUrl);
+    const requestedDateKey = requestedDateObj ? dateKey(requestedDateObj) : "";
+    const requestedMonthKey = requestedDateObj ? monthKey(startOfMonth(requestedDateObj)) : "";
+    const savedMonthKey = String((state.calendarView && state.calendarView.activeMonthKey) || "").trim();
+    const initialMonthKey = savedMonthKey || requestedMonthKey || currentMonthKey;
+    let activeMonthIndex = monthGroups.findIndex((group) => group.key === initialMonthKey);
+    if (activeMonthIndex < 0) {
+      activeMonthIndex = Math.max(
+        0,
+        monthGroups.findIndex((group) => group.key === currentMonthKey)
+      );
+    }
 
     function defaultSelectedKey(group) {
       if (!group) return "";
@@ -976,7 +990,12 @@
       `;
     }
 
-    let selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
+    const savedSelectedDateKey = String((state.calendarView && state.calendarView.selectedDateKey) || "").trim();
+    const initialSelectedDateKey =
+      (savedSelectedDateKey && parseDateKey(savedSelectedDateKey) && savedSelectedDateKey) ||
+      (requestedDateKey && parseDateKey(requestedDateKey) && requestedDateKey) ||
+      "";
+    let selectedDateKey = initialSelectedDateKey || fallbackSelectedKey(monthGroups[activeMonthIndex]);
     let pendingDateModal = "";
     let pendingDateItems = [];
     let selectedRegistrationRequestId = 0;
@@ -1083,6 +1102,8 @@
     function renderMonth() {
       const group = monthGroups[activeMonthIndex];
       if (!group) return;
+      state.calendarView.activeMonthKey = group.key;
+      state.calendarView.selectedDateKey = selectedDateKey;
 
       monthHost.innerHTML = "";
       listHost.innerHTML = "";
