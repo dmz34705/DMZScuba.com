@@ -1005,6 +1005,23 @@ body.events-public-modal-open {
   cursor: pointer;
 }
 
+.events-public-modal-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.events-public-modal-back {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.24);
+  color: rgba(234,242,255,0.9);
+  min-height: 36px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .events-public-modal-body {
   overflow: auto;
   padding: 16px 18px 18px;

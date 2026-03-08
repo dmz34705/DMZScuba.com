@@ -47,6 +47,7 @@
     eventsById: new Map(),
     publicModal: null,
     registrationSnapshotByKey: new Map(),
+    lastDateModalContext: null,
   };
 
   function startOfDay(date) {
@@ -383,7 +384,10 @@
             <h3 data-events-modal-title></h3>
             <p data-events-modal-subtitle></p>
           </div>
-          <button class="events-public-modal-close" type="button" aria-label="Close event details">Close</button>
+          <div class="events-public-modal-head-actions">
+            <button class="events-public-modal-back" type="button" aria-label="Back to selected date events" hidden>Back</button>
+            <button class="events-public-modal-close" type="button" aria-label="Close event details">Close</button>
+          </div>
         </div>
         <div class="events-public-modal-body" data-events-modal-body></div>
       </div>
@@ -395,6 +399,7 @@
     };
     const closeBtn = modal.querySelector(".events-public-modal-close");
     if (closeBtn) closeBtn.addEventListener("click", close);
+    const backBtn = modal.querySelector(".events-public-modal-back");
     modal.addEventListener("click", (event) => {
       if (event.target === modal) close();
     });
@@ -407,6 +412,7 @@
       kicker: modal.querySelector("[data-events-modal-kicker]"),
       title: modal.querySelector("[data-events-modal-title]"),
       subtitle: modal.querySelector("[data-events-modal-subtitle]"),
+      backBtn,
     };
     return state.publicModal;
   }
@@ -417,6 +423,10 @@
     modal.kicker.textContent = normalizeText(kicker);
     modal.title.textContent = normalizeText(title);
     modal.subtitle.textContent = normalizeText(subtitle);
+    if (modal.backBtn) {
+      modal.backBtn.hidden = true;
+      modal.backBtn.onclick = null;
+    }
     modal.body.innerHTML = "";
     if (typeof bodyBuilder === "function") bodyBuilder(modal.body);
     modal.root.setAttribute("aria-hidden", "false");
@@ -426,6 +436,10 @@
   function openDateEventsModal(dateValue, items) {
     const selectedDate = parseDateKey(dateValue) || new Date();
     const eventItems = Array.isArray(items) ? items : [];
+    state.lastDateModalContext = {
+      dateValue: dateKey(selectedDate),
+      items: eventItems.slice(),
+    };
     openPublicModal({
       kicker: "Selected Date",
       title: weekdayLongFormatter.format(selectedDate),
@@ -497,6 +511,7 @@
     );
     const whatToExpect = normalizeList(definition && definition.whatToExpect);
     const included = normalizeList(definition && definition.included);
+    const modal = ensurePublicModal();
 
     openPublicModal({
       kicker: eventItem.type || "Event",
@@ -691,6 +706,15 @@
         }
       },
     });
+
+    if (modal && modal.backBtn && state.lastDateModalContext && Array.isArray(state.lastDateModalContext.items)) {
+      modal.backBtn.hidden = false;
+      modal.backBtn.onclick = () => {
+        const context = state.lastDateModalContext;
+        if (!context) return;
+        openDateEventsModal(context.dateValue, context.items);
+      };
+    }
   }
 
   function indexEvents(events, payload) {
@@ -709,6 +733,8 @@
       const trigger = event.target.closest("[data-events-open-detail]");
       if (!trigger) return;
       event.preventDefault();
+      const inSelectedDateModal = Boolean(trigger.closest(".events-public-day-row"));
+      if (!inSelectedDateModal) state.lastDateModalContext = null;
       openEventDetailModalById(trigger.getAttribute("data-events-open-detail"));
     });
   }
