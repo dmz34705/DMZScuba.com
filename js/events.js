@@ -427,7 +427,7 @@
 
     openPublicModal({
       kicker: eventItem.type || "Event",
-      title: normalizeText((definition && definition.title) || eventItem.title || "Event"),
+      title: normalizeText(eventItem.title || (definition && definition.title) || "Event"),
       subtitle: `${whenText} | ${locationText}`,
       bodyBuilder: (body) => {
         const meta = document.createElement("div");

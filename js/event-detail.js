@@ -285,7 +285,7 @@
       return;
     }
 
-    const title = (definition && definition.title) || extra.title || (instance && instance.title) || "Event";
+    const title = (instance && instance.title) || (definition && definition.title) || extra.title || "Event";
     const heroSummary =
       (definition && definition.heroSummary) ||
       extra.heroSummary ||
