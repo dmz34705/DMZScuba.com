@@ -737,6 +737,7 @@
       const details = document.createElement("details");
       details.className = "events-admin-date-item";
       details.setAttribute("data-events-date-key", key);
+      details.open = key === selectedKey;
       const kindLabel = candidate.kind === "template" ? "Repeats" : "One-Time";
       const summaryText = getDateCandidateLabel(candidate, selectionContext.requestedDate);
       const metaText = getDateCandidateMeta(candidate, selectionContext.requestedDate);
@@ -2318,7 +2319,6 @@
       if (!key || !name) return;
       if (!applyInlineFieldChange(key, name, field.value)) return;
       selectedKey = key;
-      refreshContextPanel();
       setDirty(true);
       setStatus("Draft", "neutral");
     });
@@ -2337,7 +2337,6 @@
       setDirty(true);
       setStatus("Draft", "neutral");
       showValidation("");
-      refreshContextPanel();
     });
 
     dateTreeEl.addEventListener("click", (event) => {
