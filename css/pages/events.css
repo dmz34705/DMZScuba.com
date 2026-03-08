@@ -835,6 +835,11 @@
   color: var(--muted);
 }
 
+.event-card-spots {
+  color: rgba(85,185,255,0.94);
+  font-weight: 700;
+}
+
 .event-card-agenda-main {
   min-width: 0;
 }

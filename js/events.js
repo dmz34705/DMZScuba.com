@@ -46,6 +46,7 @@
     payload: {},
     eventsById: new Map(),
     publicModal: null,
+    registrationSnapshotByKey: new Map(),
   };
 
   function startOfDay(date) {
@@ -318,11 +319,24 @@
     return enabled && capacity > 0;
   }
 
+  function registrationSnapshotCacheKey(sourceId, eventDate) {
+    return `${String(sourceId || "").trim().toLowerCase()}|${String(eventDate || "").trim()}`;
+  }
+
   async function fetchRegistrationSnapshot(sourceId, eventDate) {
+    const cacheKey = registrationSnapshotCacheKey(sourceId, eventDate);
+    if (state.registrationSnapshotByKey.has(cacheKey)) {
+      return state.registrationSnapshotByKey.get(cacheKey);
+    }
     const url = `${registrationApiRoot}/${encodeURIComponent(sourceId)}/registrations?date=${encodeURIComponent(eventDate)}`;
     const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
-    if (!resp || !resp.ok) return null;
-    return resp.json().catch(() => null);
+    if (!resp || !resp.ok) {
+      state.registrationSnapshotByKey.set(cacheKey, null);
+      return null;
+    }
+    const json = await resp.json().catch(() => null);
+    state.registrationSnapshotByKey.set(cacheKey, json);
+    return json;
   }
 
   async function submitRegistration(sourceId, payload) {
@@ -432,6 +446,28 @@
           const row = renderAgendaRow(eventItem);
           row.classList.add("events-public-day-row");
           list.appendChild(row);
+          if (isRegistrationEnabled(eventItem)) {
+            const sourceId = getRegistrationSourceId(eventItem);
+            const eventDate = getRegistrationDateKey(eventItem);
+            if (sourceId && eventDate) {
+              const infoLine = row.querySelector(".event-card-agenda-info");
+              if (infoLine) {
+                const spots = document.createElement("span");
+                spots.className = "event-card-spots";
+                spots.textContent = " | Checking spots...";
+                infoLine.appendChild(spots);
+                fetchRegistrationSnapshot(sourceId, eventDate).then((snapshot) => {
+                  if (!snapshot || !snapshot.ok) {
+                    spots.textContent = " | Spots unavailable";
+                    return;
+                  }
+                  const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
+                  const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
+                  spots.textContent = ` | ${remaining}/${capacity} open`;
+                });
+              }
+            }
+          }
         });
         body.appendChild(list);
       },
