@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/events.css" />
+  <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 
@@ -326,6 +326,16 @@
                       </label>
                     </div>
                   </div>
+                  <div class="events-admin-section events-admin-detail-section">
+                    <h4>Event Info</h4>
+                    <p class="events-admin-section-note">This copy appears in the event view above the registration section. Use it for the main event details people need before signing up.</p>
+                    <div class="events-admin-form-grid">
+                      <label class="events-admin-span">
+                        Event Info Copy
+                        <textarea id="eventsDefinitionNarrative" rows="5" placeholder="Share what this event is, who it is for, what divers should know, and any key prep details."></textarea>
+                      </label>
+                    </div>
+                  </div>
                   <details class="events-admin-advanced" id="eventsAdminPageDetails">
                     <summary>More Page Details</summary>
                     <div class="events-admin-advanced-body">
@@ -339,10 +349,6 @@
                           <label>
                             Page Link Name
                             <input type="text" id="eventsDefinitionSlug" placeholder="open-water-orientation-night" />
-                          </label>
-                          <label class="events-admin-span">
-                            Full Page Description
-                            <textarea id="eventsDefinitionNarrative" rows="5"></textarea>
                           </label>
                           <label class="events-admin-span">
                             Best For
@@ -434,8 +440,8 @@
     </footer>
   </div>
 
-  <script src="/js/main.js?v=20260306c"></script>
-  <script src="/js/events.js?v=20260306c"></script>
-  <script src="/js/events-admin.js?v=20260306c"></script>
+  <script src="/js/main.js?v=20260406a"></script>
+  <script src="/js/events.js?v=20260406a"></script>
+  <script src="/js/events-admin.js?v=20260406a"></script>
 </body>
 </html>
