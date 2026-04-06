@@ -121,13 +121,6 @@
     return new Date(year, month - 1, 1);
   }
 
-  function splitParagraphs(value) {
-    return String(value || "")
-      .split(/\n\s*\n+/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
   function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
     const first = new Date(year, monthIndex, 1);
     const shift = (7 + weekday - first.getDay()) % 7;
@@ -534,7 +527,6 @@
     const typeMeta = getEventTypeMeta(eventItem.type);
     const summary = normalizeText(eventItem.summary || (definition && definition.heroSummary));
     const narrative = normalizeText((definition && definition.narrative) || "");
-    const infoParagraphs = splitParagraphs(narrative);
     const locationText = normalizeText(eventItem.location) || "Location announced soon";
     const whenText = eventDateLabel(eventItem);
     const ctaLabel = normalizeText(
@@ -574,23 +566,11 @@
           body.appendChild(intro);
         }
 
-        if (infoParagraphs.length && normalizeCompareText(narrative) !== normalizeCompareText(summary)) {
-          const infoWrap = document.createElement("section");
-          infoWrap.className = "events-public-info";
-
-          const title = document.createElement("h4");
-          title.className = "events-public-list-title";
-          title.textContent = "Event Info";
-          infoWrap.appendChild(title);
-
-          infoParagraphs.forEach((paragraph) => {
-            const details = document.createElement("p");
-            details.className = "events-public-copy";
-            details.textContent = paragraph;
-            infoWrap.appendChild(details);
-          });
-
-          body.appendChild(infoWrap);
+        if (narrative && normalizeCompareText(narrative) !== normalizeCompareText(summary)) {
+          const details = document.createElement("p");
+          details.className = "events-public-copy";
+          details.textContent = narrative;
+          body.appendChild(details);
         }
 
         if (whatToExpect.length) {

@@ -761,8 +761,6 @@
       const endTimeValue = String(item.endTime || "").trim();
       const locationValue = String(item.location || "").trim();
       const summaryValue = String(item.summary || "").trim();
-      const definition = ensureDefinitionForEntry(candidate);
-      const narrativeValue = String((definition && definition.narrative) || "").trim();
       const registrationEnabledValue = Boolean(item.registrationEnabled);
       const registrationCapacityValue = String(Math.max(0, Number(item.registrationCapacity) || 0));
       const startDateValue =
@@ -851,12 +849,6 @@
               data-events-inline-key="${key}"
               placeholder="Add description"
             >${escapeHtml(summaryValue)}</textarea>
-            <textarea
-              rows="4"
-              data-events-inline-field="definitionNarrative"
-              data-events-inline-key="${key}"
-              placeholder="Add event info shown above registration"
-            >${escapeHtml(narrativeValue)}</textarea>
             <div class="events-admin-date-repeat-row">
               <label>
                 <span>Enable Registration</span>
@@ -1898,12 +1890,6 @@
     }
     if (field === "summary") {
       item.summary = value;
-      return true;
-    }
-    if (field === "definitionNarrative") {
-      const definition = ensureDefinitionForEntry(entry);
-      if (!definition) return false;
-      definition.narrative = value;
       return true;
     }
     if (field === "registrationEnabled") {
