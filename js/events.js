@@ -787,7 +787,15 @@
         `;
       })
       .join("");
-    }
+  }
+
+  function buildMonthNavButtonsMarkup(prevDisabled, nextDisabled) {
+    return `
+      <button class="events-nav-btn" type="button" data-events-today>Current Month</button>
+      <button class="events-nav-btn" type="button" data-events-prev ${prevDisabled}>Previous</button>
+      <button class="events-nav-btn" type="button" data-events-next ${nextDisabled}>Next</button>
+    `;
+  }
 
   function renderEventCard(eventItem, variant = "default") {
     const compact = variant === "compact";
@@ -1212,9 +1220,7 @@
               </select>
             </label>
           </div>
-          <button class="events-nav-btn" type="button" data-events-today>Current Month</button>
-          <button class="events-nav-btn" type="button" data-events-prev ${prevDisabled}>Previous</button>
-          <button class="events-nav-btn" type="button" data-events-next ${nextDisabled}>Next</button>
+          ${buildMonthNavButtonsMarkup(prevDisabled, nextDisabled)}
         </div>
       `;
 
@@ -1318,7 +1324,12 @@
         grid.appendChild(cell);
       }
 
-      card.append(head, selectedSummary, selectedRegistration, legend, grid);
+      const bottomNav = document.createElement("div");
+      bottomNav.className = "events-month-nav events-month-nav-bottom";
+      bottomNav.setAttribute("aria-label", "Calendar month controls");
+      bottomNav.innerHTML = buildMonthNavButtonsMarkup(prevDisabled, nextDisabled);
+
+      card.append(head, selectedSummary, selectedRegistration, legend, grid, bottomNav);
       monthHost.appendChild(card);
       renderSelectedDateRegistration(selectedItems, selectedRegistration);
 
@@ -1388,11 +1399,11 @@
         }
       }
 
-      const todayButton = head.querySelector("[data-events-today]");
+      const todayButtons = card.querySelectorAll("[data-events-today]");
       const monthSelect = head.querySelector("[data-events-month-select]");
       const yearSelect = head.querySelector("[data-events-year-select]");
-      const prevButton = head.querySelector("[data-events-prev]");
-      const nextButton = head.querySelector("[data-events-next]");
+      const prevButtons = card.querySelectorAll("[data-events-prev]");
+      const nextButtons = card.querySelectorAll("[data-events-next]");
 
       function jumpToMonth(monthValue, yearValue) {
         const targetIndex = monthGroups.findIndex(
@@ -1430,7 +1441,7 @@
         });
       }
 
-      if (todayButton) {
+      todayButtons.forEach((todayButton) => {
         todayButton.addEventListener("click", () => {
           activeMonthIndex = Math.max(
             0,
@@ -1439,25 +1450,25 @@
           selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
-      }
+      });
 
-      if (prevButton) {
+      prevButtons.forEach((prevButton) => {
         prevButton.addEventListener("click", () => {
           if (activeMonthIndex <= 0) return;
           activeMonthIndex -= 1;
           selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
-      }
+      });
 
-      if (nextButton) {
+      nextButtons.forEach((nextButton) => {
         nextButton.addEventListener("click", () => {
           if (activeMonthIndex >= monthGroups.length - 1) return;
           activeMonthIndex += 1;
           selectedDateKey = fallbackSelectedKey(monthGroups[activeMonthIndex]);
           renderMonth();
         });
-      }
+      });
 
       if (stamp) {
         stamp.textContent = `Auto-updating rolling calendar. Showing ${monthFormatter.format(group.monthDate)} with coverage through ${monthFormatter.format(monthGroups[monthGroups.length - 1].monthDate)}.`;

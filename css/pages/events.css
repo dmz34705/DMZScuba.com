@@ -206,6 +206,13 @@
   justify-content: flex-end;
 }
 
+.events-month-nav-bottom {
+  justify-content: center;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 14px;
+}
+
 .events-nav-btn {
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 999px;
