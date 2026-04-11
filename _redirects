@@ -2,4 +2,3 @@ https://dmzscuba.com/* https://www.dmzscuba.com/:splat 301
 http://dmzscuba.com/* https://www.dmzscuba.com/:splat 301
 /api/* https://dmz-media-api.zacharylisowski55.workers.dev/api/:splat 200
 /training /pages/training/index.html 200
-/events /pages/events/index.html 200

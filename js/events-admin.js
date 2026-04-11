@@ -104,6 +104,14 @@
   let selectedKey = "";
   let editMode = false;
   let isDirty = false;
+  let registrationUiState = {
+    sourceId: "",
+    eventDate: "",
+    loading: false,
+    deletingId: "",
+    snapshot: null,
+    error: "",
+  };
   let selectionContext = {
     requestedDate: "",
     openedFromDate: false,
@@ -218,6 +226,212 @@
     if (!validationEl) return;
     validationEl.textContent = message || "";
     validationEl.classList.toggle("is-error", Boolean(isError));
+  }
+
+  function formatDateTime(value) {
+    const stamp = String(value || "").trim();
+    if (!stamp) return "";
+    const parsed = new Date(stamp);
+    if (Number.isNaN(parsed.getTime())) return stamp;
+    return parsed.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function getEntryRegistrationContext(entry) {
+    if (!entry) return null;
+    const item = entry.item || {};
+    if (!item.registrationEnabled || Math.max(0, Number(item.registrationCapacity) || 0) <= 0) return null;
+    const sourceId = String(item.id || "").trim();
+    let eventDate = "";
+    if (entry.kind === "event") {
+      eventDate = String(selectionContext.requestedDate || item.date || "").trim();
+    } else if (selectionContext.requestedDate && templateCoversDate(item, selectionContext.requestedDate)) {
+      eventDate = String(selectionContext.requestedDate || "").trim();
+    }
+    if (!sourceId || !eventDate) return null;
+    return {
+      sourceId,
+      eventDate,
+      registrationCapacity: Math.max(0, Number(item.registrationCapacity) || 0),
+    };
+  }
+
+  function resetRegistrationUiState() {
+    registrationUiState = {
+      sourceId: "",
+      eventDate: "",
+      loading: false,
+      deletingId: "",
+      snapshot: null,
+      error: "",
+    };
+  }
+
+  function renderRegistrationManager(context, options = {}) {
+    if (!context) return "";
+    const isLoading = Boolean(options.loading);
+    const errorText = String(options.error || "").trim();
+    const snapshot = options.snapshot && typeof options.snapshot === "object" ? options.snapshot : null;
+    const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+    const deletingId = String(options.deletingId || "").trim();
+    const capacity = Math.max(0, Number((snapshot && snapshot.registrationCapacity) || context.registrationCapacity || 0) || 0);
+    const usedSpots = Math.max(0, Number((snapshot && snapshot.usedSpots) || 0) || 0);
+    const remainingSpots = Math.max(0, Number((snapshot && snapshot.remainingSpots) || 0) || 0);
+    const summaryText = snapshot
+      ? `${usedSpots} of ${capacity} spots filled. ${remainingSpots} remaining.`
+      : "Load current signups to manage this event's registration list.";
+
+    return `
+      <section class="events-admin-registrations" data-events-registration-manager>
+        <div class="events-admin-registrations-head">
+          <div>
+            <h4>Registered Divers</h4>
+            <p>${escapeHtml(summaryText)}</p>
+          </div>
+          <button
+            class="btn secondary"
+            type="button"
+            data-events-registration-refresh="${escapeHtml(context.sourceId)}"
+            ${isLoading ? "disabled" : ""}
+          >${isLoading ? "Loading..." : "Refresh Signups"}</button>
+        </div>
+        ${errorText ? `<p class="events-admin-registrations-error">${escapeHtml(errorText)}</p>` : ""}
+        ${!snapshot && !isLoading ? `<div class="events-admin-registrations-empty">No signup data loaded yet.</div>` : ""}
+        ${snapshot && !registrants.length ? `<div class="events-admin-registrations-empty">Nobody is registered for this date yet.</div>` : ""}
+        ${registrants.length ? `
+          <div class="events-admin-registrations-list">
+            ${registrants.map((registrant) => {
+              const registrantId = String((registrant && registrant.id) || "").trim();
+              const additionalGuests = Math.max(0, Number((registrant && registrant.additionalGuests) || 0) || 0);
+              const partySize = Math.max(1, Number((registrant && registrant.partySize) || 1) || 1);
+              const createdAt = String((registrant && registrant.createdAt) || "").trim();
+              const detailBits = [
+                partySize > 1 ? `${partySize} divers total` : "Solo signup",
+                additionalGuests > 0 ? `${additionalGuests} guest${additionalGuests === 1 ? "" : "s"}` : "",
+                createdAt ? `Signed up ${formatDateTime(createdAt)}` : "",
+              ].filter(Boolean);
+              const isDeleting = registrantId && registrantId === deletingId;
+              return `
+                <div class="events-admin-registrations-item">
+                  <div class="events-admin-registrations-copy">
+                    <strong>${escapeHtml(String((registrant && registrant.name) || "Unnamed registrant").trim())}</strong>
+                    <span>${escapeHtml(detailBits.join(" | "))}</span>
+                  </div>
+                  <button
+                    class="btn secondary events-admin-registrations-remove"
+                    type="button"
+                    data-events-registration-remove="${escapeHtml(registrantId)}"
+                    ${!registrantId || isDeleting || isLoading ? "disabled" : ""}
+                  >${isDeleting ? "Removing..." : "Remove"}</button>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        ` : ""}
+      </section>
+    `;
+  }
+
+  async function loadRegistrationSnapshot(entry, options = {}) {
+    const context = getEntryRegistrationContext(entry);
+    if (!context || !isAuthed()) {
+      resetRegistrationUiState();
+      return null;
+    }
+    const preserveSnapshot = Boolean(options.preserveSnapshot);
+    registrationUiState = {
+      sourceId: context.sourceId,
+      eventDate: context.eventDate,
+      loading: true,
+      deletingId: preserveSnapshot ? registrationUiState.deletingId : "",
+      snapshot: preserveSnapshot ? registrationUiState.snapshot : null,
+      error: "",
+    };
+    updateDatePicker(getSelectedEntry());
+    try {
+      const resp = await apiFetch(`${publicUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data.ok) {
+        throw new Error((data && data.error) || "Could not load registrations.");
+      }
+      registrationUiState = {
+        sourceId: context.sourceId,
+        eventDate: context.eventDate,
+        loading: false,
+        deletingId: "",
+        snapshot: data,
+        error: "",
+      };
+      updateDatePicker(getSelectedEntry());
+      return data;
+    } catch (error) {
+      registrationUiState = {
+        sourceId: context.sourceId,
+        eventDate: context.eventDate,
+        loading: false,
+        deletingId: "",
+        snapshot: null,
+        error: error && error.message ? error.message : "Could not load registrations.",
+      };
+      updateDatePicker(getSelectedEntry());
+      return null;
+    }
+  }
+
+  async function removeRegistration(registrationId) {
+    const entry = getSelectedEntry();
+    const context = getEntryRegistrationContext(entry);
+    const safeId = String(registrationId || "").trim();
+    if (!context || !safeId) return;
+    if (!window.confirm("Remove this registrant from the selected event date?")) return;
+    registrationUiState = {
+      sourceId: context.sourceId,
+      eventDate: context.eventDate,
+      loading: false,
+      deletingId: safeId,
+      snapshot: registrationUiState.snapshot,
+      error: "",
+    };
+    updateDatePicker(entry);
+    try {
+      const resp = await apiFetch(
+        `${adminUrl}/${encodeURIComponent(context.sourceId)}/registrations/${encodeURIComponent(safeId)}?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`,
+        { method: "DELETE", cache: "no-store" }
+      );
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data.ok) {
+        throw new Error((data && data.error) || "Could not remove that registration.");
+      }
+      registrationUiState = {
+        sourceId: context.sourceId,
+        eventDate: context.eventDate,
+        loading: false,
+        deletingId: "",
+        snapshot: data,
+        error: "",
+      };
+      updateDatePicker(getSelectedEntry());
+      showValidation("Registrant removed from this event date.");
+    } catch (error) {
+      registrationUiState = {
+        sourceId: context.sourceId,
+        eventDate: context.eventDate,
+        loading: false,
+        deletingId: "",
+        snapshot: registrationUiState.snapshot,
+        error: error && error.message ? error.message : "Could not remove that registration.",
+      };
+      updateDatePicker(getSelectedEntry());
+      showValidation(registrationUiState.error, true);
+    }
   }
 
   function setEditMode(next) {
@@ -707,10 +921,7 @@
     const hasSelectedDate = Boolean(selectionContext.openedFromDate && selectionContext.requestedDate);
     const selectedDateLabel = hasSelectedDate ? formatDateLabel(selectionContext.requestedDate) : "";
     const addLabel = hasSelectedDate
-      ? `Add One-Time Event On ${selectedDateLabel}`
-      : "Select A Date First";
-    const addRepeatingLabel = hasSelectedDate
-      ? `Add Repeating Event From ${selectedDateLabel}`
+      ? `New Event On ${selectedDateLabel}`
       : "Select A Date First";
     document.body.classList.toggle("events-admin-date-mode", hasSelectedDate);
     if (addForDateBtn) {
@@ -718,20 +929,21 @@
       addForDateBtn.disabled = !hasSelectedDate;
     }
     if (addRepeatingForDateBtn) {
-      addRepeatingForDateBtn.textContent = addRepeatingLabel;
-      addRepeatingForDateBtn.disabled = !hasSelectedDate;
+      addRepeatingForDateBtn.hidden = true;
+      addRepeatingForDateBtn.disabled = true;
     }
     if (addEventBtn) {
-      addEventBtn.textContent = hasSelectedDate ? `Add Event On ${selectedDateLabel}` : "Select A Date First";
+      addEventBtn.textContent = hasSelectedDate ? `New Event On ${selectedDateLabel}` : "Select A Date First";
       addEventBtn.disabled = !hasSelectedDate;
-      addEventBtn.hidden = hasSelectedDate;
+      addEventBtn.hidden = true;
     }
-    if (addTemplateBtn) addTemplateBtn.hidden = hasSelectedDate;
+    if (addTemplateBtn) {
+      addTemplateBtn.textContent = "New Event";
+      addTemplateBtn.hidden = hasSelectedDate;
+    }
     if (dateFocusedEl) dateFocusedEl.hidden = !hasSelectedDate;
-    if (standardEditorEl) standardEditorEl.hidden = hasSelectedDate;
+    if (standardEditorEl) standardEditorEl.hidden = false;
     if (libraryDetails) libraryDetails.hidden = hasSelectedDate;
-    if (advancedDetails) advancedDetails.hidden = hasSelectedDate;
-    if (pageDetails) pageDetails.hidden = hasSelectedDate;
     if (dateFocusTitleEl) {
       dateFocusTitleEl.textContent = hasSelectedDate ? `Events On ${selectedDateLabel}` : "Events On This Date";
     }
@@ -741,7 +953,7 @@
       return;
     }
     if (!candidateKeys.length) {
-      dateTreeEl.innerHTML = `<div class="events-admin-date-empty">No events are scheduled for ${selectedDateLabel}. Use the buttons below to add the first one.</div>`;
+      dateTreeEl.innerHTML = `<div class="events-admin-date-empty">No events are scheduled for ${selectedDateLabel}. Use New Event to create the first one for this date.</div>`;
       return;
     }
     dateTreeEl.innerHTML = "";
@@ -782,6 +994,11 @@
         candidate.kind === "template"
           ? `Repeats every ${Math.max(1, Number(item.repeatInterval || item.intervalMonths) || 1)} ${repeatUnitValue}${Math.max(1, Number(item.repeatInterval || item.intervalMonths) || 1) === 1 ? "" : "s"}`
           : "Does not repeat";
+      const registrationContext = getEntryRegistrationContext(candidate);
+      const registrationMarkup =
+        registrationContext && selectedKey === key
+          ? renderRegistrationManager(registrationContext, registrationUiState)
+          : "";
       details.innerHTML = `
         <summary>
           <div class="events-admin-date-item-main">
@@ -878,6 +1095,7 @@
               </label>
             </div>` : ""}
             <p class="events-admin-date-item-note">${escapeHtml(occurrenceNote)}</p>
+            ${registrationMarkup}
           </div>
           <div class="events-admin-date-item-actions">
             <button class="btn primary" type="button" data-events-date-done="${key}">Done</button>
@@ -967,15 +1185,23 @@
     if (!contextBadgeEl || !contextTitleEl || !contextMetaEl || !contextHintEl) return;
 
     if (!entry) {
-      contextBadgeEl.textContent = "No Selection";
-      contextTitleEl.textContent = "Select an event to start editing.";
-      contextMetaEl.textContent = "Choose a saved entry or click a date in edit mode.";
-      contextHintEl.textContent = "Date-picked recurring items will call out that changes affect future generated dates.";
-      setFocus(editMode ? "Select a date in the calendar to edit it." : "Sign in to enable calendar editing.");
-      setModalNote();
-      if (libraryDetails) libraryDetails.hidden = false;
-      if (advancedDetails) advancedDetails.hidden = false;
-      if (pageDetails) pageDetails.hidden = false;
+      if (isDateFocusedMode()) {
+        const selectedDateLabel = formatDateLabel(selectionContext.requestedDate);
+        contextBadgeEl.textContent = "Selected Date";
+        contextTitleEl.textContent = `No event selected for ${selectedDateLabel}.`;
+        contextMetaEl.textContent = "Use New Event to create an entry for this date, then choose one-time or repeating in the form.";
+        contextHintEl.textContent = "The form below stays ready for the selected date once you create a new event.";
+        setFocus(`Selected date: ${selectionContext.requestedDate}`);
+        setModalNote(`Working on ${selectedDateLabel}. Create a new event or choose an existing event from the list above.`);
+      } else {
+        contextBadgeEl.textContent = "No Selection";
+        contextTitleEl.textContent = "Select an event to start editing.";
+        contextMetaEl.textContent = "Choose a saved entry or click a date in edit mode.";
+        contextHintEl.textContent = "Date-picked recurring items will call out that changes affect future generated dates.";
+        setFocus(editMode ? "Select a date in the calendar to edit it." : "Sign in to enable calendar editing.");
+        setModalNote();
+      }
+      if (libraryDetails) libraryDetails.hidden = isDateFocusedMode();
       updateDatePicker(null);
       updateOccurrenceActions(null);
       return;
@@ -1408,6 +1634,16 @@
     if (fieldRegistrationCapacity) {
       fieldRegistrationCapacity.value = String(Math.max(0, Number(item.registrationCapacity) || 0));
     }
+    const registrationContext = getEntryRegistrationContext(entry);
+    if (!registrationContext) {
+      resetRegistrationUiState();
+    } else if (
+      registrationUiState.sourceId !== registrationContext.sourceId ||
+      registrationUiState.eventDate !== registrationContext.eventDate
+    ) {
+      resetRegistrationUiState();
+      if (isAuthed()) loadRegistrationSnapshot(entry);
+    }
     if (fieldCtaLabel) fieldCtaLabel.value = item.ctaLabel || "";
     if (fieldCtaHref) fieldCtaHref.value = item.ctaHref || "";
     if (fieldInterval) fieldInterval.value = String(item.repeatInterval || item.intervalMonths || 1);
@@ -1837,24 +2073,6 @@
         candidateKeys: selectionContext.candidateKeys,
       },
       message: `A new one-time draft was created for ${selectionContext.requestedDate}.`,
-    });
-  }
-
-  function addRepeatingForSelectedDate() {
-    if (!selectionContext.requestedDate) {
-      createEntry("template", { context: { openedFromDate: false, resolvedFromTemplate: false } });
-      return;
-    }
-    createEntry("template", {
-      date: selectionContext.requestedDate,
-      item: buildTemplateDraft(selectionContext.requestedDate),
-      context: {
-        requestedDate: selectionContext.requestedDate,
-        openedFromDate: true,
-        resolvedFromTemplate: false,
-        candidateKeys: selectionContext.candidateKeys,
-      },
-      message: `A new repeating draft was created starting ${selectionContext.requestedDate}.`,
     });
   }
 
@@ -2379,7 +2597,7 @@
   }
 
   if (addTemplateBtn) {
-    addTemplateBtn.addEventListener("click", () => createEntry("template", { context: { openedFromDate: false, resolvedFromTemplate: false } }));
+    addTemplateBtn.addEventListener("click", () => createEntry("event", { context: { openedFromDate: false, resolvedFromTemplate: false } }));
   }
 
   if (addEventBtn) {
@@ -2389,10 +2607,6 @@
     if (addForDateBtn) {
       addForDateBtn.addEventListener("click", addEventForSelectedDate);
     }
-
-  if (addRepeatingForDateBtn) {
-    addRepeatingForDateBtn.addEventListener("click", addRepeatingForSelectedDate);
-  }
 
   if (saveBtn) saveBtn.addEventListener("click", saveAll);
 
@@ -2474,6 +2688,8 @@
             resolvedFromTemplate: Boolean(nextEntry && nextEntry.kind === "template"),
             candidateKeys: selectionContext.candidateKeys,
           });
+          renderList(searchInput ? searchInput.value : "");
+          syncAuthUi();
           showValidation("");
         }
         return;
@@ -2508,6 +2724,18 @@
       const deleteButton = event.target.closest("[data-events-date-delete]");
       if (deleteButton) {
         deleteDateTreeEntry(String(deleteButton.getAttribute("data-events-date-delete") || "").trim());
+        return;
+      }
+
+      const refreshRegistrationsButton = event.target.closest("[data-events-registration-refresh]");
+      if (refreshRegistrationsButton) {
+        loadRegistrationSnapshot(getSelectedEntry(), { preserveSnapshot: true });
+        return;
+      }
+
+      const removeRegistrationButton = event.target.closest("[data-events-registration-remove]");
+      if (removeRegistrationButton) {
+        removeRegistration(String(removeRegistrationButton.getAttribute("data-events-registration-remove") || "").trim());
         return;
       }
 
