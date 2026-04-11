@@ -748,10 +748,6 @@
         addPlayOverlay(link);
         link.addEventListener("click", () => {
           if (isEditingModeActive()) return;
-          if (singleColumnQuery.matches) {
-            openYoutubeModal(youtubeId, item.title || "YouTube video");
-            return;
-          }
           mountInlineEmbed(link, {
             src: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`,
             title: item.title || "YouTube video",
@@ -785,10 +781,6 @@
         addPlayOverlay(link);
         link.addEventListener("click", () => {
           if (isEditingModeActive()) return;
-          if (singleColumnQuery.matches) {
-            openStreamModal(streamId, item.title || "Cloudflare Stream video");
-            return;
-          }
           mountInlineEmbed(link, {
             src: `https://iframe.videodelivery.net/${streamId}?autoplay=true`,
             title: item.title || "Cloudflare Stream video",
@@ -824,10 +816,6 @@
         addPlayOverlay(link);
         link.addEventListener("click", () => {
           if (isEditingModeActive()) return;
-          if (singleColumnQuery.matches) {
-            openLocalVideoModal(mediaUrl, item.title || "Video");
-            return;
-          }
           if (link.dataset.videoLoaded === "true") return;
           link.dataset.videoLoaded = "true";
           link.innerHTML = "";
