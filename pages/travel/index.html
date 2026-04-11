@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/events.css?v=1.0" />
   <link rel="stylesheet" href="/css/pages/travel.css?v=1.8" />
   <link rel="stylesheet" href="/css/responsive.css" />
 
@@ -330,6 +331,23 @@
       </div>
     </section>
 
+    <section class="events-preview travel-upcoming-events section" aria-labelledby="travel-upcoming-title" data-events-preview data-events-src="/api/v2/events" data-events-fallback-src="/assets/data/events.json" data-events-preview-type="Travel">
+      <div class="events-preview-head">
+        <div>
+          <p class="events-preview-eyebrow">Upcoming Trips</p>
+          <h2 id="travel-upcoming-title">Travel departures, briefings, and trip momentum.</h2>
+          <p class="events-preview-sub">These are the upcoming travel events currently on the calendar. Reach out early if you want first pick on spots.</p>
+        </div>
+        <div class="events-preview-actions">
+          <a class="btn primary" href="../events/index.html">View Full Calendar</a>
+          <a class="btn secondary" href="../contact/index.html#dive-now">Plan a Trip</a>
+        </div>
+      </div>
+      <div class="events-preview-grid" data-events-preview-list aria-live="polite"></div>
+      <p class="events-preview-empty muted" data-events-preview-empty hidden>No travel events are posted yet. Reach out and we will help you plan the next trip.</p>
+      <p class="events-preview-stamp" data-events-updated></p>
+    </section>
+
     <section class="section" id="destination-list">
       <div class="section-head">
         <h2>Destination List</h2>
@@ -347,6 +365,7 @@
   </main>
 
   <script src="../../js/main.js?v=1.3" defer></script>
+  <script src="../../js/events.js?v=1.0" defer></script>
   <script src="../../js/travel-admin.js?v=1.10" defer></script>
   <!-- Globe POC (pure JS, no libraries) -->
   <script src="../../js/globe.js?v=6" defer></script>

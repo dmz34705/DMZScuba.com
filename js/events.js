@@ -13,6 +13,12 @@
     (previewRoot && previewRoot.getAttribute("data-events-fallback-src")) ||
     "/assets/data/events.json";
   const registrationApiRoot = "/api/v2/events";
+  const previewTypeFilter = previewRoot
+    ? String(previewRoot.getAttribute("data-events-preview-type") || "")
+        .split(",")
+        .map((value) => normalizeText(value))
+        .filter(Boolean)
+    : [];
 
   const monthFormatter = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -1031,15 +1037,18 @@
     if (!list || !empty) return;
 
     const previewCount = Math.max(1, Number(payload && payload.previewCount) || 3);
+    const filteredEvents = previewTypeFilter.length
+      ? events.filter((eventItem) => previewTypeFilter.includes(normalizeText(eventItem && eventItem.type)))
+      : events;
     list.innerHTML = "";
 
-    if (!events.length) {
+    if (!filteredEvents.length) {
       empty.hidden = false;
       list.hidden = true;
     } else {
       empty.hidden = true;
       list.hidden = false;
-      events.slice(0, previewCount).forEach((eventItem) => {
+      filteredEvents.slice(0, previewCount).forEach((eventItem) => {
         list.appendChild(renderEventCard(eventItem, "compact"));
       });
     }

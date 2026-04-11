@@ -420,6 +420,92 @@ body .page .destination-card:hover {
   background: rgba(10, 18, 30, 0.5);
 }
 
+.travel-upcoming-events{
+  max-width: var(--max);
+  margin: 0 auto;
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+
+.travel-upcoming-events .events-preview-sub{
+  max-width: 700px;
+}
+
+.travel-upcoming-events .events-preview-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.travel-upcoming-events .event-card{
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    radial-gradient(220px 120px at 0% 0%, rgba(85,185,255,0.10), rgba(85,185,255,0)),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+  box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+}
+
+.travel-upcoming-events .event-card h3{
+  margin: 10px 0 8px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.travel-upcoming-events .event-card-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.travel-upcoming-events .event-chip,
+.travel-upcoming-events .event-status{
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.travel-upcoming-events .event-chip{
+  background: rgba(85,185,255,0.12);
+  color: rgba(197,232,255,0.96);
+}
+
+.travel-upcoming-events .event-status{
+  background: rgba(226,27,35,0.12);
+  color: rgba(255,197,200,0.94);
+}
+
+.travel-upcoming-events .event-card-date,
+.travel-upcoming-events .event-card-location{
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.travel-upcoming-events .event-card-location{
+  color: rgba(234,242,255,0.78);
+}
+
+.travel-upcoming-events .event-card-summary{
+  margin: 0;
+  color: var(--muted);
+}
+
+.travel-upcoming-events .event-card-actions{
+  margin-top: 14px;
+}
+
+.travel-upcoming-events .events-preview-empty,
+.travel-upcoming-events .events-preview-stamp{
+  margin: 12px 0 0;
+}
+
 /* =========================
    Destinations Admin
    ========================= */
@@ -931,6 +1017,15 @@ body.dest-edit-mode #destination [contenteditable="true"] {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding-right: 0;
     padding-bottom: 12px;
+  }
+
+  .travel-upcoming-events .events-preview-head{
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .travel-upcoming-events .events-preview-grid{
+    grid-template-columns: 1fr;
   }
 }
 
