@@ -908,6 +908,7 @@
   function renderEventCard(eventItem, variant = "default") {
     const compact = variant === "compact";
     const agenda = variant === "agenda";
+    const showTypeIcon = !compact;
     const article = document.createElement("article");
     const typeMeta = getEventTypeMeta(eventItem.type);
     article.className = agenda
@@ -920,7 +921,7 @@
     meta.className = "event-card-meta";
     const metaParts = [`
       <span class="event-chip">
-        <span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>
+        ${showTypeIcon ? `<span class="event-chip-icon" aria-hidden="true">${typeMeta.icon}</span>` : ""}
         <span>${eventItem.type || "Event"}</span>
       </span>
     `];
