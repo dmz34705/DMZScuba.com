@@ -665,6 +665,52 @@ body.dest-admin-open .dest-admin-panel {
   font-size: 12px;
 }
 
+.dest-admin-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dest-admin-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 11, 20, 0.48);
+}
+
+.dest-admin-step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(85, 185, 255, 0.16);
+  color: rgba(210, 238, 255, 0.96);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dest-admin-step strong,
+.dest-admin-current h3,
+.dest-admin-form-head h3 {
+  display: block;
+  margin: 0;
+  font-size: 14px;
+  color: rgba(234, 242, 255, 0.95);
+}
+
+.dest-admin-step span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .dest-admin-grid--actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -751,6 +797,34 @@ body.dest-edit-mode .dest-admin-shell {
   gap: 10px;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   padding-right: 10px;
+}
+
+.dest-admin-current {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background:
+    radial-gradient(280px 120px at 0% 0%, rgba(85, 185, 255, 0.10), rgba(85, 185, 255, 0)),
+    rgba(8, 16, 28, 0.72);
+}
+
+.dest-admin-current-kicker {
+  margin: 0 0 6px;
+  color: rgba(85, 185, 255, 0.9);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dest-admin-current p:last-child,
+.dest-admin-form-summary,
+.dest-admin-list-status,
+.dest-admin-panel-note {
+  margin: 6px 0 0;
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .dest-admin-search,
@@ -907,6 +981,18 @@ body.dest-edit-mode #destination [contenteditable="true"] {
   border: 1px dashed rgba(255, 255, 255, 0.18);
   text-align: center;
   color: rgba(234, 242, 255, 0.6);
+  display: grid;
+  gap: 6px;
+}
+
+.dest-admin-empty strong {
+  font-size: 15px;
+  color: rgba(234, 242, 255, 0.9);
+}
+
+.dest-admin-empty span {
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .dest-admin-form {
@@ -915,8 +1001,27 @@ body.dest-edit-mode #destination [contenteditable="true"] {
   gap: 12px;
 }
 
+.dest-admin-form-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 11, 20, 0.42);
+}
+
+.dest-admin-actions--form-head {
+  min-width: 160px;
+}
+
 .dest-admin-card .dest-admin-section h3 {
   margin-bottom: 0;
+}
+
+.dest-admin-panel-note {
+  margin-top: 2px;
 }
 
 .dest-admin-tabs {
@@ -999,6 +1104,7 @@ body.dest-edit-mode #destination [contenteditable="true"] {
   margin-top: 6px;
   font-size: 12px;
   color: rgba(255, 214, 153, 0.85);
+  padding: 0 2px;
 }
 
 .dest-admin-validation.is-error {
@@ -1048,6 +1154,10 @@ body.dest-edit-mode #destination [contenteditable="true"] {
 }
 
 @media (max-width: 900px) {
+  .dest-admin-steps {
+    grid-template-columns: 1fr;
+  }
+
   .dest-admin-shell {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1057,6 +1167,15 @@ body.dest-edit-mode #destination [contenteditable="true"] {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding-right: 0;
     padding-bottom: 12px;
+  }
+
+  .dest-admin-form-head {
+    flex-direction: column;
+  }
+
+  .dest-admin-actions--form-head {
+    width: 100%;
+    min-width: 0;
   }
 
   .travel-upcoming-events .events-preview-head{

@@ -84,62 +84,100 @@
             </div>
           </div>
           <p class="dest-admin-note">Sign in to edit, upload, and publish destination updates.</p>
+          <div class="dest-admin-steps" aria-label="Destination editor workflow">
+            <div class="dest-admin-step">
+              <span class="dest-admin-step-number">1</span>
+              <div>
+                <strong>Pick a destination</strong>
+                <span>Select an existing location or create a new draft.</span>
+              </div>
+            </div>
+            <div class="dest-admin-step">
+              <span class="dest-admin-step-number">2</span>
+              <div>
+                <strong>Edit the details</strong>
+                <span>Work through the tabs in order so you always know what you are updating.</span>
+              </div>
+            </div>
+            <div class="dest-admin-step">
+              <span class="dest-admin-step-number">3</span>
+              <div>
+                <strong>Publish when ready</strong>
+                <span>Save the active destination, then publish the full destination set.</span>
+              </div>
+            </div>
+          </div>
           <div class="dest-admin-grid dest-admin-grid--actions">
             <div class="dest-admin-section">
               <h3>Editing</h3>
               <div class="dest-admin-actions">
                 <button class="btn secondary dest-admin-login" type="button">DMZ Login</button>
                 <button class="btn secondary dest-admin-logout" type="button">Logout</button>
-                <button class="dest-admin-toggle" type="button" aria-pressed="false">Edit Destinations</button>
-                <button class="btn secondary dest-admin-add" type="button">Add Destination</button>
+                <button class="dest-admin-toggle" type="button" aria-pressed="false">Open Editor</button>
+                <button class="btn secondary dest-admin-add" type="button">New Destination</button>
               </div>
             </div>
             <div class="dest-admin-section">
               <h3>Publishing</h3>
               <div class="dest-admin-actions">
-                <button class="btn primary dest-admin-publish" type="button">Publish</button>
-                <button class="btn secondary dest-admin-reset" type="button">Reset Draft</button>
-                <button class="btn secondary dest-admin-refresh" type="button">Master Refresh</button>
+                <button class="btn primary dest-admin-publish" type="button">Save Destination</button>
+                <button class="btn secondary dest-admin-reset" type="button">Reset to Saved</button>
+                <button class="btn secondary dest-admin-refresh" type="button">Refresh List</button>
               </div>
             </div>
           </div>
           <div class="dest-admin-shell" id="destAdminBar">
             <div class="dest-admin-list">
+              <div class="dest-admin-current" aria-live="polite">
+                <p class="dest-admin-current-kicker">Currently Editing</p>
+                <h3 id="destAdminCurrentName">No destination selected</h3>
+                <p id="destAdminCurrentMeta">Choose a destination from the list to begin.</p>
+              </div>
               <div class="dest-admin-list-head">
                 <input class="dest-admin-search" id="destAdminSearch" type="search" placeholder="Search destinations" />
               </div>
+              <p class="dest-admin-list-status" id="destAdminListStatus">0 destinations loaded</p>
               <select class="dest-admin-select" id="destAdminSelect" aria-label="Select destination"></select>
             </div>
             <div class="dest-admin-editor" id="destAdminEditor">
               <div class="dest-admin-empty">
-                Select a destination to edit.
+                <strong>Choose a destination to start editing.</strong>
+                <span>Use the list on the left or click Add Destination to create a new draft.</span>
               </div>
               <form class="dest-admin-form" id="destAdminForm">
-                <div class="dest-admin-actions">
-                  <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
+                <div class="dest-admin-form-head">
+                  <div>
+                    <p class="dest-admin-current-kicker">Editor</p>
+                    <h3 id="destAdminFormTitle">Destination details</h3>
+                    <p class="dest-admin-form-summary" id="destAdminFormSummary">Basic fields affect the card, globe marker, and destination detail page.</p>
+                  </div>
+                  <div class="dest-admin-actions dest-admin-actions--form-head">
+                    <button class="btn secondary" type="button" id="destDelete">Delete Destination</button>
+                  </div>
                 </div>
                 <div class="dest-admin-validation" id="destAdminValidation" aria-live="polite"></div>
                 <div class="dest-admin-tabs" role="tablist" aria-label="Destination editor sections">
-                  <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Core</button>
-                  <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Media + Snapshot</button>
-                  <button class="dest-admin-tab" type="button" data-tab="expanded" role="tab" aria-selected="false">Expanded Copy</button>
-                  <button class="dest-admin-tab" type="button" data-tab="json" role="tab" aria-selected="false">Advanced JSON</button>
+                  <button class="dest-admin-tab is-active" type="button" data-tab="core" role="tab" aria-selected="true">Basics</button>
+                  <button class="dest-admin-tab" type="button" data-tab="media" role="tab" aria-selected="false">Images + Snapshot</button>
+                  <button class="dest-admin-tab" type="button" data-tab="expanded" role="tab" aria-selected="false">Detailed Copy</button>
+                  <button class="dest-admin-tab" type="button" data-tab="json" role="tab" aria-selected="false">Advanced</button>
                 </div>
 
                 <div class="dest-admin-tab-panel is-active" data-tab="core" role="tabpanel">
                   <div class="dest-admin-section">
-                    <h3>Core</h3>
+                    <h3>Basics</h3>
+                    <p class="dest-admin-panel-note">These fields control the destination name, globe marker, and short summary shown on the travel page.</p>
                     <div class="dest-admin-grid">
                       <label class="dest-admin-required">
-                        ID
+                        Destination ID
                         <input type="text" id="destFieldId" placeholder="cozumel" required />
                       </label>
                       <label class="dest-admin-required">
-                        Name
+                        Destination Name
                         <input type="text" id="destFieldName" placeholder="Cozumel" required />
                       </label>
                       <label>
-                        Subtitle
+                        Short Subtitle
                         <input type="text" id="destFieldSubtitle" placeholder="Short destination overview" />
                       </label>
                       <label>
@@ -160,7 +198,8 @@
 
                 <div class="dest-admin-tab-panel" data-tab="media" role="tabpanel">
                   <div class="dest-admin-section">
-                    <h3>Media + Snapshot</h3>
+                    <h3>Images + Snapshot</h3>
+                    <p class="dest-admin-panel-note">Use this tab for the travel card visuals and the quick snapshot bullets that visitors see first.</p>
                     <div class="dest-admin-grid">
                       <label class="dest-admin-required">
                         Hero Image
@@ -210,18 +249,19 @@
 
                 <div class="dest-admin-tab-panel" data-tab="expanded" role="tabpanel">
                   <div class="dest-admin-section">
-                    <h3>Expanded Copy</h3>
+                    <h3>Detailed Copy</h3>
+                    <p class="dest-admin-panel-note">This content powers the deeper destination page sections. Keep each field focused on one topic.</p>
                     <div class="dest-admin-grid">
                       <label class="dest-admin-span">
-                        Experience
+                        Why Divers Like It
                         <textarea id="destFieldExperience" rows="3"></textarea>
                       </label>
                       <label class="dest-admin-span">
-                        Logistics
+                        Travel Logistics
                         <textarea id="destFieldLogistics" rows="3"></textarea>
                       </label>
                       <label class="dest-admin-span">
-                        Narrative
+                        Destination Story
                         <textarea id="destFieldNarrative" rows="4"></textarea>
                       </label>
                       <label class="dest-admin-span">
@@ -251,6 +291,7 @@
                 <div class="dest-admin-tab-panel" data-tab="json" role="tabpanel">
                   <div class="dest-admin-section">
                     <h3>Advanced JSON</h3>
+                    <p class="dest-admin-panel-note">Only use this if you want to paste or edit the full destination object directly.</p>
                     <div class="dest-admin-grid">
                       <label class="dest-admin-span">
                         Destination JSON

@@ -25,9 +25,14 @@
 
   const listEl = document.getElementById("destAdminSelect");
   const searchInput = document.getElementById("destAdminSearch");
+  const listStatusEl = document.getElementById("destAdminListStatus");
   const emptyState = adminPanel.querySelector(".dest-admin-empty");
   const formEl = document.getElementById("destAdminForm");
   const validationEl = document.getElementById("destAdminValidation");
+  const currentNameEl = document.getElementById("destAdminCurrentName");
+  const currentMetaEl = document.getElementById("destAdminCurrentMeta");
+  const formTitleEl = document.getElementById("destAdminFormTitle");
+  const formSummaryEl = document.getElementById("destAdminFormSummary");
   const previewTitleEl = document.getElementById("destTitle");
   const previewSubEl = document.getElementById("destSub");
   const previewIsoTitleEl = document.getElementById("isoTitle");
@@ -75,6 +80,12 @@
   let selectedId = "";
   let advancedJsonDirty = false;
   let suppressJsonDirty = false;
+  const tabCopy = {
+    core: "Basic fields affect the travel card, destination picker, and globe marker.",
+    media: "Images and snapshot bullets shape the first impression visitors get on the travel page.",
+    expanded: "Detailed copy fills out the long-form destination page sections.",
+    json: "Advanced mode edits the entire destination object directly.",
+  };
 
   function getToken() {
     return window.sessionStorage.getItem(tokenStorageKey) || "";
@@ -297,10 +308,10 @@
     setInlineEditable(Boolean(next));
     toggleButtons.forEach((btn) => {
       btn.setAttribute("aria-pressed", next ? "true" : "false");
-      btn.textContent = next ? "Close Editor" : "Edit Destinations";
+      btn.textContent = next ? "Close Editor" : "Open Editor";
     });
     if (next) {
-      showValidation("Edit mode enabled. Drag pins on the globe to move locations, then click Publish.");
+      showValidation("Editor open. Select a destination, make changes, then click Save Destination.");
     }
   }
 
@@ -345,6 +356,8 @@
     if (addButton) addButton.disabled = !authed;
     if (publishButton) publishButton.disabled = !authed || !hasSelection;
     if (deleteButton) deleteButton.disabled = !authed || !hasSelection;
+    if (resetButton) resetButton.disabled = !hasSelection;
+    if (refreshButton) refreshButton.disabled = items.length === 0;
   }
 
   function setActiveTab(tab) {
@@ -356,6 +369,42 @@
     panels.forEach((panel) => {
       panel.classList.toggle("is-active", panel.getAttribute("data-tab") === tab);
     });
+    if (formSummaryEl) formSummaryEl.textContent = tabCopy[tab] || tabCopy.core;
+  }
+
+  function updateCurrentSelectionUi(item = null) {
+    if (!currentNameEl || !currentMetaEl) return;
+    if (!item) {
+      currentNameEl.textContent = "No destination selected";
+      currentMetaEl.textContent = "Choose a destination from the list to begin.";
+      if (formTitleEl) formTitleEl.textContent = "Destination details";
+      return;
+    }
+    const name = String(item.name || item.id || "Destination").trim();
+    const id = String(item.id || "").trim();
+    const lat = Number(item.lat || 0);
+    const lon = Number(item.lon || 0);
+    currentNameEl.textContent = name;
+    currentMetaEl.textContent = `${id} | ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    if (formTitleEl) formTitleEl.textContent = `Editing ${name}`;
+  }
+
+  function updateListStatus(filterText = "") {
+    if (!listStatusEl) return;
+    const filter = String(filterText || "").trim().toLowerCase();
+    const visibleCount = filter
+      ? items.filter((item) => {
+          const hay = `${item.id || ""} ${item.name || ""} ${item.subtitle || ""}`.toLowerCase();
+          return hay.includes(filter);
+        }).length
+      : items.length;
+    if (!items.length) {
+      listStatusEl.textContent = "No destinations loaded yet.";
+      return;
+    }
+    listStatusEl.textContent = filter
+      ? `${visibleCount} match${visibleCount === 1 ? "" : "es"} | ${items.length} total`
+      : `${items.length} destination${items.length === 1 ? "" : "s"} loaded`;
   }
 
   function fillForm(item) {
@@ -387,6 +436,7 @@
     suppressJsonDirty = false;
     advancedJsonDirty = false;
     syncPreviewFromItem(item);
+    updateCurrentSelectionUi(item);
   }
 
   function parseAdvancedJsonFields() {
@@ -479,7 +529,11 @@
     const active = getSelected();
     setFormVisible(Boolean(active));
     if (active) fillForm(active);
-    else clearForm();
+    else {
+      clearForm();
+      updateCurrentSelectionUi(null);
+    }
+    updateListStatus(filterText);
     syncActionUi();
   }
 
@@ -617,7 +671,7 @@
     selectedId = template.id;
     renderList(searchInput ? searchInput.value : "");
     setFormVisible(true);
-    showValidation("New draft created. Click Publish to save.");
+    showValidation("New draft created. Fill in the basics, then click Save Destination.");
     setStatus("Draft", "neutral");
     notifySubscribers();
     syncActionUi();
@@ -889,14 +943,14 @@
       const idx = items.findIndex((item) => item && item.id === active.id);
       if (idx >= 0) items[idx] = json.item;
       fillForm(json.item);
-      showValidation("Form reset from API.");
+      showValidation("Destination reset to the last saved version.");
     });
   }
 
   if (refreshButton) {
     refreshButton.addEventListener("click", async () => {
       await loadItems(selectedId);
-      showValidation("Refreshed from API.");
+      showValidation("Destination list refreshed from API.");
     });
   }
 
@@ -987,5 +1041,6 @@
   setActiveTab("core");
   toggleEditMode(false);
   toggleAdminOpen(false);
+  updateCurrentSelectionUi(null);
   loadItems();
 })();
