@@ -916,6 +916,37 @@ async function ensureEventsV2Table(env) {
   ).run();
 }
 
+async function ensureSiteSettingsTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS site_settings (
+      setting_key TEXT PRIMARY KEY,
+      data_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+}
+
+function normalizeHomeTickerPayload(payload) {
+  const source = payload && typeof payload === "object" ? payload : {};
+  const rawLines = Array.isArray(source.lines) ? source.lines : [];
+  const lines = rawLines
+    .map((entry) => String(entry || "").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 24)
+    .map((entry) => entry.slice(0, 220));
+  return { lines };
+}
+
+async function getHomeTickerPayload(env) {
+  await ensureSiteSettingsTable(env);
+  const row = await env.DB.prepare("SELECT data_json FROM site_settings WHERE setting_key = ?")
+    .bind("home_ticker")
+    .first();
+  if (!row) return null;
+  return normalizeHomeTickerPayload(parseJsonSafe(row && row.data_json, null));
+}
+
 function normalizeEventRule(rule) {
   if (!rule || typeof rule !== "object") return null;
   const weekOfMonth = Number(rule.weekOfMonth);
@@ -1404,6 +1435,38 @@ async function handleDeleteEventRegistrationV2(request, env, sourceId, registrat
 
   const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
   return jsonResponse({ ok: true, removedRegistrationId: safeRegistrationId, ...snapshot }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleGetHomeTicker(env) {
+  const payload = await getHomeTickerPayload(env);
+  if (!payload) return jsonResponse({ ok: false, error: "Not found." }, 404, { "Cache-Control": "no-store" });
+  return jsonResponse(payload, 200, {
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "CDN-Cache-Control": "no-store",
+    "Cloudflare-CDN-Cache-Control": "no-store",
+  });
+}
+
+async function handlePutHomeTicker(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.payload === "object" ? body.payload : body;
+  const payload = normalizeHomeTickerPayload(incoming);
+
+  await ensureSiteSettingsTable(env);
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT created_at FROM site_settings WHERE setting_key = ?")
+    .bind("home_ticker")
+    .first();
+  const createdAt = (existing && existing.created_at) || now;
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO site_settings (setting_key, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?)`
+  )
+    .bind("home_ticker", JSON.stringify(payload), createdAt, now)
+    .run();
+  return jsonResponse({ ok: true, payload, updatedAt: now }, 200, { "Cache-Control": "no-store" });
 }
 
 async function handleGetDestinationsV2(env) {
@@ -1939,6 +2002,10 @@ export default {
       response = await handlePutEventsV2(request, env);
     } else if (pathname === "/api/admin/v2/events" && request.method === "DELETE") {
       response = await handleDeleteEventsV2(request, env);
+    } else if (pathname === "/api/v2/home-ticker" && request.method === "GET") {
+      response = await handleGetHomeTicker(env);
+    } else if (pathname === "/api/admin/v2/home-ticker" && request.method === "PUT") {
+      response = await handlePutHomeTicker(request, env);
     } else if (pathname === "/api/v2/destinations" && request.method === "GET") {
       response = await handleGetDestinationsV2(env);
     } else if (pathname.startsWith("/api/v2/destinations/") && request.method === "GET") {

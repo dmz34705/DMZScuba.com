@@ -118,6 +118,12 @@
           <span>Small groups</span>
           <span>Real-world diving</span>
         </p>
+        <section class="hero-news-ticker" data-home-ticker aria-label="DMZ Scuba updates" hidden>
+          <div class="hero-news-ticker-label">Upcoming</div>
+          <div class="hero-news-ticker-viewport" aria-live="polite">
+            <p class="hero-news-ticker-line" data-home-ticker-line></p>
+          </div>
+        </section>
       </div>
 
       <div class="hero-logo" aria-hidden="true">
@@ -253,12 +259,16 @@
   <!-- ================= FOOTER ================= -->
   <footer class="site-footer">
     <p>&copy; DMZ Scuba · Est. 2026 · Always Dive</p>
+    <button class="home-login-button" type="button">DMZ Login</button>
   </footer>
+
+  <button class="home-edit-fab" type="button" aria-label="Edit home ticker">Edit Ticker</button>
 
   <!-- Main JS -->
   <script src="js/main.js"></script>
   <script src="js/events.js"></script>
   <script src="js/quiz.js"></script>
+  <script src="js/home.js"></script>
   <script>
     (function mapLinkChooser() {
       const links = document.querySelectorAll(".js-map-link");

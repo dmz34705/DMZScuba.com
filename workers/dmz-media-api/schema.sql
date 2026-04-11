@@ -75,3 +75,10 @@ CREATE TABLE IF NOT EXISTS event_registrations_v2 (
 
 CREATE INDEX IF NOT EXISTS idx_event_regs_source_date
   ON event_registrations_v2(source_id, event_date);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  setting_key TEXT PRIMARY KEY,
+  data_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
