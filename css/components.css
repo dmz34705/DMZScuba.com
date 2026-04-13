@@ -495,13 +495,36 @@
   filter: drop-shadow(0 10px 22px rgba(0,0,0,0.45));
 }
 
+.sdi-brand{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 .sdi-section.is-main .sdi-logo{
   max-width: 220px;
+}
+
+.sdi-link{
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.sdi-link:hover,
+.sdi-link:focus-visible{
+  color: #ffffff;
 }
 
 @media (max-width: 900px){
   .sdi-section{
     flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sdi-brand{
     align-items: flex-start;
   }
 }
