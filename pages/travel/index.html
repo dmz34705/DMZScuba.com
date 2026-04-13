@@ -310,9 +310,30 @@
         </div>
       </aside>
 
-  <div class="globe-shell">
+      <div class="globe-shell">
         <div class="globe-wrap" id="globeWrap">
           <canvas id="globeCanvas" width="920" height="520" aria-label="Interactive destination globe"></canvas>
+        </div>
+      </div>
+      <div class="travel-globe-legend" aria-label="Trip status key">
+        <p class="travel-globe-legend-title">Pin Key</p>
+        <div class="travel-globe-legend-items">
+          <span class="travel-globe-legend-item">
+            <span class="travel-globe-legend-swatch is-none" aria-hidden="true"></span>
+            No trip planned
+          </span>
+          <span class="travel-globe-legend-item">
+            <span class="travel-globe-legend-swatch is-planned" aria-hidden="true"></span>
+            Planned trip 60+ days out
+          </span>
+          <span class="travel-globe-legend-item">
+            <span class="travel-globe-legend-swatch is-soon" aria-hidden="true"></span>
+            Trip within 60 days
+          </span>
+          <span class="travel-globe-legend-item">
+            <span class="travel-globe-legend-swatch is-active" aria-hidden="true"></span>
+            Trip in progress
+          </span>
         </div>
       </div>
     </section>
@@ -409,7 +430,7 @@
   <script src="../../js/events.js?v=1.0" defer></script>
   <script src="../../js/travel-admin.js?v=1.10" defer></script>
   <!-- Globe POC (pure JS, no libraries) -->
-  <script src="../../js/globe.js?v=6" defer></script>
+  <script src="../../js/globe.js?v=7" defer></script>
 
 
 </body>

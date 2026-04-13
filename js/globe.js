@@ -60,6 +60,167 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     return raw;
   }
 
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  function addDays(date, count) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+  }
+
+  function dateKey(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
+  function parseDateKey(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    const parsed = new Date(year, month - 1, day);
+    if (
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return null;
+    }
+    return parsed;
+  }
+
+  function parseMonthAnchor(value) {
+    if (!value || typeof value !== "string") return null;
+    const parts = value.split("-");
+    if (parts.length !== 2) return null;
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+    return new Date(year, month - 1, 1);
+  }
+
+  function nthWeekdayOfMonth(year, monthIndex, weekOfMonth, weekday) {
+    const first = new Date(year, monthIndex, 1);
+    const shift = (7 + weekday - first.getDay()) % 7;
+    const dayNumber = 1 + shift + (weekOfMonth - 1) * 7;
+    const candidate = new Date(year, monthIndex, dayNumber);
+    if (candidate.getMonth() !== monthIndex) return null;
+    return candidate;
+  }
+
+  function getLegacyTemplateStartDate(template) {
+    if (!template || !template.startMonth || !template.rule) return null;
+    const anchor = parseMonthAnchor(template.startMonth);
+    if (!anchor) return null;
+    const weekOfMonth = Number(template.rule.weekOfMonth);
+    const weekday = Number(template.rule.weekday);
+    if (!Number.isFinite(weekOfMonth) || !Number.isFinite(weekday)) return null;
+    return nthWeekdayOfMonth(anchor.getFullYear(), anchor.getMonth(), weekOfMonth, weekday);
+  }
+
+  function getTemplateStartDate(template) {
+    const explicitStart = parseDateKey(String((template && template.startDate) || "").trim());
+    if (explicitStart) return explicitStart;
+    return getLegacyTemplateStartDate(template);
+  }
+
+  function addRepeatInterval(date, count, unit) {
+    const interval = Math.max(1, Number(count) || 1);
+    if (unit === "week") return addDays(date, interval * 7);
+    if (unit === "year") return new Date(date.getFullYear() + interval, date.getMonth(), date.getDate());
+    return new Date(date.getFullYear(), date.getMonth() + interval, date.getDate());
+  }
+
+  function parseEventDate(eventItem) {
+    const parsed = new Date(`${eventItem.date}T12:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function normalizeEventInstance(eventItem) {
+    if (!eventItem || !eventItem.date) return null;
+    const dateObj = parseEventDate(eventItem);
+    if (!dateObj) return null;
+    const anchorStartObj = parseDateKey(String(eventItem.startDate || eventItem.date || "").trim());
+    const explicitEndDate = String(eventItem.endDate || "").trim();
+    const explicitEndDateObj = explicitEndDate ? parseDateKey(explicitEndDate) : null;
+    const derivedDurationDays =
+      anchorStartObj && explicitEndDateObj && explicitEndDateObj >= anchorStartObj
+        ? Math.max(1, Math.round((explicitEndDateObj.getTime() - anchorStartObj.getTime()) / 86400000) + 1)
+        : 1;
+    const durationDays = Math.max(1, Number(eventItem.durationDays) || derivedDurationDays);
+    const endDateObj =
+      explicitEndDateObj && explicitEndDateObj >= dateObj
+        ? explicitEndDateObj
+        : durationDays > 1
+          ? addDays(dateObj, durationDays - 1)
+          : dateObj;
+    return {
+      ...eventItem,
+      date: dateKey(dateObj),
+      endDate: endDateObj > dateObj ? dateKey(endDateObj) : "",
+      dateObj,
+      endDateObj,
+    };
+  }
+
+  function expandTravelEvents(payload) {
+    const today = startOfDay(new Date());
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const horizonMonths = Math.max(1, Number(payload && payload.horizonMonths) || 30);
+    const explicitEvents = payload && Array.isArray(payload.events) ? payload.events : [];
+    const templates = payload && Array.isArray(payload.templates) ? payload.templates : [];
+    const generated = [];
+
+    explicitEvents.forEach((eventItem) => {
+      const normalized = normalizeEventInstance(eventItem);
+      if (!normalized || normalized.endDateObj < today) return;
+      if (normalizeText(normalized.type) !== "travel") return;
+      generated.push(normalized);
+    });
+
+    templates.forEach((template) => {
+      if (normalizeText(template && template.type) !== "travel") return;
+      const anchor = getTemplateStartDate(template);
+      if (!anchor) return;
+      const repeatInterval = Math.max(1, Number(template.repeatInterval || template.intervalMonths) || 1);
+      const repeatUnit = ["week", "month", "year"].includes(String(template.repeatUnit || "").trim())
+        ? String(template.repeatUnit || "").trim()
+        : "month";
+      const allowedMonths = Array.isArray(template.months) ? template.months : null;
+      const coverageEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + horizonMonths, 0);
+
+      for (let occurrence = new Date(anchor); occurrence <= coverageEnd; occurrence = addRepeatInterval(occurrence, repeatInterval, repeatUnit)) {
+        if (allowedMonths && !allowedMonths.includes(occurrence.getMonth() + 1)) continue;
+        if (Array.isArray(template.excludedDates) && template.excludedDates.includes(dateKey(occurrence))) continue;
+        const normalized = normalizeEventInstance({
+          ...template,
+          id: `${template.id || "travel"}-${dateKey(occurrence)}`,
+          date: dateKey(occurrence),
+        });
+        if (!normalized || normalized.endDateObj < today) continue;
+        generated.push(normalized);
+      }
+    });
+
+    return generated.sort((a, b) => a.dateObj - b.dateObj);
+  }
+
   async function loadDestinationsFromApi(url) {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load destinations API");
@@ -70,12 +231,137 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   let destinations = [];
   let destinationsById = new Map();
+  let destinationTripStatusById = new Map();
   let adminUnsubscribe = null;
+
+  const TRIP_SOON_DAYS = 60;
+  const TRIP_STATUS = {
+    none: "none",
+    planned: "planned",
+    soon: "soon",
+    active: "active",
+  };
+  const PIN_COLORS = {
+    none: "rgba(226,27,35,0.95)",
+    planned: "rgba(85,185,255,0.95)",
+    soon: "rgba(255,193,69,0.96)",
+    active: "rgba(35,209,143,0.96)",
+  };
+  const PIN_INNER_DOT = "rgba(234,242,255,0.96)";
+  const DESTINATION_EVENT_ALIASES = {
+    cozumel: ["cozumel"],
+    greatlakesLM: ["lake michigan", "great lakes", "milwaukee", "two rivers", "door county"],
+    floridakey: ["key largo", "key largo florida", "florida keys", "florida key"],
+    haigh: ["haigh", "haigh quarry"],
+    playa: ["playa del carmen", "playa", "mexico cenotes"],
+    roatan: ["roatan"],
+    california: ["southern california", "catalina", "channel islands", "california"],
+    mermet: ["mermet", "mermet springs"],
+    thailand: ["thailand", "similan", "similan islands", "phuket", "khao lak"],
+    gilboa: ["gilboa", "gilboa quarry"],
+  };
+
+  function buildDestinationAliasList(dest) {
+    const values = new Set();
+    const add = (value) => {
+      const normalized = normalizeText(value);
+      if (normalized) values.add(normalized);
+    };
+
+    add(dest && dest.name);
+    add(dest && dest.id);
+
+    (DESTINATION_EVENT_ALIASES[dest && dest.id] || []).forEach(add);
+
+    return Array.from(values).sort((a, b) => b.length - a.length);
+  }
+
+  function eventMatchesDestination(eventItem, dest) {
+    if (!eventItem || !dest) return false;
+    const haystack = normalizeText([
+      eventItem.title,
+      eventItem.location,
+      eventItem.summary,
+      eventItem.eventId,
+      eventItem.id,
+    ].filter(Boolean).join(" "));
+    if (!haystack) return false;
+    return buildDestinationAliasList(dest).some((alias) => {
+      if (!alias) return false;
+      return haystack === alias || haystack.includes(alias);
+    });
+  }
+
+  function computeTripStatusForDestination(dest, travelEvents) {
+    const today = startOfDay(new Date());
+    const matched = (travelEvents || []).filter((eventItem) => eventMatchesDestination(eventItem, dest));
+    if (!matched.length) {
+      return { state: TRIP_STATUS.none, nextDate: null, daysUntil: null };
+    }
+
+    let nearestFuture = null;
+
+    for (const eventItem of matched) {
+      const start = eventItem.dateObj instanceof Date ? startOfDay(eventItem.dateObj) : null;
+      const end = eventItem.endDateObj instanceof Date ? startOfDay(eventItem.endDateObj) : start;
+      if (!start || !end) continue;
+      if (start <= today && end >= today) {
+        return { state: TRIP_STATUS.active, nextDate: start, daysUntil: 0 };
+      }
+      if (start > today && (!nearestFuture || start < nearestFuture)) {
+        nearestFuture = start;
+      }
+    }
+
+    if (!nearestFuture) {
+      return { state: TRIP_STATUS.none, nextDate: null, daysUntil: null };
+    }
+
+    const daysUntil = Math.max(0, Math.round((nearestFuture.getTime() - today.getTime()) / 86400000));
+    return {
+      state: daysUntil <= TRIP_SOON_DAYS ? TRIP_STATUS.soon : TRIP_STATUS.planned,
+      nextDate: nearestFuture,
+      daysUntil,
+    };
+  }
+
+  function applyTravelEventState(travelEvents) {
+    const nextMap = new Map();
+    destinations.forEach((dest) => {
+      nextMap.set(dest.id, computeTripStatusForDestination(dest, travelEvents));
+    });
+    destinationTripStatusById = nextMap;
+  }
+
+  async function loadEventsPayload(url) {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Failed to load events API (${response.status})`);
+    return response.json();
+  }
+
+  async function initTravelStatuses() {
+    const eventsPreview = document.querySelector("[data-events-preview]");
+    const dataUrl = (eventsPreview && eventsPreview.getAttribute("data-events-src")) || "/api/v2/events";
+    const fallbackDataUrl =
+      (eventsPreview && eventsPreview.getAttribute("data-events-fallback-src")) || "/assets/data/events.json";
+
+    try {
+      const payload = await loadEventsPayload(dataUrl).catch((error) => {
+        if (!fallbackDataUrl || fallbackDataUrl === dataUrl) throw error;
+        return loadEventsPayload(fallbackDataUrl);
+      });
+      applyTravelEventState(expandTravelEvents(payload));
+    } catch (error) {
+      console.error("Failed to load travel events for globe pin status:", error);
+      applyTravelEventState([]);
+    }
+  }
 
   function applyDestinationState(nextItems) {
     destinations = normalizeDestinations(nextItems || []);
     destinationsById = new Map(destinations.map((d) => [d.id, d]));
     renderDestinationList();
+    initTravelStatuses();
   }
 
   async function initDestinations() {
@@ -220,8 +506,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
   const glow = "rgba(85,185,255,0.20)";
   const text = "rgba(234,242,255,0.92)";
   const muted = "rgba(234,242,255,0.62)";
-  const pinRed = "rgba(226,27,35,0.95)";
-  const pinBlue = "rgba(85,185,255,0.92)";
 
   // -------------------------
   // Texture helpers
@@ -668,6 +952,8 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }
 
     for (const { d, p } of pinProjections) {
+      const tripStatus = destinationTripStatusById.get(d.id) || { state: TRIP_STATUS.none };
+      const pinColor = PIN_COLORS[tripStatus.state] || PIN_COLORS.none;
       const s = Math.max(0.85, Math.min(1.25, 1.05 + p.z * 0.35));
       const pinR = 7 * s;
       const sink = 2.0 * s;
@@ -683,13 +969,13 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       // head
       ctx.beginPath();
       ctx.arc(p.x, p.y - 20 * s + sink, pinR, 0, Math.PI * 2);
-      ctx.fillStyle = pinRed;
+      ctx.fillStyle = pinColor;
       ctx.fill();
 
       // inner dot
       ctx.beginPath();
       ctx.arc(p.x, p.y - 20 * s + sink, 3.2 * s, 0, Math.PI * 2);
-      ctx.fillStyle = pinBlue;
+      ctx.fillStyle = PIN_INNER_DOT;
       ctx.fill();
 
       // label
