@@ -518,6 +518,61 @@
   color: #ffffff;
 }
 
+.training-upcoming-events{
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    radial-gradient(720px 280px at 0% 0%, rgba(85,185,255,0.12), rgba(85,185,255,0)),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  box-shadow: 0 18px 44px rgba(0,0,0,0.35);
+  padding: 22px;
+}
+
+.training-upcoming-events .events-preview-head{
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.training-upcoming-events .events-preview-eyebrow{
+  margin: 0 0 8px;
+  color: rgba(85,185,255,0.9);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.training-upcoming-events .events-preview-head h2{
+  margin: 0;
+  max-width: 720px;
+}
+
+.training-upcoming-events .events-preview-sub{
+  margin: 8px 0 0;
+  max-width: 680px;
+  color: var(--muted);
+}
+
+.training-upcoming-events .events-preview-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.training-upcoming-events .events-preview-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.training-upcoming-events .events-preview-empty,
+.training-upcoming-events .events-preview-stamp{
+  margin: 12px 0 0;
+}
+
 @media (max-width: 900px){
   .sdi-section{
     flex-direction: column;
@@ -526,6 +581,15 @@
 
   .sdi-brand{
     align-items: flex-start;
+  }
+
+  .training-upcoming-events .events-preview-head{
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .training-upcoming-events .events-preview-grid{
+    grid-template-columns: 1fr;
   }
 }
 

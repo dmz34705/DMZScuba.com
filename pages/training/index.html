@@ -10,8 +10,9 @@
   
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://www.dmzscuba.com/pages/training/" />
-  <link rel="stylesheet" href="../../css/base.css" />
+<link rel="stylesheet" href="../../css/base.css" />
 <link rel="stylesheet" href="../../css/components.css" />
+<link rel="stylesheet" href="../../css/pages/events.css?v=20260406a" />
 <link rel="stylesheet" href="../../css/responsive.css" />
 
 </head>
@@ -122,6 +123,23 @@
     </div>
   </section>
 
+  <section class="events-preview training-upcoming-events content-section" aria-labelledby="training-upcoming-title" data-events-preview data-events-src="/api/v2/events" data-events-fallback-src="/assets/data/events.json" data-events-preview-type="Training" data-events-preview-cta="register">
+    <div class="events-preview-head">
+      <div>
+        <p class="events-preview-eyebrow">Upcoming Classes</p>
+        <h2 id="training-upcoming-title">Training dates currently open on the calendar.</h2>
+        <p class="events-preview-sub">Browse the next scheduled classes here, then open a card to register without leaving the training page.</p>
+      </div>
+      <div class="events-preview-actions">
+        <a class="btn primary" href="./course-builder/index.html">Plan My Training</a>
+        <a class="btn secondary" href="../events/index.html">View Full Calendar</a>
+      </div>
+    </div>
+    <div class="events-preview-grid" data-events-preview-list aria-live="polite"></div>
+    <p class="events-preview-empty muted" data-events-preview-empty hidden>No training events are posted yet. Reach out and we will build the right training path for you.</p>
+    <p class="events-preview-stamp" data-events-updated></p>
+  </section>
+
   <section class="cta">
     <h2>Ready to train?</h2>
     <p>Tell us your experience level and goals—we’ll recommend the best path.</p>
@@ -138,6 +156,7 @@
     <small>© <span id="year"></span> DMZ Scuba. All rights reserved.</small>
   </footer>
 
+  <script src="../../js/events.js?v=1.0"></script>
   <script src="../../js/main.js"></script>
   </div>
 </body>

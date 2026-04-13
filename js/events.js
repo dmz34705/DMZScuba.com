@@ -19,6 +19,9 @@
         .map((value) => normalizeText(value))
         .filter(Boolean)
     : [];
+  const previewCallToAction = previewRoot
+    ? normalizeText(previewRoot.getAttribute("data-events-preview-cta") || "")
+    : "";
 
   const monthFormatter = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -375,12 +378,15 @@
     return state.payload.definitions.find((item) => normalizeText(item && item.id) === eventId) || null;
   }
 
-  function createDetailTrigger(eventItem, label, tone = "secondary") {
+  function createDetailTrigger(eventItem, label, tone = "secondary", options = {}) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `btn ${tone}`;
     button.textContent = label;
     button.setAttribute("data-events-open-detail", normalizeText(eventItem && eventItem.id));
+    if (options.autoOpenRegistration) {
+      button.setAttribute("data-events-open-register", "true");
+    }
     return button;
   }
 
@@ -589,14 +595,15 @@
     });
   }
 
-  function openEventDetailModalById(eventKey) {
+  function openEventDetailModalById(eventKey, options = {}) {
     const key = normalizeText(eventKey);
     if (!key) return;
     const eventItem = state.eventsById.get(key);
     if (!eventItem) return;
     const urlParams = new URLSearchParams(window.location.search);
     const autoOpenRegistration =
-      urlParams.get("register") === "1" && normalizeText(urlParams.get("event")) === key;
+      Boolean(options && options.autoOpenRegistration) ||
+      (urlParams.get("register") === "1" && normalizeText(urlParams.get("event")) === key);
     const definition = getEventDefinition(eventItem);
     const typeMeta = getEventTypeMeta(eventItem.type);
     const summary = normalizeText(eventItem.summary || "");
@@ -878,7 +885,9 @@
       event.preventDefault();
       const inSelectedDateModal = Boolean(trigger.closest(".events-public-day-row"));
       if (!inSelectedDateModal) state.lastDateModalContext = null;
-      openEventDetailModalById(trigger.getAttribute("data-events-open-detail"));
+      openEventDetailModalById(trigger.getAttribute("data-events-open-detail"), {
+        autoOpenRegistration: trigger.getAttribute("data-events-open-register") === "true",
+      });
     });
   }
 
@@ -915,6 +924,8 @@
     const compact = variant === "compact";
     const agenda = variant === "agenda";
     const showTypeIcon = !compact;
+    const previewWantsRegister =
+      compact && previewCallToAction === "register" && isRegistrationEnabled(eventItem);
     const article = document.createElement("article");
     const typeMeta = getEventTypeMeta(eventItem.type);
     article.className = agenda
@@ -955,9 +966,11 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    const ctaLabel = compact ? "Details" : agenda ? "View" : "Event Details";
-    const ctaClass = compact || agenda ? "secondary" : "primary";
-    actions.appendChild(createDetailTrigger(eventItem, ctaLabel, ctaClass));
+    const ctaLabel = previewWantsRegister ? "Register" : compact ? "Details" : agenda ? "View" : "Event Details";
+    const ctaClass = previewWantsRegister ? "primary" : compact || agenda ? "secondary" : "primary";
+    actions.appendChild(createDetailTrigger(eventItem, ctaLabel, ctaClass, {
+      autoOpenRegistration: previewWantsRegister,
+    }));
 
     if (agenda) {
       const dateBadge = document.createElement("div");
