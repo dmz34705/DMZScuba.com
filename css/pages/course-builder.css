@@ -90,6 +90,10 @@
   bottom: 0;
 }
 
+.course-builder-note{
+  margin: 8px 0 0;
+}
+
 @media (max-width: 780px){
   .course-builder-wrap{
     padding: 0 18px 24px;
