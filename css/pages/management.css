@@ -1,0 +1,407 @@
+.management-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(226, 27, 35, 0.14), rgba(5, 11, 20, 0) 34%),
+    radial-gradient(900px 460px at 85% 5%, rgba(66, 185, 156, 0.16), rgba(5, 11, 20, 0) 58%),
+    var(--bg);
+}
+
+.management-page [hidden] {
+  display: none !important;
+}
+
+.management-shell {
+  width: min(1420px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 44px;
+}
+
+.management-login {
+  min-height: calc(100vh - 72px);
+  display: grid;
+  place-items: center;
+}
+
+.management-login-card,
+.management-panel,
+.management-list-panel,
+.management-metrics article {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(7, 19, 37, 0.86);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
+}
+
+.management-login-card {
+  width: min(420px, 100%);
+  border-radius: 8px;
+  padding: 30px;
+}
+
+.management-login-card img {
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 18px;
+}
+
+.management-kicker {
+  margin: 0 0 4px;
+  color: rgba(147, 211, 255, 0.86);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.management-login-card h1,
+.management-header h1,
+.management-panel h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.management-login-form,
+.management-record-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.management-login-form label,
+.management-record-form label,
+.management-search label {
+  display: grid;
+  gap: 7px;
+  color: rgba(234, 242, 255, 0.72);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.management-login-form input,
+.management-record-form input,
+.management-record-form select,
+.management-record-form textarea,
+.management-search input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  padding: 12px 12px;
+  outline: none;
+}
+
+.management-record-form select option {
+  background: #071325;
+  color: var(--text);
+}
+
+.management-record-form textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+.management-login-form input:focus,
+.management-record-form input:focus,
+.management-record-form select:focus,
+.management-record-form textarea:focus,
+.management-search input:focus {
+  border-color: rgba(85, 185, 255, 0.72);
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.13);
+}
+
+.management-form-status {
+  min-height: 20px;
+  margin: 0;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 13px;
+}
+
+.management-form-status.is-error {
+  color: #ffb3b8;
+}
+
+.management-form-status.is-success {
+  color: #9ff0ce;
+}
+
+.management-dashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.management-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 0 2px;
+}
+
+.management-header h1 {
+  font-size: clamp(32px, 5vw, 58px);
+  line-height: 1;
+}
+
+.management-header-actions,
+.management-form-actions,
+.management-panel-head,
+.management-list-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.management-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.management-metrics article {
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.management-metrics span {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.management-metrics p {
+  margin: 8px 0 0;
+  color: rgba(234, 242, 255, 0.66);
+  font-size: 13px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.management-workspace {
+  display: grid;
+  grid-template-columns: minmax(330px, 420px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.management-panel,
+.management-list-panel {
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.management-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.management-panel-head {
+  justify-content: space-between;
+}
+
+.management-panel-head button,
+.management-filters button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 9px 11px;
+  cursor: pointer;
+}
+
+.management-panel-head button:hover,
+.management-filters button:hover,
+.management-filters button.is-active {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
+}
+
+.management-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.management-form-actions {
+  flex-wrap: wrap;
+}
+
+.management-list-panel {
+  min-height: 640px;
+}
+
+.management-list-tools {
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.management-search {
+  flex: 1 1 300px;
+}
+
+.management-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.management-records {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.management-empty,
+.management-record {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.management-empty {
+  padding: 22px;
+  color: rgba(234, 242, 255, 0.68);
+}
+
+.management-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.management-record:hover,
+.management-record.is-selected {
+  border-color: rgba(85, 185, 255, 0.48);
+  background: rgba(85, 185, 255, 0.10);
+}
+
+.management-record h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.management-record p {
+  margin: 8px 0 0;
+  color: rgba(234, 242, 255, 0.68);
+}
+
+.management-record-meta,
+.management-record-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.management-record-meta {
+  margin-top: 10px;
+  color: rgba(234, 242, 255, 0.6);
+  font-size: 13px;
+}
+
+.management-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(234, 242, 255, 0.78);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.management-badge.is-urgent,
+.management-badge.is-high {
+  background: rgba(226, 27, 35, 0.18);
+  color: #ffd7d9;
+}
+
+.management-badge.is-complete {
+  background: rgba(66, 185, 156, 0.18);
+  color: #c5ffe9;
+}
+
+.management-badge.is-waiting {
+  background: rgba(245, 178, 62, 0.18);
+  color: #ffe5b3;
+}
+
+.management-record-actions {
+  display: flex;
+  align-items: start;
+}
+
+.management-record-actions select {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: #071325;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px;
+}
+
+@media (max-width: 980px) {
+  .management-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .management-panel {
+    position: static;
+  }
+
+  .management-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .management-shell {
+    width: min(100% - 20px, 1420px);
+    padding-top: 14px;
+  }
+
+  .management-header,
+  .management-record {
+    grid-template-columns: 1fr;
+  }
+
+  .management-header {
+    display: grid;
+  }
+
+  .management-header-actions,
+  .management-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .management-form-grid {
+    display: grid;
+  }
+
+  .management-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .management-record {
+    display: grid;
+  }
+}

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>DMZ Scuba | Management</title>
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260427a" />
+</head>
+
+<body class="management-page">
+  <main class="management-shell" data-management-app>
+    <section class="management-login" data-management-login>
+      <div class="management-login-card">
+        <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+        <p class="management-kicker">Internal management</p>
+        <h1>Sign in</h1>
+        <form class="management-login-form" data-login-form>
+          <label>
+            Username
+            <input type="text" name="user" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input type="password" name="pass" autocomplete="current-password" required />
+          </label>
+          <button class="btn primary" type="submit">Log In</button>
+          <p class="management-form-status" data-login-status aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="management-dashboard" data-management-dashboard hidden>
+      <header class="management-header">
+        <div>
+          <p class="management-kicker">DMZ Scuba</p>
+          <h1>Management</h1>
+        </div>
+        <div class="management-header-actions">
+          <button class="btn secondary" type="button" data-refresh-records>Refresh</button>
+          <button class="btn secondary" type="button" data-logout>Log Out</button>
+        </div>
+      </header>
+
+      <section class="management-metrics" aria-label="Management summary">
+        <article>
+          <span data-metric="open">0</span>
+          <p>Open Items</p>
+        </article>
+        <article>
+          <span data-metric="inquiry">0</span>
+          <p>Inquiries</p>
+        </article>
+        <article>
+          <span data-metric="class">0</span>
+          <p>Classes</p>
+        </article>
+        <article>
+          <span data-metric="trip">0</span>
+          <p>Trips</p>
+        </article>
+      </section>
+
+      <section class="management-workspace">
+        <aside class="management-panel">
+          <div class="management-panel-head">
+            <h2 data-editor-title>New Item</h2>
+            <button type="button" data-new-record>Clear</button>
+          </div>
+          <form class="management-record-form" data-record-form>
+            <input type="hidden" name="id" />
+            <label>
+              Type
+              <select name="recordType">
+                <option value="inquiry">Inquiry</option>
+                <option value="class">Class</option>
+                <option value="trip">Trip</option>
+                <option value="task">Business Task</option>
+              </select>
+            </label>
+            <label>
+              Title
+              <input type="text" name="title" maxlength="180" required placeholder="Open Water student follow-up" />
+            </label>
+            <div class="management-form-grid">
+              <label>
+                Status
+                <select name="status">
+                  <option value="new">New</option>
+                  <option value="active">Active</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="complete">Complete</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+              <label>
+                Priority
+                <select name="priority">
+                  <option value="normal">Normal</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="low">Low</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Owner
+              <input type="text" name="owner" maxlength="120" placeholder="Zachary" />
+            </label>
+            <div class="management-form-grid">
+              <label>
+                Contact Name
+                <input type="text" name="contactName" maxlength="160" />
+              </label>
+              <label>
+                Contact Email
+                <input type="email" name="contactEmail" maxlength="180" />
+              </label>
+            </div>
+            <div class="management-form-grid">
+              <label>
+                Contact Phone
+                <input type="tel" name="contactPhone" maxlength="60" />
+              </label>
+              <label>
+                Due Date
+                <input type="date" name="dueDate" />
+              </label>
+            </div>
+            <label>
+              Related Class, Trip, or Event
+              <input type="text" name="relatedEvent" maxlength="180" />
+            </label>
+            <label>
+              Notes / Progress
+              <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
+            </label>
+            <div class="management-form-actions">
+              <button class="btn primary" type="submit">Save Item</button>
+              <button class="btn secondary" type="button" data-delete-record hidden>Delete</button>
+            </div>
+            <p class="management-form-status" data-record-status aria-live="polite"></p>
+          </form>
+        </aside>
+
+        <section class="management-list-panel">
+          <div class="management-list-tools">
+            <div class="management-search">
+              <label for="managementSearch">Search</label>
+              <input id="managementSearch" type="search" data-search-records placeholder="Name, email, class, trip, note..." />
+            </div>
+            <div class="management-filters" role="group" aria-label="Record filters">
+              <button type="button" class="is-active" data-filter-type="all">All</button>
+              <button type="button" data-filter-type="inquiry">Inquiries</button>
+              <button type="button" data-filter-type="class">Classes</button>
+              <button type="button" data-filter-type="trip">Trips</button>
+              <button type="button" data-filter-type="task">Tasks</button>
+            </div>
+          </div>
+          <div class="management-records" data-record-list aria-live="polite"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/management.js?v=20260427a" defer></script>
+</body>
+</html>

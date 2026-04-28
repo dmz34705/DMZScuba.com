@@ -927,6 +927,226 @@ async function ensureSiteSettingsTable(env) {
   ).run();
 }
 
+async function ensureManagementRecordsTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS management_records (
+      id TEXT PRIMARY KEY,
+      record_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      status TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      owner TEXT,
+      contact_name TEXT,
+      contact_email TEXT,
+      contact_phone TEXT,
+      due_date TEXT,
+      related_event TEXT,
+      notes TEXT,
+      data_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_management_type_status ON management_records(record_type, status)"
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_management_due_date ON management_records(due_date)"
+  ).run();
+}
+
+function normalizeManagementText(value, maxLen = 300) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, maxLen);
+}
+
+function normalizeManagementLongText(value, maxLen = 4000) {
+  return String(value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().slice(0, maxLen);
+}
+
+function normalizeManagementChoice(value, fallback, allowed) {
+  const normalized = normalizeManagementText(value, 60).toLowerCase();
+  return allowed.includes(normalized) ? normalized : fallback;
+}
+
+function normalizeManagementRecord(input = {}, existing = {}) {
+  const source = input && typeof input === "object" ? input : {};
+  const allowedTypes = ["inquiry", "class", "trip", "task"];
+  const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
+  const allowedPriorities = ["low", "normal", "high", "urgent"];
+  const recordType = normalizeManagementChoice(source.recordType || source.type, existing.recordType || "inquiry", allowedTypes);
+  const status = normalizeManagementChoice(source.status, existing.status || "new", allowedStatuses);
+  const priority = normalizeManagementChoice(source.priority, existing.priority || "normal", allowedPriorities);
+  const title = normalizeManagementText(source.title, 180);
+  if (!title) return null;
+
+  const extras = source.extras && typeof source.extras === "object" && !Array.isArray(source.extras)
+    ? source.extras
+    : {};
+  return {
+    id: normalizeManagementText(source.id || existing.id, 80),
+    recordType,
+    title,
+    status,
+    priority,
+    owner: normalizeManagementText(source.owner, 120),
+    contactName: normalizeManagementText(source.contactName, 160),
+    contactEmail: normalizeManagementText(source.contactEmail, 180).toLowerCase(),
+    contactPhone: normalizeManagementText(source.contactPhone, 60),
+    dueDate: normalizeManagementText(source.dueDate, 20),
+    relatedEvent: normalizeManagementText(source.relatedEvent, 180),
+    notes: normalizeManagementLongText(source.notes, 4000),
+    extras,
+  };
+}
+
+function managementRecordFromRow(row) {
+  const data = parseJsonSafe(row && row.data_json, {});
+  return {
+    id: String((row && row.id) || ""),
+    recordType: String((row && row.record_type) || "inquiry"),
+    title: String((row && row.title) || ""),
+    status: String((row && row.status) || "new"),
+    priority: String((row && row.priority) || "normal"),
+    owner: String((row && row.owner) || ""),
+    contactName: String((row && row.contact_name) || ""),
+    contactEmail: String((row && row.contact_email) || ""),
+    contactPhone: String((row && row.contact_phone) || ""),
+    dueDate: String((row && row.due_date) || ""),
+    relatedEvent: String((row && row.related_event) || ""),
+    notes: String((row && row.notes) || ""),
+    extras: data && typeof data.extras === "object" && !Array.isArray(data.extras) ? data.extras : {},
+    createdAt: String((row && row.created_at) || ""),
+    updatedAt: String((row && row.updated_at) || ""),
+  };
+}
+
+async function handleListManagementRecords(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  await ensureManagementRecordsTable(env);
+  const url = new URL(request.url);
+  const type = normalizeManagementText(url.searchParams.get("type"), 40).toLowerCase();
+  const status = normalizeManagementText(url.searchParams.get("status"), 40).toLowerCase();
+  const allowedTypes = ["inquiry", "class", "trip", "task"];
+  const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
+  let sql = "SELECT * FROM management_records";
+  const conditions = [];
+  const bindings = [];
+  if (allowedTypes.includes(type)) {
+    conditions.push("record_type = ?");
+    bindings.push(type);
+  }
+  if (allowedStatuses.includes(status)) {
+    conditions.push("status = ?");
+    bindings.push(status);
+  }
+  if (conditions.length) sql += ` WHERE ${conditions.join(" AND ")}`;
+  sql += " ORDER BY CASE WHEN due_date = '' THEN 1 ELSE 0 END, due_date ASC, updated_at DESC";
+
+  const stmt = env.DB.prepare(sql);
+  const rows = bindings.length ? await stmt.bind(...bindings).all() : await stmt.all();
+  const items = (rows.results || []).map(managementRecordFromRow);
+  return jsonResponse({ ok: true, items }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleCreateManagementRecord(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.record === "object" ? body.record : body;
+  const record = normalizeManagementRecord(incoming);
+  if (!record) return jsonResponse({ ok: false, error: "Title is required." }, 400, { "Cache-Control": "no-store" });
+
+  await ensureManagementRecordsTable(env);
+  const now = new Date().toISOString();
+  const id = record.id || crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO management_records
+     (id, record_type, title, status, priority, owner, contact_name, contact_email, contact_phone, due_date, related_event, notes, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      record.recordType,
+      record.title,
+      record.status,
+      record.priority,
+      record.owner,
+      record.contactName,
+      record.contactEmail,
+      record.contactPhone,
+      record.dueDate,
+      record.relatedEvent,
+      record.notes,
+      JSON.stringify({ extras: record.extras }),
+      now,
+      now
+    )
+    .run();
+
+  return jsonResponse({ ok: true, item: { ...record, id, createdAt: now, updatedAt: now } }, 201, { "Cache-Control": "no-store" });
+}
+
+async function handleUpdateManagementRecord(request, env, id) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  const safeId = normalizeManagementText(id, 80);
+  if (!safeId) return jsonResponse({ ok: false, error: "Missing record id." }, 400, { "Cache-Control": "no-store" });
+
+  await ensureManagementRecordsTable(env);
+  const existingRow = await env.DB.prepare("SELECT * FROM management_records WHERE id = ?").bind(safeId).first();
+  if (!existingRow) return jsonResponse({ ok: false, error: "Not found." }, 404, { "Cache-Control": "no-store" });
+
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.record === "object" ? body.record : body;
+  const existing = managementRecordFromRow(existingRow);
+  const record = normalizeManagementRecord({ ...existing, ...incoming, id: safeId }, existing);
+  if (!record) return jsonResponse({ ok: false, error: "Title is required." }, 400, { "Cache-Control": "no-store" });
+
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE management_records
+     SET record_type = ?, title = ?, status = ?, priority = ?, owner = ?, contact_name = ?, contact_email = ?, contact_phone = ?, due_date = ?, related_event = ?, notes = ?, data_json = ?, updated_at = ?
+     WHERE id = ?`
+  )
+    .bind(
+      record.recordType,
+      record.title,
+      record.status,
+      record.priority,
+      record.owner,
+      record.contactName,
+      record.contactEmail,
+      record.contactPhone,
+      record.dueDate,
+      record.relatedEvent,
+      record.notes,
+      JSON.stringify({ extras: record.extras }),
+      now,
+      safeId
+    )
+    .run();
+
+  return jsonResponse({ ok: true, item: { ...record, id: safeId, createdAt: existing.createdAt, updatedAt: now } }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleDeleteManagementRecord(request, env, id) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  const safeId = normalizeManagementText(id, 80);
+  if (!safeId) return jsonResponse({ ok: false, error: "Missing record id." }, 400, { "Cache-Control": "no-store" });
+  await ensureManagementRecordsTable(env);
+  const result = await env.DB.prepare("DELETE FROM management_records WHERE id = ?").bind(safeId).run();
+  if (!result || !result.meta || !result.meta.changes) {
+    return jsonResponse({ ok: false, error: "Not found." }, 404, { "Cache-Control": "no-store" });
+  }
+  return jsonResponse({ ok: true, id: safeId }, 200, { "Cache-Control": "no-store" });
+}
+
 function normalizeHomeTickerPayload(payload) {
   const source = payload && typeof payload === "object" ? payload : {};
   const rawLines = Array.isArray(source.lines) ? source.lines : [];
@@ -1971,6 +2191,16 @@ export default {
       response = await handleClientTelemetry(request);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
+    } else if (pathname === "/api/admin/management" && request.method === "GET") {
+      response = await handleListManagementRecords(request, env);
+    } else if (pathname === "/api/admin/management" && request.method === "POST") {
+      response = await handleCreateManagementRecord(request, env);
+    } else if (pathname.startsWith("/api/admin/management/") && request.method === "PUT") {
+      const id = decodeURIComponent(pathname.split("/").pop() || "");
+      response = await handleUpdateManagementRecord(request, env, id);
+    } else if (pathname.startsWith("/api/admin/management/") && request.method === "DELETE") {
+      const id = decodeURIComponent(pathname.split("/").pop() || "");
+      response = await handleDeleteManagementRecord(request, env, id);
     } else if (pathname === "/api/admin/stream-direct-upload" && request.method === "POST") {
       response = await handleStreamDirectUpload(request, env);
     } else if (pathname === "/api/admin/stream-tus-upload" && request.method === "POST") {

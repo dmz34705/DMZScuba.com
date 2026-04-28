@@ -82,3 +82,27 @@ CREATE TABLE IF NOT EXISTS site_settings (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS management_records (
+  id TEXT PRIMARY KEY,
+  record_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL,
+  priority TEXT NOT NULL,
+  owner TEXT,
+  contact_name TEXT,
+  contact_email TEXT,
+  contact_phone TEXT,
+  due_date TEXT,
+  related_event TEXT,
+  notes TEXT,
+  data_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_management_type_status
+  ON management_records(record_type, status);
+
+CREATE INDEX IF NOT EXISTS idx_management_due_date
+  ON management_records(due_date);
