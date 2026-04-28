@@ -20,9 +20,11 @@
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
   const metricEls = {
     open: app.querySelector('[data-metric="open"]'),
+    contact: app.querySelector('[data-metric="contact"]'),
     inquiry: app.querySelector('[data-metric="inquiry"]'),
     class: app.querySelector('[data-metric="class"]'),
     trip: app.querySelector('[data-metric="trip"]'),
+    owed: app.querySelector('[data-metric="owed"]'),
   };
 
   const state = {
@@ -86,9 +88,31 @@
     return `${parts[1]}/${parts[2]}/${parts[0]}`;
   }
 
+  function formatMoney(value) {
+    const amount = Number(value || 0);
+    if (!Number.isFinite(amount) || amount <= 0) return "$0";
+    return amount.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    });
+  }
+
+  function getExtras(record) {
+    return record && record.extras && typeof record.extras === "object" ? record.extras : {};
+  }
+
+  function getBalance(record) {
+    const extras = getExtras(record);
+    const owed = Math.max(0, Number(extras.amountOwed || 0) || 0);
+    const paid = Math.max(0, Number(extras.amountPaid || 0) || 0);
+    return Math.max(0, owed - paid);
+  }
+
   function recordMatchesSearch(record) {
     const query = state.search.trim().toLowerCase();
     if (!query) return true;
+    const extras = getExtras(record);
     const haystack = [
       record.title,
       record.recordType,
@@ -100,6 +124,15 @@
       record.contactPhone,
       record.relatedEvent,
       record.notes,
+      extras.stage,
+      extras.source,
+      extras.startDate,
+      extras.endDate,
+      extras.certification,
+      extras.nextStep,
+      extras.amountOwed,
+      extras.amountPaid,
+      extras.capacity,
     ]
       .join(" ")
       .toLowerCase();
@@ -114,14 +147,19 @@
 
   function updateMetrics() {
     const openCount = state.records.filter((record) => !["complete", "archived"].includes(record.status)).length;
+    const openBalance = state.records
+      .filter((record) => !["complete", "archived"].includes(record.status))
+      .reduce((sum, record) => sum + getBalance(record), 0);
     const byType = state.records.reduce((counts, record) => {
       counts[record.recordType] = (counts[record.recordType] || 0) + 1;
       return counts;
     }, {});
     if (metricEls.open) metricEls.open.textContent = String(openCount);
+    if (metricEls.contact) metricEls.contact.textContent = String(byType.contact || 0);
     if (metricEls.inquiry) metricEls.inquiry.textContent = String(byType.inquiry || 0);
     if (metricEls.class) metricEls.class.textContent = String(byType.class || 0);
     if (metricEls.trip) metricEls.trip.textContent = String(byType.trip || 0);
+    if (metricEls.owed) metricEls.owed.textContent = formatMoney(openBalance);
   }
 
   function renderRecords() {
@@ -135,10 +173,15 @@
 
     recordList.innerHTML = visible
       .map((record) => {
+        const extras = getExtras(record);
+        const balance = getBalance(record);
         const meta = [
           record.owner ? `Owner: ${record.owner}` : "",
           record.contactName || record.contactEmail || "",
+          extras.stage ? `Stage: ${formatLabel(extras.stage)}` : "",
+          extras.startDate ? `Starts ${formatDate(extras.startDate)}` : "",
           record.dueDate ? `Due ${formatDate(record.dueDate)}` : "",
+          balance > 0 ? `Balance ${formatMoney(balance)}` : "",
           record.relatedEvent || "",
         ].filter(Boolean);
         const note = String(record.notes || "").trim();
@@ -170,6 +213,17 @@
 
   function readFormRecord() {
     const formData = new FormData(recordForm);
+    const extras = {
+      stage: String(formData.get("stage") || "").trim(),
+      source: String(formData.get("source") || "").trim(),
+      startDate: String(formData.get("startDate") || "").trim(),
+      endDate: String(formData.get("endDate") || "").trim(),
+      capacity: String(formData.get("capacity") || "").trim(),
+      certification: String(formData.get("certification") || "").trim(),
+      amountOwed: String(formData.get("amountOwed") || "").trim(),
+      amountPaid: String(formData.get("amountPaid") || "").trim(),
+      nextStep: String(formData.get("nextStep") || "").trim(),
+    };
     return {
       id: String(formData.get("id") || "").trim(),
       recordType: String(formData.get("recordType") || "inquiry"),
@@ -183,6 +237,7 @@
       dueDate: String(formData.get("dueDate") || "").trim(),
       relatedEvent: String(formData.get("relatedEvent") || "").trim(),
       notes: String(formData.get("notes") || "").trim(),
+      extras,
     };
   }
 
@@ -191,11 +246,16 @@
     recordForm.reset();
     const item = record || {
       id: "",
-      recordType: "inquiry",
+      recordType: "contact",
       status: "new",
       priority: "normal",
+      extras: {},
     };
     Object.entries(item).forEach(([key, value]) => {
+      const field = recordForm.elements[key];
+      if (field) field.value = value == null ? "" : String(value);
+    });
+    Object.entries(getExtras(item)).forEach(([key, value]) => {
       const field = recordForm.elements[key];
       if (field) field.value = value == null ? "" : String(value);
     });

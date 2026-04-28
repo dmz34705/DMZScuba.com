@@ -970,7 +970,7 @@ function normalizeManagementChoice(value, fallback, allowed) {
 
 function normalizeManagementRecord(input = {}, existing = {}) {
   const source = input && typeof input === "object" ? input : {};
-  const allowedTypes = ["inquiry", "class", "trip", "task"];
+  const allowedTypes = ["contact", "inquiry", "class", "trip", "task"];
   const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
   const allowedPriorities = ["low", "normal", "high", "urgent"];
   const recordType = normalizeManagementChoice(source.recordType || source.type, existing.recordType || "inquiry", allowedTypes);
@@ -1028,7 +1028,7 @@ async function handleListManagementRecords(request, env) {
   const url = new URL(request.url);
   const type = normalizeManagementText(url.searchParams.get("type"), 40).toLowerCase();
   const status = normalizeManagementText(url.searchParams.get("status"), 40).toLowerCase();
-  const allowedTypes = ["inquiry", "class", "trip", "task"];
+  const allowedTypes = ["contact", "inquiry", "class", "trip", "task"];
   const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
   let sql = "SELECT * FROM management_records";
   const conditions = [];

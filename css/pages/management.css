@@ -25,6 +25,7 @@
 .management-login-card,
 .management-panel,
 .management-list-panel,
+.management-site-tools,
 .management-metrics article {
   border: 1px solid rgba(255, 255, 255, 0.11);
   background: rgba(7, 19, 37, 0.86);
@@ -156,7 +157,7 @@
 
 .management-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -186,6 +187,43 @@
   grid-template-columns: minmax(330px, 420px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+}
+
+.management-site-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.management-site-tools h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.management-site-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+.management-site-links a {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 11px;
+}
+
+.management-site-links a:hover {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
 }
 
 .management-panel,
@@ -227,6 +265,15 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.management-extra-fields {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .management-form-actions {
@@ -369,7 +416,16 @@
   }
 
   .management-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .management-site-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-site-links {
+    justify-content: flex-start;
   }
 }
 
@@ -398,7 +454,7 @@
   }
 
   .management-metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .management-record {

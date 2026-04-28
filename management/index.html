@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260427a" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260427b" />
 </head>
 
 <body class="management-page">
@@ -53,6 +53,10 @@
           <p>Open Items</p>
         </article>
         <article>
+          <span data-metric="contact">0</span>
+          <p>Contacts</p>
+        </article>
+        <article>
           <span data-metric="inquiry">0</span>
           <p>Inquiries</p>
         </article>
@@ -64,6 +68,23 @@
           <span data-metric="trip">0</span>
           <p>Trips</p>
         </article>
+        <article>
+          <span data-metric="owed">$0</span>
+          <p>Open Balance</p>
+        </article>
+      </section>
+
+      <section class="management-site-tools" aria-label="Site editing shortcuts">
+        <div>
+          <p class="management-kicker">Site tools</p>
+          <h2>Editable Site Areas</h2>
+        </div>
+        <div class="management-site-links">
+          <a href="/pages/events/" target="_blank" rel="noopener">Events + Registration</a>
+          <a href="/pages/media/" target="_blank" rel="noopener">Media Library</a>
+          <a href="/pages/travel/" target="_blank" rel="noopener">Travel Destinations</a>
+          <a href="/pages/training/" target="_blank" rel="noopener">Training Pages</a>
+        </div>
       </section>
 
       <section class="management-workspace">
@@ -77,6 +98,7 @@
             <label>
               Type
               <select name="recordType">
+                <option value="contact">Customer / Contact Profile</option>
                 <option value="inquiry">Inquiry</option>
                 <option value="class">Class</option>
                 <option value="trip">Trip</option>
@@ -137,6 +159,60 @@
               Related Class, Trip, or Event
               <input type="text" name="relatedEvent" maxlength="180" />
             </label>
+            <section class="management-extra-fields" aria-label="Operational details">
+              <div class="management-form-grid">
+                <label>
+                  Stage
+                  <select name="stage">
+                    <option value="">Not Set</option>
+                    <option value="lead">Lead</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="quoted">Quoted</option>
+                    <option value="deposit">Deposit / Commitment</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </label>
+                <label>
+                  Source
+                  <input type="text" name="source" maxlength="120" placeholder="Website, referral, phone, Facebook" />
+                </label>
+              </div>
+              <div class="management-form-grid">
+                <label>
+                  Start Date
+                  <input type="date" name="startDate" />
+                </label>
+                <label>
+                  End Date
+                  <input type="date" name="endDate" />
+                </label>
+              </div>
+              <div class="management-form-grid">
+                <label>
+                  Capacity / Roster Size
+                  <input type="number" min="0" step="1" name="capacity" />
+                </label>
+                <label>
+                  Certification / Level
+                  <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
+                </label>
+              </div>
+              <div class="management-form-grid">
+                <label>
+                  Total Owed
+                  <input type="number" min="0" step="0.01" name="amountOwed" />
+                </label>
+                <label>
+                  Amount Paid
+                  <input type="number" min="0" step="0.01" name="amountPaid" />
+                </label>
+              </div>
+              <label>
+                Next Step
+                <input type="text" name="nextStep" maxlength="220" placeholder="Send forms, confirm dates, collect balance..." />
+              </label>
+            </section>
             <label>
               Notes / Progress
               <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
@@ -157,6 +233,7 @@
             </div>
             <div class="management-filters" role="group" aria-label="Record filters">
               <button type="button" class="is-active" data-filter-type="all">All</button>
+              <button type="button" data-filter-type="contact">Contacts</button>
               <button type="button" data-filter-type="inquiry">Inquiries</button>
               <button type="button" data-filter-type="class">Classes</button>
               <button type="button" data-filter-type="trip">Trips</button>
@@ -169,6 +246,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260427a" defer></script>
+  <script src="/js/management.js?v=20260427b" defer></script>
 </body>
 </html>
