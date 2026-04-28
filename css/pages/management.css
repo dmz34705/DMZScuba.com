@@ -10,6 +10,12 @@
   display: none !important;
 }
 
+.management-field-hidden,
+.management-form-grid.management-field-hidden,
+.management-extra-fields.management-field-hidden {
+  display: none !important;
+}
+
 .management-shell {
   width: min(1420px, calc(100% - 32px));
   margin: 0 auto;

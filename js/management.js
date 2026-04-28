@@ -18,6 +18,129 @@
   const editorTitle = app.querySelector("[data-editor-title]");
   const deleteButton = app.querySelector("[data-delete-record]");
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
+  const extraFieldsSection = app.querySelector(".management-extra-fields");
+  const typeConfigs = {
+    contact: {
+      editor: "Contact Profile",
+      newTitle: "New Contact Profile",
+      titleLabel: "Profile Name",
+      titlePlaceholder: "Jane Diver",
+      notesLabel: "Profile Notes",
+      notesPlaceholder: "Preferences, certification history, gear notes, family members, general relationship notes...",
+      fields: [
+        "recordType",
+        "title",
+        "status",
+        "priority",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "source",
+        "certification",
+        "notes",
+      ],
+    },
+    inquiry: {
+      editor: "Inquiry",
+      newTitle: "New Inquiry",
+      titleLabel: "Inquiry Summary",
+      titlePlaceholder: "Open Water class question",
+      relatedLabel: "Interested Class, Trip, or Service",
+      notesLabel: "Inquiry Notes / Progress",
+      notesPlaceholder: "What they asked about, latest contact, objections, follow-up timing, quote details...",
+      fields: [
+        "recordType",
+        "title",
+        "status",
+        "priority",
+        "owner",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "dueDate",
+        "relatedEvent",
+        "stage",
+        "source",
+        "amountOwed",
+        "amountPaid",
+        "nextStep",
+        "notes",
+      ],
+    },
+    class: {
+      editor: "Scheduled Class",
+      newTitle: "New Scheduled Class",
+      titleLabel: "Class Name",
+      titlePlaceholder: "Open Water - May Weekend",
+      relatedLabel: "Related Event Page or Calendar Item",
+      capacityLabel: "Class Capacity",
+      certificationLabel: "Course / Certification",
+      notesLabel: "Class Roster / Progress Notes",
+      notesPlaceholder: "Students, forms, eLearning status, pool/open-water dates, payments owed, gear needs...",
+      fields: [
+        "recordType",
+        "title",
+        "status",
+        "priority",
+        "owner",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "dueDate",
+        "relatedEvent",
+        "startDate",
+        "endDate",
+        "capacity",
+        "certification",
+        "amountOwed",
+        "amountPaid",
+        "nextStep",
+        "notes",
+      ],
+    },
+    trip: {
+      editor: "Scheduled Trip",
+      newTitle: "New Scheduled Trip",
+      titleLabel: "Trip Name",
+      titlePlaceholder: "Cozumel 2026",
+      relatedLabel: "Destination or Trip Page",
+      capacityLabel: "Trip Capacity",
+      certificationLabel: "Recommended Level",
+      notesLabel: "Trip Roster / Logistics Notes",
+      notesPlaceholder: "Roster, deposits, rooming, flights, dive operator details, documents, balances owed...",
+      fields: [
+        "recordType",
+        "title",
+        "status",
+        "priority",
+        "owner",
+        "contactName",
+        "contactEmail",
+        "contactPhone",
+        "dueDate",
+        "relatedEvent",
+        "stage",
+        "source",
+        "startDate",
+        "endDate",
+        "capacity",
+        "certification",
+        "amountOwed",
+        "amountPaid",
+        "nextStep",
+        "notes",
+      ],
+    },
+    task: {
+      editor: "Business Task",
+      newTitle: "New Business Task",
+      titleLabel: "Task",
+      titlePlaceholder: "Renew insurance policy",
+      notesLabel: "Task Notes",
+      notesPlaceholder: "Context, checklist, links, blockers, completion notes...",
+      fields: ["recordType", "title", "status", "priority", "owner", "dueDate", "nextStep", "notes"],
+    },
+  };
   const metricEls = {
     open: app.querySelector('[data-metric="open"]'),
     contact: app.querySelector('[data-metric="contact"]'),
@@ -96,6 +219,61 @@
       currency: "USD",
       maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
     });
+  }
+
+  function getTypeConfig(type) {
+    return typeConfigs[type] || typeConfigs.contact;
+  }
+
+  function setFieldLabel(fieldName, labelText) {
+    const field = recordForm && recordForm.elements[fieldName];
+    if (!field) return;
+    const label = field.closest("label");
+    if (!label) return;
+    const firstTextNode = Array.from(label.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+    if (firstTextNode) {
+      firstTextNode.textContent = `\n              ${labelText}\n              `;
+    }
+  }
+
+  function setFieldPlaceholder(fieldName, placeholder) {
+    const field = recordForm && recordForm.elements[fieldName];
+    if (field && "placeholder" in field) field.placeholder = placeholder || "";
+  }
+
+  function syncFormGridVisibility() {
+    if (!recordForm) return;
+    recordForm.querySelectorAll(".management-form-grid").forEach((grid) => {
+      const visibleFields = Array.from(grid.querySelectorAll("[data-field]")).filter(
+        (field) => !field.classList.contains("management-field-hidden")
+      );
+      grid.classList.toggle("management-field-hidden", visibleFields.length === 0);
+    });
+    if (extraFieldsSection) {
+      const visibleExtras = Array.from(extraFieldsSection.querySelectorAll("[data-field]")).filter(
+        (field) => !field.classList.contains("management-field-hidden")
+      );
+      extraFieldsSection.classList.toggle("management-field-hidden", visibleExtras.length === 0);
+    }
+  }
+
+  function applyTypeConfig(type, editing = false) {
+    if (!recordForm) return;
+    const config = getTypeConfig(type);
+    const visibleFields = new Set(config.fields);
+    recordForm.querySelectorAll("[data-field]").forEach((fieldWrap) => {
+      const fieldName = fieldWrap.getAttribute("data-field") || "";
+      fieldWrap.classList.toggle("management-field-hidden", !visibleFields.has(fieldName));
+    });
+    setFieldLabel("title", config.titleLabel || "Title");
+    setFieldLabel("relatedEvent", config.relatedLabel || "Related Class, Trip, or Event");
+    setFieldLabel("capacity", config.capacityLabel || "Capacity / Roster Size");
+    setFieldLabel("certification", config.certificationLabel || "Certification / Level");
+    setFieldLabel("notes", config.notesLabel || "Notes / Progress");
+    setFieldPlaceholder("title", config.titlePlaceholder || "");
+    setFieldPlaceholder("notes", config.notesPlaceholder || "");
+    syncFormGridVisibility();
+    if (editorTitle) editorTitle.textContent = editing ? `Edit ${config.editor}` : config.newTitle;
   }
 
   function getExtras(record) {
@@ -260,7 +438,7 @@
       if (field) field.value = value == null ? "" : String(value);
     });
     state.selectedId = item.id || "";
-    if (editorTitle) editorTitle.textContent = state.selectedId ? "Edit Item" : "New Item";
+    applyTypeConfig(item.recordType || "contact", Boolean(state.selectedId));
     if (deleteButton) deleteButton.hidden = !state.selectedId;
     setStatus(recordStatus, "");
     renderRecords();
@@ -390,6 +568,11 @@
   function bindEvents() {
     if (loginForm) loginForm.addEventListener("submit", login);
     if (recordForm) recordForm.addEventListener("submit", saveRecord);
+    if (recordForm && recordForm.elements.recordType) {
+      recordForm.elements.recordType.addEventListener("change", () => {
+        applyTypeConfig(recordForm.elements.recordType.value || "contact", Boolean(state.selectedId));
+      });
+    }
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     const newButton = app.querySelector("[data-new-record]");
     if (newButton) newButton.addEventListener("click", () => fillForm());
