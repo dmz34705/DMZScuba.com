@@ -1244,6 +1244,16 @@ function normalizeEventEntry(item, kind = "event") {
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
+    managementPriority: String(next.managementPriority || "").trim(),
+    managementOwner: String(next.managementOwner || "").trim(),
+    managementContactName: String(next.managementContactName || "").trim(),
+    managementContactEmail: String(next.managementContactEmail || "").trim(),
+    managementContactPhone: String(next.managementContactPhone || "").trim(),
+    managementDueDate: String(next.managementDueDate || "").trim(),
+    managementAmountOwed: String(next.managementAmountOwed || "").trim(),
+    managementAmountPaid: String(next.managementAmountPaid || "").trim(),
+    managementNextStep: String(next.managementNextStep || "").trim(),
+    managementNotes: String(next.managementNotes || "").trim(),
   };
   const endDate = String(next.endDate || "").trim();
 

@@ -6,6 +6,7 @@
   const loginUrl = apiRoot ? `${apiRoot}/api/admin/login` : "/api/admin/login";
   const managementUrl = apiRoot ? `${apiRoot}/api/admin/management` : "/api/admin/management";
   const eventsUrl = apiRoot ? `${apiRoot}/api/v2/events` : "/api/v2/events";
+  const adminEventsUrl = apiRoot ? `${apiRoot}/api/admin/v2/events` : "/api/admin/v2/events";
   const tokenStorageKey = "dmzMediaToken";
 
   const loginSection = app.querySelector("[data-management-login]");
@@ -158,9 +159,11 @@
 
   const state = {
     records: [],
+    eventsPayload: null,
     allSiteEvents: [],
     siteEvents: [],
     selectedId: "",
+    activeSiteRecord: null,
     filterType: "all",
     search: "",
     loading: false,
@@ -368,20 +371,16 @@
     return [item.sourceId || item.id || "", item.date || item.startDate || ""].join("|");
   }
 
-  function getLinkedRecordForSiteEvent(item) {
-    const key = getSiteEventKey(item);
-    return state.records.find((record) => {
-      const extras = getExtras(record);
-      return extras.siteSource === "events" && [extras.sourceId || "", extras.eventDate || ""].join("|") === key;
-    });
+  function isSiteBackedManagementRecord(record) {
+    const extras = getExtras(record);
+    return extras.siteSource === "events";
   }
 
-  function getUpcomingUnlinkedSiteEventCounts() {
+  function getUpcomingSiteEventCounts() {
     const counts = { class: 0, trip: 0, open: 0 };
     const currentTodayKey = todayKey();
     state.siteEvents.forEach((item) => {
       if (String(item.date || "") < currentTodayKey) return;
-      if (getLinkedRecordForSiteEvent(item)) return;
       const type = classifySiteEvent(item);
       if (type !== "class" && type !== "trip") return;
       counts[type] += 1;
@@ -450,18 +449,18 @@
     const capacity = Math.max(0, Number(item.registrationCapacity || 0) || 0);
     const existingExtras = getExtras(existing);
     return {
-      id: existing && existing.id ? existing.id : "",
+      id: `site-events:${normalizeSiteText(item.eventKind || "event")}:${normalizeSiteText(item.sourceId || item.id)}:${normalizeSiteText(item.date)}`,
       recordType,
       title,
-      status: (existing && existing.status) || "scheduled",
-      priority: (existing && existing.priority) || "normal",
-      owner: (existing && existing.owner) || "",
-      contactName: (existing && existing.contactName) || "",
-      contactEmail: (existing && existing.contactEmail) || "",
-      contactPhone: (existing && existing.contactPhone) || "",
-      dueDate: (existing && existing.dueDate) || normalizeSiteText(item.date),
+      status: normalizeSiteText(item.status) || "scheduled",
+      priority: normalizeSiteText(item.managementPriority) || "normal",
+      owner: normalizeSiteText(item.managementOwner),
+      contactName: normalizeSiteText(item.managementContactName),
+      contactEmail: normalizeSiteText(item.managementContactEmail),
+      contactPhone: normalizeSiteText(item.managementContactPhone),
+      dueDate: normalizeSiteText(item.managementDueDate) || normalizeSiteText(item.date),
       relatedEvent: title,
-      notes: (existing && existing.notes) || normalizeSiteText(item.summary),
+      notes: normalizeSiteText(item.managementNotes) || normalizeSiteText(item.summary),
       extras: {
         ...existingExtras,
         siteSource: "events",
@@ -474,6 +473,9 @@
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
         certification: recordType === "class" ? title : existingExtras.certification || "",
         source: "Site calendar",
+        amountOwed: normalizeSiteText(item.managementAmountOwed),
+        amountPaid: normalizeSiteText(item.managementAmountPaid),
+        nextStep: normalizeSiteText(item.managementNextStep),
       },
     };
   }
@@ -532,11 +534,12 @@
 
   function getVisibleRecords() {
     return state.records
+      .filter((record) => !isSiteBackedManagementRecord(record))
       .filter((record) => state.filterType === "all" || record.recordType === state.filterType)
       .filter(recordMatchesSearch);
   }
 
-  function getVisibleUnlinkedSiteEvents() {
+  function getVisibleSiteEventsForRecords() {
     if (!["all", "class", "trip"].includes(state.filterType)) return [];
     const currentTodayKey = todayKey();
     const showPast = Boolean(showPastCalendarToggle && showPastCalendarToggle.checked);
@@ -546,23 +549,31 @@
         const type = classifySiteEvent(item);
         if (state.filterType !== "all" && type !== state.filterType) return false;
         if (!showPast && String(item.date || "") < currentTodayKey) return false;
-        if (getLinkedRecordForSiteEvent(item)) return false;
         return siteEventMatchesSearch(item);
       });
   }
 
   function updateMetrics() {
     const openCount = state.records.filter(
-      (record) => record.recordType !== "contact" && !["complete", "archived"].includes(record.status)
+      (record) =>
+        !isSiteBackedManagementRecord(record) &&
+        record.recordType !== "contact" &&
+        !["complete", "archived"].includes(record.status)
     ).length;
     const openBalance = state.records
-      .filter((record) => record.recordType !== "contact" && !["complete", "archived"].includes(record.status))
+      .filter(
+        (record) =>
+          !isSiteBackedManagementRecord(record) &&
+          record.recordType !== "contact" &&
+          !["complete", "archived"].includes(record.status)
+      )
       .reduce((sum, record) => sum + getBalance(record), 0);
     const byType = state.records.reduce((counts, record) => {
+      if (isSiteBackedManagementRecord(record)) return counts;
       counts[record.recordType] = (counts[record.recordType] || 0) + 1;
       return counts;
     }, {});
-    const siteCounts = getUpcomingUnlinkedSiteEventCounts();
+    const siteCounts = getUpcomingSiteEventCounts();
     if (metricEls.open) metricEls.open.textContent = String(openCount + siteCounts.open);
     if (metricEls.contact) metricEls.contact.textContent = String(byType.contact || 0);
     if (metricEls.inquiry) metricEls.inquiry.textContent = String(byType.inquiry || 0);
@@ -575,7 +586,7 @@
     if (!recordList) return;
     updateMetrics();
     const visibleRecords = getVisibleRecords();
-    const visibleSiteEvents = getVisibleUnlinkedSiteEvents();
+    const visibleSiteEvents = getVisibleSiteEventsForRecords();
     if (!visibleRecords.length && !visibleSiteEvents.length) {
       recordList.innerHTML = '<div class="management-empty">No matching management items yet.</div>';
       return;
@@ -681,7 +692,6 @@
       .map((item, index) => {
         const sourceIndex = state.siteEvents.indexOf(item);
         const recordType = classifySiteEvent(item);
-        const linked = getLinkedRecordForSiteEvent(item);
         const isPast = String(item.date || "") < currentTodayKey;
         const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
           .filter(Boolean)
@@ -691,7 +701,6 @@
           item.type || "",
           dateText,
           item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
-          linked ? "Linked to management" : "",
         ].filter(Boolean);
         const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
         return `
@@ -700,7 +709,6 @@
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
                 ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
-                ${linked ? '<span class="management-badge is-complete">Linked</span>' : ""}
               </div>
               <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
               <p>${escapeHtml(meta.join(" | "))}</p>
@@ -718,7 +726,12 @@
   function readFormRecord() {
     const formData = new FormData(recordForm);
     const id = String(formData.get("id") || "").trim();
-    const existing = id ? state.records.find((item) => item.id === id) : null;
+    const existing =
+      id && state.activeSiteRecord && state.activeSiteRecord.id === id
+        ? state.activeSiteRecord
+        : id
+          ? state.records.find((item) => item.id === id)
+          : null;
     const existingExtras = getExtras(existing);
     const extras = {
       ...existingExtras,
@@ -768,6 +781,7 @@
       priority: "normal",
       extras: {},
     };
+    state.activeSiteRecord = isSiteBackedManagementRecord(item) ? item : null;
     Object.entries(item).forEach(([key, value]) => {
       const field = recordForm.elements[key];
       if (field) field.value = value == null ? "" : String(value);
@@ -829,6 +843,7 @@
       renderCalendarItems();
       return false;
     }
+    state.eventsPayload = data;
     state.allSiteEvents = expandSiteEventPayload(data).filter((item) => ["class", "trip"].includes(classifySiteEvent(item)));
     state.siteEvents = state.allSiteEvents;
     if (calendarStatus) {
@@ -852,6 +867,18 @@
         record.recordType === "contact" ? "First name or last name is required." : "Title is required.",
         "error"
       );
+      return;
+    }
+    if (isSiteBackedManagementRecord(record)) {
+      try {
+        const saved = await saveSiteEventRecord(record);
+        fillForm(saved);
+        setStatus(recordStatus, "Saved to site calendar.", "success");
+        renderRecords();
+        renderCalendarItems();
+      } catch (error) {
+        setStatus(recordStatus, error && error.message ? error.message : "Could not save site calendar record.", "error");
+      }
       return;
     }
     const isUpdate = Boolean(record.id);
@@ -900,21 +927,70 @@
     return saved;
   }
 
+  function findSiteEventPayloadItem(record) {
+    const extras = getExtras(record);
+    if (!state.eventsPayload) return null;
+    const listName = extras.eventKind === "template" ? "templates" : "events";
+    const list = Array.isArray(state.eventsPayload[listName]) ? state.eventsPayload[listName] : [];
+    const sourceId = String(extras.sourceId || extras.eventId || "").trim();
+    const eventDate = String(extras.eventDate || "").trim();
+    const item = list.find((entry) => {
+      if (!entry || String(entry.id || "").trim() !== sourceId) return false;
+      if (listName === "templates") return true;
+      return String(entry.date || "").trim() === eventDate;
+    });
+    return item ? { item, listName } : null;
+  }
+
+  async function saveSiteEventRecord(record) {
+    const match = findSiteEventPayloadItem(record);
+    if (!match) throw new Error("Site calendar item was not found.");
+    const extras = getExtras(record);
+    const item = match.item;
+    item.title = record.title;
+    item.status = record.status;
+    item.summary = record.notes || item.summary || "";
+    item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
+    item.managementPriority = record.priority || "";
+    item.managementOwner = record.owner || "";
+    item.managementContactName = record.contactName || "";
+    item.managementContactEmail = record.contactEmail || "";
+    item.managementContactPhone = record.contactPhone || "";
+    item.managementDueDate = record.dueDate || "";
+    item.managementAmountOwed = extras.amountOwed || "";
+    item.managementAmountPaid = extras.amountPaid || "";
+    item.managementNextStep = extras.nextStep || "";
+    item.managementNotes = record.notes || "";
+    if (match.listName === "events") {
+      item.date = extras.startDate || extras.eventDate || item.date;
+      if (extras.endDate) item.endDate = extras.endDate;
+    } else {
+      item.startDate = extras.startDate || item.startDate;
+      if (extras.endDate) item.endDate = extras.endDate;
+    }
+
+    const resp = await apiFetch(adminEventsUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: state.eventsPayload }),
+    }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok) throw new Error(data.error || "Could not save site calendar.");
+    state.eventsPayload = data.payload || state.eventsPayload;
+    state.allSiteEvents = expandSiteEventPayload(state.eventsPayload).filter((entry) =>
+      ["class", "trip"].includes(classifySiteEvent(entry))
+    );
+    state.siteEvents = state.allSiteEvents;
+    const refreshed = state.siteEvents.find((entry) => getSiteEventKey(entry) === [extras.sourceId || "", extras.eventDate || ""].join("|"));
+    return buildManagementRecordFromSiteEvent(refreshed || item);
+  }
+
   async function openCalendarRecord(indexValue) {
     const index = Number(indexValue);
     const item = Number.isFinite(index) ? state.siteEvents[index] : null;
     if (!item) return;
-    const linked = getLinkedRecordForSiteEvent(item);
-    setStatus(recordStatus, "Opening record...");
-    try {
-      const saved = await saveRecordPayload(buildManagementRecordFromSiteEvent(item, linked || null));
-      fillForm(saved);
-      setStatus(recordStatus, linked ? "Record opened." : "Record linked to site calendar.", "success");
-      renderRecords();
-      renderCalendarItems();
-    } catch (error) {
-      setStatus(recordStatus, error && error.message ? error.message : "Could not open calendar record.", "error");
-    }
+    fillForm(buildManagementRecordFromSiteEvent(item));
+    setStatus(recordStatus, "Site calendar record opened.", "success");
   }
 
   async function deleteSelectedRecord() {
