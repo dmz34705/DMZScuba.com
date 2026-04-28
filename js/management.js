@@ -23,16 +23,13 @@
     contact: {
       editor: "Contact Profile",
       newTitle: "New Contact Profile",
-      titleLabel: "Profile Name",
-      titlePlaceholder: "Jane Diver",
       notesLabel: "Profile Notes",
       notesPlaceholder: "Preferences, certification history, gear notes, family members, general relationship notes...",
       fields: [
         "recordType",
-        "title",
-        "status",
         "priority",
-        "contactName",
+        "firstName",
+        "lastName",
         "contactEmail",
         "contactPhone",
         "source",
@@ -263,7 +260,11 @@
     const visibleFields = new Set(config.fields);
     recordForm.querySelectorAll("[data-field]").forEach((fieldWrap) => {
       const fieldName = fieldWrap.getAttribute("data-field") || "";
-      fieldWrap.classList.toggle("management-field-hidden", !visibleFields.has(fieldName));
+      const isVisible = visibleFields.has(fieldName);
+      fieldWrap.classList.toggle("management-field-hidden", !isVisible);
+      fieldWrap.querySelectorAll("input, select, textarea").forEach((field) => {
+        field.disabled = !isVisible;
+      });
     });
     setFieldLabel("title", config.titleLabel || "Title");
     setFieldLabel("relatedEvent", config.relatedLabel || "Related Class, Trip, or Event");
@@ -302,6 +303,8 @@
       record.contactPhone,
       record.relatedEvent,
       record.notes,
+      extras.firstName,
+      extras.lastName,
       extras.stage,
       extras.source,
       extras.startDate,
@@ -324,9 +327,11 @@
   }
 
   function updateMetrics() {
-    const openCount = state.records.filter((record) => !["complete", "archived"].includes(record.status)).length;
+    const openCount = state.records.filter(
+      (record) => record.recordType !== "contact" && !["complete", "archived"].includes(record.status)
+    ).length;
     const openBalance = state.records
-      .filter((record) => !["complete", "archived"].includes(record.status))
+      .filter((record) => record.recordType !== "contact" && !["complete", "archived"].includes(record.status))
       .reduce((sum, record) => sum + getBalance(record), 0);
     const byType = state.records.reduce((counts, record) => {
       counts[record.recordType] = (counts[record.recordType] || 0) + 1;
@@ -355,7 +360,7 @@
         const balance = getBalance(record);
         const meta = [
           record.owner ? `Owner: ${record.owner}` : "",
-          record.contactName || record.contactEmail || "",
+          record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" ") || record.contactEmail || "",
           extras.stage ? `Stage: ${formatLabel(extras.stage)}` : "",
           extras.startDate ? `Starts ${formatDate(extras.startDate)}` : "",
           record.dueDate ? `Due ${formatDate(record.dueDate)}` : "",
@@ -369,20 +374,28 @@
             <div>
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(record.recordType))}</span>
-                <span class="management-badge is-${escapeHtml(record.status)}">${escapeHtml(formatLabel(record.status))}</span>
+                ${
+                  record.recordType === "contact"
+                    ? ""
+                    : `<span class="management-badge is-${escapeHtml(record.status)}">${escapeHtml(formatLabel(record.status))}</span>`
+                }
                 <span class="management-badge is-${escapeHtml(record.priority)}">${escapeHtml(formatLabel(record.priority))}</span>
               </div>
               <h3>${escapeHtml(record.title)}</h3>
               ${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
               ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
             </div>
-            <div class="management-record-actions">
+            ${
+              record.recordType === "contact"
+                ? ""
+                : `<div class="management-record-actions">
               <select data-status-change="${escapeHtml(record.id)}" aria-label="Change status for ${escapeHtml(record.title)}">
                 ${["new", "active", "waiting", "scheduled", "complete", "archived"]
                   .map((status) => `<option value="${status}" ${record.status === status ? "selected" : ""}>${formatLabel(status)}</option>`)
                   .join("")}
               </select>
-            </div>
+            </div>`
+            }
           </article>
         `;
       })
@@ -392,6 +405,8 @@
   function readFormRecord() {
     const formData = new FormData(recordForm);
     const extras = {
+      firstName: String(formData.get("firstName") || "").trim(),
+      lastName: String(formData.get("lastName") || "").trim(),
       stage: String(formData.get("stage") || "").trim(),
       source: String(formData.get("source") || "").trim(),
       startDate: String(formData.get("startDate") || "").trim(),
@@ -402,14 +417,19 @@
       amountPaid: String(formData.get("amountPaid") || "").trim(),
       nextStep: String(formData.get("nextStep") || "").trim(),
     };
+    const recordType = String(formData.get("recordType") || "inquiry");
+    const contactFullName = [extras.firstName, extras.lastName].filter(Boolean).join(" ").trim();
+    const title = recordType === "contact" ? contactFullName : String(formData.get("title") || "").trim();
+    const contactName =
+      recordType === "contact" ? contactFullName : String(formData.get("contactName") || "").trim();
     return {
       id: String(formData.get("id") || "").trim(),
-      recordType: String(formData.get("recordType") || "inquiry"),
-      title: String(formData.get("title") || "").trim(),
-      status: String(formData.get("status") || "new"),
+      recordType,
+      title,
+      status: recordType === "contact" ? "active" : String(formData.get("status") || "new"),
       priority: String(formData.get("priority") || "normal"),
       owner: String(formData.get("owner") || "").trim(),
-      contactName: String(formData.get("contactName") || "").trim(),
+      contactName,
       contactEmail: String(formData.get("contactEmail") || "").trim(),
       contactPhone: String(formData.get("contactPhone") || "").trim(),
       dueDate: String(formData.get("dueDate") || "").trim(),
@@ -437,6 +457,16 @@
       const field = recordForm.elements[key];
       if (field) field.value = value == null ? "" : String(value);
     });
+    if (item.recordType === "contact") {
+      const extras = getExtras(item);
+      const nameParts = String(item.contactName || item.title || "").trim().split(/\s+/);
+      if (recordForm.elements.firstName && !recordForm.elements.firstName.value) {
+        recordForm.elements.firstName.value = extras.firstName || nameParts.shift() || "";
+      }
+      if (recordForm.elements.lastName && !recordForm.elements.lastName.value) {
+        recordForm.elements.lastName.value = extras.lastName || nameParts.join(" ") || "";
+      }
+    }
     state.selectedId = item.id || "";
     applyTypeConfig(item.recordType || "contact", Boolean(state.selectedId));
     if (deleteButton) deleteButton.hidden = !state.selectedId;
@@ -473,7 +503,11 @@
     event.preventDefault();
     const record = readFormRecord();
     if (!record.title) {
-      setStatus(recordStatus, "Title is required.", "error");
+      setStatus(
+        recordStatus,
+        record.recordType === "contact" ? "First name or last name is required." : "Title is required.",
+        "error"
+      );
       return;
     }
     const isUpdate = Boolean(record.id);
