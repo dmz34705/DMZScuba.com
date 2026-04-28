@@ -656,7 +656,7 @@
               <div class="management-record-meta">${meta.map((entry) => `<span>${escapeHtml(entry)}</span>`).join("")}</div>
             </div>
             <div class="management-calendar-actions">
-              <button type="button" data-calendar-sync="${index}">Create Record</button>
+              <button type="button" data-calendar-open="${index}">Open Record</button>
               <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
             </div>
           </article>
@@ -706,8 +706,7 @@
               <p>${escapeHtml(meta.join(" | "))}</p>
             </div>
             <div class="management-calendar-actions">
-              <button type="button" data-calendar-sync="${sourceIndex}">${linked ? "Sync Record" : "Create Record"}</button>
-              ${linked ? `<button type="button" data-calendar-edit-record="${escapeHtml(linked.id)}">Open Record</button>` : ""}
+              <button type="button" data-calendar-open="${sourceIndex}">Open Record</button>
               <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
             </div>
           </article>
@@ -901,20 +900,20 @@
     return saved;
   }
 
-  async function syncCalendarRecord(indexValue) {
+  async function openCalendarRecord(indexValue) {
     const index = Number(indexValue);
     const item = Number.isFinite(index) ? state.siteEvents[index] : null;
     if (!item) return;
     const linked = getLinkedRecordForSiteEvent(item);
-    setStatus(recordStatus, linked ? "Syncing site calendar record..." : "Creating management record...");
+    setStatus(recordStatus, "Opening record...");
     try {
       const saved = await saveRecordPayload(buildManagementRecordFromSiteEvent(item, linked || null));
       fillForm(saved);
-      setStatus(recordStatus, linked ? "Synced from site calendar." : "Created from site calendar.", "success");
+      setStatus(recordStatus, linked ? "Record opened." : "Record linked to site calendar.", "success");
       renderRecords();
       renderCalendarItems();
     } catch (error) {
-      setStatus(recordStatus, error && error.message ? error.message : "Could not sync calendar item.", "error");
+      setStatus(recordStatus, error && error.message ? error.message : "Could not open calendar record.", "error");
     }
   }
 
@@ -1019,9 +1018,9 @@
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderCalendarItems);
     if (calendarItemsEl) {
       calendarItemsEl.addEventListener("click", (event) => {
-        const syncButton = event.target.closest("[data-calendar-sync]");
-        if (syncButton) {
-          syncCalendarRecord(syncButton.getAttribute("data-calendar-sync"));
+        const openButton = event.target.closest("[data-calendar-open]");
+        if (openButton) {
+          openCalendarRecord(openButton.getAttribute("data-calendar-open"));
           return;
         }
         const editButton = event.target.closest("[data-calendar-edit-record]");
@@ -1063,10 +1062,10 @@
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
-        const syncButton = event.target.closest("[data-calendar-sync]");
-        if (syncButton) {
+        const openButton = event.target.closest("[data-calendar-open]");
+        if (openButton) {
           event.stopPropagation();
-          syncCalendarRecord(syncButton.getAttribute("data-calendar-sync"));
+          openCalendarRecord(openButton.getAttribute("data-calendar-open"));
           return;
         }
         const statusSelect = event.target.closest("[data-status-change]");
