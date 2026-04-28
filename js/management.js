@@ -22,6 +22,7 @@
   const calendarItemsEl = app.querySelector("[data-calendar-items]");
   const calendarStatus = app.querySelector("[data-calendar-status]");
   const refreshCalendarButton = app.querySelector("[data-refresh-calendar]");
+  const showPastCalendarToggle = app.querySelector("[data-show-past-calendar]");
   const extraFieldsSection = app.querySelector(".management-extra-fields");
   const typeConfigs = {
     contact: {
@@ -157,6 +158,7 @@
 
   const state = {
     records: [],
+    allSiteEvents: [],
     siteEvents: [],
     selectedId: "",
     filterType: "all",
@@ -251,6 +253,11 @@
     const next = new Date(date);
     next.setFullYear(next.getFullYear() + years);
     return next;
+  }
+
+  function todayKey() {
+    const now = new Date();
+    return dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
   }
 
   function formatMoney(value) {
@@ -371,6 +378,7 @@
 
   function expandSiteEventPayload(payload) {
     const now = new Date();
+    const pastStart = addMonths(new Date(now.getFullYear(), now.getMonth(), 1), -18);
     const horizonMonths = Math.max(1, Math.min(60, Math.trunc(Number(payload && payload.horizonMonths) || 12)));
     const horizonEnd = addMonths(new Date(now.getFullYear(), now.getMonth(), 1), horizonMonths);
     const explicit = Array.isArray(payload && payload.events) ? payload.events : [];
@@ -379,6 +387,8 @@
 
     explicit.forEach((eventItem) => {
       if (!eventItem || !eventItem.date) return;
+      const eventDate = parseDateKey(eventItem.date);
+      if (!eventDate || eventDate < pastStart) return;
       results.push({
         ...eventItem,
         sourceId: eventItem.id || "",
@@ -573,14 +583,21 @@
 
   function renderCalendarItems() {
     if (!calendarItemsEl) return;
-    if (!state.siteEvents.length) {
-      calendarItemsEl.innerHTML = '<div class="management-empty">No upcoming site calendar classes or trips found.</div>';
+    const showPast = Boolean(showPastCalendarToggle && showPastCalendarToggle.checked);
+    const currentTodayKey = todayKey();
+    const visibleEvents = state.siteEvents.filter((item) => showPast || String(item.date || "") >= currentTodayKey);
+    if (!visibleEvents.length) {
+      calendarItemsEl.innerHTML = showPast
+        ? '<div class="management-empty">No site calendar classes or trips found.</div>'
+        : '<div class="management-empty">No upcoming site calendar classes or trips found. Turn on past items to review older events.</div>';
       return;
     }
-    calendarItemsEl.innerHTML = state.siteEvents
+    calendarItemsEl.innerHTML = visibleEvents
       .map((item, index) => {
+        const sourceIndex = state.siteEvents.indexOf(item);
         const recordType = classifySiteEvent(item);
         const linked = getLinkedRecordForSiteEvent(item);
+        const isPast = String(item.date || "") < currentTodayKey;
         const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
           .filter(Boolean)
           .join(" - ");
@@ -593,17 +610,18 @@
         ].filter(Boolean);
         const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
         return `
-          <article class="management-calendar-item" data-calendar-index="${index}">
+          <article class="management-calendar-item ${isPast ? "is-past" : ""}" data-calendar-index="${sourceIndex}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
+                ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
                 ${linked ? '<span class="management-badge is-complete">Linked</span>' : ""}
               </div>
               <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
               <p>${escapeHtml(meta.join(" | "))}</p>
             </div>
             <div class="management-calendar-actions">
-              <button type="button" data-calendar-sync="${index}">${linked ? "Sync Record" : "Create Record"}</button>
+              <button type="button" data-calendar-sync="${sourceIndex}">${linked ? "Sync Record" : "Create Record"}</button>
               ${linked ? `<button type="button" data-calendar-edit-record="${escapeHtml(linked.id)}">Open Record</button>` : ""}
               <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
             </div>
@@ -727,11 +745,14 @@
       renderCalendarItems();
       return false;
     }
-    state.siteEvents = expandSiteEventPayload(data).filter((item) => ["class", "trip"].includes(classifySiteEvent(item)));
+    state.allSiteEvents = expandSiteEventPayload(data).filter((item) => ["class", "trip"].includes(classifySiteEvent(item)));
+    state.siteEvents = state.allSiteEvents;
     if (calendarStatus) {
+      const upcomingCount = state.siteEvents.filter((item) => String(item.date || "") >= todayKey()).length;
+      const pastCount = Math.max(0, state.siteEvents.length - upcomingCount);
       calendarStatus.textContent = state.siteEvents.length
-        ? `${state.siteEvents.length} upcoming site-side class/trip items available to link.`
-        : "No upcoming class or trip items are currently published in the site calendar.";
+        ? `${upcomingCount} upcoming site-side class/trip items available to link${pastCount ? `, ${pastCount} past hidden` : ""}.`
+        : "No class or trip items are currently published in the site calendar.";
     }
     renderCalendarItems();
     return true;
@@ -909,6 +930,7 @@
     });
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
+    if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderCalendarItems);
     if (calendarItemsEl) {
       calendarItemsEl.addEventListener("click", (event) => {
         const syncButton = event.target.closest("[data-calendar-sync]");
@@ -933,6 +955,7 @@
       logoutButton.addEventListener("click", () => {
         setToken("");
         state.records = [];
+        state.allSiteEvents = [];
         state.siteEvents = [];
         fillForm();
         renderCalendarItems();

@@ -246,6 +246,30 @@
   gap: 14px;
 }
 
+.management-calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.management-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(234, 242, 255, 0.78);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.management-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
 .management-calendar-sync h2 {
   margin: 0;
   font-size: 22px;
@@ -538,6 +562,10 @@
     align-items: stretch;
     flex-direction: column;
     display: flex;
+  }
+
+  .management-calendar-controls {
+    justify-content: flex-start;
   }
 
   .management-site-links {

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260428a" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260428b" />
 </head>
 
 <body class="management-page">
@@ -93,7 +93,13 @@
             <p class="management-kicker">Site calendar</p>
             <h2>Classes + Trips From Site Data</h2>
           </div>
-          <button class="btn secondary" type="button" data-refresh-calendar>Refresh Calendar</button>
+          <div class="management-calendar-controls">
+            <label class="management-toggle">
+              <input type="checkbox" data-show-past-calendar />
+              <span>Show past items</span>
+            </label>
+            <button class="btn secondary" type="button" data-refresh-calendar>Refresh Calendar</button>
+          </div>
         </div>
         <p class="management-calendar-sync-note" data-calendar-status aria-live="polite">Calendar data loads after login.</p>
         <div class="management-calendar-items" data-calendar-items></div>
@@ -274,6 +280,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260428a" defer></script>
+  <script src="/js/management.js?v=20260428b" defer></script>
 </body>
 </html>
