@@ -138,6 +138,10 @@
       fields: ["recordType", "title", "status", "priority", "owner", "dueDate", "nextStep", "notes"],
     },
   };
+  const priorityOptionsByType = {
+    contact: ["normal", "high"],
+    default: ["normal", "high", "urgent", "low"],
+  };
   const metricEls = {
     open: app.querySelector('[data-metric="open"]'),
     contact: app.querySelector('[data-metric="contact"]'),
@@ -238,6 +242,17 @@
     if (field && "placeholder" in field) field.placeholder = placeholder || "";
   }
 
+  function syncPriorityOptions(type) {
+    const select = recordForm && recordForm.elements.priority;
+    if (!select) return;
+    const current = select.value || "normal";
+    const options = priorityOptionsByType[type] || priorityOptionsByType.default;
+    select.innerHTML = options
+      .map((value) => `<option value="${value}">${formatLabel(value)}</option>`)
+      .join("");
+    select.value = options.includes(current) ? current : "normal";
+  }
+
   function syncFormGridVisibility() {
     if (!recordForm) return;
     recordForm.querySelectorAll(".management-form-grid").forEach((grid) => {
@@ -273,6 +288,7 @@
     setFieldLabel("notes", config.notesLabel || "Notes / Progress");
     setFieldPlaceholder("title", config.titlePlaceholder || "");
     setFieldPlaceholder("notes", config.notesPlaceholder || "");
+    syncPriorityOptions(type);
     syncFormGridVisibility();
     if (editorTitle) editorTitle.textContent = editing ? `Edit ${config.editor}` : config.newTitle;
   }
@@ -422,12 +438,14 @@
     const title = recordType === "contact" ? contactFullName : String(formData.get("title") || "").trim();
     const contactName =
       recordType === "contact" ? contactFullName : String(formData.get("contactName") || "").trim();
+    const rawPriority = String(formData.get("priority") || "normal");
+    const priority = recordType === "contact" && rawPriority !== "high" ? "normal" : rawPriority;
     return {
       id: String(formData.get("id") || "").trim(),
       recordType,
       title,
       status: recordType === "contact" ? "active" : String(formData.get("status") || "new"),
-      priority: String(formData.get("priority") || "normal"),
+      priority,
       owner: String(formData.get("owner") || "").trim(),
       contactName,
       contactEmail: String(formData.get("contactEmail") || "").trim(),
@@ -599,6 +617,25 @@
     await loadRecords();
   }
 
+  async function copyFieldValue(fieldName) {
+    const field = recordForm && recordForm.elements[fieldName];
+    if (!field) return;
+    const value = String(field.value || "").trim();
+    if (!value) {
+      setStatus(recordStatus, "Nothing to copy.", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      setStatus(recordStatus, "Copied.", "success");
+    } catch (_error) {
+      field.focus();
+      field.select();
+      const copied = document.execCommand && document.execCommand("copy");
+      setStatus(recordStatus, copied ? "Copied." : "Copy failed.", copied ? "success" : "error");
+    }
+  }
+
   function bindEvents() {
     if (loginForm) loginForm.addEventListener("submit", login);
     if (recordForm) recordForm.addEventListener("submit", saveRecord);
@@ -607,6 +644,9 @@
         applyTypeConfig(recordForm.elements.recordType.value || "contact", Boolean(state.selectedId));
       });
     }
+    app.querySelectorAll("[data-copy-field]").forEach((button) => {
+      button.addEventListener("click", () => copyFieldValue(button.getAttribute("data-copy-field") || ""));
+    });
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     const newButton = app.querySelector("[data-new-record]");
     if (newButton) newButton.addEventListener("click", () => fillForm());

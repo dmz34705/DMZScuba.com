@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260427d" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260427e" />
 </head>
 
 <body class="management-page">
@@ -152,13 +152,19 @@
               </label>
               <label data-field="contactEmail">
                 Contact Email
-                <input type="email" name="contactEmail" maxlength="180" />
+                <span class="management-copy-field">
+                  <input type="email" name="contactEmail" maxlength="180" />
+                  <button type="button" data-copy-field="contactEmail">Copy</button>
+                </span>
               </label>
             </div>
             <div class="management-form-grid">
               <label data-field="contactPhone">
                 Contact Phone
-                <input type="tel" name="contactPhone" maxlength="60" />
+                <span class="management-copy-field">
+                  <input type="tel" name="contactPhone" maxlength="60" />
+                  <button type="button" data-copy-field="contactPhone">Copy</button>
+                </span>
               </label>
               <label data-field="dueDate">
                 Due Date
@@ -256,6 +262,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260427d" defer></script>
+  <script src="/js/management.js?v=20260427e" defer></script>
 </body>
 </html>
