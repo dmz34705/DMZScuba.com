@@ -376,6 +376,20 @@
     });
   }
 
+  function getUpcomingUnlinkedSiteEventCounts() {
+    const counts = { class: 0, trip: 0, open: 0 };
+    const currentTodayKey = todayKey();
+    state.siteEvents.forEach((item) => {
+      if (String(item.date || "") < currentTodayKey) return;
+      if (getLinkedRecordForSiteEvent(item)) return;
+      const type = classifySiteEvent(item);
+      if (type !== "class" && type !== "trip") return;
+      counts[type] += 1;
+      counts.open += 1;
+    });
+    return counts;
+  }
+
   function expandSiteEventPayload(payload) {
     const now = new Date();
     const pastStart = addMonths(new Date(now.getFullYear(), now.getMonth(), 1), -18);
@@ -516,11 +530,12 @@
       counts[record.recordType] = (counts[record.recordType] || 0) + 1;
       return counts;
     }, {});
-    if (metricEls.open) metricEls.open.textContent = String(openCount);
+    const siteCounts = getUpcomingUnlinkedSiteEventCounts();
+    if (metricEls.open) metricEls.open.textContent = String(openCount + siteCounts.open);
     if (metricEls.contact) metricEls.contact.textContent = String(byType.contact || 0);
     if (metricEls.inquiry) metricEls.inquiry.textContent = String(byType.inquiry || 0);
-    if (metricEls.class) metricEls.class.textContent = String(byType.class || 0);
-    if (metricEls.trip) metricEls.trip.textContent = String(byType.trip || 0);
+    if (metricEls.class) metricEls.class.textContent = String((byType.class || 0) + siteCounts.class);
+    if (metricEls.trip) metricEls.trip.textContent = String((byType.trip || 0) + siteCounts.trip);
     if (metricEls.owed) metricEls.owed.textContent = formatMoney(openBalance);
   }
 
@@ -755,6 +770,7 @@
         : "No class or trip items are currently published in the site calendar.";
     }
     renderCalendarItems();
+    updateMetrics();
     return true;
   }
 
