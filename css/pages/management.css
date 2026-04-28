@@ -469,6 +469,10 @@
   background: rgba(85, 185, 255, 0.10);
 }
 
+.management-record-site {
+  border-style: dashed;
+}
+
 .management-record h3 {
   margin: 0;
   font-size: 18px;

@@ -513,10 +513,42 @@
     return haystack.includes(query);
   }
 
+  function siteEventMatchesSearch(item) {
+    const query = state.search.trim().toLowerCase();
+    if (!query) return true;
+    const haystack = [
+      item.title,
+      item.type,
+      item.summary,
+      item.date,
+      item.endDate,
+      classifySiteEvent(item),
+      item.registrationCapacity,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(query);
+  }
+
   function getVisibleRecords() {
     return state.records
       .filter((record) => state.filterType === "all" || record.recordType === state.filterType)
       .filter(recordMatchesSearch);
+  }
+
+  function getVisibleUnlinkedSiteEvents() {
+    if (!["all", "class", "trip"].includes(state.filterType)) return [];
+    const currentTodayKey = todayKey();
+    const showPast = Boolean(showPastCalendarToggle && showPastCalendarToggle.checked);
+    return state.siteEvents
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => {
+        const type = classifySiteEvent(item);
+        if (state.filterType !== "all" && type !== state.filterType) return false;
+        if (!showPast && String(item.date || "") < currentTodayKey) return false;
+        if (getLinkedRecordForSiteEvent(item)) return false;
+        return siteEventMatchesSearch(item);
+      });
   }
 
   function updateMetrics() {
@@ -542,13 +574,14 @@
   function renderRecords() {
     if (!recordList) return;
     updateMetrics();
-    const visible = getVisibleRecords();
-    if (!visible.length) {
+    const visibleRecords = getVisibleRecords();
+    const visibleSiteEvents = getVisibleUnlinkedSiteEvents();
+    if (!visibleRecords.length && !visibleSiteEvents.length) {
       recordList.innerHTML = '<div class="management-empty">No matching management items yet.</div>';
       return;
     }
 
-    recordList.innerHTML = visible
+    const recordMarkup = visibleRecords
       .map((record) => {
         const extras = getExtras(record);
         const balance = getBalance(record);
@@ -594,6 +627,43 @@
         `;
       })
       .join("");
+    const currentTodayKey = todayKey();
+    const siteMarkup = visibleSiteEvents
+      .map(({ item, index }) => {
+        const recordType = classifySiteEvent(item);
+        const isPast = String(item.date || "") < currentTodayKey;
+        const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
+          .filter(Boolean)
+          .join(" - ");
+        const meta = [
+          "Site calendar",
+          item.type || "",
+          dateText,
+          item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
+        ].filter(Boolean);
+        const summary = String(item.summary || "").trim();
+        const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
+        return `
+          <article class="management-record management-record-site" data-calendar-index="${index}">
+            <div>
+              <div class="management-record-badges">
+                <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
+                <span class="management-badge is-waiting">Site Calendar</span>
+                ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
+              </div>
+              <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
+              ${summary ? `<p>${escapeHtml(summary.length > 180 ? `${summary.slice(0, 180)}...` : summary)}</p>` : ""}
+              <div class="management-record-meta">${meta.map((entry) => `<span>${escapeHtml(entry)}</span>`).join("")}</div>
+            </div>
+            <div class="management-calendar-actions">
+              <button type="button" data-calendar-sync="${index}">Create Record</button>
+              <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+    recordList.innerHTML = `${recordMarkup}${siteMarkup}`;
   }
 
   function renderCalendarItems() {
@@ -993,6 +1063,12 @@
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
+        const syncButton = event.target.closest("[data-calendar-sync]");
+        if (syncButton) {
+          event.stopPropagation();
+          syncCalendarRecord(syncButton.getAttribute("data-calendar-sync"));
+          return;
+        }
         const statusSelect = event.target.closest("[data-status-change]");
         if (statusSelect) {
           event.stopPropagation();
