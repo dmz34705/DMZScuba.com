@@ -32,6 +32,7 @@
 .management-panel,
 .management-list-panel,
 .management-site-tools,
+.management-calendar-sync,
 .management-metrics article {
   border: 1px solid rgba(255, 255, 255, 0.11);
   background: rgba(7, 19, 37, 0.86);
@@ -231,6 +232,85 @@
   margin: 0;
   font-size: 22px;
   letter-spacing: 0;
+}
+
+.management-calendar-sync {
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.management-calendar-sync-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.management-calendar-sync h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.management-calendar-sync-note {
+  margin: 10px 0 0;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 13px;
+}
+
+.management-calendar-items {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.management-calendar-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 12px;
+}
+
+.management-calendar-item h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.management-calendar-item p {
+  margin: 6px 0 0;
+  color: rgba(234, 242, 255, 0.64);
+  font-size: 13px;
+}
+
+.management-calendar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.management-calendar-actions button,
+.management-calendar-actions a {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-calendar-actions button:hover,
+.management-calendar-actions a:hover {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
 }
 
 .management-site-links {
@@ -451,6 +531,13 @@
   .management-site-tools {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .management-calendar-sync-head,
+  .management-calendar-item {
+    align-items: stretch;
+    flex-direction: column;
+    display: flex;
   }
 
   .management-site-links {

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260427e" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260428a" />
 </head>
 
 <body class="management-page">
@@ -85,6 +85,18 @@
           <a href="/pages/travel/" target="_blank" rel="noopener">Travel Destinations</a>
           <a href="/pages/training/" target="_blank" rel="noopener">Training Pages</a>
         </div>
+      </section>
+
+      <section class="management-calendar-sync" aria-label="Site calendar records">
+        <div class="management-calendar-sync-head">
+          <div>
+            <p class="management-kicker">Site calendar</p>
+            <h2>Classes + Trips From Site Data</h2>
+          </div>
+          <button class="btn secondary" type="button" data-refresh-calendar>Refresh Calendar</button>
+        </div>
+        <p class="management-calendar-sync-note" data-calendar-status aria-live="polite">Calendar data loads after login.</p>
+        <div class="management-calendar-items" data-calendar-items></div>
       </section>
 
       <section class="management-workspace">
@@ -262,6 +274,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260427e" defer></script>
+  <script src="/js/management.js?v=20260428a" defer></script>
 </body>
 </html>
