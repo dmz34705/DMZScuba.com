@@ -330,14 +330,26 @@
   async function loadHomeTicker() {
     if (!homeTickerLinesInput) return;
     const resp = await fetch(`${homeTickerUrl}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
-    const data = resp ? await resp.json().catch(() => ({})) : {};
-    if (!resp || !resp.ok) {
-      setStatus(homeTickerStatus, "Could not load the home ticker.", "error");
+    if (!resp) {
+      setStatus(homeTickerStatus, "Could not reach the ticker API.", "error");
+      homeTickerLinesInput.focus();
       return;
     }
+    if (resp.status === 404) {
+      homeTickerLinesInput.value = "";
+      setStatus(homeTickerStatus, "No ticker content saved yet. Add lines below and save.");
+      homeTickerLinesInput.focus();
+      return;
+    }
+    if (!resp.ok) {
+      setStatus(homeTickerStatus, "Could not load the home ticker.", "error");
+      homeTickerLinesInput.focus();
+      return;
+    }
+    const data = await resp.json().catch(() => ({}));
     const lines = normalizeTickerLines(data.lines);
     homeTickerLinesInput.value = lines.join("\n");
-    setStatus(homeTickerStatus, "Loaded.", "success");
+    setStatus(homeTickerStatus, "Loaded.");
     homeTickerLinesInput.focus();
     homeTickerLinesInput.setSelectionRange(homeTickerLinesInput.value.length, homeTickerLinesInput.value.length);
   }

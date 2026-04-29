@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429b" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429c" />
 </head>
 
 <body class="management-page">
@@ -447,11 +447,12 @@
           <form class="management-ticker-form" data-home-ticker-form>
             <label>
               Ticker Lines
-              <textarea rows="10" data-home-ticker-lines placeholder="Add one update per line."></textarea>
+              <span class="management-ticker-hint">One line per update. Saves immediately to the live site.</span>
+              <textarea rows="10" data-home-ticker-lines placeholder="Open Water seats available this month.&#10;April pool sessions are filling now.&#10;Reach out early for travel briefings."></textarea>
             </label>
             <p class="management-form-status" data-home-ticker-status aria-live="polite"></p>
             <div class="management-form-actions">
-              <button class="btn primary" type="submit">Save Ticker</button>
+              <button class="btn primary" type="submit">Save to Site</button>
               <button class="btn secondary" type="button" data-close-home-ticker>Cancel</button>
             </div>
           </form>
@@ -460,6 +461,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429b" defer></script>
+  <script src="/js/management.js?v=20260429c" defer></script>
 </body>
 </html>

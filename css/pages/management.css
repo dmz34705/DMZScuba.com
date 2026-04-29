@@ -160,6 +160,13 @@
   line-height: 1.55;
 }
 
+.management-ticker-hint {
+  color: rgba(234, 242, 255, 0.48);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
 .management-login-form input:focus,
 .management-record-form input:focus,
 .management-record-form select:focus,
