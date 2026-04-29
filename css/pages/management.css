@@ -74,6 +74,7 @@
   display: grid;
   gap: 14px;
   margin-top: 20px;
+  min-width: 0;
 }
 
 .management-login-form label,
@@ -256,6 +257,8 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.045);
   padding: 14px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .management-class-schedule-head h3,
@@ -302,12 +305,13 @@
 }
 
 .management-class-session-row {
-  grid-template-columns: minmax(128px, 1fr) minmax(98px, 0.75fr) minmax(98px, 0.75fr) minmax(160px, 1.2fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
   padding: 10px;
   background: rgba(5, 11, 20, 0.3);
+  min-width: 0;
 }
 
 .management-class-session-row label {
@@ -337,6 +341,13 @@
 
 .management-class-session-location {
   min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.management-class-session-row button {
+  grid-column: 1 / -1;
+  justify-self: end;
+  min-height: 38px;
 }
 
 .management-dashboard {
@@ -398,6 +409,7 @@
   grid-template-columns: minmax(330px, 420px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+  min-width: 0;
 }
 
 .management-site-tools {
@@ -544,6 +556,7 @@
 .management-list-panel {
   border-radius: 8px;
   padding: 18px;
+  min-width: 0;
 }
 
 .management-panel {
@@ -588,6 +601,7 @@
   border-radius: 8px;
   padding: 12px;
   background: rgba(255, 255, 255, 0.035);
+  min-width: 0;
 }
 
 .management-form-actions {
@@ -758,12 +772,7 @@
   }
 
   .management-class-session-row {
-    grid-template-columns: minmax(128px, 1fr) minmax(98px, 0.8fr) minmax(98px, 0.8fr);
-  }
-
-  .management-class-session-location,
-  .management-class-session-row button {
-    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
