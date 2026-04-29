@@ -616,42 +616,65 @@
     if (!record || record.recordType !== "inquiry") return "";
     const extras = getExtras(record);
     const balance = getBalance(record);
-    const detailRows = [
-      ["Progress", formatLabel(record.status)],
-      ["Direction", extras.inquiryDirection ? formatLabel(extras.inquiryDirection) : ""],
-      ["Category", extras.inquiryCategory ? formatLabel(extras.inquiryCategory) : ""],
-      ["Primary Contact", record.contactName],
-      ["Email", record.contactEmail],
-      ["Phone", record.contactPhone],
-      ["Organization / Opportunity", record.relatedEvent],
-      ["Channel / Source", extras.source],
-      ["Owner", record.owner],
-      ["Priority", formatLabel(record.priority)],
-      ["Next Follow-Up", record.dueDate ? formatDate(record.dueDate) : ""],
-      ["Target Start", extras.startDate ? formatDate(extras.startDate) : ""],
-      ["Target End", extras.endDate ? formatDate(extras.endDate) : ""],
-      ["Estimated Cost / Owed", Number(extras.amountOwed || 0) > 0 ? formatMoney(extras.amountOwed) : ""],
-      ["Amount Paid", Number(extras.amountPaid || 0) > 0 ? formatMoney(extras.amountPaid) : ""],
-      ["Open Balance", balance > 0 ? formatMoney(balance) : ""],
-      ["Next Action", extras.nextStep],
-      ["Close Reason", extras.outcomeReason ? formatLabel(extras.outcomeReason) : ""],
-      ["Activity Notes", record.notes],
-    ].filter((row) => normalizeSiteText(row[1]));
-    if (!detailRows.length) return "";
+    const renderCell = ([label, value]) => normalizeSiteText(value)
+      ? `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`
+      : "";
+    const sections = [
+      {
+        title: "Pipeline",
+        rows: [
+          ["Progress", formatLabel(record.status)],
+          ["Direction", extras.inquiryDirection ? formatLabel(extras.inquiryDirection) : ""],
+          ["Category", extras.inquiryCategory ? formatLabel(extras.inquiryCategory) : ""],
+          ["Priority", formatLabel(record.priority)],
+        ],
+      },
+      {
+        title: "Contact",
+        rows: [
+          ["Primary Contact", record.contactName],
+          ["Email", record.contactEmail],
+          ["Phone", record.contactPhone],
+          ["Organization", record.relatedEvent],
+          ["Source", extras.source],
+          ["Owner", record.owner],
+        ],
+      },
+      {
+        title: "Planning",
+        rows: [
+          ["Next Follow-Up", record.dueDate ? formatDate(record.dueDate) : ""],
+          ["Target Start", extras.startDate ? formatDate(extras.startDate) : ""],
+          ["Target End", extras.endDate ? formatDate(extras.endDate) : ""],
+          ["Next Action", extras.nextStep],
+        ],
+      },
+      {
+        title: "Money / Outcome",
+        rows: [
+          ["Estimated / Owed", Number(extras.amountOwed || 0) > 0 ? formatMoney(extras.amountOwed) : ""],
+          ["Paid", Number(extras.amountPaid || 0) > 0 ? formatMoney(extras.amountPaid) : ""],
+          ["Balance", balance > 0 ? formatMoney(balance) : ""],
+          ["Close Reason", extras.outcomeReason ? formatLabel(extras.outcomeReason) : ""],
+        ],
+      },
+    ]
+      .map((section) => {
+        const cells = section.rows.map(renderCell).filter(Boolean).join("");
+        return cells ? `<section><h4>${escapeHtml(section.title)}</h4><div>${cells}</div></section>` : "";
+      })
+      .filter(Boolean)
+      .join("");
+    const notes = normalizeSiteText(record.notes)
+      ? `<section class="management-inquiry-notes"><h4>Activity Notes</h4><p>${escapeHtml(record.notes)}</p></section>`
+      : "";
+    if (!sections && !notes) return "";
     return `
       <details class="management-record-details management-inquiry-details">
         <summary>View inquiry details</summary>
-        <div class="management-contact-detail-grid">
-          ${detailRows
-            .map(
-              ([label, value]) => `
-                <div>
-                  <strong>${escapeHtml(label)}</strong>
-                  <span>${escapeHtml(value)}</span>
-                </div>
-              `
-            )
-            .join("")}
+        <div class="management-inquiry-detail-grid">
+          ${sections}
+          ${notes}
         </div>
       </details>
     `;
