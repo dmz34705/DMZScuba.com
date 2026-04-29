@@ -787,6 +787,69 @@
   font-size: 13px;
 }
 
+.management-contact-card-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.management-contact-copy-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(5, 11, 20, 0.28);
+  padding: 9px 10px;
+}
+
+.management-contact-copy-line span {
+  min-width: 0;
+}
+
+.management-contact-copy-line strong,
+.management-contact-detail-grid strong {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.management-contact-copy-line a,
+.management-contact-copy-line em {
+  color: rgba(234, 242, 255, 0.9);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.management-contact-copy-line.is-empty a,
+.management-contact-copy-line.is-empty em {
+  color: rgba(234, 242, 255, 0.46);
+}
+
+.management-contact-copy-line button {
+  border: 1px solid rgba(85, 185, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(85, 185, 255, 0.10);
+  color: #cfeeff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 7px 9px;
+}
+
+.management-contact-copy-line button:disabled {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.36);
+  cursor: not-allowed;
+}
+
 .management-record-details {
   margin-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -803,6 +866,28 @@
   display: grid;
   gap: 12px;
   margin-top: 12px;
+}
+
+.management-contact-detail-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.management-contact-detail-grid div {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(5, 11, 20, 0.28);
+  padding: 10px;
+}
+
+.management-contact-detail-grid span {
+  display: block;
+  color: rgba(234, 242, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .management-class-detail-grid {

@@ -488,6 +488,64 @@
     `;
   }
 
+  function renderContactCopyLine(label, value, type) {
+    const text = normalizeSiteText(value);
+    const emptyText = type === "email" ? "No email saved" : "No phone saved";
+    const href = type === "email" ? `mailto:${text}` : `tel:${text.replace(/[^\d+]/g, "")}`;
+    return `
+      <div class="management-contact-copy-line ${text ? "" : "is-empty"}">
+        <span>
+          <strong>${escapeHtml(label)}</strong>
+          ${
+            text
+              ? `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`
+              : `<em>${escapeHtml(emptyText)}</em>`
+          }
+        </span>
+        <button type="button" data-copy-record="${escapeHtml(text)}" ${text ? "" : "disabled"}>Copy</button>
+      </div>
+    `;
+  }
+
+  function renderContactRecordDetails(record) {
+    if (!record || record.recordType !== "contact") return "";
+    const extras = getExtras(record);
+    const contactName = normalizeSiteText(record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" "));
+    const detailRows = [
+      ["Name", contactName || record.title],
+      ["First Name", extras.firstName],
+      ["Last Name", extras.lastName],
+      ["Email", record.contactEmail],
+      ["Phone", record.contactPhone],
+      ["Source", extras.source],
+      ["Certification", extras.certification],
+      ["Priority", formatLabel(record.priority)],
+      ["Notes", record.notes],
+    ].filter((row) => normalizeSiteText(row[1]));
+    const enrollments = getContactClassEnrollments(record)
+      .map((enrollment) => normalizeSiteText(enrollment && (enrollment.classTitle || enrollment.classId)))
+      .filter(Boolean);
+    if (enrollments.length) detailRows.push(["Classes", enrollments.join(", ")]);
+    if (!detailRows.length) return "";
+    return `
+      <details class="management-record-details management-contact-details">
+        <summary>View full contact profile</summary>
+        <div class="management-contact-detail-grid">
+          ${detailRows
+            .map(
+              ([label, value]) => `
+                <div>
+                  <strong>${escapeHtml(label)}</strong>
+                  <span>${escapeHtml(value)}</span>
+                </div>
+              `
+            )
+            .join("")}
+        </div>
+      </details>
+    `;
+  }
+
   function renderClassRoster(record = null) {
     if (!classRosterEl) return;
     const classId = record && record.recordType === "class" ? slugify(getExtras(record).classId || record.id || record.title, "class") : "";
@@ -878,6 +936,14 @@
         const note = String(record.notes || "").trim();
         const summary = note.length > 180 ? `${note.slice(0, 180)}...` : note;
         const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
+        const contactDetails = record.recordType === "contact" ? renderContactRecordDetails(record) : "";
+        const contactCopy =
+          record.recordType === "contact"
+            ? `<div class="management-contact-card-lines">
+                ${renderContactCopyLine("Email", record.contactEmail, "email")}
+                ${renderContactCopyLine("Phone", record.contactPhone, "phone")}
+              </div>`
+            : "";
         return `
           <article class="management-record ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
@@ -892,8 +958,10 @@
               </div>
               <h3>${escapeHtml(record.title)}</h3>
               ${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
+              ${contactCopy}
               ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
               ${classDetails}
+              ${contactDetails}
             </div>
             ${
               record.recordType === "contact"
@@ -1830,6 +1898,32 @@
     await loadSiteCalendar();
   }
 
+  async function copyTextValue(value, fallbackField = null) {
+    const text = String(value || "").trim();
+    if (!text) {
+      setStatus(recordStatus, "Nothing to copy.", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus(recordStatus, "Copied.", "success");
+    } catch (_error) {
+      const field = fallbackField || document.createElement("textarea");
+      if (!fallbackField) {
+        field.value = text;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.left = "-9999px";
+        document.body.appendChild(field);
+      }
+      field.focus();
+      field.select();
+      const copied = document.execCommand && document.execCommand("copy");
+      if (!fallbackField) field.remove();
+      setStatus(recordStatus, copied ? "Copied." : "Copy failed.", copied ? "success" : "error");
+    }
+  }
+
   async function copyFieldValue(fieldName) {
     const field = recordForm && recordForm.elements[fieldName];
     if (!field) return;
@@ -1838,15 +1932,7 @@
       setStatus(recordStatus, "Nothing to copy.", "error");
       return;
     }
-    try {
-      await navigator.clipboard.writeText(value);
-      setStatus(recordStatus, "Copied.", "success");
-    } catch (_error) {
-      field.focus();
-      field.select();
-      const copied = document.execCommand && document.execCommand("copy");
-      setStatus(recordStatus, copied ? "Copied." : "Copy failed.", copied ? "success" : "error");
-    }
+    copyTextValue(value, field);
   }
 
   function bindEvents() {
@@ -1962,6 +2048,13 @@
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
+        const copyButton = event.target.closest("[data-copy-record]");
+        if (copyButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          copyTextValue(copyButton.getAttribute("data-copy-record") || "");
+          return;
+        }
         const openButton = event.target.closest("[data-calendar-open]");
         if (openButton) {
           event.stopPropagation();
