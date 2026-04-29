@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429d" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429e" />
 </head>
 
 <body class="management-page">
@@ -207,6 +207,30 @@
                     <option value="completed">Completed</option>
                   </select>
                 </label>
+                <label data-field="inquiryDirection">
+                  Direction
+                  <select name="inquiryDirection">
+                    <option value="">Not Set</option>
+                    <option value="outgoing">Outgoing Outreach</option>
+                    <option value="incoming">Incoming Inquiry</option>
+                  </select>
+                </label>
+              </div>
+              <div class="management-form-grid">
+                <label data-field="inquiryCategory">
+                  Inquiry Category
+                  <select name="inquiryCategory">
+                    <option value="">Not Set</option>
+                    <option value="pool">Pool / Facility</option>
+                    <option value="program_manager">Program Manager</option>
+                    <option value="agency">Agency</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="customer">Customer / Student</option>
+                    <option value="travel_partner">Travel Partner</option>
+                    <option value="community_partner">Community Partner</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
                 <label data-field="source">
                   Source
                   <input type="text" name="source" maxlength="120" placeholder="Website, referral, phone, Facebook" />
@@ -340,6 +364,17 @@
                 Next Step
                 <input type="text" name="nextStep" maxlength="220" placeholder="Send forms, confirm dates, collect balance..." />
               </label>
+              <label data-field="outcomeReason">
+                Close Reason
+                <select name="outcomeReason">
+                  <option value="">Not Closed</option>
+                  <option value="no_response">No Response / No-Show</option>
+                  <option value="not_a_fit">Not a Good Fit</option>
+                  <option value="completed">Completed / Won</option>
+                  <option value="paused">Paused for Later</option>
+                  <option value="duplicate">Duplicate</option>
+                </select>
+              </label>
             </section>
             <label data-field="notes">
               Notes / Progress
@@ -374,6 +409,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429d" defer></script>
+  <script src="/js/management.js?v=20260429e" defer></script>
 </body>
 </html>

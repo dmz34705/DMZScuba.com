@@ -1016,6 +1016,27 @@
   color: #ffe5b3;
 }
 
+.management-badge.is-to_contact,
+.management-badge.is-reached_out {
+  background: rgba(85, 185, 255, 0.16);
+  color: #cfeeff;
+}
+
+.management-badge.is-gathering_details,
+.management-badge.is-planning,
+.management-badge.is-payment,
+.management-badge.is-timing {
+  background: rgba(245, 178, 62, 0.18);
+  color: #ffe5b3;
+}
+
+.management-badge.is-dead_end,
+.management-badge.is-not_fit,
+.management-badge.is-archived {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(234, 242, 255, 0.66);
+}
+
 .management-record-actions {
   display: flex;
   align-items: start;

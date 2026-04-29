@@ -49,6 +49,40 @@
     pool: "Pool",
     openWater: "Open Water",
   };
+  const statusOptionsByType = {
+    inquiry: [
+      "new",
+      "to_contact",
+      "reached_out",
+      "gathering_details",
+      "planning",
+      "payment",
+      "timing",
+      "complete",
+      "dead_end",
+      "not_fit",
+      "archived",
+    ],
+    class: ["scheduled", "active", "complete", "archived"],
+    trip: ["scheduled", "active", "complete", "archived"],
+    default: ["new", "active", "waiting", "scheduled", "complete", "archived"],
+  };
+  const statusLabels = {
+    new: "New / Untriaged",
+    to_contact: "To Contact",
+    reached_out: "Reached Out",
+    gathering_details: "Gathering Details",
+    planning: "Planning",
+    payment: "Payment / Agreement",
+    timing: "Timing / Scheduling",
+    complete: "Completed",
+    dead_end: "No Response / No-Show",
+    not_fit: "Not a Good Fit",
+    no_response: "No Response / No-Show",
+    not_a_fit: "Not a Good Fit",
+    completed: "Completed / Won",
+  };
+  const closedStatuses = new Set(["complete", "archived", "dead_end", "not_fit"]);
   const typeConfigs = {
     contact: {
       editor: "Contact Profile",
@@ -70,11 +104,21 @@
     inquiry: {
       editor: "Inquiry",
       newTitle: "New Inquiry",
-      titleLabel: "Inquiry Summary",
-      titlePlaceholder: "Open Water class question",
-      relatedLabel: "Interested Class, Trip, or Service",
-      notesLabel: "Inquiry Notes / Progress",
-      notesPlaceholder: "What they asked about, latest contact, objections, follow-up timing, quote details...",
+      titleLabel: "Inquiry / Outreach Summary",
+      titlePlaceholder: "Pool partnership outreach, agency question, vendor follow-up...",
+      statusLabel: "Progress",
+      relatedLabel: "Organization, Partner, or Opportunity",
+      contactLabel: "Primary Contact",
+      dueLabel: "Next Follow-Up Date",
+      stageLabel: "Legacy Stage",
+      sourceLabel: "Channel / Source",
+      startLabel: "Target Start Date",
+      endLabel: "Target End Date",
+      amountOwedLabel: "Estimated Cost / Owed",
+      amountPaidLabel: "Amount Paid",
+      nextStepLabel: "Next Action",
+      notesLabel: "Activity Notes / Progress Log",
+      notesPlaceholder: "Log each touchpoint here: date, who contacted whom, what changed, blocker, next decision, payment/timing details...",
       fields: [
         "recordType",
         "title",
@@ -86,11 +130,15 @@
         "contactPhone",
         "dueDate",
         "relatedEvent",
-        "stage",
+        "inquiryDirection",
+        "inquiryCategory",
         "source",
+        "startDate",
+        "endDate",
         "amountOwed",
         "amountPaid",
         "nextStep",
+        "outcomeReason",
         "notes",
       ],
     },
@@ -219,6 +267,8 @@
   }
 
   function formatLabel(value) {
+    const key = String(value || "");
+    if (statusLabels[key]) return statusLabels[key];
     return String(value || "")
       .replace(/[-_]+/g, " ")
       .replace(/\b\w/g, (match) => match.toUpperCase());
@@ -320,6 +370,22 @@
       .map((value) => `<option value="${value}">${formatLabel(value)}</option>`)
       .join("");
     select.value = options.includes(current) ? current : "normal";
+  }
+
+  function getStatusOptions(type) {
+    return statusOptionsByType[type] || statusOptionsByType.default;
+  }
+
+  function syncStatusOptions(type) {
+    const select = recordForm && recordForm.elements.status;
+    if (!select) return;
+    const current = select.value || "";
+    const options = getStatusOptions(type);
+    select.innerHTML = options
+      .map((value) => `<option value="${value}">${formatLabel(value)}</option>`)
+      .join("");
+    const fallback = type === "inquiry" ? "new" : options[0];
+    select.value = options.includes(current) ? current : fallback;
   }
 
   function syncTimeOptions() {
@@ -637,13 +703,24 @@
       });
     });
     setFieldLabel("title", config.titleLabel || "Title");
+    setFieldLabel("status", config.statusLabel || "Status");
+    setFieldLabel("contactName", config.contactLabel || "Contact Name");
+    setFieldLabel("dueDate", config.dueLabel || "Due Date");
     setFieldLabel("relatedEvent", config.relatedLabel || "Related Class, Trip, or Event");
+    setFieldLabel("stage", config.stageLabel || "Stage");
+    setFieldLabel("source", config.sourceLabel || "Source");
+    setFieldLabel("startDate", config.startLabel || "Start Date");
+    setFieldLabel("endDate", config.endLabel || "End Date");
     setFieldLabel("capacity", config.capacityLabel || "Capacity / Roster Size");
     setFieldLabel("certification", config.certificationLabel || "Certification / Level");
+    setFieldLabel("amountOwed", config.amountOwedLabel || "Total Owed");
+    setFieldLabel("amountPaid", config.amountPaidLabel || "Amount Paid");
+    setFieldLabel("nextStep", config.nextStepLabel || "Next Step");
     setFieldLabel("notes", config.notesLabel || "Notes / Progress");
     setFieldPlaceholder("title", config.titlePlaceholder || "");
     setFieldPlaceholder("notes", config.notesPlaceholder || "");
     syncPriorityOptions(type);
+    syncStatusOptions(type);
     syncFormGridVisibility();
     if (editorTitle) editorTitle.textContent = editing ? `Edit ${config.editor}` : config.newTitle;
   }
@@ -813,6 +890,9 @@
       extras.firstName,
       extras.lastName,
       extras.stage,
+      extras.inquiryDirection,
+      extras.inquiryCategory,
+      extras.outcomeReason,
       extras.source,
       extras.startDate,
       extras.endDate,
@@ -886,14 +966,14 @@
       (record) =>
         !isSiteBackedManagementRecord(record) &&
         record.recordType !== "contact" &&
-        !["complete", "archived"].includes(record.status)
+        !closedStatuses.has(record.status)
     ).length;
     const openBalance = state.records
       .filter(
         (record) =>
           !isSiteBackedManagementRecord(record) &&
           record.recordType !== "contact" &&
-          !["complete", "archived"].includes(record.status)
+          !closedStatuses.has(record.status)
       )
       .reduce((sum, record) => sum + getBalance(record), 0);
     const byType = state.records.reduce((counts, record) => {
@@ -938,6 +1018,9 @@
               extras.stage ? `Stage: ${formatLabel(extras.stage)}` : "",
               extras.startDate ? `Starts ${formatDate(extras.startDate)}` : "",
               record.dueDate ? `Due ${formatDate(record.dueDate)}` : "",
+              extras.inquiryDirection ? formatLabel(extras.inquiryDirection) : "",
+              extras.inquiryCategory ? formatLabel(extras.inquiryCategory) : "",
+              extras.outcomeReason ? `Closed: ${formatLabel(extras.outcomeReason)}` : "",
               balance > 0 ? `Balance ${formatMoney(balance)}` : "",
               record.relatedEvent || "",
             ].filter(Boolean);
@@ -976,7 +1059,7 @@
                 ? ""
                 : `<div class="management-record-actions">
               <select data-status-change="${escapeHtml(record.id)}" aria-label="Change status for ${escapeHtml(record.title)}">
-                ${["new", "active", "waiting", "scheduled", "complete", "archived"]
+                ${getStatusOptions(record.recordType)
                   .map((status) => `<option value="${status}" ${record.status === status ? "selected" : ""}>${formatLabel(status)}</option>`)
                   .join("")}
               </select>
@@ -1438,6 +1521,9 @@
       firstName: textValue("firstName", existingExtras.firstName),
       lastName: textValue("lastName", existingExtras.lastName),
       stage: textValue("stage", existingExtras.stage),
+      inquiryDirection: textValue("inquiryDirection", existingExtras.inquiryDirection),
+      inquiryCategory: textValue("inquiryCategory", existingExtras.inquiryCategory),
+      outcomeReason: textValue("outcomeReason", existingExtras.outcomeReason),
       source: textValue("source", existingExtras.source),
       startDate: textValue("startDate", existingExtras.startDate),
       endDate: textValue("endDate", existingExtras.endDate),

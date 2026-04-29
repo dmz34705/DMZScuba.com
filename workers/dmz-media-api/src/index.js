@@ -1042,7 +1042,22 @@ function normalizeManagementChoice(value, fallback, allowed) {
 function normalizeManagementRecord(input = {}, existing = {}) {
   const source = input && typeof input === "object" ? input : {};
   const allowedTypes = ["contact", "inquiry", "class", "trip", "task"];
-  const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
+  const allowedStatuses = [
+    "new",
+    "active",
+    "waiting",
+    "scheduled",
+    "complete",
+    "archived",
+    "to_contact",
+    "reached_out",
+    "gathering_details",
+    "planning",
+    "payment",
+    "timing",
+    "dead_end",
+    "not_fit",
+  ];
   const allowedPriorities = ["low", "normal", "high", "urgent"];
   const recordType = normalizeManagementChoice(source.recordType || source.type, existing.recordType || "inquiry", allowedTypes);
   const status = normalizeManagementChoice(source.status, existing.status || "new", allowedStatuses);
