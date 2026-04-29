@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429p" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429q" />
 </head>
 
 <body class="management-page">
@@ -80,6 +80,7 @@
           <h2>Editable Site Areas</h2>
         </div>
         <div class="management-site-links">
+          <button type="button" data-open-home-ticker>Edit Home Ticker</button>
           <a href="/pages/events/" target="_blank" rel="noopener">Events + Registration</a>
           <a href="/pages/media/" target="_blank" rel="noopener">Media Library</a>
           <a href="/pages/travel/" target="_blank" rel="noopener">Travel Destinations</a>
@@ -427,9 +428,32 @@
           <div class="management-records" data-record-list aria-live="polite"></div>
         </section>
       </section>
+
+      <section class="management-ticker-modal" data-home-ticker-modal role="dialog" aria-modal="true" aria-labelledby="managementTickerTitle" hidden>
+        <div class="management-ticker-card">
+          <div class="management-panel-head">
+            <div>
+              <p class="management-kicker">Home page</p>
+              <h2 id="managementTickerTitle">News Ticker</h2>
+            </div>
+            <button type="button" data-close-home-ticker>Cancel</button>
+          </div>
+          <form class="management-ticker-form" data-home-ticker-form>
+            <label>
+              Ticker Lines
+              <textarea rows="10" data-home-ticker-lines placeholder="Add one update per line."></textarea>
+            </label>
+            <p class="management-form-status" data-home-ticker-status aria-live="polite"></p>
+            <div class="management-form-actions">
+              <button class="btn primary" type="submit">Save Ticker</button>
+              <button class="btn secondary" type="button" data-close-home-ticker>Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429p" defer></script>
+  <script src="/js/management.js?v=20260429q" defer></script>
 </body>
 </html>

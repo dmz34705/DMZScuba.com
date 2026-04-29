@@ -73,7 +73,8 @@
 }
 
 .management-login-form,
-.management-record-form {
+.management-record-form,
+.management-ticker-form {
   display: grid;
   gap: 14px;
   margin-top: 20px;
@@ -82,6 +83,7 @@
 
 .management-login-form label,
 .management-record-form label,
+.management-ticker-form label,
 .management-search label,
 .management-sort {
   display: grid;
@@ -95,6 +97,7 @@
 .management-record-form input,
 .management-record-form select,
 .management-record-form textarea,
+.management-ticker-form textarea,
 .management-search input,
 .management-sort select {
   width: 100%;
@@ -146,15 +149,22 @@
   color: var(--text);
 }
 
-.management-record-form textarea {
+.management-record-form textarea,
+.management-ticker-form textarea {
   resize: vertical;
   min-height: 140px;
+}
+
+.management-ticker-form textarea {
+  min-height: 260px;
+  line-height: 1.55;
 }
 
 .management-login-form input:focus,
 .management-record-form input:focus,
 .management-record-form select:focus,
 .management-record-form textarea:focus,
+.management-ticker-form textarea:focus,
 .management-search input:focus,
 .management-sort select:focus {
   border-color: rgba(85, 185, 255, 0.72);
@@ -702,19 +712,51 @@
   justify-content: flex-end;
 }
 
-.management-site-links a {
+.management-site-links a,
+.management-site-links button {
+  appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.055);
   color: var(--text);
+  font: inherit;
   font-size: 13px;
   font-weight: 800;
   padding: 9px 11px;
+  cursor: pointer;
 }
 
-.management-site-links a:hover {
+.management-site-links a:hover,
+.management-site-links button:hover {
   border-color: rgba(85, 185, 255, 0.52);
   background: rgba(85, 185, 255, 0.13);
+}
+
+.management-ticker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 7, 14, 0.74);
+  backdrop-filter: blur(6px);
+}
+
+.management-ticker-card {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border: 1px solid rgba(85, 185, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(7, 19, 37, 0.96);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.42);
+  padding: 20px;
+}
+
+.management-ticker-card .management-panel-head {
+  top: -20px;
+  margin: -20px -20px 18px;
 }
 
 .management-panel,

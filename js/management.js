@@ -7,6 +7,8 @@
   const managementUrl = apiRoot ? `${apiRoot}/api/admin/management` : "/api/admin/management";
   const eventsUrl = apiRoot ? `${apiRoot}/api/v2/events` : "/api/v2/events";
   const adminEventsUrl = apiRoot ? `${apiRoot}/api/admin/v2/events` : "/api/admin/v2/events";
+  const homeTickerUrl = apiRoot ? `${apiRoot}/api/v2/home-ticker` : "/api/v2/home-ticker";
+  const adminHomeTickerUrl = apiRoot ? `${apiRoot}/api/admin/v2/home-ticker` : "/api/admin/v2/home-ticker";
   const tokenStorageKey = "dmzMediaToken";
   const timeOptions = Array.from({ length: 48 }, (_unused, index) => {
     const hour24 = Math.floor(index / 2);
@@ -28,6 +30,12 @@
   const editorTitle = app.querySelector("[data-editor-title]");
   const deleteButton = app.querySelector("[data-delete-record]");
   const cancelEditButton = app.querySelector("[data-cancel-edit]");
+  const homeTickerModal = app.querySelector("[data-home-ticker-modal]");
+  const homeTickerForm = app.querySelector("[data-home-ticker-form]");
+  const homeTickerLinesInput = app.querySelector("[data-home-ticker-lines]");
+  const homeTickerStatus = app.querySelector("[data-home-ticker-status]");
+  const openHomeTickerButton = app.querySelector("[data-open-home-ticker]");
+  const closeHomeTickerButtons = Array.from(app.querySelectorAll("[data-close-home-ticker]"));
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
   const calendarStatus = app.querySelector("[data-calendar-status]");
   const refreshCalendarButton = app.querySelector("[data-refresh-calendar]");
@@ -286,6 +294,71 @@
   function openEditor(record = null) {
     fillForm(record);
     openEditorModal();
+  }
+
+  function normalizeTickerLines(input) {
+    return (Array.isArray(input) ? input : [])
+      .map((line) => String(line || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .slice(0, 24)
+      .map((line) => line.slice(0, 220));
+  }
+
+  function openHomeTickerModal() {
+    if (!homeTickerModal) return;
+    homeTickerModal.hidden = false;
+    document.body.classList.add("management-editor-open");
+    setStatus(homeTickerStatus, "Loading ticker...");
+    loadHomeTicker();
+  }
+
+  function closeHomeTickerModal() {
+    if (!homeTickerModal) return;
+    homeTickerModal.hidden = true;
+    if (!app.classList.contains("is-editor-open")) document.body.classList.remove("management-editor-open");
+    setStatus(homeTickerStatus, "");
+  }
+
+  async function loadHomeTicker() {
+    if (!homeTickerLinesInput) return;
+    const resp = await fetch(`${homeTickerUrl}?t=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok) {
+      setStatus(homeTickerStatus, "Could not load the home ticker.", "error");
+      return;
+    }
+    const lines = normalizeTickerLines(data.lines);
+    homeTickerLinesInput.value = lines.join("\n");
+    setStatus(homeTickerStatus, "Loaded.", "success");
+    homeTickerLinesInput.focus();
+    homeTickerLinesInput.setSelectionRange(homeTickerLinesInput.value.length, homeTickerLinesInput.value.length);
+  }
+
+  async function saveHomeTicker(event) {
+    event.preventDefault();
+    const lines = normalizeTickerLines(String(homeTickerLinesInput ? homeTickerLinesInput.value : "").split(/\r?\n/));
+    setStatus(homeTickerStatus, "Saving ticker...");
+    const resp = await apiFetch(adminHomeTickerUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lines }),
+    }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || resp.status === 401) {
+      setToken("");
+      showAuthed(false);
+      closeHomeTickerModal();
+      setStatus(loginStatus, "Please log in again.", "error");
+      return;
+    }
+    if (!resp.ok || data.ok === false) {
+      setStatus(homeTickerStatus, data.error || "Could not save the home ticker.", "error");
+      return;
+    }
+    const savedLines = normalizeTickerLines(data && data.payload ? data.payload.lines : lines);
+    if (homeTickerLinesInput) homeTickerLinesInput.value = savedLines.join("\n");
+    setStatus(homeTickerStatus, "Ticker saved.", "success");
+    window.setTimeout(closeHomeTickerModal, 500);
   }
 
   function setStatus(node, message, tone = "") {
@@ -2365,6 +2438,16 @@
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderRecords);
+    if (openHomeTickerButton) openHomeTickerButton.addEventListener("click", openHomeTickerModal);
+    closeHomeTickerButtons.forEach((button) => {
+      button.addEventListener("click", closeHomeTickerModal);
+    });
+    if (homeTickerModal) {
+      homeTickerModal.addEventListener("click", (event) => {
+        if (event.target === homeTickerModal) closeHomeTickerModal();
+      });
+    }
+    if (homeTickerForm) homeTickerForm.addEventListener("submit", saveHomeTicker);
     if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
     if (registrationList) {
       registrationList.addEventListener("click", (event) => {
@@ -2449,9 +2532,12 @@
       });
     }
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && app.classList.contains("is-editor-open")) {
-        closeEditorModal();
+      if (event.key !== "Escape") return;
+      if (homeTickerModal && !homeTickerModal.hidden) {
+        closeHomeTickerModal();
+        return;
       }
+      if (app.classList.contains("is-editor-open")) closeEditorModal();
     });
   }
 
