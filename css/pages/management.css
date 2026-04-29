@@ -404,8 +404,13 @@
 }
 
 .management-contact-classes .management-class-contact-add {
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
+}
+
+.management-contact-classes .management-class-contact-add select[multiple] {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .management-class-contact-add select,
