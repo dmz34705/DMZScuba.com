@@ -405,6 +405,7 @@
 
 .management-contact-classes .management-class-contact-add {
   grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+  align-items: start;
 }
 
 .management-class-contact-add select,
@@ -423,6 +424,12 @@
 
 .management-class-contact-add select[multiple] {
   min-height: 104px;
+}
+
+.management-contact-classes .management-class-contact-add select:not([multiple]),
+.management-contact-classes .management-class-contact-add button {
+  min-height: 42px;
+  align-self: start;
 }
 
 .management-class-contact-list,
