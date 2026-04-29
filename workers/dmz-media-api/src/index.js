@@ -1525,7 +1525,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
 async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
   await ensureEventRegistrationsV2Table(env);
   const rows = await env.DB.prepare(
-    `SELECT id, first_name, last_name, additional_guests, party_size, created_at
+    `SELECT id, first_name, last_name, email, phone, cert_level, additional_guests, party_size, created_at
      FROM event_registrations_v2
      WHERE source_id = ? AND event_date = ?
      ORDER BY created_at ASC`
@@ -1534,7 +1534,12 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     .all();
   const list = (rows.results || []).map((row) => ({
     id: String((row && row.id) || "").trim(),
+    firstName: String((row && row.first_name) || "").trim(),
+    lastName: String((row && row.last_name) || "").trim(),
     name: buildRegistrantLabel(row && row.first_name, row && row.last_name),
+    email: String((row && row.email) || "").trim(),
+    phone: String((row && row.phone) || "").trim(),
+    certificationLevel: String((row && row.cert_level) || "").trim(),
     additionalGuests: Math.max(0, Number((row && row.additional_guests) || 0) || 0),
     partySize: Math.max(1, Number((row && row.party_size) || 1) || 1),
     createdAt: String((row && row.created_at) || ""),

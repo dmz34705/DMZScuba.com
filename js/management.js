@@ -36,6 +36,12 @@
   const registrationList = app.querySelector("[data-registration-list]");
   const refreshRegistrationsButton = app.querySelector("[data-refresh-registrations]");
   const classScheduleEl = app.querySelector("[data-class-schedule]");
+  const classRosterEl = app.querySelector("[data-class-roster]");
+  const classContactSelect = app.querySelector("[data-class-contact-select]");
+  const classContactList = app.querySelector("[data-class-contact-list]");
+  const classRegistrationSummary = app.querySelector("[data-class-registration-summary]");
+  const classRegistrationList = app.querySelector("[data-class-registration-list]");
+  const refreshClassRegistrationsButton = app.querySelector("[data-refresh-class-registrations]");
   const extraFieldsSection = app.querySelector(".management-extra-fields");
   const classSessionTypes = ["classroom", "pool", "openWater"];
   const classSessionLabels = {
@@ -103,6 +109,7 @@
         "classId",
         "capacity",
         "classSchedule",
+        "classRoster",
         "notes",
       ],
     },
@@ -162,6 +169,9 @@
     registrationSnapshot: null,
     registrationLoading: false,
     registrationDeletingId: "",
+    classRegistrationSnapshot: null,
+    classRegistrationLoading: false,
+    classConvertingRegistrationId: "",
     filterType: "all",
     search: "",
     loading: false,
@@ -389,6 +399,71 @@
         .filter((session) => session.date);
     });
     return sessions;
+  }
+
+  function readClassContacts() {
+    if (!classContactList) return [];
+    return Array.from(classContactList.querySelectorAll("[data-class-contact-id]")).map((row) => ({
+      id: row.getAttribute("data-class-contact-id") || "",
+      name: row.getAttribute("data-class-contact-name") || "",
+      email: row.getAttribute("data-class-contact-email") || "",
+      phone: row.getAttribute("data-class-contact-phone") || "",
+      sourceRegistrationId: row.getAttribute("data-class-contact-registration-id") || "",
+    })).filter((item) => item.id);
+  }
+
+  function getContactRecords() {
+    return state.records.filter((record) => record.recordType === "contact");
+  }
+
+  function renderClassRoster(record = null) {
+    if (!classRosterEl) return;
+    const extras = getExtras(record);
+    const attached = Array.isArray(extras.classContacts) ? extras.classContacts : [];
+    const attachedIds = new Set(attached.map((item) => String(item && item.id || "")));
+    const contacts = getContactRecords();
+    if (classContactSelect) {
+      const options = contacts
+        .filter((contact) => !attachedIds.has(contact.id))
+        .map((contact) => {
+          const label = contact.contactName || contact.title || contact.contactEmail || "Unnamed contact";
+          return `<option value="${escapeHtml(contact.id)}">${escapeHtml(label)}</option>`;
+        });
+      classContactSelect.innerHTML = options.length
+        ? `<option value="">Select existing contact</option>${options.join("")}`
+        : '<option value="">No available contacts</option>';
+    }
+    if (classContactList) {
+      classContactList.innerHTML = attached.length
+        ? attached.map((contact) => `
+          <div class="management-class-contact-item"
+            data-class-contact-id="${escapeHtml(contact.id)}"
+            data-class-contact-name="${escapeHtml(contact.name)}"
+            data-class-contact-email="${escapeHtml(contact.email)}"
+            data-class-contact-phone="${escapeHtml(contact.phone)}"
+            data-class-contact-registration-id="${escapeHtml(contact.sourceRegistrationId || "")}">
+            <div>
+              <strong>${escapeHtml(contact.name || contact.email || "Unnamed contact")}</strong>
+              <span>${escapeHtml([contact.email, contact.phone].filter(Boolean).join(" | "))}</span>
+            </div>
+            <button type="button" data-remove-class-contact="${escapeHtml(contact.id)}">Remove</button>
+          </div>
+        `).join("")
+        : '<div class="management-empty">No contacts attached to this class yet.</div>';
+    }
+    renderClassRegistrationEscrow(record);
+  }
+
+  function getPrimaryClassRegistrationContext(record) {
+    if (!record || record.recordType !== "class") return null;
+    const extras = getExtras(record);
+    const classId = slugify(extras.classId || record.id || record.title, "class");
+    const primary = getOrderedClassSessions({ ...record, extras: { ...extras, classId } })[0];
+    if (!primary || !primary.date) return null;
+    return {
+      sourceId: `${classId}-${primary.type}-${primary.index + 1}`,
+      eventDate: primary.date,
+    };
   }
 
   function syncFormGridVisibility() {
@@ -953,6 +1028,166 @@
     renderRegistrationManager();
   }
 
+  function renderClassRegistrationEscrow(record = null) {
+    if (!classRegistrationList || !classRegistrationSummary) return;
+    const classRecord = record || (state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null);
+    const context = getPrimaryClassRegistrationContext(classRecord);
+    if (!context) {
+      classRegistrationSummary.textContent = "Add and save a class date before registration escrow can load.";
+      classRegistrationList.innerHTML = '<div class="management-empty">No class registration date is available yet.</div>';
+      return;
+    }
+    if (state.classRegistrationLoading) {
+      classRegistrationSummary.textContent = "Loading registration escrow...";
+      classRegistrationList.innerHTML = '<div class="management-empty">Loading registrations...</div>';
+      return;
+    }
+    const snapshot = state.classRegistrationSnapshot;
+    const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+    classRegistrationSummary.textContent = snapshot
+      ? `${registrants.length} registration${registrants.length === 1 ? "" : "s"} waiting for review.`
+      : "Refresh registrations after the class has been saved to the calendar.";
+    if (!snapshot) {
+      classRegistrationList.innerHTML = '<div class="management-empty">No registration data loaded yet.</div>';
+      return;
+    }
+    if (!registrants.length) {
+      classRegistrationList.innerHTML = '<div class="management-empty">No registrations in escrow.</div>';
+      return;
+    }
+    const attachedIds = new Set((Array.isArray(getExtras(classRecord).classContacts) ? getExtras(classRecord).classContacts : []).map((item) => item.sourceRegistrationId).filter(Boolean));
+    classRegistrationList.innerHTML = registrants.map((registrant) => {
+      const id = normalizeSiteText(registrant && registrant.id);
+      const alreadyAdded = attachedIds.has(id);
+      const busy = id && id === state.classConvertingRegistrationId;
+      const details = [
+        normalizeSiteText(registrant && registrant.email),
+        normalizeSiteText(registrant && registrant.phone),
+        normalizeSiteText(registrant && registrant.certificationLevel),
+      ].filter(Boolean);
+      return `
+        <div class="management-class-registration-item">
+          <div>
+            <strong>${escapeHtml(normalizeSiteText(registrant && registrant.name) || "Unnamed registrant")}</strong>
+            <span>${escapeHtml(details.join(" | "))}</span>
+          </div>
+          <button type="button" data-convert-registration="${escapeHtml(id)}" ${alreadyAdded || busy ? "disabled" : ""}>${alreadyAdded ? "Added" : busy ? "Adding..." : "Add Contact"}</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function loadClassRegistrationEscrow() {
+    const classRecord = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
+    const context = getPrimaryClassRegistrationContext(classRecord);
+    if (!context) {
+      renderClassRegistrationEscrow(classRecord);
+      return null;
+    }
+    state.classRegistrationLoading = true;
+    renderClassRegistrationEscrow(classRecord);
+    const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    state.classRegistrationLoading = false;
+    if (!resp || !resp.ok || !data.ok) {
+      state.classRegistrationSnapshot = null;
+      if (classRegistrationSummary) classRegistrationSummary.textContent = data.error || "Registration escrow is unavailable.";
+      renderClassRegistrationEscrow(classRecord);
+      return null;
+    }
+    state.classRegistrationSnapshot = data;
+    renderClassRegistrationEscrow(classRecord);
+    return data;
+  }
+
+  async function saveCurrentClassContacts(nextContacts) {
+    const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
+    if (!current || current.recordType !== "class") {
+      setStatus(recordStatus, "Save or open a class before adding contacts.", "error");
+      return null;
+    }
+    const next = {
+      ...current,
+      extras: {
+        ...getExtras(current),
+        classContacts: nextContacts,
+      },
+    };
+    const saved = await saveRecordPayload(next);
+    const index = state.records.findIndex((item) => item.id === saved.id);
+    if (index >= 0) state.records[index] = saved;
+    fillForm(saved);
+    return saved;
+  }
+
+  async function attachContactToClass(contact, sourceRegistrationId = "") {
+    if (!contact || !contact.id) return;
+    const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
+    const existing = Array.isArray(getExtras(current).classContacts) ? getExtras(current).classContacts : [];
+    if (existing.some((item) => item.id === contact.id)) {
+      setStatus(recordStatus, "Contact is already attached to this class.", "error");
+      return;
+    }
+    const nextContacts = [
+      ...existing,
+      {
+        id: contact.id,
+        name: contact.contactName || contact.title || "",
+        email: contact.contactEmail || "",
+        phone: contact.contactPhone || "",
+        sourceRegistrationId,
+      },
+    ];
+    await saveCurrentClassContacts(nextContacts);
+    setStatus(recordStatus, "Contact added to class.", "success");
+  }
+
+  async function addSelectedContactToClass() {
+    const contactId = classContactSelect ? classContactSelect.value : "";
+    const contact = state.records.find((record) => record.id === contactId && record.recordType === "contact");
+    if (!contact) {
+      setStatus(recordStatus, "Choose a contact to add.", "error");
+      return;
+    }
+    await attachContactToClass(contact);
+  }
+
+  async function convertRegistrationToContact(registrationId) {
+    const registrants = Array.isArray(state.classRegistrationSnapshot && state.classRegistrationSnapshot.registrants)
+      ? state.classRegistrationSnapshot.registrants
+      : [];
+    const registrant = registrants.find((item) => normalizeSiteText(item && item.id) === normalizeSiteText(registrationId));
+    if (!registrant) return;
+    state.classConvertingRegistrationId = normalizeSiteText(registrationId);
+    renderClassRegistrationEscrow(state.records.find((item) => item.id === state.selectedId));
+    const firstName = normalizeSiteText(registrant.firstName);
+    const lastName = normalizeSiteText(registrant.lastName);
+    const contactName = [firstName, lastName].filter(Boolean).join(" ") || normalizeSiteText(registrant.name);
+    const existingContact = getContactRecords().find((contact) => {
+      const email = normalizeSiteText(contact.contactEmail).toLowerCase();
+      return email && email === normalizeSiteText(registrant.email).toLowerCase();
+    });
+    const contact = existingContact || await saveRecordPayload({
+      recordType: "contact",
+      title: contactName,
+      status: "active",
+      priority: "normal",
+      contactName,
+      contactEmail: normalizeSiteText(registrant.email),
+      contactPhone: normalizeSiteText(registrant.phone),
+      notes: "Created from class registration escrow.",
+      extras: {
+        firstName,
+        lastName,
+        source: "Class registration",
+        certification: normalizeSiteText(registrant.certificationLevel),
+      },
+    });
+    state.classConvertingRegistrationId = "";
+    await attachContactToClass(contact, normalizeSiteText(registrationId));
+  }
+
   function readFormRecord() {
     const formData = new FormData(recordForm);
     const id = String(formData.get("id") || "").trim();
@@ -983,6 +1218,9 @@
       classSessions: recordForm.elements.recordType && String(formData.get("recordType") || existing && existing.recordType || "") === "class"
         ? readClassSessions()
         : existingExtras.classSessions,
+      classContacts: recordForm.elements.recordType && String(formData.get("recordType") || existing && existing.recordType || "") === "class"
+        ? readClassContacts()
+        : existingExtras.classContacts,
       registrationEnabled:
         recordForm.elements.registrationEnabled && !recordForm.elements.registrationEnabled.disabled
           ? (recordForm.elements.registrationEnabled.checked ? "1" : "")
@@ -1055,7 +1293,11 @@
       if (field.type === "checkbox") field.checked = Boolean(value);
       else field.value = value == null ? "" : String(value);
     });
+    state.classRegistrationSnapshot = null;
+    state.classRegistrationLoading = false;
+    state.classConvertingRegistrationId = "";
     renderClassSchedule(getExtras(item).classSessions || {});
+    renderClassRoster(item);
     if (item.recordType === "contact") {
       const extras = getExtras(item);
       const nameParts = String(item.contactName || item.title || "").trim().split(/\s+/);
@@ -1227,7 +1469,7 @@
       }
       return;
     }
-    if (record.recordType === "class" || record.recordType === "trip") {
+    if (record.recordType === "trip") {
       setStatus(recordStatus, "Open a calendar record from the Site Calendar list before editing calendar items.", "error");
       return;
     }
@@ -1482,6 +1724,27 @@
             }
           });
         }
+      });
+    }
+    const addClassContactButton = app.querySelector("[data-add-class-contact]");
+    if (addClassContactButton) addClassContactButton.addEventListener("click", addSelectedContactToClass);
+    if (refreshClassRegistrationsButton) refreshClassRegistrationsButton.addEventListener("click", loadClassRegistrationEscrow);
+    if (classContactList) {
+      classContactList.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-remove-class-contact]");
+        if (!button) return;
+        const removeId = button.getAttribute("data-remove-class-contact") || "";
+        const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
+        const existing = Array.isArray(getExtras(current).classContacts) ? getExtras(current).classContacts : [];
+        await saveCurrentClassContacts(existing.filter((contact) => contact.id !== removeId));
+        setStatus(recordStatus, "Contact removed from class.", "success");
+      });
+    }
+    if (classRegistrationList) {
+      classRegistrationList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-convert-registration]");
+        if (!button) return;
+        convertRegistrationToContact(button.getAttribute("data-convert-registration") || "");
       });
     }
     app.querySelectorAll("[data-copy-field]").forEach((button) => {

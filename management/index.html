@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260428j" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260428k" />
 </head>
 
 <body class="management-page">
@@ -281,6 +281,27 @@
                   <div data-class-session-list="openWater"></div>
                 </div>
               </section>
+              <section class="management-class-roster" data-field="classRoster" data-class-roster>
+                <div class="management-class-roster-head">
+                  <div>
+                    <h3>Class Contacts</h3>
+                    <p>Add existing contacts or convert event registrations into contact records.</p>
+                  </div>
+                </div>
+                <div class="management-class-contact-add">
+                  <select data-class-contact-select aria-label="Select contact to add"></select>
+                  <button type="button" data-add-class-contact>Add Contact</button>
+                </div>
+                <div class="management-class-contact-list" data-class-contact-list></div>
+                <div class="management-class-registration-review">
+                  <div class="management-class-session-head">
+                    <h4>Registration Escrow</h4>
+                    <button type="button" data-refresh-class-registrations>Refresh Registrations</button>
+                  </div>
+                  <p data-class-registration-summary>No registration data loaded.</p>
+                  <div data-class-registration-list></div>
+                </div>
+              </section>
               <div class="management-form-grid">
                 <label data-field="capacity">
                   Capacity / Roster Size
@@ -353,6 +374,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260428j" defer></script>
+  <script src="/js/management.js?v=20260428k" defer></script>
 </body>
 </html>

@@ -250,7 +250,8 @@
   background: rgba(226, 27, 35, 0.14);
 }
 
-.management-class-schedule {
+.management-class-schedule,
+.management-class-roster {
   display: grid;
   gap: 14px;
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -263,11 +264,15 @@
 
 .management-class-schedule-head h3,
 .management-class-schedule-head p,
+.management-class-roster-head h3,
+.management-class-roster-head p,
 .management-class-session-head h4 {
   margin: 0;
 }
 
-.management-class-schedule-head p {
+.management-class-schedule-head p,
+.management-class-roster-head p,
+.management-class-registration-review p {
   margin-top: 4px;
   color: rgba(234, 242, 255, 0.62);
   font-size: 13px;
@@ -348,6 +353,60 @@
   grid-column: 1 / -1;
   justify-self: end;
   min-height: 38px;
+}
+
+.management-class-contact-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.management-class-contact-add select,
+.management-class-contact-add button,
+.management-class-contact-item button,
+.management-class-registration-item button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 10px;
+}
+
+.management-class-contact-list,
+.management-class-registration-review,
+[data-class-registration-list] {
+  display: grid;
+  gap: 8px;
+}
+
+.management-class-contact-item,
+.management-class-registration-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(5, 11, 20, 0.3);
+}
+
+.management-class-contact-item strong,
+.management-class-registration-item strong {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.management-class-contact-item span,
+.management-class-registration-item span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 12px;
 }
 
 .management-dashboard {
@@ -809,6 +868,12 @@
   }
 
   .management-class-session-row {
+    grid-template-columns: 1fr;
+  }
+
+  .management-class-contact-add,
+  .management-class-contact-item,
+  .management-class-registration-item {
     grid-template-columns: 1fr;
   }
 }
