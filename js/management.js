@@ -101,7 +101,6 @@
         "recordType",
         "title",
         "classId",
-        "eventLocation",
         "capacity",
         "classSchedule",
         "notes",
@@ -335,9 +334,22 @@
     ].join("");
     return `
       <div class="management-class-session-row" data-class-session="${escapeHtml(type)}">
-        <input type="date" data-class-session-date value="${escapeHtml(session.date || "")}" aria-label="${escapeHtml(classSessionLabels[type])} date" />
-        <select data-class-session-start aria-label="${escapeHtml(classSessionLabels[type])} start time">${options}</select>
-        <select data-class-session-end aria-label="${escapeHtml(classSessionLabels[type])} end time">${endOptions}</select>
+        <label>
+          <span>Date</span>
+          <input type="date" data-class-session-date value="${escapeHtml(session.date || "")}" aria-label="${escapeHtml(classSessionLabels[type])} date" />
+        </label>
+        <label>
+          <span>Start</span>
+          <select data-class-session-start aria-label="${escapeHtml(classSessionLabels[type])} start time">${options}</select>
+        </label>
+        <label>
+          <span>End</span>
+          <select data-class-session-end aria-label="${escapeHtml(classSessionLabels[type])} end time">${endOptions}</select>
+        </label>
+        <label class="management-class-session-location">
+          <span>Location</span>
+          <input type="text" data-class-session-location value="${escapeHtml(session.location || "")}" maxlength="180" placeholder="${escapeHtml(classSessionLabels[type])} location" />
+        </label>
         <button type="button" data-remove-class-session>Remove</button>
       </div>
     `;
@@ -372,6 +384,7 @@
           date: String((row.querySelector("[data-class-session-date]") || {}).value || "").trim(),
           startTime: String((row.querySelector("[data-class-session-start]") || {}).value || "").trim(),
           endTime: String((row.querySelector("[data-class-session-end]") || {}).value || "").trim(),
+          location: String((row.querySelector("[data-class-session-location]") || {}).value || "").trim(),
         }))
         .filter((session) => session.date);
     });
@@ -1130,6 +1143,7 @@
           date: String(session.date || "").trim(),
           startTime: String(session.startTime || "").trim(),
           endTime: String(session.endTime || "").trim(),
+          location: String(session.location || "").trim(),
         });
       });
     });
@@ -1147,7 +1161,6 @@
     const events = Array.isArray(state.eventsPayload.events) ? state.eventsPayload.events : [];
     const remaining = events.filter((item) => String(item && item.managementClassId || "").trim().toLowerCase() !== classId);
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
-    const location = String(extras.eventLocation || "").trim();
     const description = String(record.notes || "").trim();
     const generated = sessions.map((session, index) => {
       const primary = index === 0;
@@ -1161,7 +1174,7 @@
         endTime: session.endTime,
         type: "Training",
         status: record.status || "scheduled",
-        location,
+        location: session.location,
         summary: description,
         registrationEnabled: primary && capacity > 0,
         registrationCapacity: primary ? capacity : 0,
