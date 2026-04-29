@@ -1386,7 +1386,7 @@
               </div>`
             : "";
         return `
-          <article class="management-record ${isContact ? "is-contact" : ""} ${record.recordType === "class" ? "is-class" : ""} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
+          <article class="management-record is-${escapeHtml(record.recordType)} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(record.recordType))}</span>

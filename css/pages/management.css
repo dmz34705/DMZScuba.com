@@ -1376,3 +1376,190 @@
     justify-content: flex-start;
   }
 }
+
+/* ============================================================
+   Visual & Layout Improvements
+   ============================================================ */
+
+/* ---- Two-row toolbar: grid replaces flat flex ---- */
+.management-list-tools {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: end;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.management-new-record {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  border-color: rgba(226, 27, 35, 0.42);
+  background: rgba(226, 27, 35, 0.13);
+  font-weight: 800;
+}
+
+.management-new-record:hover {
+  border-color: rgba(226, 27, 35, 0.72);
+  background: rgba(226, 27, 35, 0.24);
+}
+
+.management-search {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.management-sort {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: end;
+}
+
+.management-filters {
+  grid-column: 1 / 3;
+  grid-row: 2;
+  align-self: center;
+}
+
+.management-calendar-controls {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: center;
+  justify-self: end;
+}
+
+/* ---- Filter buttons: pill tabs ---- */
+.management-filters button {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.management-filters button:hover {
+  border-color: rgba(85, 185, 255, 0.38);
+  background: rgba(85, 185, 255, 0.10);
+}
+
+.management-filters button.is-active {
+  border-color: rgba(85, 185, 255, 0.56);
+  background: rgba(85, 185, 255, 0.20);
+  color: #cfeeff;
+}
+
+/* ---- Metric tiles: colored left accents per category ---- */
+.management-metrics article:nth-child(1) { border-left: 3px solid rgba(226, 27, 35, 0.65); }
+.management-metrics article:nth-child(2) { border-left: 3px solid rgba(85, 185, 255, 0.65); }
+.management-metrics article:nth-child(3) { border-left: 3px solid rgba(245, 178, 62, 0.65); }
+.management-metrics article:nth-child(4) { border-left: 3px solid rgba(66, 185, 156, 0.65); }
+.management-metrics article:nth-child(5) { border-left: 3px solid rgba(85, 210, 230, 0.65); }
+.management-metrics article:nth-child(6) { border-left: 3px solid rgba(226, 27, 35, 0.45); }
+
+/* ---- Inquiry records: amber left bar ---- */
+.management-record.is-inquiry {
+  border-color: rgba(245, 178, 62, 0.22);
+  border-left: 3px solid rgba(245, 178, 62, 0.72);
+  background:
+    linear-gradient(90deg, rgba(245, 178, 62, 0.07), rgba(245, 178, 62, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-inquiry:hover,
+.management-record.is-inquiry.is-selected {
+  border-color: rgba(245, 178, 62, 0.42);
+  border-left-color: rgba(245, 178, 62, 0.88);
+  background:
+    linear-gradient(90deg, rgba(245, 178, 62, 0.13), rgba(245, 178, 62, 0.02) 46%),
+    rgba(245, 178, 62, 0.055);
+}
+
+/* ---- Task records: violet left bar ---- */
+.management-record.is-task {
+  border-color: rgba(149, 117, 205, 0.22);
+  border-left: 3px solid rgba(149, 117, 205, 0.72);
+  background:
+    linear-gradient(90deg, rgba(149, 117, 205, 0.07), rgba(149, 117, 205, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-task:hover,
+.management-record.is-task.is-selected {
+  border-color: rgba(149, 117, 205, 0.42);
+  border-left-color: rgba(149, 117, 205, 0.88);
+  background:
+    linear-gradient(90deg, rgba(149, 117, 205, 0.13), rgba(149, 117, 205, 0.02) 46%),
+    rgba(149, 117, 205, 0.055);
+}
+
+/* ---- Trip records: cyan left bar ---- */
+.management-record.is-trip {
+  border-color: rgba(85, 210, 230, 0.22);
+  border-left: 3px solid rgba(85, 210, 230, 0.72);
+  background:
+    linear-gradient(90deg, rgba(85, 210, 230, 0.07), rgba(85, 210, 230, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-trip:hover,
+.management-record.is-trip.is-selected {
+  border-color: rgba(85, 210, 230, 0.42);
+  border-left-color: rgba(85, 210, 230, 0.88);
+  background:
+    linear-gradient(90deg, rgba(85, 210, 230, 0.13), rgba(85, 210, 230, 0.02) 46%),
+    rgba(85, 210, 230, 0.055);
+}
+
+/* ---- Type badge colors ---- */
+.management-badge.is-contact { background: rgba(85, 185, 255, 0.16); color: #cfeeff; }
+.management-badge.is-inquiry { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
+.management-badge.is-class   { background: rgba(66, 185, 156, 0.18); color: #c5ffe9; }
+.management-badge.is-trip    { background: rgba(85, 210, 230, 0.16); color: #b3f0ff; }
+.management-badge.is-task    { background: rgba(149, 117, 205, 0.18); color: #dfd0ff; }
+
+/* ---- Status badge fills (previously unstyled values) ---- */
+.management-badge.is-new       { background: rgba(85, 185, 255, 0.11); color: #cfeeff; }
+.management-badge.is-active    { background: rgba(66, 185, 156, 0.15); color: #c5ffe9; }
+.management-badge.is-scheduled { background: rgba(66, 185, 156, 0.13); color: #c5ffe9; }
+.management-badge.is-normal    { background: rgba(255, 255, 255, 0.05); color: rgba(234, 242, 255, 0.62); }
+.management-badge.is-low       { background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.48); }
+
+/* ---- Quick-status select: pill style ---- */
+.management-record-actions select {
+  border-radius: 20px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 130px;
+  cursor: pointer;
+}
+
+/* ---- Extra-fields section label via pseudo-element ---- */
+.management-extra-fields:not(.management-field-hidden)::before {
+  content: "Additional Details";
+  display: block;
+  color: rgba(155, 211, 255, 0.74);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: -2px;
+}
+
+/* ---- Responsive: single-column toolbar on narrow screens ---- */
+@media (max-width: 680px) {
+  .management-list-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .management-new-record       { grid-column: 1; grid-row: 1; }
+  .management-search           { grid-column: 1; grid-row: 2; }
+  .management-sort             { grid-column: 1; grid-row: 3; }
+  .management-filters          { grid-column: 1; grid-row: 4; }
+  .management-calendar-controls { grid-column: 1; grid-row: 5; justify-self: start; }
+}
