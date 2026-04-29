@@ -783,6 +783,15 @@
   background: rgba(85, 185, 255, 0.78);
 }
 
+.management-record.is-class {
+  display: block;
+  padding: 16px;
+  border-color: rgba(66, 185, 156, 0.18);
+  background:
+    linear-gradient(90deg, rgba(66, 185, 156, 0.10), rgba(66, 185, 156, 0) 42%),
+    rgba(255, 255, 255, 0.045);
+}
+
 .management-record:hover,
 .management-record.is-selected {
   border-color: rgba(85, 185, 255, 0.48);
@@ -796,6 +805,14 @@
     rgba(85, 185, 255, 0.08);
 }
 
+.management-record.is-class:hover,
+.management-record.is-class.is-selected {
+  border-color: rgba(66, 185, 156, 0.42);
+  background:
+    linear-gradient(90deg, rgba(66, 185, 156, 0.16), rgba(66, 185, 156, 0.03) 48%),
+    rgba(66, 185, 156, 0.06);
+}
+
 .management-record-site {
   border-style: dashed;
 }
@@ -807,6 +824,11 @@
 }
 
 .management-record.is-contact h3 {
+  margin-top: 6px;
+  font-size: 18px;
+}
+
+.management-record.is-class h3 {
   margin-top: 6px;
   font-size: 18px;
 }
@@ -944,7 +966,7 @@
 
 .management-class-card-detail {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin-top: 12px;
 }
 
@@ -1025,22 +1047,28 @@
 .management-class-detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
 .management-class-detail-grid span,
 .management-class-detail-section {
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(66, 185, 156, 0.15);
   border-radius: 8px;
-  background: rgba(5, 11, 20, 0.28);
+  background: rgba(5, 11, 20, 0.32);
   padding: 10px;
+}
+
+.management-class-detail-grid span {
+  color: rgba(234, 242, 255, 0.9);
+  font-size: 18px;
+  font-weight: 850;
 }
 
 .management-class-detail-grid strong,
 .management-class-detail-section strong {
   display: block;
   margin-bottom: 4px;
-  color: rgba(234, 242, 255, 0.76);
+  color: rgba(159, 240, 206, 0.78);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1048,6 +1076,9 @@
 
 .management-class-detail-section p {
   margin: 6px 0 0;
+  color: rgba(234, 242, 255, 0.82);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .management-badge {

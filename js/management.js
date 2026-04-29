@@ -530,51 +530,57 @@
   function getClassSummaryDetails(record) {
     const extras = getExtras(record);
     const classId = slugify(extras.classId || record.id || record.title, "class");
-    const rosterCount = getClassRosterContacts(record).length;
+    const rosterContacts = getClassRosterContacts(record);
+    const rosterCount = rosterContacts.length;
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
+    const remaining = capacity ? Math.max(0, capacity - rosterCount) : 0;
     return {
       classId,
+      rosterContacts,
       rosterCount,
       capacity,
-      registrationText: capacity > 0 ? "Registration enabled on first class date" : "Registration not enabled",
+      remaining,
+      rosterText: capacity ? `${rosterCount} / ${capacity}` : `${rosterCount}`,
+      remainingText: capacity ? `${remaining} spot${remaining === 1 ? "" : "s"}` : "No cap set",
       scheduleLines: getClassScheduleLines(record),
-      description: normalizeSiteText(record.notes),
     };
   }
 
   function renderClassRecordDetails(record) {
     if (!record || record.recordType !== "class") return "";
     const details = getClassSummaryDetails(record);
-    const rosterText = details.capacity
-      ? `${details.rosterCount} of ${details.capacity} enrolled`
-      : `${details.rosterCount} enrolled`;
+    const rosterPreview = details.rosterContacts
+      .slice(0, 6)
+      .map((contact) => normalizeSiteText(contact.contactName || contact.title || contact.contactEmail))
+      .filter(Boolean);
+    const overflowCount = Math.max(0, details.rosterContacts.length - rosterPreview.length);
+    const rosterText = rosterPreview.length
+      ? `${rosterPreview.join(", ")}${overflowCount ? `, +${overflowCount} more` : ""}`
+      : "";
     return `
-      <details class="management-record-details">
-        <summary>View class details</summary>
-        <div class="management-class-card-detail">
-          <div class="management-class-detail-grid">
-            <span><strong>Class ID</strong>${escapeHtml(details.classId)}</span>
-            <span><strong>Roster</strong>${escapeHtml(rosterText)}</span>
-            <span><strong>Registration</strong>${escapeHtml(details.registrationText)}</span>
-          </div>
+      <div class="management-class-card-detail">
+        <div class="management-class-detail-grid">
+          <span><strong>Class ID</strong>${escapeHtml(details.classId)}</span>
+          <span><strong>Enrolled</strong>${escapeHtml(details.rosterText)}</span>
+          <span><strong>Remaining</strong>${escapeHtml(details.remainingText)}</span>
+        </div>
+        ${
+          details.scheduleLines.length
+            ? `<div class="management-class-detail-section">
+                <strong>Class Dates</strong>
+                ${details.scheduleLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+              </div>`
+            : '<div class="management-empty management-empty-compact">No class dates added.</div>'
+        }
+        <div class="management-class-detail-section">
+          <strong>Enrolled Students</strong>
           ${
-            details.scheduleLines.length
-              ? `<div class="management-class-detail-section">
-                  <strong>Schedule</strong>
-                  ${details.scheduleLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
-                </div>`
-              : '<div class="management-empty management-empty-compact">No class dates added.</div>'
-          }
-          ${
-            details.description
-              ? `<div class="management-class-detail-section">
-                  <strong>Description</strong>
-                  <p>${escapeHtml(details.description)}</p>
-                </div>`
-              : ""
+            rosterPreview.length
+              ? `<p>${escapeHtml(rosterText)}</p>`
+              : "<p>No students enrolled yet.</p>"
           }
         </div>
-      </details>
+      </div>
     `;
   }
 
@@ -1159,7 +1165,7 @@
               record.relatedEvent || "",
             ].filter(Boolean);
         const note = String(record.notes || "").trim();
-        const summary = note.length > 180 ? `${note.slice(0, 180)}...` : note;
+        const summary = record.recordType === "class" ? "" : (note.length > 180 ? `${note.slice(0, 180)}...` : note);
         const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
         const contactDetails = record.recordType === "contact" ? renderContactRecordDetails(record) : "";
         const inquiryDetails = record.recordType === "inquiry" ? renderInquiryRecordDetails(record) : "";
@@ -1171,7 +1177,7 @@
               </div>`
             : "";
         return `
-          <article class="management-record ${isContact ? "is-contact" : ""} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
+          <article class="management-record ${isContact ? "is-contact" : ""} ${record.recordType === "class" ? "is-class" : ""} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(record.recordType))}</span>
