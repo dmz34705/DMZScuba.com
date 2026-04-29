@@ -922,17 +922,25 @@
 
     const recordMarkup = visibleRecords
       .map((record) => {
+        const isContact = record.recordType === "contact";
         const extras = getExtras(record);
         const balance = getBalance(record);
-        const meta = [
-          record.owner ? `Owner: ${record.owner}` : "",
-          record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" ") || record.contactEmail || "",
-          extras.stage ? `Stage: ${formatLabel(extras.stage)}` : "",
-          extras.startDate ? `Starts ${formatDate(extras.startDate)}` : "",
-          record.dueDate ? `Due ${formatDate(record.dueDate)}` : "",
-          balance > 0 ? `Balance ${formatMoney(balance)}` : "",
-          record.relatedEvent || "",
-        ].filter(Boolean);
+        const contactEnrollments = isContact ? getContactClassEnrollments(record) : [];
+        const meta = isContact
+          ? [
+              extras.source ? `Source: ${extras.source}` : "",
+              extras.certification ? `Certification: ${extras.certification}` : "",
+              contactEnrollments.length ? `${contactEnrollments.length} class${contactEnrollments.length === 1 ? "" : "es"}` : "",
+            ].filter(Boolean)
+          : [
+              record.owner ? `Owner: ${record.owner}` : "",
+              record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" ") || record.contactEmail || "",
+              extras.stage ? `Stage: ${formatLabel(extras.stage)}` : "",
+              extras.startDate ? `Starts ${formatDate(extras.startDate)}` : "",
+              record.dueDate ? `Due ${formatDate(record.dueDate)}` : "",
+              balance > 0 ? `Balance ${formatMoney(balance)}` : "",
+              record.relatedEvent || "",
+            ].filter(Boolean);
         const note = String(record.notes || "").trim();
         const summary = note.length > 180 ? `${note.slice(0, 180)}...` : note;
         const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
@@ -945,7 +953,7 @@
               </div>`
             : "";
         return `
-          <article class="management-record ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
+          <article class="management-record ${isContact ? "is-contact" : ""} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(record.recordType))}</span>
