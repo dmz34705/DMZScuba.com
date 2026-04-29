@@ -1165,7 +1165,6 @@
           ${summary ? `<p>${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
         </div>
         <div class="management-calendar-actions">
-          <button type="button" data-calendar-open="${sourceIndex}">Open Record</button>
           <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
         </div>
       </article>
@@ -2426,12 +2425,6 @@
           copyTextValue(copyButton.getAttribute("data-copy-record") || "");
           return;
         }
-        const openButton = event.target.closest("[data-calendar-open]");
-        if (openButton) {
-          event.stopPropagation();
-          openCalendarRecord(openButton.getAttribute("data-calendar-open"));
-          return;
-        }
         const statusSelect = event.target.closest("[data-status-change]");
         if (statusSelect) {
           event.stopPropagation();
@@ -2441,6 +2434,11 @@
         const detailToggle = event.target.closest(".management-record-details");
         if (detailToggle) {
           event.stopPropagation();
+          return;
+        }
+        const calendarCard = event.target.closest("[data-calendar-index]");
+        if (calendarCard) {
+          openCalendarRecord(calendarCard.getAttribute("data-calendar-index") || "");
           return;
         }
         const card = event.target.closest("[data-record-id]");

@@ -593,6 +593,7 @@
     linear-gradient(90deg, rgba(85, 185, 255, 0.10), rgba(85, 185, 255, 0) 44%),
     rgba(255, 255, 255, 0.045);
   padding: 14px;
+  cursor: pointer;
 }
 
 .management-calendar-item:hover {
@@ -677,7 +678,6 @@
   justify-content: flex-end;
 }
 
-.management-calendar-actions button,
 .management-calendar-actions a {
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
@@ -690,7 +690,6 @@
   cursor: pointer;
 }
 
-.management-calendar-actions button:hover,
 .management-calendar-actions a:hover {
   border-color: rgba(85, 185, 255, 0.52);
   background: rgba(85, 185, 255, 0.13);
