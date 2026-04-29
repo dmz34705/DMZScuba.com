@@ -1332,6 +1332,10 @@ function normalizeEventEntry(item, kind = "event") {
     managementAmountPaid: String(next.managementAmountPaid || "").trim(),
     managementNextStep: String(next.managementNextStep || "").trim(),
     managementNotes: String(next.managementNotes || "").trim(),
+    managementClassId: String(next.managementClassId || "").trim().toLowerCase(),
+    managementClassSessionType: String(next.managementClassSessionType || "").trim(),
+    managementClassSessionIndex: Math.max(0, Math.trunc(Number(next.managementClassSessionIndex) || 0)),
+    managementClassPrimary: Boolean(next.managementClassPrimary),
   };
   const endDate = String(next.endDate || "").trim();
 

@@ -249,6 +249,67 @@
   background: rgba(226, 27, 35, 0.14);
 }
 
+.management-class-schedule {
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px;
+}
+
+.management-class-schedule-head h3,
+.management-class-schedule-head p,
+.management-class-session-head h4 {
+  margin: 0;
+}
+
+.management-class-schedule-head p {
+  margin-top: 4px;
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 13px;
+}
+
+.management-class-session-group {
+  display: grid;
+  gap: 8px;
+}
+
+.management-class-session-head,
+.management-class-session-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.management-class-session-head h4 {
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.management-class-session-head button,
+.management-class-session-row button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-class-session-row {
+  grid-template-columns: minmax(110px, 1fr) minmax(96px, 0.8fr) minmax(96px, 0.8fr) auto;
+}
+
+.management-class-session-row input,
+.management-class-session-row select {
+  min-width: 0;
+}
+
 .management-dashboard {
   display: grid;
   gap: 18px;

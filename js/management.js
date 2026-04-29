@@ -35,7 +35,14 @@
   const registrationSummary = app.querySelector("[data-registration-summary]");
   const registrationList = app.querySelector("[data-registration-list]");
   const refreshRegistrationsButton = app.querySelector("[data-refresh-registrations]");
+  const classScheduleEl = app.querySelector("[data-class-schedule]");
   const extraFieldsSection = app.querySelector(".management-extra-fields");
+  const classSessionTypes = ["classroom", "pool", "openWater"];
+  const classSessionLabels = {
+    classroom: "Classroom",
+    pool: "Pool",
+    openWater: "Open Water",
+  };
   const typeConfigs = {
     contact: {
       editor: "Contact Profile",
@@ -88,27 +95,15 @@
       titlePlaceholder: "Open Water - May Weekend",
       relatedLabel: "Related Event Page or Calendar Item",
       capacityLabel: "Class Capacity",
-      certificationLabel: "Course / Certification",
-      notesLabel: "Class Roster / Progress Notes",
-      notesPlaceholder: "Students, forms, eLearning status, pool/open-water dates, payments owed, gear needs...",
+      notesLabel: "Class Description",
+      notesPlaceholder: "Public-facing class description plus any important class context...",
       fields: [
         "recordType",
         "title",
-        "status",
-        "priority",
-        "owner",
-        "contactName",
-        "contactEmail",
-        "contactPhone",
-        "dueDate",
-        "relatedEvent",
-        "startDate",
-        "endDate",
+        "classId",
+        "eventLocation",
         "capacity",
-        "certification",
-        "amountOwed",
-        "amountPaid",
-        "nextStep",
+        "classSchedule",
         "notes",
       ],
     },
@@ -244,6 +239,15 @@
     return `${year}-${month}-${day}`;
   }
 
+  function slugify(value, fallback = "record") {
+    const slug = String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 72);
+    return slug || fallback;
+  }
+
   function addDateDays(date, days) {
     const next = new Date(date);
     next.setDate(next.getDate() + days);
@@ -318,6 +322,60 @@
       ].join("");
       select.value = timeOptions.includes(current) ? current : "";
     });
+  }
+
+  function classSessionTemplate(type, session = {}) {
+    const options = [
+      '<option value="">Select time</option>',
+      ...timeOptions.map((value) => `<option value="${value}" ${String(session.startTime || "") === value ? "selected" : ""}>${value}</option>`),
+    ].join("");
+    const endOptions = [
+      '<option value="">Select time</option>',
+      ...timeOptions.map((value) => `<option value="${value}" ${String(session.endTime || "") === value ? "selected" : ""}>${value}</option>`),
+    ].join("");
+    return `
+      <div class="management-class-session-row" data-class-session="${escapeHtml(type)}">
+        <input type="date" data-class-session-date value="${escapeHtml(session.date || "")}" aria-label="${escapeHtml(classSessionLabels[type])} date" />
+        <select data-class-session-start aria-label="${escapeHtml(classSessionLabels[type])} start time">${options}</select>
+        <select data-class-session-end aria-label="${escapeHtml(classSessionLabels[type])} end time">${endOptions}</select>
+        <button type="button" data-remove-class-session>Remove</button>
+      </div>
+    `;
+  }
+
+  function renderClassSchedule(sessions = {}) {
+    if (!classScheduleEl) return;
+    classSessionTypes.forEach((type) => {
+      const list = classScheduleEl.querySelector(`[data-class-session-list="${type}"]`);
+      if (!list) return;
+      const rows = Array.isArray(sessions[type]) ? sessions[type] : [];
+      list.innerHTML = rows.length
+        ? rows.map((session) => classSessionTemplate(type, session)).join("")
+        : '<div class="management-empty">No dates added yet.</div>';
+    });
+  }
+
+  function addClassSession(type, session = {}) {
+    if (!classSessionTypes.includes(type) || !classScheduleEl) return;
+    const list = classScheduleEl.querySelector(`[data-class-session-list="${type}"]`);
+    if (!list) return;
+    if (list.querySelector(".management-empty")) list.innerHTML = "";
+    list.insertAdjacentHTML("beforeend", classSessionTemplate(type, session));
+  }
+
+  function readClassSessions() {
+    const sessions = {};
+    if (!classScheduleEl) return sessions;
+    classSessionTypes.forEach((type) => {
+      sessions[type] = Array.from(classScheduleEl.querySelectorAll(`[data-class-session="${type}"]`))
+        .map((row) => ({
+          date: String((row.querySelector("[data-class-session-date]") || {}).value || "").trim(),
+          startTime: String((row.querySelector("[data-class-session-start]") || {}).value || "").trim(),
+          endTime: String((row.querySelector("[data-class-session-end]") || {}).value || "").trim(),
+        }))
+        .filter((session) => session.date);
+    });
+    return sessions;
   }
 
   function syncFormGridVisibility() {
@@ -539,6 +597,8 @@
       extras.siteSource,
       extras.sourceId,
       extras.eventDate,
+      extras.classId,
+      JSON.stringify(extras.classSessions || {}),
     ]
       .join(" ")
       .toLowerCase();
@@ -575,13 +635,13 @@
 
   function getVisibleSiteEventsForRecords() {
     if (!["all", "class", "trip"].includes(state.filterType)) return [];
+    if (state.filterType === "class") return [];
     const currentTodayKey = todayKey();
     const showPast = Boolean(showPastCalendarToggle && showPastCalendarToggle.checked);
     return state.siteEvents
       .map((item, index) => ({ item, index }))
       .filter(({ item }) => {
         const type = classifySiteEvent(item);
-        if (state.filterType === "class" && type !== "class") return false;
         if (state.filterType === "trip") {
           // The Calendar tab intentionally shows every site calendar record, not only travel trips.
         } else if (state.filterType !== "all" && type !== state.filterType) return false;
@@ -614,7 +674,7 @@
     if (metricEls.open) metricEls.open.textContent = String(openCount + siteCounts.open);
     if (metricEls.contact) metricEls.contact.textContent = String(byType.contact || 0);
     if (metricEls.inquiry) metricEls.inquiry.textContent = String(byType.inquiry || 0);
-    if (metricEls.class) metricEls.class.textContent = String((byType.class || 0) + siteCounts.class);
+    if (metricEls.class) metricEls.class.textContent = String(byType.class || 0);
     if (metricEls.trip) metricEls.trip.textContent = String((byType.trip || 0) + siteCounts.trip);
     if (metricEls.owed) metricEls.owed.textContent = formatMoney(openBalance);
   }
@@ -906,6 +966,10 @@
       endTime: textValue("endTime", existingExtras.endTime),
       eventTag: textValue("eventTag", existingExtras.eventTag || "Training"),
       eventLocation: textValue("eventLocation", existingExtras.eventLocation),
+      classId: textValue("classId", existingExtras.classId),
+      classSessions: recordForm.elements.recordType && String(formData.get("recordType") || existing && existing.recordType || "") === "class"
+        ? readClassSessions()
+        : existingExtras.classSessions,
       registrationEnabled:
         recordForm.elements.registrationEnabled && !recordForm.elements.registrationEnabled.disabled
           ? (recordForm.elements.registrationEnabled.checked ? "1" : "")
@@ -919,6 +983,15 @@
     const recordType = textValue("recordType", existing && existing.recordType) || "inquiry";
     const contactFullName = [extras.firstName, extras.lastName].filter(Boolean).join(" ").trim();
     const title = recordType === "contact" ? contactFullName : textValue("title", existing && existing.title);
+    if (recordType === "class" && !extras.classId) {
+      const firstSessionDate =
+        classSessionTypes
+          .flatMap((type) => (Array.isArray(extras.classSessions && extras.classSessions[type]) ? extras.classSessions[type] : []))
+          .map((session) => session.date)
+          .filter(Boolean)
+          .sort()[0] || "";
+      extras.classId = slugify(`${title || "class"} ${firstSessionDate}`, "class");
+    }
     const contactName =
       recordType === "contact" ? contactFullName : textValue("contactName", existing && existing.contactName);
     const rawPriority = textValue("priority", existing && existing.priority) || "normal";
@@ -927,7 +1000,12 @@
       id,
       recordType,
       title,
-      status: recordType === "contact" ? "active" : textValue("status", existing && existing.status) || "new",
+      status:
+        recordType === "contact"
+          ? "active"
+          : recordType === "class"
+            ? "scheduled"
+            : textValue("status", existing && existing.status) || "new",
       priority,
       owner: textValue("owner", existing && existing.owner),
       contactName,
@@ -964,6 +1042,7 @@
       if (field.type === "checkbox") field.checked = Boolean(value);
       else field.value = value == null ? "" : String(value);
     });
+    renderClassSchedule(getExtras(item).classSessions || {});
     if (item.recordType === "contact") {
       const extras = getExtras(item);
       const nameParts = String(item.contactName || item.title || "").trim().split(/\s+/);
@@ -1037,6 +1116,81 @@
     return true;
   }
 
+  function getOrderedClassSessions(record) {
+    const extras = getExtras(record);
+    const sessions = extras.classSessions && typeof extras.classSessions === "object" ? extras.classSessions : {};
+    const ordered = [];
+    classSessionTypes.forEach((type) => {
+      (Array.isArray(sessions[type]) ? sessions[type] : []).forEach((session, index) => {
+        if (!session || !session.date) return;
+        ordered.push({
+          type,
+          label: classSessionLabels[type],
+          index,
+          date: String(session.date || "").trim(),
+          startTime: String(session.startTime || "").trim(),
+          endTime: String(session.endTime || "").trim(),
+        });
+      });
+    });
+    return ordered.sort((a, b) => a.date.localeCompare(b.date) || classSessionTypes.indexOf(a.type) - classSessionTypes.indexOf(b.type));
+  }
+
+  async function syncClassRecordToCalendar(record) {
+    if (!state.eventsPayload) {
+      await loadSiteCalendar({ silent: true });
+    }
+    if (!state.eventsPayload) throw new Error("Could not load site calendar for class sync.");
+    const extras = getExtras(record);
+    const classId = slugify(extras.classId || record.id || record.title, "class");
+    const sessions = getOrderedClassSessions({ ...record, extras: { ...extras, classId } });
+    const events = Array.isArray(state.eventsPayload.events) ? state.eventsPayload.events : [];
+    const remaining = events.filter((item) => String(item && item.managementClassId || "").trim().toLowerCase() !== classId);
+    const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
+    const location = String(extras.eventLocation || "").trim();
+    const description = String(record.notes || "").trim();
+    const generated = sessions.map((session, index) => {
+      const primary = index === 0;
+      return {
+        id: `${classId}-${session.type}-${session.index + 1}`,
+        eventId: classId,
+        title: `${record.title} - ${session.label}`,
+        date: session.date,
+        endDate: session.date,
+        time: session.startTime,
+        endTime: session.endTime,
+        type: "Training",
+        status: record.status || "scheduled",
+        location,
+        summary: description,
+        registrationEnabled: primary && capacity > 0,
+        registrationCapacity: primary ? capacity : 0,
+        ctaLabel: primary ? "Register For Class" : "",
+        ctaHref: "",
+        managementClassId: classId,
+        managementClassSessionType: session.type,
+        managementClassSessionIndex: session.index + 1,
+        managementClassPrimary: primary,
+      };
+    });
+    state.eventsPayload.events = [...remaining, ...generated].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    const resp = await apiFetch(adminEventsUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: state.eventsPayload }),
+    }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok) throw new Error(data.error || "Could not sync class dates to site calendar.");
+    state.eventsPayload = data.payload || state.eventsPayload;
+    state.allSiteEvents = expandSiteEventPayload(state.eventsPayload).filter((entry) =>
+      ["class", "trip"].includes(classifySiteEvent(entry))
+    );
+    state.siteEvents = state.allSiteEvents;
+    renderCalendarItems();
+    updateMetrics();
+    return generated.length;
+  }
+
   async function saveRecord(event) {
     event.preventDefault();
     const record = readFormRecord();
@@ -1083,6 +1237,18 @@
       state.records[index] = saved;
     } else {
       state.records.unshift(saved);
+    }
+    if (saved.recordType === "class") {
+      try {
+        const syncedCount = await syncClassRecordToCalendar(saved);
+        fillForm(saved);
+        setStatus(recordStatus, `Saved. Synced ${syncedCount} class date${syncedCount === 1 ? "" : "s"} to the site calendar.`, "success");
+        return;
+      } catch (error) {
+        fillForm(saved);
+        setStatus(recordStatus, error && error.message ? error.message : "Saved, but class dates did not sync.", "error");
+        return;
+      }
     }
     fillForm(saved);
     setStatus(recordStatus, "Saved.", "success");
@@ -1178,6 +1344,15 @@
     const index = Number(indexValue);
     const item = Number.isFinite(index) ? state.siteEvents[index] : null;
     if (!item) return;
+    const classId = normalizeSiteText(item.managementClassId);
+    if (classId) {
+      const classRecord = state.records.find((record) => record.recordType === "class" && normalizeSiteText(getExtras(record).classId) === classId);
+      if (classRecord) {
+        fillForm(classRecord);
+        setStatus(recordStatus, "Class record opened for this calendar date.", "success");
+        return;
+      }
+    }
     fillForm(buildManagementRecordFromSiteEvent(item));
     setStatus(recordStatus, "Site calendar record opened.", "success");
   }
@@ -1273,6 +1448,27 @@
     if (recordForm && recordForm.elements.recordType) {
       recordForm.elements.recordType.addEventListener("change", () => {
         applyTypeConfig(recordForm.elements.recordType.value || "contact", Boolean(state.selectedId));
+        if (recordForm.elements.recordType.value === "class" && classScheduleEl) renderClassSchedule(readClassSessions());
+      });
+    }
+    if (classScheduleEl) {
+      classScheduleEl.addEventListener("click", (event) => {
+        const addButton = event.target.closest("[data-add-class-session]");
+        if (addButton) {
+          addClassSession(addButton.getAttribute("data-add-class-session") || "");
+          return;
+        }
+        const removeButton = event.target.closest("[data-remove-class-session]");
+        if (removeButton) {
+          const row = removeButton.closest("[data-class-session]");
+          if (row) row.remove();
+          classSessionTypes.forEach((type) => {
+            const list = classScheduleEl.querySelector(`[data-class-session-list="${type}"]`);
+            if (list && !list.querySelector("[data-class-session]")) {
+              list.innerHTML = '<div class="management-empty">No dates added yet.</div>';
+            }
+          });
+        }
       });
     }
     app.querySelectorAll("[data-copy-field]").forEach((button) => {
