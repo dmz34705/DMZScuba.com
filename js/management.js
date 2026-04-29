@@ -22,6 +22,7 @@
   const recordForm = app.querySelector("[data-record-form]");
   const recordList = app.querySelector("[data-record-list]");
   const searchInput = app.querySelector("[data-search-records]");
+  const sortSelect = app.querySelector("[data-sort-records]");
   const loginStatus = app.querySelector("[data-login-status]");
   const recordStatus = app.querySelector("[data-record-status]");
   const editorTitle = app.querySelector("[data-editor-title]");
@@ -83,6 +84,28 @@
     completed: "Completed / Won",
   };
   const closedStatuses = new Set(["complete", "archived", "dead_end", "not_fit"]);
+  const priorityRank = {
+    urgent: 4,
+    high: 3,
+    normal: 2,
+    low: 1,
+  };
+  const statusRank = {
+    to_contact: 1,
+    new: 2,
+    reached_out: 3,
+    gathering_details: 4,
+    planning: 5,
+    payment: 6,
+    timing: 7,
+    scheduled: 8,
+    active: 9,
+    waiting: 10,
+    complete: 20,
+    dead_end: 21,
+    not_fit: 22,
+    archived: 23,
+  };
   const typeConfigs = {
     contact: {
       editor: "Contact Profile",
@@ -222,6 +245,7 @@
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
     filterType: "all",
+    sortBy: "newest",
     search: "",
     loading: false,
   };
@@ -1005,11 +1029,53 @@
     return haystack.includes(query);
   }
 
+  function getRecordSortTitle(record) {
+    const extras = getExtras(record);
+    return normalizeSiteText(
+      record.recordType === "contact"
+        ? record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" ") || record.title || record.contactEmail
+        : record.title || record.relatedEvent || record.contactName
+    ).toLowerCase();
+  }
+
+  function getTimeValue(value, fallback = 0) {
+    const time = Date.parse(value || "");
+    return Number.isFinite(time) ? time : fallback;
+  }
+
+  function compareVisibleRecords(a, b) {
+    const sortBy = state.sortBy || "newest";
+    const titleCompare = getRecordSortTitle(a).localeCompare(getRecordSortTitle(b));
+    if (sortBy === "alpha") return titleCompare || getTimeValue(b.createdAt) - getTimeValue(a.createdAt);
+    if (sortBy === "alpha_desc") return -titleCompare || getTimeValue(b.createdAt) - getTimeValue(a.createdAt);
+    if (sortBy === "oldest") return getTimeValue(a.createdAt, Infinity) - getTimeValue(b.createdAt, Infinity) || titleCompare;
+    if (sortBy === "updated") return getTimeValue(b.updatedAt) - getTimeValue(a.updatedAt) || titleCompare;
+    if (sortBy === "priority") {
+      return (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0)
+        || getTimeValue(a.dueDate, Infinity) - getTimeValue(b.dueDate, Infinity)
+        || titleCompare;
+    }
+    if (sortBy === "due") {
+      return getTimeValue(a.dueDate, Infinity) - getTimeValue(b.dueDate, Infinity)
+        || (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0)
+        || titleCompare;
+    }
+    if (sortBy === "progress") {
+      return (statusRank[a.status] || 99) - (statusRank[b.status] || 99)
+        || (priorityRank[b.priority] || 0) - (priorityRank[a.priority] || 0)
+        || titleCompare;
+    }
+    if (sortBy === "balance") return getBalance(b) - getBalance(a) || titleCompare;
+    return getTimeValue(b.createdAt) - getTimeValue(a.createdAt) || titleCompare;
+  }
+
   function getVisibleRecords() {
     return state.records
       .filter((record) => !isSiteBackedManagementRecord(record))
       .filter((record) => state.filterType === "all" || record.recordType === state.filterType)
-      .filter(recordMatchesSearch);
+      .filter(recordMatchesSearch)
+      .slice()
+      .sort(compareVisibleRecords);
   }
 
   function getVisibleSiteEventsForRecords() {
@@ -2203,6 +2269,12 @@
     if (searchInput) {
       searchInput.addEventListener("input", () => {
         state.search = searchInput.value || "";
+        renderRecords();
+      });
+    }
+    if (sortSelect) {
+      sortSelect.addEventListener("change", () => {
+        state.sortBy = sortSelect.value || "newest";
         renderRecords();
       });
     }

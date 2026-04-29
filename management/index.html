@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429g" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429h" />
 </head>
 
 <body class="management-page">
@@ -394,6 +394,20 @@
               <label for="managementSearch">Search</label>
               <input id="managementSearch" type="search" data-search-records placeholder="Name, email, class, trip, note..." />
             </div>
+            <label class="management-sort" for="managementSort">
+              Sort
+              <select id="managementSort" data-sort-records>
+                <option value="newest">Newest Created</option>
+                <option value="oldest">Oldest Created</option>
+                <option value="alpha">Alphabetical A-Z</option>
+                <option value="alpha_desc">Alphabetical Z-A</option>
+                <option value="updated">Recently Updated</option>
+                <option value="priority">Priority / Urgency</option>
+                <option value="due">Follow-Up Due Soon</option>
+                <option value="progress">Progress</option>
+                <option value="balance">Balance Owed</option>
+              </select>
+            </label>
             <div class="management-filters" role="group" aria-label="Record filters">
               <button type="button" class="is-active" data-filter-type="all">All</button>
               <button type="button" data-filter-type="contact">Contacts</button>
@@ -409,6 +423,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429g" defer></script>
+  <script src="/js/management.js?v=20260429h" defer></script>
 </body>
 </html>

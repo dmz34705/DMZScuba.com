@@ -79,7 +79,8 @@
 
 .management-login-form label,
 .management-record-form label,
-.management-search label {
+.management-search label,
+.management-sort {
   display: grid;
   gap: 7px;
   color: rgba(234, 242, 255, 0.72);
@@ -91,7 +92,8 @@
 .management-record-form input,
 .management-record-form select,
 .management-record-form textarea,
-.management-search input {
+.management-search input,
+.management-sort select {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
@@ -150,9 +152,15 @@
 .management-record-form input:focus,
 .management-record-form select:focus,
 .management-record-form textarea:focus,
-.management-search input:focus {
+.management-search input:focus,
+.management-sort select:focus {
   border-color: rgba(85, 185, 255, 0.72);
   box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.13);
+}
+
+.management-sort select option {
+  background: #071325;
+  color: var(--text);
 }
 
 .management-form-status {
@@ -711,6 +719,10 @@
 
 .management-search {
   flex: 1 1 300px;
+}
+
+.management-sort {
+  flex: 0 1 220px;
 }
 
 .management-filters {
