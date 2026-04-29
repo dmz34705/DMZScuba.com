@@ -489,6 +489,64 @@ async function handleLogin(request, env) {
   return jsonResponse({ ok: true, token });
 }
 
+function buildPublicInquiryManagementRecord({ body, fields, lines, name, email, formName, subject, pageUrl, submittedAt }) {
+  const phone =
+    String(body.phone || "").trim() ||
+    getFieldValue(fields, "phone") ||
+    getFieldValue(fields, "contact-phone") ||
+    getFieldValue(fields, "tel");
+  const relatedEvent =
+    getFieldValue(fields, "course") ||
+    getFieldValue(fields, "class") ||
+    getFieldValue(fields, "trip") ||
+    getFieldValue(fields, "destination") ||
+    getFieldValue(fields, "location") ||
+    getFieldValue(fields, "interest") ||
+    "";
+  const messageText = String(body.message || "").trim();
+  const notes = [
+    `Form: ${formName}`,
+    `Submitted: ${submittedAt}`,
+    pageUrl ? `Page: ${pageUrl}` : "",
+    "",
+    ...lines,
+    messageText ? `\nMessage:\n${messageText}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const titleSource = subject || formName || relatedEvent || "Website inquiry";
+  const titleContact = name || email || "";
+  return {
+    recordType: "inquiry",
+    title: titleContact ? `${titleSource} - ${titleContact}` : titleSource,
+    status: "new",
+    priority: "normal",
+    contactName: name,
+    contactEmail: email,
+    contactPhone: phone,
+    relatedEvent,
+    notes,
+    extras: {
+      source: "Public site form",
+      formName,
+      pageUrl,
+      submittedAt,
+      subject,
+      autoReplyType: String(body.autoReplyType || getFieldValue(fields, "autoReplyType") || "").trim(),
+    },
+  };
+}
+
+async function savePublicInquiryManagementRecord(env, recordInput) {
+  try {
+    const saved = await createManagementRecord(env, recordInput);
+    return saved && saved.id ? saved : null;
+  } catch (error) {
+    console.log("Management inquiry save error", error && error.message ? error.message : error);
+    return null;
+  }
+}
+
 async function handleContact(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || "").trim();
@@ -504,6 +562,17 @@ async function handleContact(request, env) {
   const subject = String(body.subject || "").trim() || `${formName} Inquiry`;
   const pageUrl = String(body.pageUrl || "").trim();
   const submittedAt = new Date().toISOString();
+  const managementRecord = buildPublicInquiryManagementRecord({
+    body,
+    fields,
+    lines,
+    name,
+    email,
+    formName,
+    subject,
+    pageUrl,
+    submittedAt,
+  });
 
   const message = [
     `Form: ${formName}`,
@@ -698,7 +767,8 @@ async function handleContact(request, env) {
         502
       );
     }
-    return jsonResponse({ ok: true, autoReplySent: true, notifySent: true });
+    const savedRecord = await savePublicInquiryManagementRecord(env, managementRecord);
+    return jsonResponse({ ok: true, autoReplySent: true, notifySent: true, managementRecordSaved: Boolean(savedRecord) });
   }
 
   const payload = {
@@ -779,7 +849,8 @@ async function handleContact(request, env) {
     generalAutoReplySent = true;
   }
 
-  return jsonResponse({ ok: true, generalAutoReplySent });
+  const savedRecord = await savePublicInquiryManagementRecord(env, managementRecord);
+  return jsonResponse({ ok: true, generalAutoReplySent, managementRecordSaved: Boolean(savedRecord) });
 }
 
 function normalizeItem(row) {
@@ -999,6 +1070,40 @@ function normalizeManagementRecord(input = {}, existing = {}) {
   };
 }
 
+async function createManagementRecord(env, input) {
+  const record = normalizeManagementRecord(input);
+  if (!record) return null;
+
+  await ensureManagementRecordsTable(env);
+  const now = new Date().toISOString();
+  const id = record.id || crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO management_records
+     (id, record_type, title, status, priority, owner, contact_name, contact_email, contact_phone, due_date, related_event, notes, data_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      record.recordType,
+      record.title,
+      record.status,
+      record.priority,
+      record.owner,
+      record.contactName,
+      record.contactEmail,
+      record.contactPhone,
+      record.dueDate,
+      record.relatedEvent,
+      record.notes,
+      JSON.stringify({ extras: record.extras }),
+      now,
+      now
+    )
+    .run();
+
+  return { ...record, id, createdAt: now, updatedAt: now };
+}
+
 function managementRecordFromRow(row) {
   const data = parseJsonSafe(row && row.data_json, {});
   return {
@@ -1056,37 +1161,10 @@ async function handleCreateManagementRecord(request, env) {
 
   const body = await request.json().catch(() => ({}));
   const incoming = body && typeof body.record === "object" ? body.record : body;
-  const record = normalizeManagementRecord(incoming);
+  const record = await createManagementRecord(env, incoming);
   if (!record) return jsonResponse({ ok: false, error: "Title is required." }, 400, { "Cache-Control": "no-store" });
 
-  await ensureManagementRecordsTable(env);
-  const now = new Date().toISOString();
-  const id = record.id || crypto.randomUUID();
-  await env.DB.prepare(
-    `INSERT INTO management_records
-     (id, record_type, title, status, priority, owner, contact_name, contact_email, contact_phone, due_date, related_event, notes, data_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      id,
-      record.recordType,
-      record.title,
-      record.status,
-      record.priority,
-      record.owner,
-      record.contactName,
-      record.contactEmail,
-      record.contactPhone,
-      record.dueDate,
-      record.relatedEvent,
-      record.notes,
-      JSON.stringify({ extras: record.extras }),
-      now,
-      now
-    )
-    .run();
-
-  return jsonResponse({ ok: true, item: { ...record, id, createdAt: now, updatedAt: now } }, 201, { "Cache-Control": "no-store" });
+  return jsonResponse({ ok: true, item: record }, 201, { "Cache-Control": "no-store" });
 }
 
 async function handleUpdateManagementRecord(request, env, id) {
