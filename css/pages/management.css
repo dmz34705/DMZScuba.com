@@ -208,9 +208,9 @@
 }
 
 .management-registration-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -250,16 +250,46 @@
   background: rgba(226, 27, 35, 0.14);
 }
 
+.management-registration-item .management-registration-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.management-registration-actions button:first-child:hover:not(:disabled) {
+  border-color: rgba(85, 185, 255, 0.58);
+  background: rgba(85, 185, 255, 0.14);
+}
+
 .management-class-schedule,
 .management-class-roster {
-  display: grid;
-  gap: 14px;
+  display: block;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.045);
   padding: 14px;
   min-width: 0;
   overflow: hidden;
+}
+
+.management-class-schedule[open],
+.management-class-roster[open] {
+  display: grid;
+  gap: 14px;
+}
+
+.management-class-schedule > summary,
+.management-class-roster > summary,
+.management-record-details > summary {
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.management-class-schedule > summary::marker,
+.management-class-roster > summary::marker,
+.management-record-details > summary::marker {
+  color: rgba(85, 185, 255, 0.82);
 }
 
 .management-class-schedule-head h3,
@@ -707,6 +737,11 @@
   color: rgba(234, 242, 255, 0.68);
 }
 
+.management-empty-compact {
+  padding: 12px;
+  font-size: 13px;
+}
+
 .management-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -750,6 +785,52 @@
   margin-top: 10px;
   color: rgba(234, 242, 255, 0.6);
   font-size: 13px;
+}
+
+.management-record-details {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+}
+
+.management-record-details summary {
+  color: rgba(234, 242, 255, 0.82);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.management-class-card-detail {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.management-class-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.management-class-detail-grid span,
+.management-class-detail-section {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(5, 11, 20, 0.28);
+  padding: 10px;
+}
+
+.management-class-detail-grid strong,
+.management-class-detail-section strong {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(234, 242, 255, 0.76);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.management-class-detail-section p {
+  margin: 6px 0 0;
 }
 
 .management-badge {
@@ -873,7 +954,13 @@
 
   .management-class-contact-add,
   .management-class-contact-item,
-  .management-class-registration-item {
+  .management-class-registration-item,
+  .management-registration-item,
+  .management-class-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .management-registration-item .management-registration-actions {
+    justify-content: flex-start;
   }
 }

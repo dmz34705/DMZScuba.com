@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260428l" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429b" />
 </head>
 
 <body class="management-page">
@@ -252,13 +252,13 @@
                 Class ID
                 <input type="text" name="classId" maxlength="80" placeholder="open-water-may-2026" />
               </label>
-              <section class="management-class-schedule" data-field="classSchedule" data-class-schedule>
-                <div class="management-class-schedule-head">
+              <details class="management-class-schedule" data-field="classSchedule" data-class-schedule>
+                <summary class="management-class-schedule-head">
                   <div>
                     <h3>Class Schedule</h3>
                     <p>Each date can have its own time and location. The first class date is the registration date on the public calendar.</p>
                   </div>
-                </div>
+                </summary>
                 <div class="management-class-session-group">
                   <div class="management-class-session-head">
                     <h4>Classroom Dates</h4>
@@ -280,14 +280,14 @@
                   </div>
                   <div data-class-session-list="openWater"></div>
                 </div>
-              </section>
-              <section class="management-class-roster" data-field="classRoster" data-class-roster>
-                <div class="management-class-roster-head">
+              </details>
+              <details class="management-class-roster" data-field="classRoster" data-class-roster>
+                <summary class="management-class-roster-head">
                   <div>
                     <h3>Class Roster</h3>
                     <p>Uses the same management contact records. Imports from registration escrow are tagged as self-registered.</p>
                   </div>
-                </div>
+                </summary>
                 <div class="management-class-contact-add">
                   <select data-class-contact-select aria-label="Select contact to add"></select>
                   <button type="button" data-add-class-contact>Add Contact</button>
@@ -301,7 +301,7 @@
                   <p data-class-registration-summary>No registration data loaded.</p>
                   <div data-class-registration-list></div>
                 </div>
-              </section>
+              </details>
               <div class="management-form-grid">
                 <label data-field="capacity">
                   Capacity / Roster Size
@@ -319,7 +319,7 @@
               <section class="management-registration-manager" data-registration-manager hidden>
                 <div class="management-registration-head">
                   <div>
-                    <h3>Registered Divers</h3>
+                    <h3>Registration Escrow</h3>
                     <p data-registration-summary>No signup data loaded.</p>
                   </div>
                   <button class="btn secondary" type="button" data-refresh-registrations>Refresh Signups</button>
@@ -374,6 +374,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429a" defer></script>
+  <script src="/js/management.js?v=20260429b" defer></script>
 </body>
 </html>

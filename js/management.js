@@ -169,6 +169,7 @@
     registrationSnapshot: null,
     registrationLoading: false,
     registrationDeletingId: "",
+    registrationConvertingId: "",
     classRegistrationSnapshot: null,
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
@@ -422,6 +423,71 @@
     return getContactClassEnrollments(contact).find((enrollment) => normalizeSiteText(enrollment && enrollment.classId) === classId) || {};
   }
 
+  function getClassScheduleLines(record) {
+    if (!record || record.recordType !== "class") return [];
+    const sessions = getOrderedClassSessions(record);
+    return sessions.map((session) => {
+      const timeText = [session.startTime, session.endTime].filter(Boolean).join(" - ");
+      return [
+        session.label,
+        formatDate(session.date),
+        timeText,
+        session.location,
+      ].filter(Boolean).join(" | ");
+    });
+  }
+
+  function getClassSummaryDetails(record) {
+    const extras = getExtras(record);
+    const classId = slugify(extras.classId || record.id || record.title, "class");
+    const rosterCount = getClassRosterContacts(record).length;
+    const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
+    return {
+      classId,
+      rosterCount,
+      capacity,
+      registrationText: capacity > 0 ? "Registration enabled on first class date" : "Registration not enabled",
+      scheduleLines: getClassScheduleLines(record),
+      description: normalizeSiteText(record.notes),
+    };
+  }
+
+  function renderClassRecordDetails(record) {
+    if (!record || record.recordType !== "class") return "";
+    const details = getClassSummaryDetails(record);
+    const rosterText = details.capacity
+      ? `${details.rosterCount} of ${details.capacity} enrolled`
+      : `${details.rosterCount} enrolled`;
+    return `
+      <details class="management-record-details">
+        <summary>View class details</summary>
+        <div class="management-class-card-detail">
+          <div class="management-class-detail-grid">
+            <span><strong>Class ID</strong>${escapeHtml(details.classId)}</span>
+            <span><strong>Roster</strong>${escapeHtml(rosterText)}</span>
+            <span><strong>Registration</strong>${escapeHtml(details.registrationText)}</span>
+          </div>
+          ${
+            details.scheduleLines.length
+              ? `<div class="management-class-detail-section">
+                  <strong>Schedule</strong>
+                  ${details.scheduleLines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+                </div>`
+              : '<div class="management-empty management-empty-compact">No class dates added.</div>'
+          }
+          ${
+            details.description
+              ? `<div class="management-class-detail-section">
+                  <strong>Description</strong>
+                  <p>${escapeHtml(details.description)}</p>
+                </div>`
+              : ""
+          }
+        </div>
+      </details>
+    `;
+  }
+
   function renderClassRoster(record = null) {
     if (!classRosterEl) return;
     const classId = record && record.recordType === "class" ? slugify(getExtras(record).classId || record.id || record.title, "class") : "";
@@ -528,6 +594,7 @@
     state.registrationSnapshot = null;
     state.registrationLoading = false;
     state.registrationDeletingId = "";
+    state.registrationConvertingId = "";
     renderRegistrationManager();
   }
 
@@ -810,6 +877,7 @@
         ].filter(Boolean);
         const note = String(record.notes || "").trim();
         const summary = note.length > 180 ? `${note.slice(0, 180)}...` : note;
+        const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
         return `
           <article class="management-record ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
@@ -825,6 +893,7 @@
               <h3>${escapeHtml(record.title)}</h3>
               ${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
               ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
+              ${classDetails}
             </div>
             ${
               record.recordType === "contact"
@@ -978,24 +1047,38 @@
       registrationList.innerHTML = '<div class="management-empty">Nobody is registered for this date yet.</div>';
       return;
     }
+    const contactEmails = new Set(
+      getContactRecords()
+        .map((contact) => normalizeSiteText(contact.contactEmail).toLowerCase())
+        .filter(Boolean)
+    );
     registrationList.innerHTML = registrants
       .map((registrant) => {
         const registrantId = normalizeSiteText(registrant && registrant.id);
+        const registrantEmail = normalizeSiteText(registrant && registrant.email).toLowerCase();
         const additionalGuests = Math.max(0, Number((registrant && registrant.additionalGuests) || 0) || 0);
         const partySize = Math.max(1, Number((registrant && registrant.partySize) || 1) || 1);
         const details = [
           partySize > 1 ? `${partySize} divers total` : "Solo signup",
+          normalizeSiteText(registrant && registrant.email),
+          normalizeSiteText(registrant && registrant.phone),
+          normalizeSiteText(registrant && registrant.certificationLevel),
           additionalGuests > 0 ? `${additionalGuests} guest${additionalGuests === 1 ? "" : "s"}` : "",
           normalizeSiteText(registrant && registrant.createdAt) ? `Signed up ${normalizeSiteText(registrant.createdAt).slice(0, 10)}` : "",
         ].filter(Boolean);
         const deleting = registrantId && registrantId === state.registrationDeletingId;
+        const converting = registrantId && registrantId === state.registrationConvertingId;
+        const alreadyContact = registrantEmail && contactEmails.has(registrantEmail);
         return `
           <div class="management-registration-item">
             <div>
               <strong>${escapeHtml(normalizeSiteText(registrant && registrant.name) || "Unnamed registrant")}</strong>
               <span>${escapeHtml(details.join(" | "))}</span>
             </div>
-            <button type="button" data-remove-registration="${escapeHtml(registrantId)}" ${!registrantId || deleting || state.registrationLoading ? "disabled" : ""}>${deleting ? "Removing..." : "Unregister"}</button>
+            <div class="management-registration-actions">
+              <button type="button" data-convert-event-registration="${escapeHtml(registrantId)}" ${!registrantId || alreadyContact || converting || state.registrationLoading ? "disabled" : ""}>${alreadyContact ? "Added" : converting ? "Adding..." : "Add Contact"}</button>
+              <button type="button" data-remove-registration="${escapeHtml(registrantId)}" ${!registrantId || deleting || state.registrationLoading ? "disabled" : ""}>${deleting ? "Removing..." : "Unregister"}</button>
+            </div>
           </div>
         `;
       })
@@ -1044,6 +1127,56 @@
     state.registrationSnapshot = data;
     setStatus(recordStatus, "Registration removed.", "success");
     renderRegistrationManager();
+  }
+
+  async function saveRegistrantAsContact(registrant, notes = "Created from event registration escrow.") {
+    const firstName = normalizeSiteText(registrant && registrant.firstName);
+    const lastName = normalizeSiteText(registrant && registrant.lastName);
+    const contactName = [firstName, lastName].filter(Boolean).join(" ") || normalizeSiteText(registrant && registrant.name);
+    const existingContact = getContactRecords().find((contact) => {
+      const email = normalizeSiteText(contact.contactEmail).toLowerCase();
+      return email && email === normalizeSiteText(registrant && registrant.email).toLowerCase();
+    });
+    if (existingContact) {
+      return updateContactRecord(existingContact, {
+        registrationSource: "self_registered",
+        certification: normalizeSiteText(registrant && registrant.certificationLevel) || getExtras(existingContact).certification,
+      });
+    }
+    const saved = await saveRecordPayload({
+      recordType: "contact",
+      title: contactName,
+      status: "active",
+      priority: "normal",
+      contactName,
+      contactEmail: normalizeSiteText(registrant && registrant.email),
+      contactPhone: normalizeSiteText(registrant && registrant.phone),
+      notes,
+      extras: {
+        firstName,
+        lastName,
+        source: "Event registration",
+        registrationSource: "self_registered",
+        certification: normalizeSiteText(registrant && registrant.certificationLevel),
+      },
+    });
+    state.records = [saved, ...state.records.filter((item) => item.id !== saved.id)];
+    return saved;
+  }
+
+  async function convertEventRegistrationToContact(registrationId) {
+    const registrants = Array.isArray(state.registrationSnapshot && state.registrationSnapshot.registrants)
+      ? state.registrationSnapshot.registrants
+      : [];
+    const registrant = registrants.find((item) => normalizeSiteText(item && item.id) === normalizeSiteText(registrationId));
+    if (!registrant) return;
+    state.registrationConvertingId = normalizeSiteText(registrationId);
+    renderRegistrationManager();
+    await saveRegistrantAsContact(registrant);
+    state.registrationConvertingId = "";
+    renderRegistrationManager();
+    renderRecords();
+    setStatus(recordStatus, "Registration imported as a contact.", "success");
   }
 
   function renderClassRegistrationEscrow(record = null) {
@@ -1204,35 +1337,7 @@
     if (!registrant || !classRecord) return;
     state.classConvertingRegistrationId = normalizeSiteText(registrationId);
     renderClassRegistrationEscrow(classRecord);
-    const firstName = normalizeSiteText(registrant.firstName);
-    const lastName = normalizeSiteText(registrant.lastName);
-    const contactName = [firstName, lastName].filter(Boolean).join(" ") || normalizeSiteText(registrant.name);
-    const existingContact = getContactRecords().find((contact) => {
-      const email = normalizeSiteText(contact.contactEmail).toLowerCase();
-      return email && email === normalizeSiteText(registrant.email).toLowerCase();
-    });
-    const contact = existingContact
-      ? await updateContactRecord(existingContact, {
-          registrationSource: "self_registered",
-          certification: normalizeSiteText(registrant.certificationLevel) || getExtras(existingContact).certification,
-        })
-      : await saveRecordPayload({
-          recordType: "contact",
-          title: contactName,
-          status: "active",
-          priority: "normal",
-          contactName,
-          contactEmail: normalizeSiteText(registrant.email),
-          contactPhone: normalizeSiteText(registrant.phone),
-          notes: "Created from class registration escrow.",
-          extras: {
-            firstName,
-            lastName,
-            source: "Class registration",
-            registrationSource: "self_registered",
-            certification: normalizeSiteText(registrant.certificationLevel),
-          },
-        });
+    const contact = await saveRegistrantAsContact(registrant, "Created from class registration escrow.");
     state.classConvertingRegistrationId = "";
     await enrollContactInClass(contact, "self_registered", normalizeSiteText(registrationId));
     setStatus(recordStatus, "Registration imported as a contact and enrolled in class.", "success");
@@ -1801,9 +1906,14 @@
     if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
     if (registrationList) {
       registrationList.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-remove-registration]");
-        if (!button) return;
-        removeRegistration(button.getAttribute("data-remove-registration") || "");
+        const convertButton = event.target.closest("[data-convert-event-registration]");
+        if (convertButton) {
+          convertEventRegistrationToContact(convertButton.getAttribute("data-convert-event-registration") || "");
+          return;
+        }
+        const removeButton = event.target.closest("[data-remove-registration]");
+        if (!removeButton) return;
+        removeRegistration(removeButton.getAttribute("data-remove-registration") || "");
       });
     }
     if (calendarItemsEl) {
@@ -1862,6 +1972,11 @@
         if (statusSelect) {
           event.stopPropagation();
           updateRecordStatus(statusSelect.getAttribute("data-status-change"), statusSelect.value);
+          return;
+        }
+        const detailToggle = event.target.closest(".management-record-details");
+        if (detailToggle) {
+          event.stopPropagation();
           return;
         }
         const card = event.target.closest("[data-record-id]");
