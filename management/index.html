@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429s" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429b" />
 </head>
 
 <body class="management-page">
@@ -376,12 +376,14 @@
                 </select>
               </label>
             </section>
-            <label data-field="notes">
+            <label data-field="notes" class="management-notes-label">
               Notes / Progress
+              <button type="button" class="management-timestamp-btn" data-insert-timestamp title="Insert today's date">Stamp Date</button>
               <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
             </label>
             <div class="management-form-actions">
               <button class="btn primary" type="submit">Save Item</button>
+              <button class="btn secondary" type="button" data-duplicate-record hidden>Duplicate</button>
               <button class="btn secondary" type="button" data-delete-record hidden>Delete</button>
             </div>
             <p class="management-form-status" data-record-status aria-live="polite"></p>
@@ -410,12 +412,12 @@
               </select>
             </label>
             <div class="management-filters" role="group" aria-label="Record filters">
-              <button type="button" class="is-active" data-filter-type="all">Agenda</button>
-              <button type="button" data-filter-type="contact">Contacts</button>
-              <button type="button" data-filter-type="inquiry">Inquiries</button>
-              <button type="button" data-filter-type="class">Classes</button>
-              <button type="button" data-filter-type="trip">Calendar</button>
-              <button type="button" data-filter-type="task">Tasks</button>
+              <button type="button" class="is-active" data-filter-type="all">Agenda<span data-filter-count></span></button>
+              <button type="button" data-filter-type="contact">Contacts<span data-filter-count></span></button>
+              <button type="button" data-filter-type="inquiry">Inquiries<span data-filter-count></span></button>
+              <button type="button" data-filter-type="class">Classes<span data-filter-count></span></button>
+              <button type="button" data-filter-type="trip">Calendar<span data-filter-count></span></button>
+              <button type="button" data-filter-type="task">Tasks<span data-filter-count></span></button>
             </div>
             <div class="management-calendar-controls">
               <label class="management-toggle">
@@ -425,6 +427,10 @@
               <button class="btn secondary" type="button" data-refresh-calendar>Refresh Calendar</button>
             </div>
           </div>
+          <form class="management-quick-add" data-quick-add-task aria-label="Quick add task">
+            <input type="text" class="management-quick-add-input" data-quick-task-input maxlength="180" placeholder="Quick add task… press Enter to save" autocomplete="off" />
+            <button class="management-quick-add-btn" type="submit">Add Task</button>
+          </form>
           <div class="management-records" data-record-list aria-live="polite"></div>
         </section>
       </section>
@@ -454,6 +460,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429s" defer></script>
+  <script src="/js/management.js?v=20260429b" defer></script>
 </body>
 </html>

@@ -457,6 +457,18 @@
     return dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
   }
 
+  function isOverdue(record) {
+    if (!record.dueDate || closedStatuses.has(record.status)) return false;
+    return record.dueDate < todayKey();
+  }
+
+  function isInputFocused() {
+    const active = document.activeElement;
+    if (!active) return false;
+    const tag = active.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || active.isContentEditable;
+  }
+
   function formatMoney(value) {
     const amount = Number(value || 0);
     if (!Number.isFinite(amount) || amount <= 0) return "$0";
@@ -1320,6 +1332,7 @@
   }
 
   function compareVisibleRecords(a, b) {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     const sortBy = state.sortBy || "newest";
     const titleCompare = getRecordSortTitle(a).localeCompare(getRecordSortTitle(b));
     if (sortBy === "alpha") return titleCompare || getTimeValue(b.createdAt) - getTimeValue(a.createdAt);
@@ -1402,9 +1415,30 @@
     if (metricEls.owed) metricEls.owed.textContent = formatMoney(openBalance);
   }
 
+  function updateFilterCounts() {
+    const typeCounts = { contact: 0, inquiry: 0, class: 0, trip: 0, task: 0 };
+    state.records.forEach((record) => {
+      if (!isSiteBackedManagementRecord(record) && typeCounts[record.recordType] !== undefined) {
+        typeCounts[record.recordType]++;
+      }
+    });
+    filterButtons.forEach((button) => {
+      const type = button.getAttribute("data-filter-type");
+      const countEl = button.querySelector("[data-filter-count]");
+      if (!countEl) return;
+      if (type === "all") {
+        const total = Object.values(typeCounts).reduce((sum, n) => sum + n, 0);
+        countEl.textContent = total ? ` (${total})` : "";
+      } else if (typeCounts[type] !== undefined) {
+        countEl.textContent = typeCounts[type] ? ` (${typeCounts[type]})` : "";
+      }
+    });
+  }
+
   function renderRecords() {
     if (!recordList) return;
     updateMetrics();
+    updateFilterCounts();
     const visibleRecords = getVisibleRecords();
     const visibleSiteEvents = getVisibleSiteEventsForRecords();
     if (!visibleRecords.length && !visibleSiteEvents.length) {
@@ -1452,8 +1486,10 @@
                 ${renderContactCopyLine("Phone", record.contactPhone, "phone")}
               </div>`
             : "";
+        const overdueFlag = isOverdue(record) ? `<span class="management-badge is-overdue">Overdue</span>` : "";
+        const pinnedFlag = record.pinned ? " is-pinned" : "";
         return `
-          <article class="management-record is-${escapeHtml(record.recordType)} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
+          <article class="management-record is-${escapeHtml(record.recordType)}${pinnedFlag} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge is-${escapeHtml(record.recordType)}">${escapeHtml(formatLabel(record.recordType))}</span>
@@ -1463,6 +1499,7 @@
                     : `<span class="management-badge is-${escapeHtml(record.status)}">${escapeHtml(formatLabel(record.status))}</span>`
                 }
                 <span class="management-badge is-${escapeHtml(record.priority)}">${escapeHtml(formatLabel(record.priority))}</span>
+                ${overdueFlag}
               </div>
               <h3>${escapeHtml(record.title)}</h3>
               ${inquiryPipeline}
@@ -1474,17 +1511,18 @@
               ${contactDetails}
               ${inquiryDetails}
             </div>
-            ${
-              record.recordType === "contact"
-                ? ""
-                : `<div class="management-record-actions">
-              <select data-status-change="${escapeHtml(record.id)}" aria-label="Change status for ${escapeHtml(record.title)}">
+            <div class="management-record-actions">
+              <button class="management-pin-btn ${record.pinned ? "is-pinned" : ""}" type="button" data-pin-record="${escapeHtml(record.id)}" aria-label="${record.pinned ? "Unpin" : "Pin"} ${escapeHtml(record.title)}" title="${record.pinned ? "Unpin" : "Pin"}">${record.pinned ? "★" : "☆"}</button>
+              ${
+                record.recordType === "contact"
+                  ? ""
+                  : `<select data-status-change="${escapeHtml(record.id)}" aria-label="Change status for ${escapeHtml(record.title)}">
                 ${getStatusOptions(record.recordType)
                   .map((status) => `<option value="${status}" ${record.status === status ? "selected" : ""}>${formatLabel(status)}</option>`)
                   .join("")}
-              </select>
-            </div>`
-            }
+              </select>`
+              }
+            </div>
           </article>
         `;
       })
@@ -1983,6 +2021,7 @@
       relatedEvent: textValue("relatedEvent", existing && existing.relatedEvent),
       notes: textValue("notes", existing && existing.notes),
       extras,
+      ...(existing && existing.pinned ? { pinned: true } : {}),
     };
   }
 
@@ -2037,6 +2076,8 @@
       resetRegistrationManager();
     }
     if (deleteButton) deleteButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
+    const duplicateButton = app.querySelector("[data-duplicate-record]");
+    if (duplicateButton) duplicateButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
     setStatus(recordStatus, "");
     renderRecords();
   }
@@ -2438,6 +2479,85 @@
     copyTextValue(value, field);
   }
 
+  function duplicateRecord() {
+    const id = state.selectedId;
+    const record = id ? state.records.find((r) => r.id === id) : null;
+    if (!record) return;
+    const extras = getExtras(record);
+    const copy = {
+      ...record,
+      id: "",
+      title: record.recordType === "contact" ? record.title : `Copy of ${record.title}`,
+      extras: {
+        ...extras,
+        firstName: record.recordType === "contact" ? extras.firstName : extras.firstName,
+      },
+      pinned: false,
+    };
+    fillForm(copy);
+    if (editorTitle) editorTitle.textContent = `Duplicate: ${record.title}`;
+  }
+
+  async function quickAddTask(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const input = form.querySelector("[data-quick-task-input]");
+    const title = input ? String(input.value || "").trim() : "";
+    if (!title) return;
+    const record = {
+      id: "",
+      recordType: "task",
+      title,
+      status: "new",
+      priority: "normal",
+      owner: "",
+      contactName: "",
+      contactEmail: "",
+      contactPhone: "",
+      dueDate: "",
+      relatedEvent: "",
+      notes: "",
+      extras: {},
+    };
+    form.classList.add("is-loading");
+    try {
+      await saveRecordPayload(record);
+      if (input) input.value = "";
+      renderRecords();
+    } catch (err) {
+      setStatus(recordStatus, (err && err.message) || "Could not add task.", "error");
+    } finally {
+      form.classList.remove("is-loading");
+    }
+  }
+
+  function insertTimestamp() {
+    const notesField = recordForm && recordForm.elements.notes;
+    if (!notesField) return;
+    const stamp = `\n--- ${formatDate(todayKey())} ---\n`;
+    const pos = notesField.selectionStart || notesField.value.length;
+    notesField.value = notesField.value.slice(0, pos) + stamp + notesField.value.slice(pos);
+    notesField.focus();
+    notesField.selectionStart = notesField.selectionEnd = pos + stamp.length;
+  }
+
+  async function togglePin(id) {
+    const record = state.records.find((r) => r.id === id);
+    if (!record) return;
+    const next = { ...record, pinned: !record.pinned };
+    try {
+      const saved = await saveRecordPayload(next);
+      if (state.selectedId === id) {
+        const duplicateButton = app.querySelector("[data-duplicate-record]");
+        if (deleteButton) deleteButton.hidden = !saved.id || Boolean(state.activeSiteRecord);
+        if (duplicateButton) duplicateButton.hidden = !saved.id || Boolean(state.activeSiteRecord);
+      }
+      renderRecords();
+    } catch (err) {
+      setStatus(recordStatus, (err && err.message) || "Could not update pin.", "error");
+    }
+  }
+
   function bindEvents() {
     if (loginForm) loginForm.addEventListener("submit", login);
     if (recordForm) recordForm.addEventListener("submit", saveRecord);
@@ -2505,6 +2625,12 @@
       button.addEventListener("click", () => copyFieldValue(button.getAttribute("data-copy-field") || ""));
     });
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
+    const duplicateButton = app.querySelector("[data-duplicate-record]");
+    if (duplicateButton) duplicateButton.addEventListener("click", duplicateRecord);
+    const timestampButton = app.querySelector("[data-insert-timestamp]");
+    if (timestampButton) timestampButton.addEventListener("click", insertTimestamp);
+    const quickAddForm = app.querySelector("[data-quick-add-task]");
+    if (quickAddForm) quickAddForm.addEventListener("submit", quickAddTask);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderRecords);
     if (openHomeTickerButton) openHomeTickerButton.addEventListener("click", openHomeTickerModal);
@@ -2570,6 +2696,13 @@
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
+        const pinButton = event.target.closest("[data-pin-record]");
+        if (pinButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          togglePin(pinButton.getAttribute("data-pin-record") || "");
+          return;
+        }
         const copyButton = event.target.closest("[data-copy-record]");
         if (copyButton) {
           event.preventDefault();
@@ -2601,12 +2734,25 @@
       });
     }
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      if (homeTickerModal && !homeTickerModal.hidden) {
-        closeHomeTickerModal();
+      if (event.key === "Escape") {
+        if (homeTickerModal && !homeTickerModal.hidden) {
+          closeHomeTickerModal();
+          return;
+        }
+        if (app.classList.contains("is-editor-open")) closeEditorModal();
         return;
       }
-      if (app.classList.contains("is-editor-open")) closeEditorModal();
+      if (isInputFocused()) return;
+      if (event.key === "n" || event.key === "N") {
+        event.preventDefault();
+        openEditor();
+        return;
+      }
+      if (event.key === "/") {
+        event.preventDefault();
+        if (searchInput) { searchInput.focus(); searchInput.select(); }
+        return;
+      }
     });
   }
 

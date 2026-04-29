@@ -1665,3 +1665,116 @@
     letter-spacing: 0;
   }
 }
+
+/* ---- Overdue badge ---- */
+.management-badge.is-overdue {
+  background: rgba(226, 27, 35, 0.22);
+  color: #ffb3b8;
+  border: 1px solid rgba(226, 27, 35, 0.38);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Pin button on cards ---- */
+.management-pin-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: rgba(234, 242, 255, 0.30);
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.1s;
+  border-radius: 6px;
+}
+.management-pin-btn:hover {
+  color: rgba(245, 178, 62, 0.80);
+  background: rgba(245, 178, 62, 0.10);
+}
+.management-pin-btn.is-pinned {
+  color: #f5b23e;
+}
+.management-record.is-pinned {
+  border-color: rgba(245, 178, 62, 0.30);
+  background: rgba(245, 178, 62, 0.05);
+}
+
+/* ---- Quick-add task bar ---- */
+.management-quick-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+.management-quick-add.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.management-quick-add-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.042);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+}
+.management-quick-add-input:focus {
+  border-color: rgba(85, 185, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.11);
+}
+.management-quick-add-btn {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.management-quick-add-btn:hover {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
+}
+
+/* ---- Timestamp button in notes label ---- */
+.management-notes-label {
+  position: relative;
+}
+.management-timestamp-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(234, 242, 255, 0.60);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  padding: 3px 8px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.management-timestamp-btn:hover {
+  border-color: rgba(85, 185, 255, 0.45);
+  background: rgba(85, 185, 255, 0.10);
+  color: var(--text);
+}
+
+/* ---- Filter count badge ---- */
+.management-filters button [data-filter-count] {
+  color: rgba(234, 242, 255, 0.50);
+  font-size: 11px;
+  font-weight: 700;
+}
+.management-filters button.is-active [data-filter-count] {
+  color: rgba(85, 185, 255, 0.75);
+}
