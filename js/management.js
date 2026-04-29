@@ -40,6 +40,10 @@
   const classRosterEl = app.querySelector("[data-class-roster]");
   const classContactSelect = app.querySelector("[data-class-contact-select]");
   const classContactList = app.querySelector("[data-class-contact-list]");
+  const contactClassesEl = app.querySelector("[data-contact-classes]");
+  const contactClassSelect = app.querySelector("[data-contact-class-select]");
+  const contactClassStatusSelect = app.querySelector("[data-contact-class-status]");
+  const contactClassList = app.querySelector("[data-contact-class-list]");
   const classRegistrationSummary = app.querySelector("[data-class-registration-summary]");
   const classRegistrationList = app.querySelector("[data-class-registration-list]");
   const refreshClassRegistrationsButton = app.querySelector("[data-refresh-class-registrations]");
@@ -121,6 +125,7 @@
         "contactPhone",
         "source",
         "certification",
+        "contactClasses",
         "notes",
       ],
     },
@@ -496,14 +501,27 @@
     return state.records.filter((record) => record.recordType === "contact");
   }
 
+  function getClassRecords() {
+    return state.records.filter((record) => record.recordType === "class" && !isSiteBackedManagementRecord(record));
+  }
+
+  function getClassRecordId(record) {
+    if (!record || record.recordType !== "class") return "";
+    return slugify(getExtras(record).classId || record.id || record.title, "class");
+  }
+
   function getContactClassEnrollments(contact) {
     const extras = getExtras(contact);
     return Array.isArray(extras.classEnrollments) ? extras.classEnrollments : [];
   }
 
+  function getEnrollmentStatus(enrollment) {
+    return normalizeSiteText(enrollment && enrollment.status) || "enrolled";
+  }
+
   function getClassRosterContacts(record) {
     if (!record || record.recordType !== "class") return [];
-    const classId = slugify(getExtras(record).classId || record.id || record.title, "class");
+    const classId = getClassRecordId(record);
     return getContactRecords().filter((contact) =>
       getContactClassEnrollments(contact).some((enrollment) => normalizeSiteText(enrollment && enrollment.classId) === classId)
     );
@@ -619,7 +637,11 @@
       ["Notes", record.notes],
     ].filter((row) => normalizeSiteText(row[1]));
     const enrollments = getContactClassEnrollments(record)
-      .map((enrollment) => normalizeSiteText(enrollment && (enrollment.classTitle || enrollment.classId)))
+      .map((enrollment) => {
+        const classRecord = getEnrollmentClassRecord(enrollment);
+        const title = normalizeSiteText((classRecord && classRecord.title) || (enrollment && (enrollment.classTitle || enrollment.classId)));
+        return title ? `${title} (${formatLabel(getEnrollmentStatus(enrollment))})` : "";
+      })
       .filter(Boolean);
     if (enrollments.length) detailRows.push(["Classes", enrollments.join(", ")]);
     if (!detailRows.length) return "";
@@ -732,12 +754,13 @@
         ? rosterContacts.map((contact) => {
           const enrollment = getClassRosterEntry(contact, classId);
           const sourceLabel = enrollment.source === "self_registered" ? "Self Registered" : "In House Registered";
+          const statusLabel = getEnrollmentStatus(enrollment) === "completed" ? "Completed" : "Enrolled";
           return `
           <div class="management-class-contact-item"
             data-class-contact-id="${escapeHtml(contact.id)}">
             <div>
               <strong>${escapeHtml(contact.contactName || contact.title || contact.contactEmail || "Unnamed contact")}</strong>
-              <span>${escapeHtml([contact.contactEmail, contact.contactPhone, sourceLabel].filter(Boolean).join(" | "))}</span>
+              <span>${escapeHtml([contact.contactEmail, contact.contactPhone, statusLabel, sourceLabel].filter(Boolean).join(" | "))}</span>
             </div>
             <button type="button" data-remove-class-contact="${escapeHtml(contact.id)}">Remove</button>
           </div>
@@ -746,6 +769,60 @@
         : '<div class="management-empty">No contacts enrolled in this class yet.</div>';
     }
     renderClassRegistrationEscrow(record);
+  }
+
+  function getEnrollmentClassRecord(enrollment) {
+    const classId = normalizeSiteText(enrollment && enrollment.classId);
+    if (!classId) return null;
+    return getClassRecords().find((record) => getClassRecordId(record) === classId) || null;
+  }
+
+  function renderContactClassManager(record = null) {
+    if (!contactClassesEl) return;
+    const isContact = record && record.recordType === "contact" && record.id;
+    const enrollments = isContact ? getContactClassEnrollments(record) : [];
+    const enrolledIds = new Set(enrollments.map((entry) => normalizeSiteText(entry && entry.classId)).filter(Boolean));
+    const availableClasses = getClassRecords().filter((classRecord) => !enrolledIds.has(getClassRecordId(classRecord)));
+
+    if (contactClassSelect) {
+      contactClassSelect.innerHTML = availableClasses.length
+        ? availableClasses
+          .map((classRecord) => `<option value="${escapeHtml(getClassRecordId(classRecord))}">${escapeHtml(classRecord.title || getClassRecordId(classRecord))}</option>`)
+          .join("")
+        : '<option value="">No available classes</option>';
+      contactClassSelect.disabled = !isContact || !availableClasses.length;
+    }
+    if (contactClassStatusSelect) contactClassStatusSelect.disabled = !isContact;
+
+    if (contactClassList) {
+      contactClassList.innerHTML = !isContact
+        ? '<div class="management-empty">Save this contact before adding classes.</div>'
+        : enrollments.length
+          ? enrollments.map((enrollment) => {
+            const classRecord = getEnrollmentClassRecord(enrollment);
+            const classId = normalizeSiteText(enrollment && enrollment.classId);
+            const title = classRecord ? classRecord.title : normalizeSiteText(enrollment && enrollment.classTitle) || classId || "Class";
+            const status = getEnrollmentStatus(enrollment);
+            const details = [
+              status === "completed" ? "Completed" : "Enrolled",
+              normalizeSiteText(enrollment && enrollment.source) === "self_registered" ? "Self Registered" : "In House Registered",
+              normalizeSiteText(enrollment && enrollment.enrolledAt) ? `Added ${normalizeSiteText(enrollment && enrollment.enrolledAt).slice(0, 10)}` : "",
+            ].filter(Boolean);
+            return `
+              <div class="management-class-contact-item" data-contact-class-id="${escapeHtml(classId)}">
+                <div>
+                  <strong>${escapeHtml(title)}</strong>
+                  <span>${escapeHtml(details.join(" | "))}</span>
+                </div>
+                <div class="management-class-contact-actions">
+                  <button type="button" data-toggle-contact-class="${escapeHtml(classId)}">${status === "completed" ? "Mark Enrolled" : "Mark Complete"}</button>
+                  <button type="button" data-remove-contact-class="${escapeHtml(classId)}">Remove</button>
+                </div>
+              </div>
+            `;
+          }).join("")
+          : '<div class="management-empty">No classes added to this contact yet.</div>';
+    }
   }
 
   function getPrimaryClassRegistrationContext(record) {
@@ -1598,6 +1675,7 @@
           classRecordId: current.id,
           classTitle: current.title,
           source,
+          status: "enrolled",
           sourceRegistrationId,
           enrolledAt: new Date().toISOString(),
         },
@@ -1605,6 +1683,67 @@
     });
     fillForm(current);
     return saved;
+  }
+
+  async function addClassesToContact() {
+    const contact = state.selectedId ? state.records.find((record) => record.id === state.selectedId && record.recordType === "contact") : null;
+    if (!contact || !contact.id) {
+      setStatus(recordStatus, "Save or open a contact before adding classes.", "error");
+      return;
+    }
+    const classIds = contactClassSelect
+      ? Array.from(contactClassSelect.selectedOptions).map((option) => normalizeSiteText(option.value)).filter(Boolean)
+      : [];
+    if (!classIds.length) {
+      setStatus(recordStatus, "Choose at least one class to add.", "error");
+      return;
+    }
+    const existingEnrollments = getContactClassEnrollments(contact);
+    const existingIds = new Set(existingEnrollments.map((entry) => normalizeSiteText(entry && entry.classId)));
+    const status = contactClassStatusSelect && contactClassStatusSelect.value === "completed" ? "completed" : "enrolled";
+    const nextEnrollments = [
+      ...existingEnrollments,
+      ...classIds
+        .filter((classId) => !existingIds.has(classId))
+        .map((classId) => {
+          const classRecord = getClassRecords().find((record) => getClassRecordId(record) === classId);
+          return {
+            classId,
+            classRecordId: classRecord ? classRecord.id : "",
+            classTitle: classRecord ? classRecord.title : classId,
+            source: "in_house",
+            status,
+            enrolledAt: new Date().toISOString(),
+          };
+        }),
+    ];
+    const saved = await updateContactRecord(contact, { classEnrollments: nextEnrollments });
+    fillForm(saved);
+    setStatus(recordStatus, `${classIds.length} class${classIds.length === 1 ? "" : "es"} added to contact.`, "success");
+  }
+
+  async function updateContactClassEnrollment(classId, updater) {
+    const contact = state.selectedId ? state.records.find((record) => record.id === state.selectedId && record.recordType === "contact") : null;
+    const safeClassId = normalizeSiteText(classId);
+    if (!contact || !safeClassId) return;
+    const nextEnrollments = getContactClassEnrollments(contact)
+      .map((entry) => normalizeSiteText(entry && entry.classId) === safeClassId ? updater(entry) : entry)
+      .filter(Boolean);
+    const saved = await updateContactRecord(contact, { classEnrollments: nextEnrollments });
+    fillForm(saved);
+  }
+
+  async function toggleContactClassStatus(classId) {
+    await updateContactClassEnrollment(classId, (entry) => ({
+      ...entry,
+      status: getEnrollmentStatus(entry) === "completed" ? "enrolled" : "completed",
+    }));
+    setStatus(recordStatus, "Class status updated for this contact.", "success");
+  }
+
+  async function removeClassFromContact(classId) {
+    await updateContactClassEnrollment(classId, () => null);
+    setStatus(recordStatus, "Class removed from this contact.", "success");
   }
 
   async function removeContactEnrollmentFromClass(contactId) {
@@ -1759,6 +1898,7 @@
     state.classConvertingRegistrationId = "";
     renderClassSchedule(getExtras(item).classSessions || {});
     renderClassRoster(item);
+    renderContactClassManager(item);
     if (item.recordType === "contact") {
       const extras = getExtras(item);
       const nameParts = String(item.contactName || item.title || "").trim().split(/\s+/);
@@ -2205,6 +2345,21 @@
     }
     const addClassContactButton = app.querySelector("[data-add-class-contact]");
     if (addClassContactButton) addClassContactButton.addEventListener("click", addSelectedContactToClass);
+    const addContactClassesButton = app.querySelector("[data-add-contact-classes]");
+    if (addContactClassesButton) addContactClassesButton.addEventListener("click", addClassesToContact);
+    if (contactClassList) {
+      contactClassList.addEventListener("click", async (event) => {
+        const toggleButton = event.target.closest("[data-toggle-contact-class]");
+        if (toggleButton) {
+          await toggleContactClassStatus(toggleButton.getAttribute("data-toggle-contact-class") || "");
+          return;
+        }
+        const removeButton = event.target.closest("[data-remove-contact-class]");
+        if (removeButton) {
+          await removeClassFromContact(removeButton.getAttribute("data-remove-contact-class") || "");
+        }
+      });
+    }
     if (refreshClassRegistrationsButton) refreshClassRegistrationsButton.addEventListener("click", loadClassRegistrationEscrow);
     if (classContactList) {
       classContactList.addEventListener("click", async (event) => {

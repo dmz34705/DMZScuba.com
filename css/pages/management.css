@@ -271,7 +271,8 @@
 }
 
 .management-class-schedule,
-.management-class-roster {
+.management-class-roster,
+.management-contact-classes {
   display: block;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 8px;
@@ -282,13 +283,15 @@
 }
 
 .management-class-schedule[open],
-.management-class-roster[open] {
+.management-class-roster[open],
+.management-contact-classes[open] {
   display: grid;
   gap: 14px;
 }
 
 .management-class-schedule > summary,
 .management-class-roster > summary,
+.management-contact-classes > summary,
 .management-record-details > summary {
   cursor: pointer;
   list-style-position: outside;
@@ -296,6 +299,7 @@
 
 .management-class-schedule > summary::marker,
 .management-class-roster > summary::marker,
+.management-contact-classes > summary::marker,
 .management-record-details > summary::marker {
   color: rgba(85, 185, 255, 0.82);
 }
@@ -399,6 +403,10 @@
   gap: 8px;
 }
 
+.management-contact-classes .management-class-contact-add {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+}
+
 .management-class-contact-add select,
 .management-class-contact-add button,
 .management-class-contact-item button,
@@ -411,6 +419,10 @@
   font-size: 12px;
   font-weight: 800;
   padding: 9px 10px;
+}
+
+.management-class-contact-add select[multiple] {
+  min-height: 104px;
 }
 
 .management-class-contact-list,
@@ -430,6 +442,13 @@
   border-radius: 8px;
   padding: 10px;
   background: rgba(5, 11, 20, 0.3);
+}
+
+.management-class-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .management-class-contact-item strong,
@@ -1223,6 +1242,7 @@
 
   .management-class-contact-add,
   .management-class-contact-item,
+  .management-class-contact-actions,
   .management-class-registration-item,
   .management-registration-item,
   .management-class-detail-grid,

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429i" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429j" />
 </head>
 
 <body class="management-page">
@@ -340,6 +340,23 @@
                   <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
                 </label>
               </div>
+              <details class="management-contact-classes" data-field="contactClasses" data-contact-classes>
+                <summary class="management-class-roster-head">
+                  <div>
+                    <h3>Student Classes</h3>
+                    <p>Add one or more class records to this contact. The class roster updates from the same enrollment record.</p>
+                  </div>
+                </summary>
+                <div class="management-class-contact-add">
+                  <select data-contact-class-select aria-label="Select classes to add" multiple size="6"></select>
+                  <select data-contact-class-status aria-label="Class enrollment status">
+                    <option value="enrolled">Enrolled</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <button type="button" data-add-contact-classes>Add Classes</button>
+                </div>
+                <div class="management-class-contact-list" data-contact-class-list></div>
+              </details>
               <section class="management-registration-manager" data-registration-manager hidden>
                 <div class="management-registration-head">
                   <div>
@@ -423,6 +440,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429i" defer></script>
+  <script src="/js/management.js?v=20260429j" defer></script>
 </body>
 </html>
