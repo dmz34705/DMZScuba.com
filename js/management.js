@@ -1365,24 +1365,36 @@
         const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
           .filter(Boolean)
           .join(" - ");
-        const meta = [
-          formatLabel(recordType),
-          item.type || "",
-          dateText,
-          item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "",
-          item.location || "",
-          item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
+        const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
+        const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
+        const registrationText = item.registrationEnabled ? "Registration open" : "Registration off";
+        const summary = normalizeSiteText(item.summary);
+        const statItems = [
+          ["Date", dateText || "No date"],
+          ["Time", timeText || "No time set"],
+          ["Location", item.location || "No location set"],
+          ["Capacity", spotsText],
+          ["Registration", registrationText],
         ].filter(Boolean);
         const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
         return `
           <article class="management-calendar-item ${isPast ? "is-past" : ""}" data-calendar-index="${sourceIndex}">
-            <div>
+            <div class="management-calendar-date-block">
+              <strong>${escapeHtml(formatDate(item.date) || "No Date")}</strong>
+              <span>${escapeHtml(timeText || "Time TBD")}</span>
+            </div>
+            <div class="management-calendar-main">
               <div class="management-record-badges">
                 <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
+                ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
+                ${item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
                 ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
               </div>
               <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
-              <p>${escapeHtml(meta.join(" | "))}</p>
+              <div class="management-calendar-stat-grid">
+                ${statItems.map(([label, value]) => `<span><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`).join("")}
+              </div>
+              ${summary ? `<p>${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
             </div>
             <div class="management-calendar-actions">
               <button type="button" data-calendar-open="${sourceIndex}">Open Record</button>
