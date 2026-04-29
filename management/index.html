@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260428f" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260428g" />
 </head>
 
 <body class="management-page">
@@ -66,7 +66,7 @@
         </article>
         <article>
           <span data-metric="trip">0</span>
-          <p>Trips</p>
+          <p>Calendar</p>
         </article>
         <article>
           <span data-metric="owed">$0</span>
@@ -91,7 +91,7 @@
         <div class="management-calendar-sync-head">
           <div>
             <p class="management-kicker">Site calendar</p>
-            <h2>Classes + Trips From Site Data</h2>
+            <h2>Calendar From Site Data</h2>
           </div>
           <div class="management-calendar-controls">
             <label class="management-toggle">
@@ -119,7 +119,7 @@
                 <option value="contact">Customer / Contact Profile</option>
                 <option value="inquiry">Inquiry</option>
                 <option value="class">Class</option>
-                <option value="trip">Trip</option>
+                <option value="trip">Calendar</option>
                 <option value="task">Business Task</option>
               </select>
             </label>
@@ -223,15 +223,55 @@
                 </label>
               </div>
               <div class="management-form-grid">
+                <label data-field="startTime">
+                  Start Time
+                  <select name="startTime" data-time-select></select>
+                </label>
+                <label data-field="endTime">
+                  End Time
+                  <select name="endTime" data-time-select></select>
+                </label>
+              </div>
+              <div class="management-form-grid">
+                <label data-field="eventTag">
+                  Tag
+                  <select name="eventTag">
+                    <option value="Training">Training</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Local Dive">Local Dive</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Community">Community</option>
+                  </select>
+                </label>
+                <label data-field="eventLocation">
+                  Location
+                  <input type="text" name="eventLocation" maxlength="180" />
+                </label>
+              </div>
+              <div class="management-form-grid">
                 <label data-field="capacity">
                   Capacity / Roster Size
                   <input type="number" min="0" step="1" name="capacity" />
+                </label>
+                <label data-field="registrationEnabled" class="management-checkbox-field">
+                  <span>Enable Registration</span>
+                  <input type="checkbox" name="registrationEnabled" value="1" />
                 </label>
                 <label data-field="certification">
                   Certification / Level
                   <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
                 </label>
               </div>
+              <section class="management-registration-manager" data-registration-manager hidden>
+                <div class="management-registration-head">
+                  <div>
+                    <h3>Registered Divers</h3>
+                    <p data-registration-summary>No signup data loaded.</p>
+                  </div>
+                  <button class="btn secondary" type="button" data-refresh-registrations>Refresh Signups</button>
+                </div>
+                <div class="management-registration-list" data-registration-list></div>
+              </section>
               <div class="management-form-grid">
                 <label data-field="amountOwed">
                   Total Owed
@@ -270,7 +310,7 @@
               <button type="button" data-filter-type="contact">Contacts</button>
               <button type="button" data-filter-type="inquiry">Inquiries</button>
               <button type="button" data-filter-type="class">Classes</button>
-              <button type="button" data-filter-type="trip">Trips</button>
+              <button type="button" data-filter-type="trip">Calendar</button>
               <button type="button" data-filter-type="task">Tasks</button>
             </div>
           </div>
@@ -280,6 +320,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260428f" defer></script>
+  <script src="/js/management.js?v=20260428g" defer></script>
 </body>
 </html>

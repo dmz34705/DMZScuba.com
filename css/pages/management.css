@@ -124,6 +124,17 @@
   background: rgba(85, 185, 255, 0.13);
 }
 
+.management-checkbox-field {
+  min-height: 47px;
+  align-content: center;
+}
+
+.management-checkbox-field input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
 .management-record-form select option {
   background: #071325;
   color: var(--text);
@@ -156,6 +167,86 @@
 
 .management-form-status.is-success {
   color: #9ff0ce;
+}
+
+.management-registration-manager {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px;
+}
+
+.management-registration-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.management-registration-head h3,
+.management-registration-head p {
+  margin: 0;
+}
+
+.management-registration-head h3 {
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.management-registration-head p {
+  margin-top: 4px;
+  color: rgba(234, 242, 255, 0.64);
+  font-size: 13px;
+}
+
+.management-registration-list {
+  display: grid;
+  gap: 8px;
+}
+
+.management-registration-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(5, 11, 20, 0.36);
+}
+
+.management-registration-item div {
+  display: grid;
+  gap: 3px;
+}
+
+.management-registration-item strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.management-registration-item span {
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 12px;
+}
+
+.management-registration-item button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-registration-item button:hover:not(:disabled) {
+  border-color: rgba(226, 27, 35, 0.58);
+  background: rgba(226, 27, 35, 0.14);
 }
 
 .management-dashboard {

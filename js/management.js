@@ -8,6 +8,13 @@
   const eventsUrl = apiRoot ? `${apiRoot}/api/v2/events` : "/api/v2/events";
   const adminEventsUrl = apiRoot ? `${apiRoot}/api/admin/v2/events` : "/api/admin/v2/events";
   const tokenStorageKey = "dmzMediaToken";
+  const timeOptions = Array.from({ length: 48 }, (_unused, index) => {
+    const hour24 = Math.floor(index / 2);
+    const minute = index % 2 === 0 ? "00" : "30";
+    const meridiem = hour24 >= 12 ? "PM" : "AM";
+    const hour12 = hour24 % 12 || 12;
+    return `${hour12}:${minute} ${meridiem}`;
+  });
 
   const loginSection = app.querySelector("[data-management-login]");
   const dashboard = app.querySelector("[data-management-dashboard]");
@@ -24,6 +31,10 @@
   const calendarStatus = app.querySelector("[data-calendar-status]");
   const refreshCalendarButton = app.querySelector("[data-refresh-calendar]");
   const showPastCalendarToggle = app.querySelector("[data-show-past-calendar]");
+  const registrationManager = app.querySelector("[data-registration-manager]");
+  const registrationSummary = app.querySelector("[data-registration-summary]");
+  const registrationList = app.querySelector("[data-registration-list]");
+  const refreshRegistrationsButton = app.querySelector("[data-refresh-registrations]");
   const extraFieldsSection = app.querySelector(".management-extra-fields");
   const typeConfigs = {
     contact: {
@@ -102,35 +113,25 @@
       ],
     },
     trip: {
-      editor: "Scheduled Trip",
-      newTitle: "New Scheduled Trip",
-      titleLabel: "Trip Name",
-      titlePlaceholder: "Cozumel 2026",
-      relatedLabel: "Destination or Trip Page",
-      capacityLabel: "Trip Capacity",
-      certificationLabel: "Recommended Level",
-      notesLabel: "Trip Roster / Logistics Notes",
-      notesPlaceholder: "Roster, deposits, rooming, flights, dive operator details, documents, balances owed...",
+      editor: "Calendar Event",
+      newTitle: "New Calendar Event",
+      titleLabel: "Trip Name / Event Name",
+      titlePlaceholder: "Open Water Weekend",
+      relatedLabel: "Site Calendar Record",
+      capacityLabel: "Spots Available",
+      notesLabel: "Event Description",
+      notesPlaceholder: "Short description shown on the public calendar and event detail view...",
       fields: [
         "recordType",
         "title",
-        "status",
-        "priority",
-        "owner",
-        "contactName",
-        "contactEmail",
-        "contactPhone",
-        "dueDate",
-        "relatedEvent",
-        "stage",
-        "source",
         "startDate",
         "endDate",
+        "startTime",
+        "endTime",
+        "eventTag",
+        "eventLocation",
+        "registrationEnabled",
         "capacity",
-        "certification",
-        "amountOwed",
-        "amountPaid",
-        "nextStep",
         "notes",
       ],
     },
@@ -164,6 +165,9 @@
     siteEvents: [],
     selectedId: "",
     activeSiteRecord: null,
+    registrationSnapshot: null,
+    registrationLoading: false,
+    registrationDeletingId: "",
     filterType: "all",
     search: "",
     loading: false,
@@ -304,6 +308,18 @@
     select.value = options.includes(current) ? current : "normal";
   }
 
+  function syncTimeOptions() {
+    if (!recordForm) return;
+    recordForm.querySelectorAll("[data-time-select]").forEach((select) => {
+      const current = String(select.value || "").trim();
+      select.innerHTML = [
+        '<option value="">Select time</option>',
+        ...timeOptions.map((value) => `<option value="${value}">${value}</option>`),
+      ].join("");
+      select.value = timeOptions.includes(current) ? current : "";
+    });
+  }
+
   function syncFormGridVisibility() {
     if (!recordForm) return;
     recordForm.querySelectorAll(".management-form-grid").forEach((grid) => {
@@ -344,6 +360,13 @@
     if (editorTitle) editorTitle.textContent = editing ? `Edit ${config.editor}` : config.newTitle;
   }
 
+  function resetRegistrationManager() {
+    state.registrationSnapshot = null;
+    state.registrationLoading = false;
+    state.registrationDeletingId = "";
+    renderRegistrationManager();
+  }
+
   function getExtras(record) {
     return record && record.extras && typeof record.extras === "object" ? record.extras : {};
   }
@@ -361,10 +384,7 @@
 
   function classifySiteEvent(item) {
     const type = normalizeSiteText(item && item.type).toLowerCase();
-    const title = normalizeSiteText(item && item.title).toLowerCase();
-    const combined = `${type} ${title}`;
-    if (combined.includes("travel") || combined.includes("trip") || combined.includes("local dive")) return "trip";
-    return "class";
+    return type === "training" ? "class" : "trip";
   }
 
   function getSiteEventKey(item) {
@@ -383,7 +403,8 @@
       if (String(item.date || "") < currentTodayKey) return;
       const type = classifySiteEvent(item);
       if (type !== "class" && type !== "trip") return;
-      counts[type] += 1;
+      if (type === "class") counts.class += 1;
+      counts.trip += 1;
       counts.open += 1;
     });
     return counts;
@@ -444,7 +465,7 @@
   }
 
   function buildManagementRecordFromSiteEvent(item, existing = null) {
-    const recordType = classifySiteEvent(item);
+    const recordType = "trip";
     const title = normalizeSiteText(item.title) || "Scheduled Event";
     const capacity = Math.max(0, Number(item.registrationCapacity || 0) || 0);
     const existingExtras = getExtras(existing);
@@ -470,8 +491,13 @@
         eventKind: normalizeSiteText(item.eventKind),
         startDate: normalizeSiteText(item.date),
         endDate: normalizeSiteText(item.endDate),
+        startTime: normalizeSiteText(item.time),
+        endTime: normalizeSiteText(item.endTime),
+        eventTag: normalizeSiteText(item.type) || "Training",
+        eventLocation: normalizeSiteText(item.location),
+        registrationEnabled: item.registrationEnabled ? "1" : "",
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
-        certification: recordType === "class" ? title : existingExtras.certification || "",
+        certification: existingExtras.certification || "",
         source: "Site calendar",
         amountOwed: normalizeSiteText(item.managementAmountOwed),
         amountPaid: normalizeSiteText(item.managementAmountPaid),
@@ -501,6 +527,10 @@
       extras.source,
       extras.startDate,
       extras.endDate,
+      extras.startTime,
+      extras.endTime,
+      extras.eventTag,
+      extras.eventLocation,
       extras.certification,
       extras.nextStep,
       extras.amountOwed,
@@ -522,8 +552,12 @@
       item.title,
       item.type,
       item.summary,
+      item.location,
+      item.time,
+      item.endTime,
       item.date,
       item.endDate,
+      item.type,
       classifySiteEvent(item),
       item.registrationCapacity,
     ]
@@ -547,7 +581,10 @@
       .map((item, index) => ({ item, index }))
       .filter(({ item }) => {
         const type = classifySiteEvent(item);
-        if (state.filterType !== "all" && type !== state.filterType) return false;
+        if (state.filterType === "class" && type !== "class") return false;
+        if (state.filterType === "trip") {
+          // The Calendar tab intentionally shows every site calendar record, not only travel trips.
+        } else if (state.filterType !== "all" && type !== state.filterType) return false;
         if (!showPast && String(item.date || "") < currentTodayKey) return false;
         return siteEventMatchesSearch(item);
       });
@@ -650,6 +687,8 @@
           "Site calendar",
           item.type || "",
           dateText,
+          item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "",
+          item.location || "",
           item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
         ].filter(Boolean);
         const summary = String(item.summary || "").trim();
@@ -684,8 +723,8 @@
     const visibleEvents = state.siteEvents.filter((item) => showPast || String(item.date || "") >= currentTodayKey);
     if (!visibleEvents.length) {
       calendarItemsEl.innerHTML = showPast
-        ? '<div class="management-empty">No site calendar classes or trips found.</div>'
-        : '<div class="management-empty">No upcoming site calendar classes or trips found. Turn on past items to review older events.</div>';
+        ? '<div class="management-empty">No site calendar records found.</div>'
+        : '<div class="management-empty">No upcoming site calendar records found. Turn on past items to review older events.</div>';
       return;
     }
     calendarItemsEl.innerHTML = visibleEvents
@@ -700,6 +739,8 @@
           formatLabel(recordType),
           item.type || "",
           dateText,
+          item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "",
+          item.location || "",
           item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
         ].filter(Boolean);
         const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
@@ -723,6 +764,122 @@
       .join("");
   }
 
+  function getActiveRegistrationContext() {
+    const record = state.activeSiteRecord;
+    const extras = getExtras(record);
+    const sourceId = normalizeSiteText(extras.sourceId || extras.eventId);
+    const eventDate = normalizeSiteText(extras.eventDate || extras.startDate);
+    if (!record || !sourceId || !eventDate) return null;
+    return {
+      sourceId,
+      eventDate,
+      registrationEnabled: Boolean(extras.registrationEnabled),
+      registrationCapacity: Math.max(0, Number(extras.capacity || 0) || 0),
+    };
+  }
+
+  function renderRegistrationManager() {
+    if (!registrationManager) return;
+    const context = getActiveRegistrationContext();
+    registrationManager.hidden = !context;
+    if (!context) return;
+    const snapshot = state.registrationSnapshot;
+    const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+    const capacity = Math.max(0, Number((snapshot && snapshot.registrationCapacity) || context.registrationCapacity || 0) || 0);
+    const usedSpots = Math.max(0, Number((snapshot && snapshot.usedSpots) || 0) || 0);
+    const remainingSpots = Math.max(0, Number((snapshot && snapshot.remainingSpots) || 0) || 0);
+    if (registrationSummary) {
+      registrationSummary.textContent = state.registrationLoading
+        ? "Loading signups..."
+        : snapshot
+          ? `${usedSpots} of ${capacity} spots filled. ${remainingSpots} remaining.`
+          : "Load current signups to manage this event's registration list.";
+    }
+    if (refreshRegistrationsButton) {
+      refreshRegistrationsButton.disabled = state.registrationLoading;
+      refreshRegistrationsButton.textContent = state.registrationLoading ? "Loading..." : "Refresh Signups";
+    }
+    if (!registrationList) return;
+    if (state.registrationLoading && !snapshot) {
+      registrationList.innerHTML = '<div class="management-empty">Loading registered divers...</div>';
+      return;
+    }
+    if (!snapshot) {
+      registrationList.innerHTML = '<div class="management-empty">No signup data loaded yet.</div>';
+      return;
+    }
+    if (!registrants.length) {
+      registrationList.innerHTML = '<div class="management-empty">Nobody is registered for this date yet.</div>';
+      return;
+    }
+    registrationList.innerHTML = registrants
+      .map((registrant) => {
+        const registrantId = normalizeSiteText(registrant && registrant.id);
+        const additionalGuests = Math.max(0, Number((registrant && registrant.additionalGuests) || 0) || 0);
+        const partySize = Math.max(1, Number((registrant && registrant.partySize) || 1) || 1);
+        const details = [
+          partySize > 1 ? `${partySize} divers total` : "Solo signup",
+          additionalGuests > 0 ? `${additionalGuests} guest${additionalGuests === 1 ? "" : "s"}` : "",
+          normalizeSiteText(registrant && registrant.createdAt) ? `Signed up ${normalizeSiteText(registrant.createdAt).slice(0, 10)}` : "",
+        ].filter(Boolean);
+        const deleting = registrantId && registrantId === state.registrationDeletingId;
+        return `
+          <div class="management-registration-item">
+            <div>
+              <strong>${escapeHtml(normalizeSiteText(registrant && registrant.name) || "Unnamed registrant")}</strong>
+              <span>${escapeHtml(details.join(" | "))}</span>
+            </div>
+            <button type="button" data-remove-registration="${escapeHtml(registrantId)}" ${!registrantId || deleting || state.registrationLoading ? "disabled" : ""}>${deleting ? "Removing..." : "Unregister"}</button>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  async function loadRegistrationSnapshot() {
+    const context = getActiveRegistrationContext();
+    if (!context) {
+      resetRegistrationManager();
+      return null;
+    }
+    state.registrationLoading = true;
+    renderRegistrationManager();
+    const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+    const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    state.registrationLoading = false;
+    if (!resp || !resp.ok || !data.ok) {
+      state.registrationSnapshot = null;
+      if (registrationSummary) registrationSummary.textContent = data.error || "Registration status is unavailable.";
+      renderRegistrationManager();
+      return null;
+    }
+    state.registrationSnapshot = data;
+    renderRegistrationManager();
+    return data;
+  }
+
+  async function removeRegistration(registrationId) {
+    const context = getActiveRegistrationContext();
+    const safeId = normalizeSiteText(registrationId);
+    if (!context || !safeId) return;
+    if (!window.confirm("Unregister this person from the event?")) return;
+    state.registrationDeletingId = safeId;
+    renderRegistrationManager();
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations/${encodeURIComponent(safeId)}?date=${encodeURIComponent(context.eventDate)}`;
+    const resp = await apiFetch(url, { method: "DELETE" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    state.registrationDeletingId = "";
+    if (!resp || !resp.ok || !data.ok) {
+      setStatus(recordStatus, data.error || "Could not unregister this person.", "error");
+      renderRegistrationManager();
+      return;
+    }
+    state.registrationSnapshot = data;
+    setStatus(recordStatus, "Registration removed.", "success");
+    renderRegistrationManager();
+  }
+
   function readFormRecord() {
     const formData = new FormData(recordForm);
     const id = String(formData.get("id") || "").trim();
@@ -733,40 +890,52 @@
           ? state.records.find((item) => item.id === id)
           : null;
     const existingExtras = getExtras(existing);
+    const textValue = (name, fallback = "") =>
+      recordForm.elements[name] && !recordForm.elements[name].disabled
+        ? String(formData.get(name) || "").trim()
+        : String(fallback || "").trim();
     const extras = {
       ...existingExtras,
-      firstName: String(formData.get("firstName") || "").trim(),
-      lastName: String(formData.get("lastName") || "").trim(),
-      stage: String(formData.get("stage") || "").trim(),
-      source: String(formData.get("source") || "").trim(),
-      startDate: String(formData.get("startDate") || "").trim(),
-      endDate: String(formData.get("endDate") || "").trim(),
-      capacity: String(formData.get("capacity") || "").trim(),
-      certification: String(formData.get("certification") || "").trim(),
-      amountOwed: String(formData.get("amountOwed") || "").trim(),
-      amountPaid: String(formData.get("amountPaid") || "").trim(),
-      nextStep: String(formData.get("nextStep") || "").trim(),
+      firstName: textValue("firstName", existingExtras.firstName),
+      lastName: textValue("lastName", existingExtras.lastName),
+      stage: textValue("stage", existingExtras.stage),
+      source: textValue("source", existingExtras.source),
+      startDate: textValue("startDate", existingExtras.startDate),
+      endDate: textValue("endDate", existingExtras.endDate),
+      startTime: textValue("startTime", existingExtras.startTime),
+      endTime: textValue("endTime", existingExtras.endTime),
+      eventTag: textValue("eventTag", existingExtras.eventTag || "Training"),
+      eventLocation: textValue("eventLocation", existingExtras.eventLocation),
+      registrationEnabled:
+        recordForm.elements.registrationEnabled && !recordForm.elements.registrationEnabled.disabled
+          ? (recordForm.elements.registrationEnabled.checked ? "1" : "")
+          : String(existingExtras.registrationEnabled || ""),
+      capacity: textValue("capacity", existingExtras.capacity),
+      certification: textValue("certification", existingExtras.certification),
+      amountOwed: textValue("amountOwed", existingExtras.amountOwed),
+      amountPaid: textValue("amountPaid", existingExtras.amountPaid),
+      nextStep: textValue("nextStep", existingExtras.nextStep),
     };
-    const recordType = String(formData.get("recordType") || "inquiry");
+    const recordType = textValue("recordType", existing && existing.recordType) || "inquiry";
     const contactFullName = [extras.firstName, extras.lastName].filter(Boolean).join(" ").trim();
-    const title = recordType === "contact" ? contactFullName : String(formData.get("title") || "").trim();
+    const title = recordType === "contact" ? contactFullName : textValue("title", existing && existing.title);
     const contactName =
-      recordType === "contact" ? contactFullName : String(formData.get("contactName") || "").trim();
-    const rawPriority = String(formData.get("priority") || "normal");
+      recordType === "contact" ? contactFullName : textValue("contactName", existing && existing.contactName);
+    const rawPriority = textValue("priority", existing && existing.priority) || "normal";
     const priority = recordType === "contact" && rawPriority !== "high" ? "normal" : rawPriority;
     return {
       id,
       recordType,
       title,
-      status: recordType === "contact" ? "active" : String(formData.get("status") || "new"),
+      status: recordType === "contact" ? "active" : textValue("status", existing && existing.status) || "new",
       priority,
-      owner: String(formData.get("owner") || "").trim(),
+      owner: textValue("owner", existing && existing.owner),
       contactName,
-      contactEmail: String(formData.get("contactEmail") || "").trim(),
-      contactPhone: String(formData.get("contactPhone") || "").trim(),
-      dueDate: String(formData.get("dueDate") || "").trim(),
-      relatedEvent: String(formData.get("relatedEvent") || "").trim(),
-      notes: String(formData.get("notes") || "").trim(),
+      contactEmail: textValue("contactEmail", existing && existing.contactEmail),
+      contactPhone: textValue("contactPhone", existing && existing.contactPhone),
+      dueDate: textValue("dueDate", existing && existing.dueDate),
+      relatedEvent: textValue("relatedEvent", existing && existing.relatedEvent),
+      notes: textValue("notes", existing && existing.notes),
       extras,
     };
   }
@@ -774,6 +943,7 @@
   function fillForm(record = null) {
     if (!recordForm) return;
     recordForm.reset();
+    syncTimeOptions();
     const item = record || {
       id: "",
       recordType: "contact",
@@ -784,11 +954,15 @@
     state.activeSiteRecord = isSiteBackedManagementRecord(item) ? item : null;
     Object.entries(item).forEach(([key, value]) => {
       const field = recordForm.elements[key];
-      if (field) field.value = value == null ? "" : String(value);
+      if (!field) return;
+      if (field.type === "checkbox") field.checked = Boolean(value);
+      else field.value = value == null ? "" : String(value);
     });
     Object.entries(getExtras(item)).forEach(([key, value]) => {
       const field = recordForm.elements[key];
-      if (field) field.value = value == null ? "" : String(value);
+      if (!field) return;
+      if (field.type === "checkbox") field.checked = Boolean(value);
+      else field.value = value == null ? "" : String(value);
     });
     if (item.recordType === "contact") {
       const extras = getExtras(item);
@@ -802,7 +976,12 @@
     }
     state.selectedId = item.id || "";
     applyTypeConfig(item.recordType || "contact", Boolean(state.selectedId));
-    if (deleteButton) deleteButton.hidden = !state.selectedId;
+    if (state.activeSiteRecord) {
+      loadRegistrationSnapshot();
+    } else {
+      resetRegistrationManager();
+    }
+    if (deleteButton) deleteButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
     setStatus(recordStatus, "");
     renderRecords();
   }
@@ -850,8 +1029,8 @@
       const upcomingCount = state.siteEvents.filter((item) => String(item.date || "") >= todayKey()).length;
       const pastCount = Math.max(0, state.siteEvents.length - upcomingCount);
       calendarStatus.textContent = state.siteEvents.length
-        ? `${upcomingCount} upcoming site-side class/trip items available to link${pastCount ? `, ${pastCount} past hidden` : ""}.`
-        : "No class or trip items are currently published in the site calendar.";
+        ? `${upcomingCount} upcoming site calendar records${pastCount ? `, ${pastCount} past hidden` : ""}.`
+        : "No records are currently published in the site calendar.";
     }
     renderCalendarItems();
     updateMetrics();
@@ -879,6 +1058,10 @@
       } catch (error) {
         setStatus(recordStatus, error && error.message ? error.message : "Could not save site calendar record.", "error");
       }
+      return;
+    }
+    if (record.recordType === "class" || record.recordType === "trip") {
+      setStatus(recordStatus, "Open a calendar record from the Site Calendar list before editing calendar items.", "error");
       return;
     }
     const isUpdate = Boolean(record.id);
@@ -950,6 +1133,11 @@
     item.title = record.title;
     item.status = record.status;
     item.summary = record.notes || item.summary || "";
+    item.time = extras.startTime || "";
+    item.endTime = extras.endTime || "";
+    item.type = extras.eventTag || item.type || "Training";
+    item.location = extras.eventLocation || "";
+    item.registrationEnabled = Boolean(extras.registrationEnabled);
     item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
     item.managementPriority = record.priority || "";
     item.managementOwner = record.owner || "";
@@ -963,10 +1151,10 @@
     item.managementNotes = record.notes || "";
     if (match.listName === "events") {
       item.date = extras.startDate || extras.eventDate || item.date;
-      if (extras.endDate) item.endDate = extras.endDate;
+      item.endDate = extras.endDate || item.date;
     } else {
       item.startDate = extras.startDate || item.startDate;
-      if (extras.endDate) item.endDate = extras.endDate;
+      item.endDate = extras.endDate || item.startDate;
     }
 
     const resp = await apiFetch(adminEventsUrl, {
@@ -981,7 +1169,8 @@
       ["class", "trip"].includes(classifySiteEvent(entry))
     );
     state.siteEvents = state.allSiteEvents;
-    const refreshed = state.siteEvents.find((entry) => getSiteEventKey(entry) === [extras.sourceId || "", extras.eventDate || ""].join("|"));
+    const updatedEventDate = match.listName === "events" ? item.date : (extras.eventDate || extras.startDate || item.startDate);
+    const refreshed = state.siteEvents.find((entry) => getSiteEventKey(entry) === [extras.sourceId || "", updatedEventDate || ""].join("|"));
     return buildManagementRecordFromSiteEvent(refreshed || item);
   }
 
@@ -1092,6 +1281,14 @@
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderCalendarItems);
+    if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
+    if (registrationList) {
+      registrationList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-remove-registration]");
+        if (!button) return;
+        removeRegistration(button.getAttribute("data-remove-registration") || "");
+      });
+    }
     if (calendarItemsEl) {
       calendarItemsEl.addEventListener("click", (event) => {
         const openButton = event.target.closest("[data-calendar-open]");
