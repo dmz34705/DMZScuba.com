@@ -27,6 +27,7 @@
   const recordStatus = app.querySelector("[data-record-status]");
   const editorTitle = app.querySelector("[data-editor-title]");
   const deleteButton = app.querySelector("[data-delete-record]");
+  const cancelEditButton = app.querySelector("[data-cancel-edit]");
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
   const calendarItemsEl = app.querySelector("[data-calendar-items]");
   const calendarStatus = app.querySelector("[data-calendar-status]");
@@ -270,6 +271,22 @@
   function showAuthed(authed) {
     if (loginSection) loginSection.hidden = authed;
     if (dashboard) dashboard.hidden = !authed;
+  }
+
+  function openEditorModal() {
+    app.classList.add("is-editor-open");
+    document.body.classList.add("management-editor-open");
+  }
+
+  function closeEditorModal() {
+    app.classList.remove("is-editor-open");
+    document.body.classList.remove("management-editor-open");
+    setStatus(recordStatus, "");
+  }
+
+  function openEditor(record = null) {
+    fillForm(record);
+    openEditorModal();
   }
 
   function setStatus(node, message, tone = "") {
@@ -2063,6 +2080,7 @@
         setStatus(recordStatus, "Saved to site calendar.", "success");
         renderRecords();
         renderCalendarItems();
+        closeEditorModal();
       } catch (error) {
         setStatus(recordStatus, error && error.message ? error.message : "Could not save site calendar record.", "error");
       }
@@ -2097,6 +2115,7 @@
         const syncedCount = await syncClassRecordToCalendar(saved);
         fillForm(saved);
         setStatus(recordStatus, `Saved. Synced ${syncedCount} class date${syncedCount === 1 ? "" : "s"} to the site calendar.`, "success");
+        closeEditorModal();
         return;
       } catch (error) {
         fillForm(saved);
@@ -2106,6 +2125,7 @@
     }
     fillForm(saved);
     setStatus(recordStatus, "Saved.", "success");
+    closeEditorModal();
   }
 
   async function saveRecordPayload(record) {
@@ -2202,12 +2222,12 @@
     if (classId) {
       const classRecord = state.records.find((record) => record.recordType === "class" && normalizeSiteText(getExtras(record).classId) === classId);
       if (classRecord) {
-        fillForm(classRecord);
+        openEditor(classRecord);
         setStatus(recordStatus, "Class record opened for this calendar date.", "success");
         return;
       }
     }
-    fillForm(buildManagementRecordFromSiteEvent(item));
+    openEditor(buildManagementRecordFromSiteEvent(item));
     setStatus(recordStatus, "Site calendar record opened.", "success");
   }
 
@@ -2228,6 +2248,7 @@
     }
     state.records = state.records.filter((item) => item.id !== id);
     fillForm();
+    closeEditorModal();
     setStatus(recordStatus, "Deleted.", "success");
   }
 
@@ -2407,12 +2428,14 @@
         if (editButton) {
           const id = editButton.getAttribute("data-calendar-edit-record") || "";
           const record = state.records.find((item) => item.id === id);
-          if (record) fillForm(record);
+          if (record) openEditor(record);
         }
       });
     }
-    const newButton = app.querySelector("[data-new-record]");
-    if (newButton) newButton.addEventListener("click", () => fillForm());
+    app.querySelectorAll("[data-new-record]").forEach((button) => {
+      button.addEventListener("click", () => openEditor());
+    });
+    if (cancelEditButton) cancelEditButton.addEventListener("click", closeEditorModal);
     const refreshButton = app.querySelector("[data-refresh-records]");
     if (refreshButton) refreshButton.addEventListener("click", () => loadRecords());
     const logoutButton = app.querySelector("[data-logout]");
@@ -2423,6 +2446,7 @@
         state.allSiteEvents = [];
         state.siteEvents = [];
         fillForm();
+        closeEditorModal();
         renderCalendarItems();
         showAuthed(false);
       });
@@ -2476,9 +2500,14 @@
         if (!card) return;
         const id = card.getAttribute("data-record-id") || "";
         const record = state.records.find((item) => item.id === id);
-        if (record) fillForm(record);
+        if (record) openEditor(record);
       });
     }
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && app.classList.contains("is-editor-open")) {
+        closeEditorModal();
+      }
+    });
   }
 
   async function init() {

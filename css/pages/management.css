@@ -10,6 +10,10 @@
   display: none !important;
 }
 
+.management-editor-open {
+  overflow: hidden;
+}
+
 .management-field-hidden,
 .management-form-grid.management-field-hidden,
 .management-extra-fields.management-field-hidden {
@@ -534,7 +538,7 @@
 
 .management-workspace {
   display: grid;
-  grid-template-columns: minmax(330px, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   min-width: 0;
@@ -688,15 +692,43 @@
 }
 
 .management-panel {
-  position: sticky;
-  top: 18px;
+  position: fixed;
+  inset: 24px;
+  z-index: 40;
+  display: none;
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  margin: 0 auto;
+  overflow: auto;
+  border-color: rgba(85, 185, 255, 0.28);
+}
+
+.is-editor-open .management-panel {
+  display: block;
+}
+
+.is-editor-open .management-workspace::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(2, 7, 14, 0.74);
+  backdrop-filter: blur(6px);
 }
 
 .management-panel-head {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
   justify-content: space-between;
+  margin: -18px -18px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(7, 19, 37, 0.96);
+  padding: 18px;
 }
 
 .management-panel-head button,
+.management-new-record,
 .management-filters button {
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
@@ -710,6 +742,7 @@
 }
 
 .management-panel-head button:hover,
+.management-new-record:hover,
 .management-filters button:hover,
 .management-filters button.is-active {
   border-color: rgba(85, 185, 255, 0.52);
@@ -1184,7 +1217,9 @@
   }
 
   .management-panel {
-    position: static;
+    inset: 14px;
+    width: calc(100vw - 28px);
+    max-height: calc(100vh - 28px);
   }
 
   .management-metrics {

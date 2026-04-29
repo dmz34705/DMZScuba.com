@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429l" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260429m" />
 </head>
 
 <body class="management-page">
@@ -106,10 +106,10 @@
       </section>
 
       <section class="management-workspace">
-        <aside class="management-panel">
+        <aside class="management-panel" role="dialog" aria-modal="true" aria-labelledby="managementEditorTitle">
           <div class="management-panel-head">
-            <h2 data-editor-title>New Item</h2>
-            <button type="button" data-new-record>Clear</button>
+            <h2 id="managementEditorTitle" data-editor-title>New Item</h2>
+            <button type="button" data-cancel-edit>Cancel</button>
           </div>
           <form class="management-record-form" data-record-form>
             <input type="hidden" name="id" />
@@ -407,6 +407,7 @@
 
         <section class="management-list-panel">
           <div class="management-list-tools">
+            <button class="management-new-record" type="button" data-new-record>New Item</button>
             <div class="management-search">
               <label for="managementSearch">Search</label>
               <input id="managementSearch" type="search" data-search-records placeholder="Name, email, class, trip, note..." />
@@ -440,6 +441,6 @@
     </section>
   </main>
 
-  <script src="/js/management.js?v=20260429l" defer></script>
+  <script src="/js/management.js?v=20260429m" defer></script>
 </body>
 </html>
