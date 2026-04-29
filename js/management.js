@@ -446,7 +446,7 @@
           const sourceLabel = enrollment.source === "self_registered" ? "Self Registered" : "In House Registered";
           return `
           <div class="management-class-contact-item"
-            data-class-contact-id="${escapeHtml(contact.id)}"
+            data-class-contact-id="${escapeHtml(contact.id)}">
             <div>
               <strong>${escapeHtml(contact.contactName || contact.title || contact.contactEmail || "Unnamed contact")}</strong>
               <span>${escapeHtml([contact.contactEmail, contact.contactPhone, sourceLabel].filter(Boolean).join(" | "))}</span>
@@ -464,6 +464,18 @@
     if (!record || record.recordType !== "class") return null;
     const extras = getExtras(record);
     const classId = slugify(extras.classId || record.id || record.title, "class");
+    const syncedEvent = state.siteEvents.find((item) =>
+      normalizeSiteText(item && item.managementClassId) === classId
+        && Boolean(item && item.managementClassPrimary)
+        && normalizeSiteText(item && (item.sourceId || item.id))
+        && normalizeSiteText(item && item.date)
+    );
+    if (syncedEvent) {
+      return {
+        sourceId: normalizeSiteText(syncedEvent.sourceId || syncedEvent.id),
+        eventDate: normalizeSiteText(syncedEvent.date),
+      };
+    }
     const primary = getOrderedClassSessions({ ...record, extras: { ...extras, classId } })[0];
     if (!primary || !primary.date) return null;
     return {
