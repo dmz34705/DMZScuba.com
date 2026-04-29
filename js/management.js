@@ -1348,7 +1348,9 @@
   function getVisibleRecords() {
     return state.records
       .filter((record) => !isSiteBackedManagementRecord(record))
-      .filter((record) => state.filterType === "all" || record.recordType === state.filterType)
+      .filter((record) => record.recordType === "contact"
+        ? state.filterType === "contact"
+        : state.filterType === "all" || record.recordType === state.filterType)
       .filter(recordMatchesSearch)
       .slice()
       .sort(compareVisibleRecords);
