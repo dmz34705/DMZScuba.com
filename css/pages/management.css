@@ -36,7 +36,6 @@
 .management-panel,
 .management-list-panel,
 .management-site-tools,
-.management-calendar-sync,
 .management-metrics article {
   border: 1px solid rgba(255, 255, 255, 0.11);
   background: rgba(7, 19, 37, 0.86);
@@ -559,18 +558,6 @@
   letter-spacing: 0;
 }
 
-.management-calendar-sync {
-  border-radius: 8px;
-  padding: 16px 18px;
-}
-
-.management-calendar-sync-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
 .management-calendar-controls {
   display: flex;
   align-items: center;
@@ -593,24 +580,6 @@
   width: 16px;
   height: 16px;
   accent-color: var(--accent);
-}
-
-.management-calendar-sync h2 {
-  margin: 0;
-  font-size: 22px;
-  letter-spacing: 0;
-}
-
-.management-calendar-sync-note {
-  margin: 10px 0 0;
-  color: rgba(234, 242, 255, 0.68);
-  font-size: 13px;
-}
-
-.management-calendar-items {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
 }
 
 .management-calendar-item {
@@ -1296,7 +1265,6 @@
     flex-direction: column;
   }
 
-  .management-calendar-sync-head,
   .management-calendar-item {
     align-items: stretch;
     flex-direction: column;

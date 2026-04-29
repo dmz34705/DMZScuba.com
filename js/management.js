@@ -29,7 +29,6 @@
   const deleteButton = app.querySelector("[data-delete-record]");
   const cancelEditButton = app.querySelector("[data-cancel-edit]");
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
-  const calendarItemsEl = app.querySelector("[data-calendar-items]");
   const calendarStatus = app.querySelector("[data-calendar-status]");
   const refreshCalendarButton = app.querySelector("[data-refresh-calendar]");
   const showPastCalendarToggle = app.querySelector("[data-show-past-calendar]");
@@ -1129,6 +1128,50 @@
     return haystack.includes(query);
   }
 
+  function renderSiteCalendarCard(item, sourceIndex, isPast) {
+    const recordType = classifySiteEvent(item);
+    const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
+      .filter(Boolean)
+      .join(" - ");
+    const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
+    const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
+    const registrationText = item.registrationEnabled ? "Registration open" : "Registration off";
+    const summary = normalizeSiteText(item.summary);
+    const statItems = [
+      ["Date", dateText || "No date"],
+      ["Time", timeText || "No time set"],
+      ["Location", item.location || "No location set"],
+      ["Capacity", spotsText],
+      ["Registration", registrationText],
+    ];
+    const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
+    return `
+      <article class="management-calendar-item ${isPast ? "is-past" : ""}" data-calendar-index="${sourceIndex}">
+        <div class="management-calendar-date-block">
+          <strong>${escapeHtml(formatDate(item.date) || "No Date")}</strong>
+          <span>${escapeHtml(timeText || "Time TBD")}</span>
+        </div>
+        <div class="management-calendar-main">
+          <div class="management-record-badges">
+            <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
+            ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
+            ${item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
+            ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
+          </div>
+          <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
+          <div class="management-calendar-stat-grid">
+            ${statItems.map(([label, value]) => `<span><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`).join("")}
+          </div>
+          ${summary ? `<p>${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
+        </div>
+        <div class="management-calendar-actions">
+          <button type="button" data-calendar-open="${sourceIndex}">Open Record</button>
+          <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
+        </div>
+      </article>
+    `;
+  }
+
   function getRecordSortTitle(record) {
     const extras = getExtras(record);
     return normalizeSiteText(
@@ -1308,102 +1351,11 @@
     const currentTodayKey = todayKey();
     const siteMarkup = visibleSiteEvents
       .map(({ item, index }) => {
-        const recordType = classifySiteEvent(item);
         const isPast = String(item.date || "") < currentTodayKey;
-        const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
-          .filter(Boolean)
-          .join(" - ");
-        const meta = [
-          "Site calendar",
-          item.type || "",
-          dateText,
-          item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "",
-          item.location || "",
-          item.registrationCapacity ? `${item.registrationCapacity} spots` : "",
-        ].filter(Boolean);
-        const summary = String(item.summary || "").trim();
-        const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
-        return `
-          <article class="management-record management-record-site" data-calendar-index="${index}">
-            <div>
-              <div class="management-record-badges">
-                <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
-                <span class="management-badge is-waiting">Site Calendar</span>
-                ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
-              </div>
-              <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
-              ${summary ? `<p>${escapeHtml(summary.length > 180 ? `${summary.slice(0, 180)}...` : summary)}</p>` : ""}
-              <div class="management-record-meta">${meta.map((entry) => `<span>${escapeHtml(entry)}</span>`).join("")}</div>
-            </div>
-            <div class="management-calendar-actions">
-              <button type="button" data-calendar-open="${index}">Open Record</button>
-              <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
-            </div>
-          </article>
-        `;
+        return renderSiteCalendarCard(item, index, isPast);
       })
       .join("");
     recordList.innerHTML = `${recordMarkup}${siteMarkup}`;
-  }
-
-  function renderCalendarItems() {
-    if (!calendarItemsEl) return;
-    const showPast = Boolean(showPastCalendarToggle && showPastCalendarToggle.checked);
-    const currentTodayKey = todayKey();
-    const visibleEvents = state.siteEvents.filter((item) => showPast || String(item.date || "") >= currentTodayKey);
-    if (!visibleEvents.length) {
-      calendarItemsEl.innerHTML = showPast
-        ? '<div class="management-empty">No site calendar records found.</div>'
-        : '<div class="management-empty">No upcoming site calendar records found. Turn on past items to review older events.</div>';
-      return;
-    }
-    calendarItemsEl.innerHTML = visibleEvents
-      .map((item, index) => {
-        const sourceIndex = state.siteEvents.indexOf(item);
-        const recordType = classifySiteEvent(item);
-        const isPast = String(item.date || "") < currentTodayKey;
-        const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
-          .filter(Boolean)
-          .join(" - ");
-        const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
-        const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
-        const registrationText = item.registrationEnabled ? "Registration open" : "Registration off";
-        const summary = normalizeSiteText(item.summary);
-        const statItems = [
-          ["Date", dateText || "No date"],
-          ["Time", timeText || "No time set"],
-          ["Location", item.location || "No location set"],
-          ["Capacity", spotsText],
-          ["Registration", registrationText],
-        ].filter(Boolean);
-        const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
-        return `
-          <article class="management-calendar-item ${isPast ? "is-past" : ""}" data-calendar-index="${sourceIndex}">
-            <div class="management-calendar-date-block">
-              <strong>${escapeHtml(formatDate(item.date) || "No Date")}</strong>
-              <span>${escapeHtml(timeText || "Time TBD")}</span>
-            </div>
-            <div class="management-calendar-main">
-              <div class="management-record-badges">
-                <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
-                ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
-                ${item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
-                ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
-              </div>
-              <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
-              <div class="management-calendar-stat-grid">
-                ${statItems.map(([label, value]) => `<span><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`).join("")}
-              </div>
-              ${summary ? `<p>${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
-            </div>
-            <div class="management-calendar-actions">
-              <button type="button" data-calendar-open="${sourceIndex}">Open Record</button>
-              <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
-            </div>
-          </article>
-        `;
-      })
-      .join("");
   }
 
   function getActiveRegistrationContext() {
@@ -1970,7 +1922,6 @@
     state.records = Array.isArray(data.items) ? data.items : [];
     setStatus(recordStatus, silent ? "" : "Loaded.", "success");
     renderRecords();
-    renderCalendarItems();
     return true;
   }
 
@@ -1981,7 +1932,7 @@
     if (!resp || !resp.ok || !data) {
       state.siteEvents = [];
       if (calendarStatus) calendarStatus.textContent = "Could not load site calendar data.";
-      renderCalendarItems();
+      renderRecords();
       return false;
     }
     state.eventsPayload = data;
@@ -1994,7 +1945,7 @@
         ? `${upcomingCount} upcoming site calendar records${pastCount ? `, ${pastCount} past hidden` : ""}.`
         : "No records are currently published in the site calendar.";
     }
-    renderCalendarItems();
+    renderRecords();
     updateMetrics();
     return true;
   }
@@ -2069,7 +2020,7 @@
       ["class", "trip"].includes(classifySiteEvent(entry))
     );
     state.siteEvents = state.allSiteEvents;
-    renderCalendarItems();
+    renderRecords();
     updateMetrics();
     return generated.length;
   }
@@ -2091,7 +2042,6 @@
         fillForm(saved);
         setStatus(recordStatus, "Saved to site calendar.", "success");
         renderRecords();
-        renderCalendarItems();
         closeEditorModal();
       } catch (error) {
         setStatus(recordStatus, error && error.message ? error.message : "Could not save site calendar record.", "error");
@@ -2415,7 +2365,7 @@
     });
     if (deleteButton) deleteButton.addEventListener("click", deleteSelectedRecord);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
-    if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderCalendarItems);
+    if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderRecords);
     if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
     if (registrationList) {
       registrationList.addEventListener("click", (event) => {
@@ -2427,21 +2377,6 @@
         const removeButton = event.target.closest("[data-remove-registration]");
         if (!removeButton) return;
         removeRegistration(removeButton.getAttribute("data-remove-registration") || "");
-      });
-    }
-    if (calendarItemsEl) {
-      calendarItemsEl.addEventListener("click", (event) => {
-        const openButton = event.target.closest("[data-calendar-open]");
-        if (openButton) {
-          openCalendarRecord(openButton.getAttribute("data-calendar-open"));
-          return;
-        }
-        const editButton = event.target.closest("[data-calendar-edit-record]");
-        if (editButton) {
-          const id = editButton.getAttribute("data-calendar-edit-record") || "";
-          const record = state.records.find((item) => item.id === id);
-          if (record) openEditor(record);
-        }
       });
     }
     app.querySelectorAll("[data-new-record]").forEach((button) => {
@@ -2459,7 +2394,7 @@
         state.siteEvents = [];
         fillForm();
         closeEditorModal();
-        renderCalendarItems();
+        renderRecords();
         showAuthed(false);
       });
     }
