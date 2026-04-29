@@ -1149,7 +1149,22 @@ async function handleListManagementRecords(request, env) {
   const type = normalizeManagementText(url.searchParams.get("type"), 40).toLowerCase();
   const status = normalizeManagementText(url.searchParams.get("status"), 40).toLowerCase();
   const allowedTypes = ["contact", "inquiry", "class", "trip", "task"];
-  const allowedStatuses = ["new", "active", "waiting", "scheduled", "complete", "archived"];
+  const allowedStatuses = [
+    "new",
+    "active",
+    "waiting",
+    "scheduled",
+    "complete",
+    "archived",
+    "to_contact",
+    "reached_out",
+    "gathering_details",
+    "planning",
+    "payment",
+    "timing",
+    "dead_end",
+    "not_fit",
+  ];
   let sql = "SELECT * FROM management_records";
   const conditions = [];
   const bindings = [];

@@ -612,6 +612,51 @@
     `;
   }
 
+  function renderInquiryRecordDetails(record) {
+    if (!record || record.recordType !== "inquiry") return "";
+    const extras = getExtras(record);
+    const balance = getBalance(record);
+    const detailRows = [
+      ["Progress", formatLabel(record.status)],
+      ["Direction", extras.inquiryDirection ? formatLabel(extras.inquiryDirection) : ""],
+      ["Category", extras.inquiryCategory ? formatLabel(extras.inquiryCategory) : ""],
+      ["Primary Contact", record.contactName],
+      ["Email", record.contactEmail],
+      ["Phone", record.contactPhone],
+      ["Organization / Opportunity", record.relatedEvent],
+      ["Channel / Source", extras.source],
+      ["Owner", record.owner],
+      ["Priority", formatLabel(record.priority)],
+      ["Next Follow-Up", record.dueDate ? formatDate(record.dueDate) : ""],
+      ["Target Start", extras.startDate ? formatDate(extras.startDate) : ""],
+      ["Target End", extras.endDate ? formatDate(extras.endDate) : ""],
+      ["Estimated Cost / Owed", Number(extras.amountOwed || 0) > 0 ? formatMoney(extras.amountOwed) : ""],
+      ["Amount Paid", Number(extras.amountPaid || 0) > 0 ? formatMoney(extras.amountPaid) : ""],
+      ["Open Balance", balance > 0 ? formatMoney(balance) : ""],
+      ["Next Action", extras.nextStep],
+      ["Close Reason", extras.outcomeReason ? formatLabel(extras.outcomeReason) : ""],
+      ["Activity Notes", record.notes],
+    ].filter((row) => normalizeSiteText(row[1]));
+    if (!detailRows.length) return "";
+    return `
+      <details class="management-record-details management-inquiry-details">
+        <summary>View inquiry details</summary>
+        <div class="management-contact-detail-grid">
+          ${detailRows
+            .map(
+              ([label, value]) => `
+                <div>
+                  <strong>${escapeHtml(label)}</strong>
+                  <span>${escapeHtml(value)}</span>
+                </div>
+              `
+            )
+            .join("")}
+        </div>
+      </details>
+    `;
+  }
+
   function renderClassRoster(record = null) {
     if (!classRosterEl) return;
     const classId = record && record.recordType === "class" ? slugify(getExtras(record).classId || record.id || record.title, "class") : "";
@@ -1028,6 +1073,7 @@
         const summary = note.length > 180 ? `${note.slice(0, 180)}...` : note;
         const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
         const contactDetails = record.recordType === "contact" ? renderContactRecordDetails(record) : "";
+        const inquiryDetails = record.recordType === "inquiry" ? renderInquiryRecordDetails(record) : "";
         const contactCopy =
           record.recordType === "contact"
             ? `<div class="management-contact-card-lines">
@@ -1053,6 +1099,7 @@
               ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
               ${classDetails}
               ${contactDetails}
+              ${inquiryDetails}
             </div>
             ${
               record.recordType === "contact"
@@ -1595,6 +1642,11 @@
       extras: {},
     };
     state.activeSiteRecord = isSiteBackedManagementRecord(item) ? item : null;
+    state.selectedId = item.id || "";
+    if (recordForm.elements.recordType) {
+      recordForm.elements.recordType.value = item.recordType || "contact";
+    }
+    applyTypeConfig(item.recordType || "contact", Boolean(state.selectedId));
     Object.entries(item).forEach(([key, value]) => {
       const field = recordForm.elements[key];
       if (!field) return;
@@ -1622,8 +1674,6 @@
         recordForm.elements.lastName.value = extras.lastName || nameParts.join(" ") || "";
       }
     }
-    state.selectedId = item.id || "";
-    applyTypeConfig(item.recordType || "contact", Boolean(state.selectedId));
     if (state.activeSiteRecord) {
       loadRegistrationSnapshot();
     } else {
