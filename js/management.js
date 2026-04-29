@@ -96,6 +96,14 @@
     completed: "Completed / Won",
   };
   const closedStatuses = new Set(["complete", "archived", "dead_end", "not_fit"]);
+  const inquiryPipelineStages = [
+    { keys: new Set(["new", "to_contact"]), label: "Lead" },
+    { keys: new Set(["reached_out"]), label: "Contacted" },
+    { keys: new Set(["gathering_details"]), label: "Gathering Info" },
+    { keys: new Set(["planning", "timing"]), label: "Planning" },
+    { keys: new Set(["payment"]), label: "Financial" },
+    { keys: new Set(["complete", "dead_end", "not_fit", "archived"]), label: "Closed" },
+  ];
   const priorityRank = {
     urgent: 4,
     high: 3,
@@ -753,6 +761,59 @@
     `;
   }
 
+  function renderInquiryPipelineBar(status) {
+    const isDead = status === "dead_end" || status === "not_fit";
+    let currentIndex = 0;
+    inquiryPipelineStages.forEach((stage, i) => {
+      if (stage.keys.has(status)) currentIndex = i;
+    });
+    const steps = inquiryPipelineStages
+      .map((stage, i) => {
+        const isCurrent = i === currentIndex;
+        const isPast = i < currentIndex;
+        let cls = "management-inquiry-stage";
+        if (isPast) cls += " is-done";
+        if (isCurrent) cls += " is-current";
+        if (isCurrent && isDead) cls += " is-dead";
+        return `<span class="${cls}">${escapeHtml(stage.label)}</span>`;
+      })
+      .join("");
+    return `<div class="management-inquiry-pipeline">${steps}</div>`;
+  }
+
+  function renderInquiryCallout(record) {
+    const extras = getExtras(record);
+    const nextStep = normalizeSiteText(extras.nextStep);
+    const dueDate = normalizeSiteText(record.dueDate);
+    const contactName = normalizeSiteText(record.contactName);
+    const contactEmail = normalizeSiteText(record.contactEmail);
+    const balance = getBalance(record);
+    let dueSoonClass = "";
+    if (dueDate) {
+      const due = parseDateKey(dueDate);
+      const today = parseDateKey(todayKey());
+      if (due && today) {
+        const diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 3) dueSoonClass = " is-due-soon";
+      }
+    }
+    const metaItems = [
+      dueDate ? `<span class="management-inquiry-due${escapeHtml(dueSoonClass)}">${escapeHtml("Follow-up: " + formatDate(dueDate))}</span>` : "",
+      contactName ? `<span>${escapeHtml(contactName)}</span>` : (contactEmail ? `<span>${escapeHtml(contactEmail)}</span>` : ""),
+      extras.inquiryCategory ? `<span>${escapeHtml(formatLabel(extras.inquiryCategory))}</span>` : "",
+      extras.inquiryDirection ? `<span>${escapeHtml(formatLabel(extras.inquiryDirection))}</span>` : "",
+      record.owner ? `<span>${escapeHtml("Owner: " + record.owner)}</span>` : "",
+      balance > 0 ? `<span class="management-inquiry-balance">${escapeHtml("Balance: " + formatMoney(balance))}</span>` : "",
+    ].filter(Boolean);
+    if (!nextStep && !metaItems.length) return "";
+    return `
+      <div class="management-inquiry-callout">
+        ${nextStep ? `<span class="management-inquiry-next-step">${escapeHtml(nextStep)}</span>` : ""}
+        ${metaItems.length ? `<div class="management-inquiry-callout-meta">${metaItems.join("")}</div>` : ""}
+      </div>
+    `;
+  }
+
   function renderInquiryRecordDetails(record) {
     if (!record || record.recordType !== "inquiry") return "";
     const extras = getExtras(record);
@@ -1361,6 +1422,8 @@
               extras.certification ? `Certification: ${extras.certification}` : "",
               contactEnrollments.length ? `${contactEnrollments.length} class${contactEnrollments.length === 1 ? "" : "es"}` : "",
             ].filter(Boolean)
+          : record.recordType === "inquiry"
+          ? []
           : [
               record.owner ? `Owner: ${record.owner}` : "",
               record.contactName || [extras.firstName, extras.lastName].filter(Boolean).join(" ") || record.contactEmail || "",
@@ -1374,10 +1437,12 @@
               record.relatedEvent || "",
             ].filter(Boolean);
         const note = String(record.notes || "").trim();
-        const summary = record.recordType === "class" ? "" : (note.length > 180 ? `${note.slice(0, 180)}...` : note);
+        const summary = (record.recordType === "class" || record.recordType === "inquiry") ? "" : (note.length > 180 ? `${note.slice(0, 180)}...` : note);
         const classDetails = record.recordType === "class" ? renderClassRecordDetails(record) : "";
         const contactDetails = record.recordType === "contact" ? renderContactRecordDetails(record) : "";
         const inquiryDetails = record.recordType === "inquiry" ? renderInquiryRecordDetails(record) : "";
+        const inquiryPipeline = record.recordType === "inquiry" ? renderInquiryPipelineBar(record.status) : "";
+        const inquiryCallout = record.recordType === "inquiry" ? renderInquiryCallout(record) : "";
         const contactCopy =
           record.recordType === "contact"
             ? `<div class="management-contact-card-lines">
@@ -1389,7 +1454,7 @@
           <article class="management-record is-${escapeHtml(record.recordType)} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
             <div>
               <div class="management-record-badges">
-                <span class="management-badge">${escapeHtml(formatLabel(record.recordType))}</span>
+                <span class="management-badge is-${escapeHtml(record.recordType)}">${escapeHtml(formatLabel(record.recordType))}</span>
                 ${
                   record.recordType === "contact"
                     ? ""
@@ -1398,6 +1463,8 @@
                 <span class="management-badge is-${escapeHtml(record.priority)}">${escapeHtml(formatLabel(record.priority))}</span>
               </div>
               <h3>${escapeHtml(record.title)}</h3>
+              ${inquiryPipeline}
+              ${inquiryCallout}
               ${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
               ${contactCopy}
               ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
