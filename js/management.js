@@ -401,26 +401,32 @@
     return sessions;
   }
 
-  function readClassContacts() {
-    if (!classContactList) return [];
-    return Array.from(classContactList.querySelectorAll("[data-class-contact-id]")).map((row) => ({
-      id: row.getAttribute("data-class-contact-id") || "",
-      name: row.getAttribute("data-class-contact-name") || "",
-      email: row.getAttribute("data-class-contact-email") || "",
-      phone: row.getAttribute("data-class-contact-phone") || "",
-      sourceRegistrationId: row.getAttribute("data-class-contact-registration-id") || "",
-    })).filter((item) => item.id);
-  }
-
   function getContactRecords() {
     return state.records.filter((record) => record.recordType === "contact");
   }
 
+  function getContactClassEnrollments(contact) {
+    const extras = getExtras(contact);
+    return Array.isArray(extras.classEnrollments) ? extras.classEnrollments : [];
+  }
+
+  function getClassRosterContacts(record) {
+    if (!record || record.recordType !== "class") return [];
+    const classId = slugify(getExtras(record).classId || record.id || record.title, "class");
+    return getContactRecords().filter((contact) =>
+      getContactClassEnrollments(contact).some((enrollment) => normalizeSiteText(enrollment && enrollment.classId) === classId)
+    );
+  }
+
+  function getClassRosterEntry(contact, classId) {
+    return getContactClassEnrollments(contact).find((enrollment) => normalizeSiteText(enrollment && enrollment.classId) === classId) || {};
+  }
+
   function renderClassRoster(record = null) {
     if (!classRosterEl) return;
-    const extras = getExtras(record);
-    const attached = Array.isArray(extras.classContacts) ? extras.classContacts : [];
-    const attachedIds = new Set(attached.map((item) => String(item && item.id || "")));
+    const classId = record && record.recordType === "class" ? slugify(getExtras(record).classId || record.id || record.title, "class") : "";
+    const rosterContacts = classId ? getClassRosterContacts(record) : [];
+    const attachedIds = new Set(rosterContacts.map((item) => String(item && item.id || "")));
     const contacts = getContactRecords();
     if (classContactSelect) {
       const options = contacts
@@ -434,22 +440,22 @@
         : '<option value="">No available contacts</option>';
     }
     if (classContactList) {
-      classContactList.innerHTML = attached.length
-        ? attached.map((contact) => `
+      classContactList.innerHTML = rosterContacts.length
+        ? rosterContacts.map((contact) => {
+          const enrollment = getClassRosterEntry(contact, classId);
+          const sourceLabel = enrollment.source === "self_registered" ? "Self Registered" : "In House Registered";
+          return `
           <div class="management-class-contact-item"
             data-class-contact-id="${escapeHtml(contact.id)}"
-            data-class-contact-name="${escapeHtml(contact.name)}"
-            data-class-contact-email="${escapeHtml(contact.email)}"
-            data-class-contact-phone="${escapeHtml(contact.phone)}"
-            data-class-contact-registration-id="${escapeHtml(contact.sourceRegistrationId || "")}">
             <div>
-              <strong>${escapeHtml(contact.name || contact.email || "Unnamed contact")}</strong>
-              <span>${escapeHtml([contact.email, contact.phone].filter(Boolean).join(" | "))}</span>
+              <strong>${escapeHtml(contact.contactName || contact.title || contact.contactEmail || "Unnamed contact")}</strong>
+              <span>${escapeHtml([contact.contactEmail, contact.contactPhone, sourceLabel].filter(Boolean).join(" | "))}</span>
             </div>
             <button type="button" data-remove-class-contact="${escapeHtml(contact.id)}">Remove</button>
           </div>
-        `).join("")
-        : '<div class="management-empty">No contacts attached to this class yet.</div>';
+        `;
+        }).join("")
+        : '<div class="management-empty">No contacts enrolled in this class yet.</div>';
     }
     renderClassRegistrationEscrow(record);
   }
@@ -1055,10 +1061,15 @@
       classRegistrationList.innerHTML = '<div class="management-empty">No registrations in escrow.</div>';
       return;
     }
-    const attachedIds = new Set((Array.isArray(getExtras(classRecord).classContacts) ? getExtras(classRecord).classContacts : []).map((item) => item.sourceRegistrationId).filter(Boolean));
+    const classId = classRecord ? slugify(getExtras(classRecord).classId || classRecord.id || classRecord.title, "class") : "";
+    const enrolledRegistrationIds = new Set(
+      getClassRosterContacts(classRecord)
+        .map((contact) => getClassRosterEntry(contact, classId).sourceRegistrationId)
+        .filter(Boolean)
+    );
     classRegistrationList.innerHTML = registrants.map((registrant) => {
       const id = normalizeSiteText(registrant && registrant.id);
-      const alreadyAdded = attachedIds.has(id);
+      const alreadyAdded = enrolledRegistrationIds.has(id);
       const busy = id && id === state.classConvertingRegistrationId;
       const details = [
         normalizeSiteText(registrant && registrant.email),
@@ -1101,46 +1112,64 @@
     return data;
   }
 
-  async function saveCurrentClassContacts(nextContacts) {
-    const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
-    if (!current || current.recordType !== "class") {
-      setStatus(recordStatus, "Save or open a class before adding contacts.", "error");
-      return null;
-    }
+  function getActiveClassRecord() {
+    return state.selectedId ? state.records.find((item) => item.id === state.selectedId && item.recordType === "class") : null;
+  }
+
+  async function updateContactRecord(contact, nextExtras) {
     const next = {
-      ...current,
+      ...contact,
       extras: {
-        ...getExtras(current),
-        classContacts: nextContacts,
+        ...getExtras(contact),
+        ...nextExtras,
       },
     };
     const saved = await saveRecordPayload(next);
     const index = state.records.findIndex((item) => item.id === saved.id);
     if (index >= 0) state.records[index] = saved;
-    fillForm(saved);
     return saved;
   }
 
-  async function attachContactToClass(contact, sourceRegistrationId = "") {
-    if (!contact || !contact.id) return;
+  async function enrollContactInClass(contact, source = "in_house", sourceRegistrationId = "") {
     const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
-    const existing = Array.isArray(getExtras(current).classContacts) ? getExtras(current).classContacts : [];
-    if (existing.some((item) => item.id === contact.id)) {
-      setStatus(recordStatus, "Contact is already attached to this class.", "error");
-      return;
+    if (!current || current.recordType !== "class") {
+      setStatus(recordStatus, "Save or open a class before adding contacts.", "error");
+      return null;
     }
-    const nextContacts = [
-      ...existing,
-      {
-        id: contact.id,
-        name: contact.contactName || contact.title || "",
-        email: contact.contactEmail || "",
-        phone: contact.contactPhone || "",
-        sourceRegistrationId,
-      },
-    ];
-    await saveCurrentClassContacts(nextContacts);
-    setStatus(recordStatus, "Contact added to class.", "success");
+    if (!contact || !contact.id) return null;
+    const classId = slugify(getExtras(current).classId || current.id || current.title, "class");
+    const existingEnrollments = getContactClassEnrollments(contact);
+    if (existingEnrollments.some((entry) => normalizeSiteText(entry && entry.classId) === classId)) {
+      setStatus(recordStatus, "Contact is already enrolled in this class.", "error");
+      return contact;
+    }
+    const saved = await updateContactRecord(contact, {
+      registrationSource: source === "self_registered" ? "self_registered" : (getExtras(contact).registrationSource || "in_house"),
+      classEnrollments: [
+        ...existingEnrollments,
+        {
+          classId,
+          classRecordId: current.id,
+          classTitle: current.title,
+          source,
+          sourceRegistrationId,
+          enrolledAt: new Date().toISOString(),
+        },
+      ],
+    });
+    fillForm(current);
+    return saved;
+  }
+
+  async function removeContactEnrollmentFromClass(contactId) {
+    const current = getActiveClassRecord();
+    const contact = state.records.find((record) => record.id === contactId && record.recordType === "contact");
+    if (!current || !contact) return;
+    const classId = slugify(getExtras(current).classId || current.id || current.title, "class");
+    await updateContactRecord(contact, {
+      classEnrollments: getContactClassEnrollments(contact).filter((entry) => normalizeSiteText(entry && entry.classId) !== classId),
+    });
+    fillForm(current);
   }
 
   async function addSelectedContactToClass() {
@@ -1150,17 +1179,19 @@
       setStatus(recordStatus, "Choose a contact to add.", "error");
       return;
     }
-    await attachContactToClass(contact);
+    await enrollContactInClass(contact, "in_house");
+    setStatus(recordStatus, "Contact enrolled in class.", "success");
   }
 
   async function convertRegistrationToContact(registrationId) {
+    const classRecord = getActiveClassRecord();
     const registrants = Array.isArray(state.classRegistrationSnapshot && state.classRegistrationSnapshot.registrants)
       ? state.classRegistrationSnapshot.registrants
       : [];
     const registrant = registrants.find((item) => normalizeSiteText(item && item.id) === normalizeSiteText(registrationId));
-    if (!registrant) return;
+    if (!registrant || !classRecord) return;
     state.classConvertingRegistrationId = normalizeSiteText(registrationId);
-    renderClassRegistrationEscrow(state.records.find((item) => item.id === state.selectedId));
+    renderClassRegistrationEscrow(classRecord);
     const firstName = normalizeSiteText(registrant.firstName);
     const lastName = normalizeSiteText(registrant.lastName);
     const contactName = [firstName, lastName].filter(Boolean).join(" ") || normalizeSiteText(registrant.name);
@@ -1168,24 +1199,31 @@
       const email = normalizeSiteText(contact.contactEmail).toLowerCase();
       return email && email === normalizeSiteText(registrant.email).toLowerCase();
     });
-    const contact = existingContact || await saveRecordPayload({
-      recordType: "contact",
-      title: contactName,
-      status: "active",
-      priority: "normal",
-      contactName,
-      contactEmail: normalizeSiteText(registrant.email),
-      contactPhone: normalizeSiteText(registrant.phone),
-      notes: "Created from class registration escrow.",
-      extras: {
-        firstName,
-        lastName,
-        source: "Class registration",
-        certification: normalizeSiteText(registrant.certificationLevel),
-      },
-    });
+    const contact = existingContact
+      ? await updateContactRecord(existingContact, {
+          registrationSource: "self_registered",
+          certification: normalizeSiteText(registrant.certificationLevel) || getExtras(existingContact).certification,
+        })
+      : await saveRecordPayload({
+          recordType: "contact",
+          title: contactName,
+          status: "active",
+          priority: "normal",
+          contactName,
+          contactEmail: normalizeSiteText(registrant.email),
+          contactPhone: normalizeSiteText(registrant.phone),
+          notes: "Created from class registration escrow.",
+          extras: {
+            firstName,
+            lastName,
+            source: "Class registration",
+            registrationSource: "self_registered",
+            certification: normalizeSiteText(registrant.certificationLevel),
+          },
+        });
     state.classConvertingRegistrationId = "";
-    await attachContactToClass(contact, normalizeSiteText(registrationId));
+    await enrollContactInClass(contact, "self_registered", normalizeSiteText(registrationId));
+    setStatus(recordStatus, "Registration imported as a contact and enrolled in class.", "success");
   }
 
   function readFormRecord() {
@@ -1218,9 +1256,6 @@
       classSessions: recordForm.elements.recordType && String(formData.get("recordType") || existing && existing.recordType || "") === "class"
         ? readClassSessions()
         : existingExtras.classSessions,
-      classContacts: recordForm.elements.recordType && String(formData.get("recordType") || existing && existing.recordType || "") === "class"
-        ? readClassContacts()
-        : existingExtras.classContacts,
       registrationEnabled:
         recordForm.elements.registrationEnabled && !recordForm.elements.registrationEnabled.disabled
           ? (recordForm.elements.registrationEnabled.checked ? "1" : "")
@@ -1734,10 +1769,8 @@
         const button = event.target.closest("[data-remove-class-contact]");
         if (!button) return;
         const removeId = button.getAttribute("data-remove-class-contact") || "";
-        const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
-        const existing = Array.isArray(getExtras(current).classContacts) ? getExtras(current).classContacts : [];
-        await saveCurrentClassContacts(existing.filter((contact) => contact.id !== removeId));
-        setStatus(recordStatus, "Contact removed from class.", "success");
+        await removeContactEnrollmentFromClass(removeId);
+        setStatus(recordStatus, "Contact removed from this class.", "success");
       });
     }
     if (classRegistrationList) {
