@@ -304,8 +304,15 @@
     setStatus(recordStatus, "");
   }
 
-  function openEditor(record = null) {
-    fillForm(record);
+  function getDefaultNewRecordType() {
+    const type = normalizeSiteText(state.filterType);
+    if (["contact", "inquiry", "class", "trip", "task"].includes(type)) return type;
+    if (type === "registration") return "contact";
+    return "contact";
+  }
+
+  function openEditor(record = null, defaultType = "") {
+    fillForm(record, defaultType);
     openEditorModal();
   }
 
@@ -2234,13 +2241,15 @@
     };
   }
 
-  function fillForm(record = null) {
+  function fillForm(record = null, defaultType = "") {
     if (!recordForm) return;
     recordForm.reset();
     syncTimeOptions();
+    const requestedType = normalizeSiteText(defaultType);
+    const newRecordType = typeConfigs[requestedType] ? requestedType : "contact";
     const item = record || {
       id: "",
-      recordType: "contact",
+      recordType: newRecordType,
       status: "new",
       priority: "normal",
       extras: {},
@@ -2892,7 +2901,7 @@
       });
     }
     app.querySelectorAll("[data-new-record]").forEach((button) => {
-      button.addEventListener("click", () => openEditor());
+      button.addEventListener("click", () => openEditor(null, getDefaultNewRecordType()));
     });
     if (cancelEditButton) cancelEditButton.addEventListener("click", closeEditorModal);
     const refreshButton = app.querySelector("[data-refresh-records]");
@@ -2995,7 +3004,7 @@
       if (isInputFocused()) return;
       if (event.key === "n" || event.key === "N") {
         event.preventDefault();
-        openEditor();
+        openEditor(null, getDefaultNewRecordType());
         return;
       }
       if (event.key === "/") {
