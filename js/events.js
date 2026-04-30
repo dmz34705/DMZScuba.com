@@ -648,10 +648,6 @@
 
         const actions = document.createElement("div");
         actions.className = "events-public-actions";
-        const actionLink = document.createElement("a");
-        actionLink.className = "btn secondary";
-        actionLink.href = ctaHref;
-        actionLink.textContent = ctaLabel || "Contact Us";
         const shareBtn = document.createElement("button");
         shareBtn.type = "button";
         shareBtn.className = "btn secondary";
@@ -664,7 +660,13 @@
           registerBtn.textContent = "Register For Event";
           actions.appendChild(registerBtn);
         }
-        actions.appendChild(actionLink);
+        if (!registrationEnabled) {
+          const actionLink = document.createElement("a");
+          actionLink.className = "btn secondary";
+          actionLink.href = ctaHref;
+          actionLink.textContent = ctaLabel || "Contact Us";
+          actions.appendChild(actionLink);
+        }
         actions.appendChild(shareBtn);
         body.appendChild(actions);
         const shareFeedback = document.createElement("p");
