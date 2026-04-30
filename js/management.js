@@ -1461,15 +1461,20 @@
     );
     return state.allRegistrationSnapshots.flatMap((snapshot) => {
       const context = snapshot && snapshot.context ? snapshot.context : {};
-      const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+      const registrants = Array.isArray(snapshot && snapshot.registeredDivers)
+        ? snapshot.registeredDivers
+        : (Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : []);
       return registrants.map((registrant) => {
         const registrantId = normalizeSiteText(registrant && registrant.id);
         const email = normalizeSiteText(registrant && registrant.email);
+        const contactId = normalizeSiteText(registrant && registrant.contactId);
+        const isRosterContact = normalizeSiteText(registrant && registrant.source) === "management_roster" || Boolean(contactId);
         return {
           context,
           registrant,
           actionKey: getRegistrationActionKey(context, registrantId),
-          alreadyContact: Boolean(email && contactEmails.has(email.toLowerCase())),
+          alreadyContact: isRosterContact || Boolean(email && contactEmails.has(email.toLowerCase())),
+          canUnregister: !isRosterContact,
         };
       });
     });
@@ -1507,7 +1512,7 @@
     if (!entries.length) {
       return '<div class="management-empty">No matching online registrations found.</div>';
     }
-    return entries.map(({ context, registrant, actionKey, alreadyContact }) => {
+    return entries.map(({ context, registrant, actionKey, alreadyContact, canUnregister }) => {
       const registrantId = normalizeSiteText(registrant && registrant.id);
       const firstName = normalizeSiteText(registrant && registrant.firstName);
       const lastName = normalizeSiteText(registrant && registrant.lastName);
@@ -1552,7 +1557,7 @@
           </div>
           <div class="management-record-actions management-registration-card-actions">
             <button type="button" data-add-registration-contact="${escapeHtml(actionKey)}" ${!registrantId || alreadyContact || converting || state.allRegistrationsLoading ? "disabled" : ""}>${alreadyContact ? "Added to Contacts" : converting ? "Adding..." : "Add to Contacts"}</button>
-            <button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>
+            <button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || !canUnregister || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${!canUnregister ? "Managed in Roster" : deleting ? "Unregistering..." : "Unregister from Event"}</button>
           </div>
         </article>
       `;

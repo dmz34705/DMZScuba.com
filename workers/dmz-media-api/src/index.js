@@ -1563,6 +1563,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       description: getDescriptionForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
+      managementClassId: String(eventMatch.managementClassId || "").trim().toLowerCase(),
       managementClassRoster: Array.isArray(eventMatch.managementClassRoster) ? eventMatch.managementClassRoster : [],
     };
   }
@@ -1575,8 +1576,59 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     description: getDescriptionForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
+    managementClassId: String(templateMatch.managementClassId || "").trim().toLowerCase(),
     managementClassRoster: Array.isArray(templateMatch.managementClassRoster) ? templateMatch.managementClassRoster : [],
   };
+}
+
+function getManagementRecordExtras(row) {
+  try {
+    const parsed = JSON.parse(String((row && row.data_json) || "{}"));
+    return parsed && parsed.extras && typeof parsed.extras === "object" ? parsed.extras : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function getContactClassEnrollmentsFromRow(row) {
+  const extras = getManagementRecordExtras(row);
+  return Array.isArray(extras.classEnrollments) ? extras.classEnrollments : [];
+}
+
+async function getManagementClassRoster(env, classId) {
+  const safeClassId = String(classId || "").trim().toLowerCase();
+  if (!safeClassId) return [];
+  await ensureManagementTable(env);
+  const rows = await env.DB.prepare(
+    `SELECT id, title, contact_name, contact_email, contact_phone, data_json
+     FROM management_records
+     WHERE record_type = 'contact' AND data_json LIKE ?`
+  )
+    .bind(`%"classId":"${safeClassId}"%`)
+    .all();
+  return (rows.results || [])
+    .map((row) => {
+      const extras = getManagementRecordExtras(row);
+      const enrollment = getContactClassEnrollmentsFromRow(row).find((entry) =>
+        String((entry && entry.classId) || "").trim().toLowerCase() === safeClassId
+      );
+      if (!enrollment) return null;
+      const contactName = String((row && (row.contact_name || row.title)) || "").trim();
+      const nameParts = contactName.split(/\s+/).filter(Boolean);
+      return {
+        contactId: String((row && row.id) || "").trim(),
+        firstName: String(extras.firstName || nameParts[0] || "").trim(),
+        lastName: String(extras.lastName || (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "") || "").trim(),
+        name: contactName || String((row && row.contact_email) || "").trim() || "Registered diver",
+        email: String((row && row.contact_email) || "").trim().toLowerCase(),
+        phone: String((row && row.contact_phone) || "").trim(),
+        certificationLevel: String(extras.certification || "").trim(),
+        source: String((enrollment && enrollment.source) || "in_house").trim(),
+        sourceRegistrationId: String((enrollment && enrollment.sourceRegistrationId) || "").trim(),
+        status: String((enrollment && enrollment.status) || "enrolled").trim(),
+      };
+    })
+    .filter(Boolean);
 }
 
 async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
@@ -1602,7 +1654,10 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     createdAt: String((row && row.created_at) || ""),
     source: "online_registration",
   }));
-  const rosterList = (Array.isArray(config && config.managementClassRoster) ? config.managementClassRoster : [])
+  const liveRoster = await getManagementClassRoster(env, config && config.managementClassId);
+  const configuredRoster = Array.isArray(config && config.managementClassRoster) ? config.managementClassRoster : [];
+  const rosterSource = liveRoster.length ? liveRoster : configuredRoster;
+  const rosterList = rosterSource
     .map((entry) => {
       const firstName = String((entry && entry.firstName) || "").trim();
       const lastName = String((entry && entry.lastName) || "").trim();
@@ -1637,7 +1692,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     if (email && rosterEmails.has(email)) return false;
     return true;
   });
-  const registeredDivers = [...rosterList, ...uniqueOnlineList];
+  const registeredDivers = rosterList.length ? rosterList : uniqueOnlineList;
   const usedSpots = registeredDivers.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
   const capacity = Math.max(0, Number((config && config.registrationCapacity) || 0) || 0);
   const remainingSpots = capacity > 0 ? Math.max(0, capacity - usedSpots) : 0;
