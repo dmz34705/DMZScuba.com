@@ -460,7 +460,6 @@
           <div class="events-public-modal-copy">
             <span class="events-public-modal-kicker" data-events-modal-kicker></span>
             <h3 data-events-modal-title></h3>
-            <button class="btn primary events-public-modal-register-jump" type="button" data-events-modal-register-jump hidden>Register For Event</button>
             <p data-events-modal-subtitle></p>
           </div>
           <div class="events-public-modal-head-actions">
@@ -491,7 +490,6 @@
       kicker: modal.querySelector("[data-events-modal-kicker]"),
       title: modal.querySelector("[data-events-modal-title]"),
       subtitle: modal.querySelector("[data-events-modal-subtitle]"),
-      registerJumpBtn: modal.querySelector("[data-events-modal-register-jump]"),
       backBtn,
     };
     return state.publicModal;
@@ -506,10 +504,6 @@
     if (modal.backBtn) {
       modal.backBtn.hidden = true;
       modal.backBtn.onclick = null;
-    }
-    if (modal.registerJumpBtn) {
-      modal.registerJumpBtn.hidden = true;
-      modal.registerJumpBtn.onclick = null;
     }
     modal.body.innerHTML = "";
     if (typeof bodyBuilder === "function") bodyBuilder(modal.body);
@@ -652,6 +646,32 @@
         `;
         body.appendChild(meta);
 
+        const actions = document.createElement("div");
+        actions.className = "events-public-actions";
+        const actionLink = document.createElement("a");
+        actionLink.className = "btn secondary";
+        actionLink.href = ctaHref;
+        actionLink.textContent = ctaLabel || "Contact Us";
+        const shareBtn = document.createElement("button");
+        shareBtn.type = "button";
+        shareBtn.className = "btn secondary";
+        shareBtn.textContent = registrationEnabled ? "Share Sign-Up Link" : "Share Event Link";
+        let registerBtn = null;
+        if (registrationEnabled) {
+          registerBtn = document.createElement("button");
+          registerBtn.type = "button";
+          registerBtn.className = "btn primary";
+          registerBtn.textContent = "Register For Event";
+          actions.appendChild(registerBtn);
+        }
+        actions.appendChild(actionLink);
+        actions.appendChild(shareBtn);
+        body.appendChild(actions);
+        const shareFeedback = document.createElement("p");
+        shareFeedback.className = "events-registration-feedback";
+        shareFeedback.hidden = true;
+        body.appendChild(shareFeedback);
+
         if (primaryDescription) {
           const intro = document.createElement("p");
           intro.className = "events-public-summary";
@@ -688,32 +708,6 @@
           });
           body.appendChild(list);
         }
-
-        const actions = document.createElement("div");
-        actions.className = "events-public-actions";
-        const actionLink = document.createElement("a");
-        actionLink.className = "btn secondary";
-        actionLink.href = ctaHref;
-        actionLink.textContent = ctaLabel || "Contact Us";
-        const shareBtn = document.createElement("button");
-        shareBtn.type = "button";
-        shareBtn.className = "btn secondary";
-        shareBtn.textContent = registrationEnabled ? "Share Sign-Up Link" : "Share Event Link";
-        let registerBtn = null;
-        if (registrationEnabled) {
-          registerBtn = document.createElement("button");
-          registerBtn.type = "button";
-          registerBtn.className = "btn primary";
-          registerBtn.textContent = "Register For Event";
-          actions.appendChild(registerBtn);
-        }
-        actions.appendChild(actionLink);
-        actions.appendChild(shareBtn);
-        body.appendChild(actions);
-        const shareFeedback = document.createElement("p");
-        shareFeedback.className = "events-registration-feedback";
-        shareFeedback.hidden = true;
-        body.appendChild(shareFeedback);
 
         shareBtn.addEventListener("click", async () => {
           const result = await shareEventLink(shareUrl, eventItem.title || "DMZ Scuba Event");
@@ -839,17 +833,6 @@
                 const firstInput = formEl && formEl.querySelector("input[name='firstName']");
                 if (firstInput && !formEl.hidden) firstInput.focus();
               });
-            }
-
-            if (modal && modal.registerJumpBtn) {
-              modal.registerJumpBtn.hidden = false;
-              modal.registerJumpBtn.onclick = () => {
-                regWrap.hidden = false;
-                syncEventShareUrl(eventItem, { register: true });
-                regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
-                const firstInput = formEl && formEl.querySelector("input[name='firstName']");
-                if (firstInput && !formEl.hidden) firstInput.focus();
-              };
             }
 
             loadSnapshot();
