@@ -993,6 +993,11 @@ body.events-public-modal-open {
   min-width: 0;
 }
 
+.events-public-modal-register-jump {
+  justify-self: flex-start;
+  min-height: 38px;
+}
+
 .events-public-modal-kicker {
   color: rgba(85,185,255,0.92);
   font-size: 10px;
@@ -1256,6 +1261,10 @@ body.events-public-modal-open {
 
   .events-public-modal-head p {
     font-size: 12px;
+  }
+
+  .events-public-modal-register-jump {
+    width: 100%;
   }
 
   .events-public-modal-body {

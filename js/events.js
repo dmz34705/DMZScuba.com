@@ -460,6 +460,7 @@
           <div class="events-public-modal-copy">
             <span class="events-public-modal-kicker" data-events-modal-kicker></span>
             <h3 data-events-modal-title></h3>
+            <button class="btn primary events-public-modal-register-jump" type="button" data-events-modal-register-jump hidden>Register For Event</button>
             <p data-events-modal-subtitle></p>
           </div>
           <div class="events-public-modal-head-actions">
@@ -490,6 +491,7 @@
       kicker: modal.querySelector("[data-events-modal-kicker]"),
       title: modal.querySelector("[data-events-modal-title]"),
       subtitle: modal.querySelector("[data-events-modal-subtitle]"),
+      registerJumpBtn: modal.querySelector("[data-events-modal-register-jump]"),
       backBtn,
     };
     return state.publicModal;
@@ -504,6 +506,10 @@
     if (modal.backBtn) {
       modal.backBtn.hidden = true;
       modal.backBtn.onclick = null;
+    }
+    if (modal.registerJumpBtn) {
+      modal.registerJumpBtn.hidden = true;
+      modal.registerJumpBtn.onclick = null;
     }
     modal.body.innerHTML = "";
     if (typeof bodyBuilder === "function") bodyBuilder(modal.body);
@@ -833,6 +839,17 @@
                 const firstInput = formEl && formEl.querySelector("input[name='firstName']");
                 if (firstInput && !formEl.hidden) firstInput.focus();
               });
+            }
+
+            if (modal && modal.registerJumpBtn) {
+              modal.registerJumpBtn.hidden = false;
+              modal.registerJumpBtn.onclick = () => {
+                regWrap.hidden = false;
+                syncEventShareUrl(eventItem, { register: true });
+                regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+                const firstInput = formEl && formEl.querySelector("input[name='firstName']");
+                if (firstInput && !formEl.hidden) firstInput.focus();
+              };
             }
 
             loadSnapshot();
