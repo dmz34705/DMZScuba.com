@@ -2122,10 +2122,12 @@
       return;
     }
     const snapshot = state.classRegistrationSnapshot;
+    syncRegistrationClosedCheckbox(classRecord, snapshot);
     const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
     const pendingCount = registrants.filter((item) => getRegistrationApprovalStatus(item) !== "approved").length;
+    const registrationClosed = isSnapshotRegistrationAtCapacity(snapshot) || Boolean(getExtras(classRecord).registrationClosed);
     classRegistrationSummary.textContent = snapshot
-      ? `${pendingCount} registration${pendingCount === 1 ? "" : "s"} waiting for approval. ${registrants.length} online signup${registrants.length === 1 ? "" : "s"} total.`
+      ? `${pendingCount} registration${pendingCount === 1 ? "" : "s"} waiting for approval. ${registrants.length} online signup${registrants.length === 1 ? "" : "s"} total. ${registrationClosed ? "Registration is closed." : "Registration is open."}`
       : "Refresh registrations after the class has been saved to the calendar.";
     if (!snapshot) {
       classRegistrationList.innerHTML = '<div class="management-empty">No registration data loaded yet.</div>';
