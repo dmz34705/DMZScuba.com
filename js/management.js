@@ -262,6 +262,11 @@
     registrationLoading: false,
     registrationDeletingId: "",
     registrationConvertingId: "",
+    allRegistrationSnapshots: [],
+    allRegistrationsLoading: false,
+    allRegistrationsLoaded: false,
+    allRegistrationDeletingKey: "",
+    allRegistrationConvertingKey: "",
     classRegistrationSnapshot: null,
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
@@ -1106,6 +1111,14 @@
     return [item.sourceId || item.id || "", item.date || item.startDate || ""].join("|");
   }
 
+  function getRegistrationActionKey(context, registrationId) {
+    return [
+      context && context.sourceId,
+      context && context.eventDate,
+      registrationId,
+    ].map((value) => normalizeSiteText(value)).join("|");
+  }
+
   function isSiteBackedManagementRecord(record) {
     const extras = getExtras(record);
     return extras.siteSource === "events";
@@ -1398,6 +1411,126 @@
       });
   }
 
+  function getRegistrationContexts() {
+    return state.allSiteEvents
+      .filter((item) => item && item.registrationEnabled)
+      .map((item) => ({
+        sourceId: normalizeSiteText(item.sourceId || item.id),
+        eventDate: normalizeSiteText(item.date),
+        title: normalizeSiteText(item.title) || "DMZ Scuba Event",
+        type: normalizeSiteText(item.type),
+        location: normalizeSiteText(item.location),
+        registrationCapacity: Math.max(0, Number(item.registrationCapacity || 0) || 0),
+      }))
+      .filter((item) => item.sourceId && item.eventDate);
+  }
+
+  function flattenRegistrationSnapshots() {
+    const contactEmails = new Set(
+      getContactRecords()
+        .map((contact) => normalizeSiteText(contact.contactEmail).toLowerCase())
+        .filter(Boolean)
+    );
+    return state.allRegistrationSnapshots.flatMap((snapshot) => {
+      const context = snapshot && snapshot.context ? snapshot.context : {};
+      const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+      return registrants.map((registrant) => {
+        const registrantId = normalizeSiteText(registrant && registrant.id);
+        const email = normalizeSiteText(registrant && registrant.email);
+        return {
+          context,
+          registrant,
+          actionKey: getRegistrationActionKey(context, registrantId),
+          alreadyContact: Boolean(email && contactEmails.has(email.toLowerCase())),
+        };
+      });
+    });
+  }
+
+  function registrationMatchesSearch(entry) {
+    const query = state.search.trim().toLowerCase();
+    if (!query) return true;
+    const context = entry && entry.context ? entry.context : {};
+    const registrant = entry && entry.registrant ? entry.registrant : {};
+    const fullName = [
+      normalizeSiteText(registrant.firstName),
+      normalizeSiteText(registrant.lastName),
+    ].filter(Boolean).join(" ") || normalizeSiteText(registrant.name);
+    return [
+      fullName,
+      registrant.email,
+      registrant.phone,
+      registrant.certificationLevel,
+      context.title,
+      context.eventDate,
+      context.type,
+      context.location,
+    ].some((value) => normalizeSiteText(value).toLowerCase().includes(query));
+  }
+
+  function renderRegistrationCards() {
+    if (state.allRegistrationsLoading && !state.allRegistrationSnapshots.length) {
+      return '<div class="management-empty">Loading online registrations...</div>';
+    }
+    if (!state.allRegistrationsLoaded && !state.allRegistrationSnapshots.length) {
+      return '<div class="management-empty">Open this tab to load online registrations.</div>';
+    }
+    const entries = flattenRegistrationSnapshots().filter(registrationMatchesSearch);
+    if (!entries.length) {
+      return '<div class="management-empty">No matching online registrations found.</div>';
+    }
+    return entries.map(({ context, registrant, actionKey, alreadyContact }) => {
+      const registrantId = normalizeSiteText(registrant && registrant.id);
+      const firstName = normalizeSiteText(registrant && registrant.firstName);
+      const lastName = normalizeSiteText(registrant && registrant.lastName);
+      const fullName = [firstName, lastName].filter(Boolean).join(" ") || normalizeSiteText(registrant && registrant.name) || "Unnamed diver";
+      const email = normalizeSiteText(registrant && registrant.email);
+      const phone = normalizeSiteText(registrant && registrant.phone);
+      const cert = normalizeSiteText(registrant && registrant.certificationLevel);
+      const partySize = Math.max(1, Number((registrant && registrant.partySize) || 1) || 1);
+      const additionalGuests = Math.max(0, Number((registrant && registrant.additionalGuests) || 0) || 0);
+      const createdAt = normalizeSiteText(registrant && registrant.createdAt);
+      const deleting = actionKey && actionKey === state.allRegistrationDeletingKey;
+      const converting = actionKey && actionKey === state.allRegistrationConvertingKey;
+      const detailItems = [
+        cert ? `Certification: ${cert}` : "",
+        partySize > 1 ? `${partySize} divers total` : "Solo signup",
+        additionalGuests > 0 ? `${additionalGuests} guest${additionalGuests === 1 ? "" : "s"}` : "",
+        createdAt ? `Signed up ${createdAt.slice(0, 10)}` : "",
+      ].filter(Boolean);
+      const eventLine = [
+        context.eventDate ? formatDate(context.eventDate) : "",
+        context.location,
+      ].filter(Boolean).join(" | ");
+      return `
+        <article class="management-record management-registration-card is-registration" data-registration-card>
+          <div>
+            <div class="management-record-badges">
+              <span class="management-badge is-registration">Registration</span>
+              ${context.type ? `<span class="management-badge is-trip">${escapeHtml(context.type)}</span>` : ""}
+            </div>
+            <h3>${escapeHtml(fullName)}</h3>
+            <div class="management-contact-card-lines">
+              ${renderContactCopyLine("Email", email, "email")}
+              ${renderContactCopyLine("Phone", phone, "phone")}
+            </div>
+            <div class="management-registration-card-event">
+              <strong>${escapeHtml(context.title || "DMZ Scuba Event")}</strong>
+              <span>${escapeHtml(eventLine)}</span>
+            </div>
+            <div class="management-record-meta">
+              ${detailItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+            </div>
+          </div>
+          <div class="management-record-actions management-registration-card-actions">
+            <button type="button" data-add-registration-contact="${escapeHtml(actionKey)}" ${!registrantId || alreadyContact || converting || state.allRegistrationsLoading ? "disabled" : ""}>${alreadyContact ? "Added to Contacts" : converting ? "Adding..." : "Add to Contacts"}</button>
+            <button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
   function updateMetrics() {
     const openCount = state.records.filter(
       (record) =>
@@ -1441,6 +1574,9 @@
       if (type === "all") {
         const total = Object.values(typeCounts).reduce((sum, n) => sum + n, 0);
         countEl.textContent = total ? ` (${total})` : "";
+      } else if (type === "registration") {
+        const total = flattenRegistrationSnapshots().length;
+        countEl.textContent = total ? ` (${total})` : "";
       } else if (typeCounts[type] !== undefined) {
         countEl.textContent = typeCounts[type] ? ` (${typeCounts[type]})` : "";
       }
@@ -1451,6 +1587,10 @@
     if (!recordList) return;
     updateMetrics();
     updateFilterCounts();
+    if (state.filterType === "registration") {
+      recordList.innerHTML = renderRegistrationCards();
+      return;
+    }
     const visibleRecords = getVisibleRecords();
     const visibleSiteEvents = getVisibleSiteEventsForRecords();
     if (!visibleRecords.length && !visibleSiteEvents.length) {
@@ -1679,6 +1819,41 @@
     renderRegistrationManager();
   }
 
+  function findAllRegistrationEntry(actionKey) {
+    return flattenRegistrationSnapshots().find((entry) => entry.actionKey === normalizeSiteText(actionKey)) || null;
+  }
+
+  async function unregisterFromRegistrationCard(actionKey) {
+    const entry = findAllRegistrationEntry(actionKey);
+    const context = entry && entry.context;
+    const registrantId = normalizeSiteText(entry && entry.registrant && entry.registrant.id);
+    if (!context || !registrantId) return;
+    if (!window.confirm("Unregister this person from the event?")) return;
+    state.allRegistrationDeletingKey = normalizeSiteText(actionKey);
+    renderRecords();
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations/${encodeURIComponent(registrantId)}?date=${encodeURIComponent(context.eventDate)}`;
+    const resp = await apiFetch(url, { method: "DELETE" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    state.allRegistrationDeletingKey = "";
+    if (!resp || !resp.ok || !data.ok) {
+      setStatus(recordStatus, data.error || "Could not unregister this person.", "error");
+      renderRecords();
+      return;
+    }
+    state.allRegistrationSnapshots = state.allRegistrationSnapshots.map((snapshot) => {
+      const snapshotContext = snapshot && snapshot.context ? snapshot.context : {};
+      if (
+        normalizeSiteText(snapshotContext.sourceId) === normalizeSiteText(context.sourceId) &&
+        normalizeSiteText(snapshotContext.eventDate) === normalizeSiteText(context.eventDate)
+      ) {
+        return { ...data, context };
+      }
+      return snapshot;
+    });
+    setStatus(recordStatus, "Registration removed.", "success");
+    renderRecords();
+  }
+
   async function saveRegistrantAsContact(registrant, notes = "Created from event registration escrow.") {
     const firstName = normalizeSiteText(registrant && registrant.firstName);
     const lastName = normalizeSiteText(registrant && registrant.lastName);
@@ -1727,6 +1902,28 @@
     renderRegistrationManager();
     renderRecords();
     setStatus(recordStatus, "Registration imported as a contact.", "success");
+  }
+
+  async function addRegistrationCardToContacts(actionKey) {
+    const entry = findAllRegistrationEntry(actionKey);
+    if (!entry || !entry.registrant) return;
+    state.allRegistrationConvertingKey = normalizeSiteText(actionKey);
+    renderRecords();
+    const context = entry.context || {};
+    const notes = [
+      "Created from online event registration.",
+      context.title ? `Event: ${context.title}` : "",
+      context.eventDate ? `Event date: ${formatDate(context.eventDate)}` : "",
+    ].filter(Boolean).join("\n");
+    try {
+      await saveRegistrantAsContact(entry.registrant, notes);
+      setStatus(recordStatus, "Registration imported as a contact.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not add this registration to contacts.", "error");
+    } finally {
+      state.allRegistrationConvertingKey = "";
+      renderRecords();
+    }
   }
 
   function renderClassRegistrationEscrow(record = null) {
@@ -2132,6 +2329,8 @@
     state.eventsPayload = data;
     state.allSiteEvents = expandSiteEventPayload(data).filter((item) => ["class", "trip"].includes(classifySiteEvent(item)));
     state.siteEvents = state.allSiteEvents;
+    state.allRegistrationSnapshots = [];
+    state.allRegistrationsLoaded = false;
     if (calendarStatus) {
       const upcomingCount = state.siteEvents.filter((item) => String(item.date || "") >= todayKey()).length;
       const pastCount = Math.max(0, state.siteEvents.length - upcomingCount);
@@ -2142,6 +2341,30 @@
     renderRecords();
     updateMetrics();
     return true;
+  }
+
+  async function loadAllRegistrationSnapshots({ force = false } = {}) {
+    if (state.allRegistrationsLoading) return;
+    if (state.allRegistrationsLoaded && !force) return;
+    if (!state.allSiteEvents.length) {
+      await loadSiteCalendar({ silent: true });
+    }
+    const contexts = getRegistrationContexts();
+    state.allRegistrationsLoading = true;
+    renderRecords();
+    const snapshots = await Promise.all(
+      contexts.map(async (context) => {
+        const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+        const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+        const data = resp ? await resp.json().catch(() => ({})) : {};
+        if (!resp || !resp.ok || !data.ok) return null;
+        return { ...data, context };
+      })
+    );
+    state.allRegistrationSnapshots = snapshots.filter(Boolean);
+    state.allRegistrationsLoaded = true;
+    state.allRegistrationsLoading = false;
+    renderRecords();
   }
 
   function getOrderedClassSessions(record) {
@@ -2704,10 +2927,25 @@
         state.filterType = button.getAttribute("data-filter-type") || "all";
         filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
         renderRecords();
+        if (state.filterType === "registration") loadAllRegistrationSnapshots();
       });
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
+        const addRegistrationButton = event.target.closest("[data-add-registration-contact]");
+        if (addRegistrationButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          addRegistrationCardToContacts(addRegistrationButton.getAttribute("data-add-registration-contact") || "");
+          return;
+        }
+        const unregisterButton = event.target.closest("[data-unregister-card]");
+        if (unregisterButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          unregisterFromRegistrationCard(unregisterButton.getAttribute("data-unregister-card") || "");
+          return;
+        }
         const pinButton = event.target.closest("[data-pin-record]");
         if (pinButton) {
           event.preventDefault();
