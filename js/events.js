@@ -336,6 +336,10 @@
     return enabled && capacity > 0;
   }
 
+  function isRegistrationClosed(eventItem) {
+    return Boolean(eventItem && eventItem.registrationClosed);
+  }
+
   function getRegistrationApprovalStatus(registrant) {
     const source = normalizeText(registrant && registrant.source);
     if (source === "management_roster" || normalizeText(registrant && registrant.contactId)) return "approved";
@@ -578,9 +582,10 @@
                     spots.textContent = " | Spots unavailable";
                     return;
                   }
+                  const closed = Boolean(snapshot.registrationClosed || isRegistrationClosed(eventItem));
                   const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
                   const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
-                  spots.textContent = ` | ${remaining}/${capacity} open`;
+                  spots.textContent = closed ? " | registration closed" : ` | ${remaining}/${capacity} open`;
                 });
               }
             }
@@ -768,10 +773,16 @@
               if (!snapshot || !metaEl || !listEl) return;
               const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
               const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
+              const isClosed = Boolean(snapshot.registrationClosed || isRegistrationClosed(eventItem));
               const isFull = capacity > 0 && remaining <= 0;
-              metaEl.textContent = isFull ? "This event is fully booked." : `${remaining} of ${capacity} spots remaining`;
-              if (formEl) formEl.hidden = isFull;
-              if (closedEl) closedEl.hidden = !isFull;
+              const isUnavailable = isClosed || isFull;
+              metaEl.textContent = isClosed
+                ? "Registration is closed for this event."
+                : isFull
+                  ? "This event is fully booked."
+                  : `${remaining} of ${capacity} spots remaining`;
+              if (formEl) formEl.hidden = isUnavailable;
+              if (closedEl) closedEl.hidden = !isUnavailable;
               const registrants = Array.isArray(snapshot.registeredDivers)
                 ? snapshot.registeredDivers
                 : (Array.isArray(snapshot.registrants) ? snapshot.registrants : []);
@@ -1206,12 +1217,14 @@
               title: item.title || "Event",
               remaining: Math.max(0, Number(snapshot.remainingSpots) || 0),
               capacity: Math.max(0, Number(snapshot.registrationCapacity) || 0),
+              closed: Boolean(snapshot.registrationClosed || isRegistrationClosed(item)),
             };
           }
           return {
             title: item.title || "Event",
             remaining: -1,
             capacity: fallbackCapacity,
+            closed: isRegistrationClosed(item),
           };
         })
       );
@@ -1230,7 +1243,9 @@
         const li = document.createElement("li");
         li.className = "events-selected-registration-item";
         const countText =
-          row.remaining >= 0
+          row.closed
+            ? "registration closed"
+            : row.remaining >= 0
             ? `${row.remaining}/${row.capacity} open`
             : `${row.capacity} spots configured`;
         li.textContent = `${row.title}: ${countText}`;

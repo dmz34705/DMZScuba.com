@@ -200,6 +200,7 @@
         "title",
         "classId",
         "capacity",
+        "registrationClosed",
         "classSchedule",
         "classRoster",
         "notes",
@@ -224,6 +225,7 @@
         "eventTag",
         "eventLocation",
         "registrationEnabled",
+        "registrationClosed",
         "capacity",
         "notes",
       ],
@@ -1254,6 +1256,7 @@
         eventTag: normalizeSiteText(item.type) || "Training",
         eventLocation: normalizeSiteText(item.location),
         registrationEnabled: item.registrationEnabled ? "1" : "",
+        registrationClosed: item.registrationClosed ? "1" : "",
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
         certification: existingExtras.certification || "",
         source: "Site calendar",
@@ -1297,6 +1300,7 @@
       extras.amountOwed,
       extras.amountPaid,
       extras.capacity,
+      extras.registrationClosed,
       extras.siteSource,
       extras.sourceId,
       extras.eventDate,
@@ -1336,7 +1340,11 @@
       .join(" - ");
     const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
     const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
-    const registrationText = item.registrationEnabled ? "Registration open" : "Registration off";
+    const registrationText = item.registrationClosed
+      ? "Registration closed"
+      : item.registrationEnabled
+        ? "Registration open"
+        : "Registration off";
     const summary = normalizeSiteText(item.summary);
     const statItems = [
       ["Date", dateText || "No date"],
@@ -1356,7 +1364,7 @@
           <div class="management-record-badges">
             <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
             ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
-            ${item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
+            ${item.registrationClosed ? '<span class="management-badge is-waiting">Registration Closed</span>' : item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
             ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
           </div>
           <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
@@ -1452,6 +1460,7 @@
         location: normalizeSiteText(item.location),
         managementClassId: normalizeSiteText(item.managementClassId).toLowerCase(),
         registrationCapacity: Math.max(0, Number(item.registrationCapacity || 0) || 0),
+        registrationClosed: Boolean(item.registrationClosed),
       }))
       .filter((item) => item.sourceId && item.eventDate);
   }
@@ -1781,6 +1790,7 @@
       sourceId,
       eventDate,
       registrationEnabled: Boolean(extras.registrationEnabled),
+      registrationClosed: Boolean(extras.registrationClosed),
       registrationCapacity: Math.max(0, Number(extras.capacity || 0) || 0),
     };
   }
@@ -1795,11 +1805,12 @@
     const capacity = Math.max(0, Number((snapshot && snapshot.registrationCapacity) || context.registrationCapacity || 0) || 0);
     const usedSpots = Math.max(0, Number((snapshot && snapshot.usedSpots) || 0) || 0);
     const remainingSpots = Math.max(0, Number((snapshot && snapshot.remainingSpots) || 0) || 0);
+    const registrationClosed = Boolean((snapshot && snapshot.registrationClosed) || context.registrationClosed);
     if (registrationSummary) {
       registrationSummary.textContent = state.registrationLoading
         ? "Loading signups..."
         : snapshot
-          ? `${usedSpots} of ${capacity} spots filled. ${remainingSpots} remaining.`
+          ? `${usedSpots} of ${capacity} spots filled. ${remainingSpots} remaining. ${registrationClosed ? "Registration is closed." : "Registration is open."}`
           : "Load current signups to manage this event's registration list.";
     }
     if (refreshRegistrationsButton) {
@@ -2408,6 +2419,10 @@
         recordForm.elements.registrationEnabled && !recordForm.elements.registrationEnabled.disabled
           ? (recordForm.elements.registrationEnabled.checked ? "1" : "")
           : String(existingExtras.registrationEnabled || ""),
+      registrationClosed:
+        recordForm.elements.registrationClosed && !recordForm.elements.registrationClosed.disabled
+          ? (recordForm.elements.registrationClosed.checked ? "1" : "")
+          : String(existingExtras.registrationClosed || ""),
       capacity: textValue("capacity", existingExtras.capacity),
       certification: textValue("certification", existingExtras.certification),
       amountOwed: textValue("amountOwed", existingExtras.amountOwed),
@@ -2638,6 +2653,7 @@
         location: session.location,
         summary: description,
         registrationEnabled: primary && capacity > 0,
+        registrationClosed: primary && Boolean(extras.registrationClosed),
         registrationCapacity: primary ? capacity : 0,
         ctaLabel: primary ? "Register For Class" : "",
         ctaHref: "",
@@ -2781,6 +2797,7 @@
     item.type = extras.eventTag || item.type || "Training";
     item.location = extras.eventLocation || "";
     item.registrationEnabled = Boolean(extras.registrationEnabled);
+    item.registrationClosed = Boolean(extras.registrationClosed);
     item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
     item.managementPriority = record.priority || "";
     item.managementOwner = record.owner || "";

@@ -1371,6 +1371,7 @@ function normalizeEventEntry(item, kind = "event") {
     location: String(next.location || "").trim(),
     summary: String(next.summary || "").trim(),
     registrationEnabled: Boolean(next.registrationEnabled),
+    registrationClosed: Boolean(next.registrationClosed),
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
@@ -1566,6 +1567,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
+      registrationClosed: Boolean(eventMatch.registrationClosed),
       registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
       managementClassId: String(eventMatch.managementClassId || "").trim().toLowerCase(),
       managementClassRoster: Array.isArray(eventMatch.managementClassRoster) ? eventMatch.managementClassRoster : [],
@@ -1579,6 +1581,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
+    registrationClosed: Boolean(templateMatch.registrationClosed),
     registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
     managementClassId: String(templateMatch.managementClassId || "").trim().toLowerCase(),
     managementClassRoster: Array.isArray(templateMatch.managementClassRoster) ? templateMatch.managementClassRoster : [],
@@ -1707,6 +1710,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     sourceId,
     eventDate,
     registrationEnabled: Boolean(config && config.registrationEnabled),
+    registrationClosed: Boolean(config && config.registrationClosed),
     registrationCapacity: capacity,
     usedSpots,
     remainingSpots,
@@ -1750,6 +1754,9 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   }
   if (!config.registrationEnabled || config.registrationCapacity <= 0) {
     return jsonResponse({ ok: false, error: "Registration is not enabled for this event." }, 400, { "Cache-Control": "no-store" });
+  }
+  if (config.registrationClosed) {
+    return jsonResponse({ ok: false, error: "Registration has closed for this event." }, 409, { "Cache-Control": "no-store" });
   }
 
   const firstName = normalizeRegistrationText(body && body.firstName, 60);
