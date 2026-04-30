@@ -1785,3 +1785,736 @@
 .management-filters button.is-active [data-filter-count] {
   color: rgba(85, 185, 255, 0.75);
 }
+
+/* ============================================================
+   Mobile enhancements - up to 767px
+   Everything above this point is the unchanged desktop layout.
+   ============================================================ */
+
+@keyframes mgmt-sheet-up {
+  from { transform: translateY(36px); opacity: 0.5; }
+  to   { transform: translateY(0);    opacity: 1;   }
+}
+
+@media (max-width: 767px) {
+
+  /* Shell */
+  .management-shell {
+    width: calc(100% - 20px);
+    padding: 14px 0 max(env(safe-area-inset-bottom, 0px), 40px);
+  }
+
+  .management-dashboard {
+    gap: 14px;
+  }
+
+  /* Header */
+  .management-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0 0;
+  }
+
+  .management-header h1 {
+    font-size: 26px;
+  }
+
+  .management-header-actions {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    gap: 7px;
+  }
+
+  .management-header-actions button {
+    min-height: 40px;
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+
+  /* Metrics: 3 columns by 2 rows */
+  .management-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .management-metrics article {
+    padding: 10px 10px 12px;
+  }
+
+  .management-metrics span {
+    font-size: 22px;
+  }
+
+  .management-metrics p {
+    font-size: 9px;
+    margin-top: 5px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Site tools */
+  .management-site-tools {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .management-site-tools h2 {
+    font-size: 17px;
+  }
+
+  .management-site-links {
+    justify-content: flex-start;
+    gap: 7px;
+  }
+
+  .management-site-links a,
+  .management-site-links button {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* List toolbar: New and Sort, then Search, then Filters */
+  .management-list-tools {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto auto;
+    gap: 9px;
+    padding-bottom: 12px;
+  }
+
+  .management-new-record {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .management-sort {
+    grid-column: 2;
+    grid-row: 1;
+    flex: none;
+    align-self: stretch;
+    min-width: 0;
+  }
+
+  .management-sort select {
+    height: 100%;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 12px;
+    max-width: 130px;
+  }
+
+  .management-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex: none;
+  }
+
+  /* 16px prevents iOS auto-zoom on focus */
+  .management-search input,
+  .management-search input[type="search"] {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  /* Filter pills become a horizontal scroll strip */
+  .management-filters {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    /* Fade right edge to hint at more pills */
+    mask-image: linear-gradient(to right, black 0%, black calc(100% - 22px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 0%, black calc(100% - 22px), transparent 100%);
+  }
+
+  .management-filters::-webkit-scrollbar { display: none; }
+
+  .management-filters button {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-height: 38px;
+    padding: 5px 12px;
+    touch-action: manipulation;
+  }
+
+  .management-calendar-controls {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Quick-add bar */
+  .management-quick-add-input {
+    font-size: 16px; /* iOS zoom prevention */
+    min-height: 44px;
+  }
+
+  .management-quick-add-btn {
+    min-height: 44px;
+  }
+
+  /* Record cards */
+  .management-record {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px 12px;
+    touch-action: manipulation;
+  }
+
+  .management-record.is-contact,
+  .management-record.is-class {
+    padding: 14px 14px 12px;
+  }
+
+  .management-record-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    padding-top: 2px;
+  }
+
+  .management-record-actions select {
+    min-width: 100px;
+    font-size: 11px;
+    padding: 5px 7px;
+  }
+
+  .management-pin-btn {
+    padding: 3px 6px;
+    min-height: 30px;
+    font-size: 15px;
+  }
+
+  /* Bottom-sheet editor panel */
+  .management-panel {
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    margin: 0;
+    padding: 0 16px max(env(safe-area-inset-bottom, 0px), 24px);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .is-editor-open .management-panel {
+    display: block;
+    animation: mgmt-sheet-up 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Panel head: re-anchor to top, add drag handle */
+  .management-panel .management-panel-head {
+    top: 0;
+    margin: 0 -16px 16px;
+    padding: 24px 16px 14px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* Drag-handle indicator (position: sticky is a containing block) */
+  .management-panel .management-panel-head::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    pointer-events: none;
+  }
+
+  /* Inputs: 16px font-size prevents iOS auto-zoom */
+  .management-record-form input,
+  .management-record-form select,
+  .management-record-form textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .management-record-form textarea {
+    min-height: 100px;
+  }
+
+  /* Form labels slightly larger for readability */
+  .management-record-form label,
+  .management-ticker-form label {
+    font-size: 14px;
+  }
+
+  /* Form actions: full-width stacked buttons */
+  .management-form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .management-form-actions button {
+    width: 100%;
+    min-height: 50px;
+    font-size: 15px;
+    touch-action: manipulation;
+  }
+
+  /* Ticker modal as bottom sheet */
+  .management-ticker-modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .management-ticker-card {
+    width: 100%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    padding: 0 16px max(env(safe-area-inset-bottom, 0px), 24px);
+    animation: mgmt-sheet-up 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  .management-ticker-card .management-panel-head {
+    top: 0;
+    margin: 0 -16px 16px;
+    padding: 24px 16px 14px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .management-ticker-card .management-panel-head::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    pointer-events: none;
+  }
+
+  .management-ticker-form textarea {
+    font-size: 16px;
+    min-height: 200px;
+  }
+
+  /* Calendar items */
+  .management-calendar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .management-calendar-date-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .management-calendar-date-block strong {
+    font-size: 17px;
+  }
+
+  /* Contact copy lines */
+  .management-contact-card-lines {
+    grid-template-columns: 1fr;
+  }
+
+  /* Class session dates */
+  .management-class-session-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Registration items: stack actions below info */
+  .management-registration-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .management-registration-item .management-registration-actions {
+    justify-content: flex-start;
+  }
+
+  /* Inquiry pipeline: compact */
+  .management-inquiry-stage {
+    font-size: 9px;
+    padding: 4px 3px;
+    letter-spacing: 0;
+  }
+
+  /* Login card */
+  .management-login-card {
+    padding: 24px 20px;
+  }
+
+}
+
+/* Extra-small phones, up to 390px */
+@media (max-width: 390px) {
+  .management-metrics span    { font-size: 19px; }
+  .management-metrics p       { font-size: 8px; letter-spacing: 0; }
+  .management-metrics article { padding: 8px 8px 10px; }
+
+  .management-panel,
+  .management-ticker-card {
+    max-height: 96dvh;
+    max-height: 96vh;
+  }
+}
+
+/* ============================================================
+   Mobile polish pass
+   These overrides only apply to the management console on
+   phone-sized screens. Desktop layout and behavior stay intact.
+   ============================================================ */
+
+@media (max-width: 767px) {
+  .management-page {
+    overflow-x: hidden;
+  }
+
+  .management-shell {
+    width: 100%;
+    padding: 12px 10px max(env(safe-area-inset-bottom, 0px), 32px);
+  }
+
+  .management-login {
+    min-height: calc(100dvh - 24px);
+  }
+
+  .management-login-card {
+    width: 100%;
+    padding: 22px 18px;
+  }
+
+  .management-login-card img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .management-header {
+    align-items: start;
+  }
+
+  .management-header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .management-header-actions button {
+    white-space: nowrap;
+  }
+
+  .management-kicker {
+    font-size: 10px;
+  }
+
+  .management-site-tools,
+  .management-list-panel {
+    padding: 12px;
+  }
+
+  .management-site-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .management-site-links a,
+  .management-site-links button {
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .management-list-tools {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    margin: -12px -12px 0;
+    padding: 12px;
+    border-radius: 8px 8px 0 0;
+    background: rgba(7, 19, 37, 0.97);
+    backdrop-filter: blur(10px);
+  }
+
+  .management-sort {
+    min-width: 128px;
+  }
+
+  .management-sort select {
+    max-width: none;
+  }
+
+  .management-filters {
+    margin-right: -12px;
+    padding-right: 28px;
+  }
+
+  .management-calendar-controls {
+    display: flex;
+    width: 100%;
+  }
+
+  .management-toggle {
+    min-height: 36px;
+  }
+
+  .management-records {
+    gap: 12px;
+  }
+
+  .management-record {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .management-record-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .management-record-actions select {
+    width: 100%;
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  .management-pin-btn {
+    justify-self: start;
+    width: 44px;
+    min-height: 38px;
+  }
+
+  .management-record h3,
+  .management-record.is-contact h3,
+  .management-record.is-class h3 {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+
+  .management-record-badges,
+  .management-record-meta,
+  .management-inquiry-callout-meta {
+    gap: 6px;
+  }
+
+  .management-badge {
+    min-height: 24px;
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .management-contact-copy-line {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .management-contact-copy-line button,
+  .management-copy-field button {
+    min-height: 42px;
+  }
+
+  .management-inquiry-pipeline {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .management-inquiry-stage {
+    min-height: 30px;
+    display: grid;
+    place-items: center;
+    white-space: normal;
+    line-height: 1.1;
+  }
+
+  .management-inquiry-next-step {
+    font-size: 13px;
+  }
+
+  .management-calendar-stat-grid,
+  .management-class-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .management-calendar-actions,
+  .management-registration-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .management-calendar-actions a,
+  .management-registration-actions button {
+    flex: 1 1 auto;
+    min-height: 42px;
+    text-align: center;
+  }
+
+  .management-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: min(92dvh, 760px);
+    overflow-y: auto;
+  }
+
+  .management-panel-head {
+    align-items: start;
+  }
+
+  .management-panel-head h2 {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .management-panel-head button {
+    min-height: 42px;
+  }
+
+  .management-record-form {
+    gap: 12px;
+  }
+
+  .management-record-form input,
+  .management-record-form select,
+  .management-record-form textarea,
+  .management-ticker-form textarea,
+  .management-class-contact-add select {
+    font-size: 16px;
+  }
+
+  .management-copy-field {
+    grid-template-columns: 1fr;
+  }
+
+  .management-extra-fields,
+  .management-class-schedule,
+  .management-class-roster,
+  .management-contact-classes,
+  .management-registration-manager {
+    padding: 12px;
+  }
+
+  .management-class-session-head {
+    align-items: start;
+  }
+
+  .management-class-session-row,
+  .management-class-contact-add,
+  .management-contact-classes .management-class-contact-add,
+  .management-class-contact-item,
+  .management-class-registration-item {
+    grid-template-columns: 1fr;
+  }
+
+  .management-class-session-row button,
+  .management-class-contact-add button,
+  .management-class-contact-item button,
+  .management-class-registration-item button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .management-contact-classes .management-class-contact-add select[multiple] {
+    min-height: 148px;
+  }
+
+  .management-inquiry-detail-grid,
+  .management-inquiry-detail-grid section > div,
+  .management-contact-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .management-timestamp-btn {
+    position: static;
+    width: max-content;
+    margin-top: 6px;
+  }
+
+  .management-ticker-card {
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .management-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .management-header-actions {
+    width: 100%;
+  }
+
+  .management-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .management-site-links {
+    grid-template-columns: 1fr;
+  }
+
+  .management-list-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .management-new-record,
+  .management-sort,
+  .management-search,
+  .management-filters,
+  .management-calendar-controls {
+    grid-column: 1 / -1;
+  }
+
+  .management-new-record { grid-row: 1; }
+  .management-sort { grid-row: 2; }
+  .management-search { grid-row: 3; }
+  .management-filters { grid-row: 4; }
+  .management-calendar-controls { grid-row: 5; }
+
+  .management-sort select {
+    width: 100%;
+  }
+
+  .management-calendar-stat-grid,
+  .management-class-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .management-inquiry-pipeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .management-panel,
+  .management-ticker-card {
+    max-height: 96dvh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .management-panel .management-panel-head,
+  .management-ticker-card .management-panel-head {
+    border-radius: 16px 16px 0 0;
+  }
+}
