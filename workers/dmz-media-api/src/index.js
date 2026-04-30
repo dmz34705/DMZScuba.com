@@ -1598,7 +1598,7 @@ function getContactClassEnrollmentsFromRow(row) {
 async function getManagementClassRoster(env, classId) {
   const safeClassId = String(classId || "").trim().toLowerCase();
   if (!safeClassId) return [];
-  await ensureManagementTable(env);
+  await ensureManagementRecordsTable(env);
   const rows = await env.DB.prepare(
     `SELECT id, title, contact_name, contact_email, contact_phone, data_json
      FROM management_records
