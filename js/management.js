@@ -2504,6 +2504,7 @@
       loadRegistrationSnapshot();
     } else {
       resetRegistrationManager();
+      if (item.recordType === "class" && item.id) loadClassRegistrationEscrow();
     }
     if (deleteButton) deleteButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
     const duplicateButton = app.querySelector("[data-duplicate-record]");

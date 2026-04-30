@@ -336,6 +336,12 @@
     return enabled && capacity > 0;
   }
 
+  function getRegistrationApprovalStatus(registrant) {
+    const source = normalizeText(registrant && registrant.source);
+    if (source === "management_roster" || normalizeText(registrant && registrant.contactId)) return "approved";
+    return normalizeText(registrant && registrant.approvalStatus) === "approved" ? "approved" : "pending";
+  }
+
   function registrationSnapshotCacheKey(sourceId, eventDate) {
     return `${String(sourceId || "").trim().toLowerCase()}|${String(eventDate || "").trim()}`;
   }
@@ -781,7 +787,8 @@
               }
               registrants.forEach((entry) => {
                 const li = document.createElement("li");
-                li.textContent = entry && entry.name ? entry.name : "Registered diver";
+                const name = entry && entry.name ? entry.name : "Registered diver";
+                li.textContent = getRegistrationApprovalStatus(entry) === "pending" ? `${name} (pending approval)` : name;
                 listEl.appendChild(li);
               });
             };

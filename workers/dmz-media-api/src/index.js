@@ -1699,7 +1699,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     return true;
   });
   const approvedOnlineList = uniqueOnlineList.filter((entry) => entry.approvalStatus === "approved");
-  const registeredDivers = [...rosterList, ...approvedOnlineList];
+  const registeredDivers = [...rosterList, ...uniqueOnlineList];
   const usedSpots = registeredDivers.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
   const capacity = Math.max(0, Number((config && config.registrationCapacity) || 0) || 0);
   const remainingSpots = capacity > 0 ? Math.max(0, capacity - usedSpots) : 0;
@@ -1711,7 +1711,8 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     usedSpots,
     remainingSpots,
     rosterSpots: rosterList.length,
-    onlineSpots: approvedOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
+    onlineSpots: uniqueOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
+    approvedOnlineSpots: approvedOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
     pendingSpots: uniqueOnlineList
       .filter((entry) => entry.approvalStatus !== "approved")
       .reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
