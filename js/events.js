@@ -728,6 +728,11 @@
             regWrap.innerHTML = `
               <h4 class="events-public-list-title">Event Registration</h4>
               <p class="events-registration-meta" data-events-registration-meta>Loading registration status...</p>
+              <div class="events-registration-list-wrap">
+                <h5>Currently Registered</h5>
+                <ul class="events-registration-list" data-events-registration-list></ul>
+              </div>
+              <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
               <form class="events-registration-form" data-events-registration-form>
                 <label><span>First Name</span><input type="text" name="firstName" required /></label>
                 <label><span>Last Name</span><input type="text" name="lastName" required /></label>
@@ -750,11 +755,6 @@
                 </div>
               </form>
               <p class="events-registration-feedback" data-events-registration-feedback aria-live="polite"></p>
-              <div class="events-registration-list-wrap">
-                <h5>Currently Registered</h5>
-                <ul class="events-registration-list" data-events-registration-list></ul>
-              </div>
-              <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
             `;
             body.appendChild(regWrap);
 

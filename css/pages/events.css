@@ -1144,6 +1144,10 @@ body.events-public-modal-open {
   gap: 8px;
 }
 
+.events-registration-form[hidden] {
+  display: none;
+}
+
 .events-registration-form label {
   display: grid;
   gap: 5px;
