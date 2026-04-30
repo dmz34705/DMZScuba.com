@@ -1578,9 +1578,9 @@
         context.eventDate ? formatDate(context.eventDate) : "",
         context.location,
       ].filter(Boolean).join(" | ");
-      const rosterOrUnregisterButton = !canUnregister
-        ? `<button type="button" data-open-registration-target="${escapeHtml(actionKey)}">Managed in Roster</button>`
-        : `<button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>`;
+      const unregisterButton = canUnregister
+        ? `<button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>`
+        : "";
       return `
         <article class="management-record management-registration-card is-registration" data-registration-card>
           <div>
@@ -1606,7 +1606,7 @@
             <button type="button" data-open-registration-target="${escapeHtml(actionKey)}">${classRecord ? "Open Roster" : "Open Event"}</button>
             <button type="button" data-approve-registration="${escapeHtml(actionKey)}" ${!registrantId || !canApprove || approving || state.allRegistrationsLoading ? "disabled" : ""}>${approvalStatus === "approved" ? "Approved" : approving ? "Approving..." : "Approve"}</button>
             <button type="button" data-add-registration-contact="${escapeHtml(actionKey)}" ${!registrantId || alreadyContact || converting || state.allRegistrationsLoading ? "disabled" : ""}>${alreadyContact ? "Added to Contacts" : converting ? "Adding..." : "Add to Contacts"}</button>
-            ${rosterOrUnregisterButton}
+            ${unregisterButton}
           </div>
         </article>
       `;
