@@ -460,7 +460,6 @@
           <div class="events-public-modal-copy">
             <span class="events-public-modal-kicker" data-events-modal-kicker></span>
             <h3 data-events-modal-title></h3>
-            <button class="btn primary events-public-modal-register-jump" type="button" data-events-modal-register-jump hidden>Register For Event</button>
             <p data-events-modal-subtitle></p>
           </div>
           <div class="events-public-modal-head-actions">
@@ -491,7 +490,6 @@
       kicker: modal.querySelector("[data-events-modal-kicker]"),
       title: modal.querySelector("[data-events-modal-title]"),
       subtitle: modal.querySelector("[data-events-modal-subtitle]"),
-      registerJumpBtn: modal.querySelector("[data-events-modal-register-jump]"),
       backBtn,
     };
     return state.publicModal;
@@ -507,10 +505,6 @@
       modal.backBtn.hidden = true;
       modal.backBtn.onclick = null;
     }
-    if (modal.registerJumpBtn) {
-      modal.registerJumpBtn.hidden = true;
-      modal.registerJumpBtn.onclick = null;
-    }
     modal.body.innerHTML = "";
     if (typeof bodyBuilder === "function") bodyBuilder(modal.body);
     modal.root.setAttribute("aria-hidden", "false");
@@ -519,10 +513,6 @@
 
   function openDateEventsModal(dateValue, items) {
     const modal = ensurePublicModal();
-    if (modal && modal.registerJumpBtn) {
-      modal.registerJumpBtn.hidden = true;
-      modal.registerJumpBtn.onclick = null;
-    }
     const selectedDate = parseDateKey(dateValue) || new Date();
     const eventItems = Array.isArray(items) ? items : [];
     state.lastDateModalContext = {
@@ -736,7 +726,6 @@
             regWrap.innerHTML = `
               <h4 class="events-public-list-title">Event Registration</h4>
               <p class="events-registration-meta" data-events-registration-meta>Loading registration status...</p>
-              <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
               <form class="events-registration-form" data-events-registration-form>
                 <label><span>First Name</span><input type="text" name="firstName" required /></label>
                 <label><span>Last Name</span><input type="text" name="lastName" required /></label>
@@ -763,6 +752,7 @@
                 <h5>Currently Registered</h5>
                 <ul class="events-registration-list" data-events-registration-list></ul>
               </div>
+              <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
             `;
             body.appendChild(regWrap);
 
@@ -843,17 +833,6 @@
                 const firstInput = formEl && formEl.querySelector("input[name='firstName']");
                 if (firstInput && !formEl.hidden) firstInput.focus();
               });
-            }
-
-            if (modal && modal.registerJumpBtn) {
-              modal.registerJumpBtn.hidden = false;
-              modal.registerJumpBtn.onclick = () => {
-                regWrap.hidden = false;
-                syncEventShareUrl(eventItem, { register: true });
-                regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
-                const firstInput = formEl && formEl.querySelector("input[name='firstName']");
-                if (firstInput && !formEl.hidden) firstInput.focus();
-              };
             }
 
             loadSnapshot();
