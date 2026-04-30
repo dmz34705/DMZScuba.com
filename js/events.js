@@ -736,6 +736,7 @@
             regWrap.innerHTML = `
               <h4 class="events-public-list-title">Event Registration</h4>
               <p class="events-registration-meta" data-events-registration-meta>Loading registration status...</p>
+              <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
               <form class="events-registration-form" data-events-registration-form>
                 <label><span>First Name</span><input type="text" name="firstName" required /></label>
                 <label><span>Last Name</span><input type="text" name="lastName" required /></label>
@@ -769,12 +770,16 @@
             const feedbackEl = regWrap.querySelector("[data-events-registration-feedback]");
             const listEl = regWrap.querySelector("[data-events-registration-list]");
             const formEl = regWrap.querySelector("[data-events-registration-form]");
+            const closedEl = regWrap.querySelector("[data-events-registration-closed]");
 
             const renderSnapshot = (snapshot) => {
               if (!snapshot || !metaEl || !listEl) return;
               const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
               const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
-              metaEl.textContent = `${remaining} of ${capacity} spots remaining`;
+              const isFull = capacity > 0 && remaining <= 0;
+              metaEl.textContent = isFull ? "This event is fully booked." : `${remaining} of ${capacity} spots remaining`;
+              if (formEl) formEl.hidden = isFull;
+              if (closedEl) closedEl.hidden = !isFull;
               const registrants = Array.isArray(snapshot.registeredDivers)
                 ? snapshot.registeredDivers
                 : (Array.isArray(snapshot.registrants) ? snapshot.registrants : []);
@@ -836,7 +841,7 @@
                 syncEventShareUrl(eventItem, { register: true });
                 regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
                 const firstInput = formEl && formEl.querySelector("input[name='firstName']");
-                if (firstInput) firstInput.focus();
+                if (firstInput && !formEl.hidden) firstInput.focus();
               });
             }
 
@@ -847,7 +852,7 @@
                 syncEventShareUrl(eventItem, { register: true });
                 regWrap.scrollIntoView({ behavior: "smooth", block: "start" });
                 const firstInput = formEl && formEl.querySelector("input[name='firstName']");
-                if (firstInput) firstInput.focus();
+                if (firstInput && !formEl.hidden) firstInput.focus();
               };
             }
 
@@ -857,7 +862,7 @@
               const firstInput = formEl && formEl.querySelector("input[name='firstName']");
               if (firstInput) {
                 requestAnimationFrame(() => {
-                  firstInput.focus();
+                  if (!formEl.hidden) firstInput.focus();
                 });
               }
             }
