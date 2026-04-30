@@ -793,7 +793,7 @@
               registrants.forEach((entry) => {
                 const li = document.createElement("li");
                 const name = entry && entry.name ? entry.name : "Registered diver";
-                li.textContent = getRegistrationApprovalStatus(entry) === "pending" ? `${name} (pending approval)` : name;
+                li.textContent = getRegistrationApprovalStatus(entry) === "pending" ? `${name} (registration pending)` : name;
                 listEl.appendChild(li);
               });
             };
