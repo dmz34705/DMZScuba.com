@@ -722,6 +722,27 @@
     };
   }
 
+  function isClassRegistrationAtCapacity(record) {
+    if (!record || record.recordType !== "class") return false;
+    const details = getClassSummaryDetails(record);
+    return details.capacity > 0 && details.rosterCount >= details.capacity;
+  }
+
+  function isSnapshotRegistrationAtCapacity(snapshot) {
+    if (!snapshot) return false;
+    const capacity = Math.max(0, Number(snapshot.registrationCapacity || 0) || 0);
+    const remaining = Math.max(0, Number(snapshot.remainingSpots || 0) || 0);
+    return capacity > 0 && remaining <= 0;
+  }
+
+  function syncRegistrationClosedCheckbox(record = null, snapshot = null) {
+    if (!recordForm || !recordForm.elements.registrationClosed || recordForm.elements.registrationClosed.disabled) return;
+    const extras = getExtras(record);
+    recordForm.elements.registrationClosed.checked = Boolean(extras.registrationClosed) ||
+      isClassRegistrationAtCapacity(record) ||
+      isSnapshotRegistrationAtCapacity(snapshot);
+  }
+
   function renderClassRecordDetails(record) {
     if (!record || record.recordType !== "class") return "";
     const details = getClassSummaryDetails(record);
@@ -979,6 +1000,7 @@
         }).join("")
         : '<div class="management-empty">No contacts enrolled in this class yet.</div>';
     }
+    syncRegistrationClosedCheckbox(record);
     renderClassRegistrationEscrow(record);
   }
 
@@ -1805,7 +1827,8 @@
     const capacity = Math.max(0, Number((snapshot && snapshot.registrationCapacity) || context.registrationCapacity || 0) || 0);
     const usedSpots = Math.max(0, Number((snapshot && snapshot.usedSpots) || 0) || 0);
     const remainingSpots = Math.max(0, Number((snapshot && snapshot.remainingSpots) || 0) || 0);
-    const registrationClosed = Boolean((snapshot && snapshot.registrationClosed) || context.registrationClosed);
+    const registrationClosed = Boolean((snapshot && snapshot.registrationClosed) || context.registrationClosed || isSnapshotRegistrationAtCapacity(snapshot));
+    syncRegistrationClosedCheckbox(state.activeSiteRecord, snapshot);
     if (registrationSummary) {
       registrationSummary.textContent = state.registrationLoading
         ? "Loading signups..."
@@ -2640,6 +2663,7 @@
     const roster = getClassRosterSnapshot({ ...record, extras: { ...extras, classId } }, classId);
     const generated = sessions.map((session, index) => {
       const primary = index === 0;
+      const registrationClosed = capacity > 0 && roster.length >= capacity;
       return {
         id: `${classId}-${session.type}-${session.index + 1}`,
         eventId: classId,
@@ -2653,7 +2677,7 @@
         location: session.location,
         summary: description,
         registrationEnabled: primary && capacity > 0,
-        registrationClosed: primary && Boolean(extras.registrationClosed),
+        registrationClosed: primary && (Boolean(extras.registrationClosed) || registrationClosed),
         registrationCapacity: primary ? capacity : 0,
         ctaLabel: primary ? "Register For Class" : "",
         ctaHref: "",
