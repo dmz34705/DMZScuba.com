@@ -664,6 +664,27 @@
     return getContactClassEnrollments(contact).find((enrollment) => normalizeSiteText(enrollment && enrollment.classId) === classId) || {};
   }
 
+  function getClassRosterSnapshot(record, classId) {
+    return getClassRosterContacts(record).map((contact) => {
+      const extras = getExtras(contact);
+      const enrollment = getClassRosterEntry(contact, classId);
+      const contactName = normalizeSiteText(contact.contactName || contact.title);
+      const nameParts = contactName.split(/\s+/).filter(Boolean);
+      return {
+        contactId: normalizeSiteText(contact.id),
+        firstName: normalizeSiteText(extras.firstName) || nameParts[0] || "",
+        lastName: normalizeSiteText(extras.lastName) || (nameParts.length > 1 ? nameParts.slice(1).join(" ") : ""),
+        name: contactName || normalizeSiteText(contact.contactEmail) || "Registered diver",
+        email: normalizeSiteText(contact.contactEmail),
+        phone: normalizeSiteText(contact.contactPhone),
+        certificationLevel: normalizeSiteText(extras.certification),
+        source: normalizeSiteText(enrollment.source) || "in_house",
+        sourceRegistrationId: normalizeSiteText(enrollment.sourceRegistrationId),
+        status: getEnrollmentStatus(enrollment),
+      };
+    });
+  }
+
   function getClassScheduleLines(record) {
     if (!record || record.recordType !== "class") return [];
     const sessions = getOrderedClassSessions(record);
@@ -2095,7 +2116,14 @@
     ];
     const saved = await updateContactRecord(contact, { classEnrollments: nextEnrollments });
     fillForm(saved);
-    setStatus(recordStatus, `${classIds.length} class${classIds.length === 1 ? "" : "es"} added to contact.`, "success");
+    const syncResult = await syncClassCalendarsByIds(classIds);
+    setStatus(
+      recordStatus,
+      syncResult.failed
+        ? `${classIds.length} class${classIds.length === 1 ? "" : "es"} added to contact, but one or more calendars did not sync.`
+        : `${classIds.length} class${classIds.length === 1 ? "" : "es"} added to contact.${syncResult.synced ? ` Synced ${syncResult.synced} calendar date${syncResult.synced === 1 ? "" : "s"}.` : ""}`,
+      syncResult.failed ? "error" : "success"
+    );
   }
 
   async function updateContactClassEnrollment(classId, updater) {
@@ -2107,6 +2135,7 @@
       .filter(Boolean);
     const saved = await updateContactRecord(contact, { classEnrollments: nextEnrollments });
     fillForm(saved);
+    return saved;
   }
 
   async function toggleContactClassStatus(classId) {
@@ -2119,7 +2148,30 @@
 
   async function removeClassFromContact(classId) {
     await updateContactClassEnrollment(classId, () => null);
-    setStatus(recordStatus, "Class removed from this contact.", "success");
+    const syncResult = await syncClassCalendarsByIds([classId]);
+    setStatus(
+      recordStatus,
+      syncResult.failed
+        ? "Class removed from this contact, but the calendar did not sync."
+        : `Class removed from this contact.${syncResult.synced ? ` Synced ${syncResult.synced} calendar date${syncResult.synced === 1 ? "" : "s"}.` : ""}`,
+      syncResult.failed ? "error" : "success"
+    );
+  }
+
+  async function syncClassCalendarsByIds(classIds) {
+    let syncedTotal = 0;
+    let failed = false;
+    const uniqueIds = Array.from(new Set((Array.isArray(classIds) ? classIds : []).map((id) => normalizeSiteText(id)).filter(Boolean)));
+    for (const classId of uniqueIds) {
+      const classRecord = getClassRecords().find((record) => getClassRecordId(record) === classId);
+      if (!classRecord) continue;
+      try {
+        syncedTotal += await syncClassRecordToCalendar(classRecord);
+      } catch (_error) {
+        failed = true;
+      }
+    }
+    return { synced: syncedTotal, failed };
   }
 
   async function removeContactEnrollmentFromClass(contactId) {
@@ -2133,7 +2185,19 @@
     fillForm(current);
   }
 
+  async function syncClassCalendarAfterRosterChange(classRecord, successMessage) {
+    if (!classRecord || classRecord.recordType !== "class") return;
+    try {
+      const syncedCount = await syncClassRecordToCalendar(classRecord);
+      fillForm(classRecord);
+      setStatus(recordStatus, `${successMessage} Synced ${syncedCount} class date${syncedCount === 1 ? "" : "s"} to the site calendar.`, "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Roster updated, but class dates did not sync.", "error");
+    }
+  }
+
   async function addSelectedContactToClass() {
+    const classRecord = getActiveClassRecord();
     const contactId = classContactSelect ? classContactSelect.value : "";
     const contact = state.records.find((record) => record.id === contactId && record.recordType === "contact");
     if (!contact) {
@@ -2141,7 +2205,7 @@
       return;
     }
     await enrollContactInClass(contact, "in_house");
-    setStatus(recordStatus, "Contact enrolled in class.", "success");
+    await syncClassCalendarAfterRosterChange(classRecord, "Contact enrolled in class.");
   }
 
   async function convertRegistrationToContact(registrationId) {
@@ -2156,7 +2220,7 @@
     const contact = await saveRegistrantAsContact(registrant, "Created from class registration escrow.");
     state.classConvertingRegistrationId = "";
     await enrollContactInClass(contact, "self_registered", normalizeSiteText(registrationId));
-    setStatus(recordStatus, "Registration imported as a contact and enrolled in class.", "success");
+    await syncClassCalendarAfterRosterChange(classRecord, "Registration imported as a contact and enrolled in class.");
   }
 
   function readFormRecord() {
@@ -2409,6 +2473,7 @@
     const remaining = events.filter((item) => String(item && item.managementClassId || "").trim().toLowerCase() !== classId);
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
     const description = String(record.notes || "").trim();
+    const roster = getClassRosterSnapshot({ ...record, extras: { ...extras, classId } }, classId);
     const generated = sessions.map((session, index) => {
       const primary = index === 0;
       return {
@@ -2431,6 +2496,7 @@
         managementClassSessionType: session.type,
         managementClassSessionIndex: session.index + 1,
         managementClassPrimary: primary,
+        managementClassRoster: roster,
       };
     });
     state.eventsPayload.events = [...remaining, ...generated].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
@@ -2854,8 +2920,9 @@
         const button = event.target.closest("[data-remove-class-contact]");
         if (!button) return;
         const removeId = button.getAttribute("data-remove-class-contact") || "";
+        const classRecord = getActiveClassRecord();
         await removeContactEnrollmentFromClass(removeId);
-        setStatus(recordStatus, "Contact removed from this class.", "success");
+        await syncClassCalendarAfterRosterChange(classRecord, "Contact removed from this class.");
       });
     }
     if (classRegistrationList) {

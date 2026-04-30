@@ -1333,6 +1333,28 @@ function normalizeEventDefinition(item) {
   };
 }
 
+function normalizeEventRosterEntry(item) {
+  if (!item || typeof item !== "object") return null;
+  const contactId = String(item.contactId || "").trim();
+  const email = String(item.email || "").trim().toLowerCase();
+  const name = String(item.name || "").trim();
+  const firstName = String(item.firstName || "").trim();
+  const lastName = String(item.lastName || "").trim();
+  if (!contactId && !email && !name && !firstName) return null;
+  return {
+    contactId,
+    firstName,
+    lastName,
+    name,
+    email,
+    phone: String(item.phone || "").trim(),
+    certificationLevel: String(item.certificationLevel || "").trim(),
+    source: String(item.source || "").trim(),
+    sourceRegistrationId: String(item.sourceRegistrationId || "").trim(),
+    status: String(item.status || "").trim(),
+  };
+}
+
 function normalizeEventEntry(item, kind = "event") {
   if (!item || typeof item !== "object") return null;
   const next = { ...item };
@@ -1366,6 +1388,9 @@ function normalizeEventEntry(item, kind = "event") {
     managementClassSessionType: String(next.managementClassSessionType || "").trim(),
     managementClassSessionIndex: Math.max(0, Math.trunc(Number(next.managementClassSessionIndex) || 0)),
     managementClassPrimary: Boolean(next.managementClassPrimary),
+    managementClassRoster: Array.isArray(next.managementClassRoster)
+      ? next.managementClassRoster.map((entry) => normalizeEventRosterEntry(entry)).filter(Boolean).slice(0, 200)
+      : [],
   };
   const endDate = String(next.endDate || "").trim();
 
@@ -1538,6 +1563,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       description: getDescriptionForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
+      managementClassRoster: Array.isArray(eventMatch.managementClassRoster) ? eventMatch.managementClassRoster : [],
     };
   }
   const templateMatch = templates.find((item) => item && item.id === sourceId);
@@ -1549,6 +1575,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     description: getDescriptionForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
+    managementClassRoster: Array.isArray(templateMatch.managementClassRoster) ? templateMatch.managementClassRoster : [],
   };
 }
 
@@ -1573,8 +1600,45 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     additionalGuests: Math.max(0, Number((row && row.additional_guests) || 0) || 0),
     partySize: Math.max(1, Number((row && row.party_size) || 1) || 1),
     createdAt: String((row && row.created_at) || ""),
+    source: "online_registration",
   }));
-  const usedSpots = list.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
+  const rosterList = (Array.isArray(config && config.managementClassRoster) ? config.managementClassRoster : [])
+    .map((entry) => {
+      const firstName = String((entry && entry.firstName) || "").trim();
+      const lastName = String((entry && entry.lastName) || "").trim();
+      const displayName = String((entry && entry.name) || "").trim();
+      return {
+        id: String((entry && entry.sourceRegistrationId) || (entry && entry.contactId) || "").trim(),
+        contactId: String((entry && entry.contactId) || "").trim(),
+        firstName,
+        lastName,
+        name: buildRegistrantLabel(firstName || displayName, firstName ? lastName : ""),
+        email: String((entry && entry.email) || "").trim(),
+        phone: String((entry && entry.phone) || "").trim(),
+        certificationLevel: String((entry && entry.certificationLevel) || "").trim(),
+        additionalGuests: 0,
+        partySize: 1,
+        createdAt: "",
+        source: "management_roster",
+        sourceRegistrationId: String((entry && entry.sourceRegistrationId) || "").trim(),
+      };
+    })
+    .filter((entry) => entry.name || entry.email || entry.contactId);
+  const rosterRegistrationIds = new Set(
+    rosterList.map((entry) => String(entry.sourceRegistrationId || "").trim()).filter(Boolean)
+  );
+  const rosterEmails = new Set(
+    rosterList.map((entry) => String(entry.email || "").trim().toLowerCase()).filter(Boolean)
+  );
+  const uniqueOnlineList = list.filter((entry) => {
+    const id = String(entry.id || "").trim();
+    const email = String(entry.email || "").trim().toLowerCase();
+    if (id && rosterRegistrationIds.has(id)) return false;
+    if (email && rosterEmails.has(email)) return false;
+    return true;
+  });
+  const registeredDivers = [...rosterList, ...uniqueOnlineList];
+  const usedSpots = registeredDivers.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
   const capacity = Math.max(0, Number((config && config.registrationCapacity) || 0) || 0);
   const remainingSpots = capacity > 0 ? Math.max(0, capacity - usedSpots) : 0;
   return {
@@ -1584,7 +1648,11 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     registrationCapacity: capacity,
     usedSpots,
     remainingSpots,
+    rosterSpots: rosterList.length,
+    onlineSpots: uniqueOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
     registrants: list,
+    rosterRegistrants: rosterList,
+    registeredDivers,
   };
 }
 

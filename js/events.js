@@ -769,11 +769,13 @@
               const capacity = Math.max(0, Number(snapshot.registrationCapacity) || 0);
               const remaining = Math.max(0, Number(snapshot.remainingSpots) || 0);
               metaEl.textContent = `${remaining} of ${capacity} spots remaining`;
-              const registrants = Array.isArray(snapshot.registrants) ? snapshot.registrants : [];
+              const registrants = Array.isArray(snapshot.registeredDivers)
+                ? snapshot.registeredDivers
+                : (Array.isArray(snapshot.registrants) ? snapshot.registrants : []);
               listEl.innerHTML = "";
               if (!registrants.length) {
                 const li = document.createElement("li");
-                li.textContent = "No registrations yet.";
+                li.textContent = "No registered divers yet.";
                 listEl.appendChild(li);
                 return;
               }
