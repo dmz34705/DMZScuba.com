@@ -931,7 +931,7 @@
 
 .management-record.is-class {
   display: block;
-  padding: 16px;
+  padding: 12px 14px;
   border-color: rgba(66, 185, 156, 0.18);
   background:
     linear-gradient(90deg, rgba(66, 185, 156, 0.10), rgba(66, 185, 156, 0) 42%),
@@ -1007,7 +1007,7 @@
 }
 
 .management-record.is-class h3 {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 18px;
 }
 
@@ -1144,8 +1144,8 @@
 
 .management-class-card-detail {
   display: grid;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .management-contact-detail-grid {
@@ -1224,8 +1224,8 @@
 
 .management-class-detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .management-class-detail-grid span,
@@ -1233,30 +1233,30 @@
   border: 1px solid rgba(66, 185, 156, 0.15);
   border-radius: 8px;
   background: rgba(5, 11, 20, 0.32);
-  padding: 10px;
+  padding: 8px 10px;
 }
 
 .management-class-detail-grid span {
   color: rgba(234, 242, 255, 0.9);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 850;
 }
 
 .management-class-detail-grid strong,
 .management-class-detail-section strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: rgba(159, 240, 206, 0.78);
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .management-class-detail-section p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: rgba(234, 242, 255, 0.82);
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 .management-badge {
