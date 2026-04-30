@@ -1521,9 +1521,13 @@ async function ensureEventRegistrationsV2Table(env) {
       cert_level TEXT NOT NULL,
       additional_guests INTEGER NOT NULL DEFAULT 0,
       party_size INTEGER NOT NULL DEFAULT 1,
+      approval_status TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL
     )`
   ).run();
+  await env.DB.prepare("ALTER TABLE event_registrations_v2 ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'pending'")
+    .run()
+    .catch(() => {});
   await env.DB.prepare(
     "CREATE INDEX IF NOT EXISTS idx_event_regs_source_date ON event_registrations_v2(source_id, event_date)"
   ).run();
@@ -1634,7 +1638,7 @@ async function getManagementClassRoster(env, classId) {
 async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
   await ensureEventRegistrationsV2Table(env);
   const rows = await env.DB.prepare(
-    `SELECT id, first_name, last_name, email, phone, cert_level, additional_guests, party_size, created_at
+    `SELECT id, first_name, last_name, email, phone, cert_level, additional_guests, party_size, approval_status, created_at
      FROM event_registrations_v2
      WHERE source_id = ? AND event_date = ?
      ORDER BY created_at ASC`
@@ -1651,6 +1655,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     certificationLevel: String((row && row.cert_level) || "").trim(),
     additionalGuests: Math.max(0, Number((row && row.additional_guests) || 0) || 0),
     partySize: Math.max(1, Number((row && row.party_size) || 1) || 1),
+    approvalStatus: String((row && row.approval_status) || "pending").trim() === "approved" ? "approved" : "pending",
     createdAt: String((row && row.created_at) || ""),
     source: "online_registration",
   }));
@@ -1675,6 +1680,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
         partySize: 1,
         createdAt: "",
         source: "management_roster",
+        approvalStatus: "approved",
         sourceRegistrationId: String((entry && entry.sourceRegistrationId) || "").trim(),
       };
     })
@@ -1692,7 +1698,8 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     if (email && rosterEmails.has(email)) return false;
     return true;
   });
-  const registeredDivers = rosterList.length ? rosterList : uniqueOnlineList;
+  const approvedOnlineList = uniqueOnlineList.filter((entry) => entry.approvalStatus === "approved");
+  const registeredDivers = [...rosterList, ...approvedOnlineList];
   const usedSpots = registeredDivers.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0);
   const capacity = Math.max(0, Number((config && config.registrationCapacity) || 0) || 0);
   const remainingSpots = capacity > 0 ? Math.max(0, capacity - usedSpots) : 0;
@@ -1704,7 +1711,10 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     usedSpots,
     remainingSpots,
     rosterSpots: rosterList.length,
-    onlineSpots: uniqueOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
+    onlineSpots: approvedOnlineList.reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
+    pendingSpots: uniqueOnlineList
+      .filter((entry) => entry.approvalStatus !== "approved")
+      .reduce((sum, entry) => sum + Math.max(1, Number(entry.partySize) || 1), 0),
     registrants: list,
     rosterRegistrants: rosterList,
     registeredDivers,
@@ -1769,8 +1779,8 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const registrationId = crypto.randomUUID();
   await env.DB.prepare(
     `INSERT INTO event_registrations_v2
-     (id, source_id, event_date, first_name, last_name, email, phone, cert_level, additional_guests, party_size, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     (id, source_id, event_date, first_name, last_name, email, phone, cert_level, additional_guests, party_size, approval_status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       registrationId,
@@ -1783,6 +1793,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
       certLevel,
       additionalGuests,
       partySize,
+      "pending",
       now
     )
     .run();
@@ -1905,6 +1916,43 @@ async function handleDeleteEventRegistrationV2(request, env, sourceId, registrat
 
   const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
   return jsonResponse({ ok: true, removedRegistrationId: safeRegistrationId, ...snapshot }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleUpdateEventRegistrationApprovalV2(request, env, sourceId, registrationId) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+
+  const url = new URL(request.url);
+  const body = await request.json().catch(() => ({}));
+  const eventDate = String(url.searchParams.get("date") || body.eventDate || "").trim();
+  const safeRegistrationId = String(registrationId || "").trim();
+  const nextStatus = String(body.status || "approved").trim() === "approved" ? "approved" : "pending";
+  if (!sourceId || !eventDate || !safeRegistrationId) {
+    return jsonResponse({ ok: false, error: "Missing source id, registration id, or date." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, sourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+
+  await ensureEventRegistrationsV2Table(env);
+  const result = await env.DB.prepare(
+    `UPDATE event_registrations_v2
+     SET approval_status = ?
+     WHERE id = ? AND source_id = ? AND event_date = ?`
+  )
+    .bind(nextStatus, safeRegistrationId, sourceId, eventDate)
+    .run();
+
+  const changed = result && result.meta ? Number(result.meta.changes || 0) : 0;
+  if (!changed) {
+    return jsonResponse({ ok: false, error: "Registration not found." }, 404, { "Cache-Control": "no-store" });
+  }
+
+  const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  return jsonResponse({ ok: true, updatedRegistrationId: safeRegistrationId, approvalStatus: nextStatus, ...snapshot }, 200, { "Cache-Control": "no-store" });
 }
 
 async function handleGetHomeTicker(env) {
@@ -2473,6 +2521,11 @@ export default {
     } else if (pathname.startsWith("/api/v2/events/") && pathname.endsWith("/registrations") && request.method === "POST") {
       const sourceId = decodeURIComponent(pathname.split("/")[4] || "").trim().toLowerCase();
       response = await handleCreateEventRegistrationV2(request, env, sourceId);
+    } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/approval") && request.method === "PUT") {
+      const parts = pathname.split("/");
+      const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
+      const registrationId = decodeURIComponent(parts[7] || "").trim();
+      response = await handleUpdateEventRegistrationApprovalV2(request, env, sourceId, registrationId);
     } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.includes("/registrations/") && request.method === "DELETE") {
       const parts = pathname.split("/");
       const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();

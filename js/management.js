@@ -267,9 +267,11 @@
     allRegistrationsLoaded: false,
     allRegistrationDeletingKey: "",
     allRegistrationConvertingKey: "",
+    allRegistrationApprovingKey: "",
     classRegistrationSnapshot: null,
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
+    classApprovingRegistrationId: "",
     filterType: "all",
     sortBy: "newest",
     search: "",
@@ -1448,9 +1450,33 @@
         title: normalizeSiteText(item.title) || "DMZ Scuba Event",
         type: normalizeSiteText(item.type),
         location: normalizeSiteText(item.location),
+        managementClassId: normalizeSiteText(item.managementClassId).toLowerCase(),
         registrationCapacity: Math.max(0, Number(item.registrationCapacity || 0) || 0),
       }))
       .filter((item) => item.sourceId && item.eventDate);
+  }
+
+  function getRegistrationApprovalStatus(registrant) {
+    const source = normalizeSiteText(registrant && registrant.source);
+    if (source === "management_roster" || normalizeSiteText(registrant && registrant.contactId)) return "approved";
+    return normalizeSiteText(registrant && registrant.approvalStatus) === "approved" ? "approved" : "pending";
+  }
+
+  function getClassRecordByClassId(classId) {
+    const safeClassId = normalizeSiteText(classId).toLowerCase();
+    if (!safeClassId) return null;
+    return getClassRecords().find((record) => getClassRecordId(record) === safeClassId) || null;
+  }
+
+  function getRegistrationContextClassRecord(context) {
+    if (!context) return null;
+    const explicit = getClassRecordByClassId(context.managementClassId);
+    if (explicit) return explicit;
+    const eventItem = state.allSiteEvents.find((item) =>
+      normalizeSiteText(item && (item.sourceId || item.id)) === normalizeSiteText(context.sourceId) &&
+      normalizeSiteText(item && item.date) === normalizeSiteText(context.eventDate)
+    );
+    return eventItem ? getClassRecordByClassId(eventItem.managementClassId) : null;
   }
 
   function flattenRegistrationSnapshots() {
@@ -1461,20 +1487,34 @@
     );
     return state.allRegistrationSnapshots.flatMap((snapshot) => {
       const context = snapshot && snapshot.context ? snapshot.context : {};
-      const registrants = Array.isArray(snapshot && snapshot.registeredDivers)
-        ? snapshot.registeredDivers
-        : (Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : []);
+      const onlineRegistrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+      const rosterRegistrants = Array.isArray(snapshot && snapshot.rosterRegistrants) ? snapshot.rosterRegistrants : [];
+      const rosterRegistrationIds = new Set(rosterRegistrants.map((item) => normalizeSiteText(item && item.sourceRegistrationId)).filter(Boolean));
+      const rosterEmails = new Set(rosterRegistrants.map((item) => normalizeSiteText(item && item.email).toLowerCase()).filter(Boolean));
+      const registrants = [
+        ...rosterRegistrants,
+        ...onlineRegistrants.filter((item) => {
+          const id = normalizeSiteText(item && item.id);
+          const email = normalizeSiteText(item && item.email).toLowerCase();
+          if (id && rosterRegistrationIds.has(id)) return false;
+          if (email && rosterEmails.has(email)) return false;
+          return true;
+        }),
+      ];
       return registrants.map((registrant) => {
         const registrantId = normalizeSiteText(registrant && registrant.id);
         const email = normalizeSiteText(registrant && registrant.email);
         const contactId = normalizeSiteText(registrant && registrant.contactId);
         const isRosterContact = normalizeSiteText(registrant && registrant.source) === "management_roster" || Boolean(contactId);
+        const approvalStatus = getRegistrationApprovalStatus(registrant);
         return {
           context,
           registrant,
           actionKey: getRegistrationActionKey(context, registrantId),
           alreadyContact: isRosterContact || Boolean(email && contactEmails.has(email.toLowerCase())),
           canUnregister: !isRosterContact,
+          approvalStatus,
+          canApprove: !isRosterContact && approvalStatus !== "approved",
         };
       });
     });
@@ -1512,7 +1552,7 @@
     if (!entries.length) {
       return '<div class="management-empty">No matching online registrations found.</div>';
     }
-    return entries.map(({ context, registrant, actionKey, alreadyContact, canUnregister }) => {
+    return entries.map(({ context, registrant, actionKey, alreadyContact, canUnregister, approvalStatus, canApprove }) => {
       const registrantId = normalizeSiteText(registrant && registrant.id);
       const firstName = normalizeSiteText(registrant && registrant.firstName);
       const lastName = normalizeSiteText(registrant && registrant.lastName);
@@ -1525,7 +1565,10 @@
       const createdAt = normalizeSiteText(registrant && registrant.createdAt);
       const deleting = actionKey && actionKey === state.allRegistrationDeletingKey;
       const converting = actionKey && actionKey === state.allRegistrationConvertingKey;
+      const approving = actionKey && actionKey === state.allRegistrationApprovingKey;
+      const classRecord = getRegistrationContextClassRecord(context);
       const detailItems = [
+        approvalStatus === "approved" ? "Approved" : "Pending approval",
         cert ? `Certification: ${cert}` : "",
         partySize > 1 ? `${partySize} divers total` : "Solo signup",
         additionalGuests > 0 ? `${additionalGuests} guest${additionalGuests === 1 ? "" : "s"}` : "",
@@ -1535,11 +1578,15 @@
         context.eventDate ? formatDate(context.eventDate) : "",
         context.location,
       ].filter(Boolean).join(" | ");
+      const rosterOrUnregisterButton = !canUnregister
+        ? `<button type="button" data-open-registration-target="${escapeHtml(actionKey)}">Managed in Roster</button>`
+        : `<button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>`;
       return `
         <article class="management-record management-registration-card is-registration" data-registration-card>
           <div>
             <div class="management-record-badges">
               <span class="management-badge is-registration">Registration</span>
+              <span class="management-badge is-${approvalStatus === "approved" ? "complete" : "waiting"}">${approvalStatus === "approved" ? "Approved" : "Pending"}</span>
               ${context.type ? `<span class="management-badge is-trip">${escapeHtml(context.type)}</span>` : ""}
             </div>
             <h3>${escapeHtml(fullName)}</h3>
@@ -1556,8 +1603,10 @@
             </div>
           </div>
           <div class="management-record-actions management-registration-card-actions">
+            <button type="button" data-open-registration-target="${escapeHtml(actionKey)}">${classRecord ? "Open Roster" : "Open Event"}</button>
+            <button type="button" data-approve-registration="${escapeHtml(actionKey)}" ${!registrantId || !canApprove || approving || state.allRegistrationsLoading ? "disabled" : ""}>${approvalStatus === "approved" ? "Approved" : approving ? "Approving..." : "Approve"}</button>
             <button type="button" data-add-registration-contact="${escapeHtml(actionKey)}" ${!registrantId || alreadyContact || converting || state.allRegistrationsLoading ? "disabled" : ""}>${alreadyContact ? "Added to Contacts" : converting ? "Adding..." : "Add to Contacts"}</button>
-            <button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || !canUnregister || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${!canUnregister ? "Managed in Roster" : deleting ? "Unregistering..." : "Unregister from Event"}</button>
+            ${rosterOrUnregisterButton}
           </div>
         </article>
       `;
@@ -1887,6 +1936,22 @@
     renderRecords();
   }
 
+  async function approveRegistrationCard(actionKey) {
+    const entry = findAllRegistrationEntry(actionKey);
+    if (!entry || !entry.registrant || !entry.context) return;
+    state.allRegistrationApprovingKey = normalizeSiteText(actionKey);
+    renderRecords();
+    try {
+      await approveRegistrationEntry(entry);
+      setStatus(recordStatus, "Registration approved.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not approve this registration.", "error");
+    } finally {
+      state.allRegistrationApprovingKey = "";
+      renderRecords();
+    }
+  }
+
   async function saveRegistrantAsContact(registrant, notes = "Created from event registration escrow.") {
     const firstName = normalizeSiteText(registrant && registrant.firstName);
     const lastName = normalizeSiteText(registrant && registrant.lastName);
@@ -1959,6 +2024,55 @@
     }
   }
 
+  async function updateRegistrationApproval(context, registrationId, status = "approved") {
+    const safeId = normalizeSiteText(registrationId);
+    if (!context || !context.sourceId || !context.eventDate || !safeId) return null;
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations/${encodeURIComponent(safeId)}/approval?date=${encodeURIComponent(context.eventDate)}`;
+    const resp = await apiFetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok || !data.ok) {
+      throw new Error(data.error || "Could not update registration approval.");
+    }
+    return data;
+  }
+
+  function updateAllRegistrationSnapshot(context, data) {
+    if (!context || !data) return;
+    state.allRegistrationSnapshots = state.allRegistrationSnapshots.map((snapshot) => {
+      const snapshotContext = snapshot && snapshot.context ? snapshot.context : {};
+      if (
+        normalizeSiteText(snapshotContext.sourceId) === normalizeSiteText(context.sourceId) &&
+        normalizeSiteText(snapshotContext.eventDate) === normalizeSiteText(context.eventDate)
+      ) {
+        return { ...data, context: snapshotContext };
+      }
+      return snapshot;
+    });
+  }
+
+  async function approveRegistrationEntry(entry, { renderScope = "records" } = {}) {
+    if (!entry || !entry.registrant || !entry.context) return null;
+    const registrantId = normalizeSiteText(entry.registrant.id);
+    const classRecord = getRegistrationContextClassRecord(entry.context);
+    if (classRecord) {
+      const contact = await saveRegistrantAsContact(entry.registrant, `Approved from online registration.\nEvent: ${entry.context.title || classRecord.title}\nEvent date: ${formatDate(entry.context.eventDate)}`);
+      await addContactToClassRecord(contact, classRecord, "self_registered", registrantId);
+      await syncClassCalendarAfterRosterChange(classRecord, "Registration approved and added to roster.");
+    }
+    const data = await updateRegistrationApproval(entry.context, registrantId, "approved");
+    updateAllRegistrationSnapshot(entry.context, data);
+    if (state.classRegistrationSnapshot && normalizeSiteText((getPrimaryClassRegistrationContext(getActiveClassRecord()) || {}).sourceId) === normalizeSiteText(entry.context.sourceId)) {
+      state.classRegistrationSnapshot = data;
+    }
+    if (renderScope === "class") renderClassRegistrationEscrow(getActiveClassRecord());
+    else renderRecords();
+    return data;
+  }
+
   function renderClassRegistrationEscrow(record = null) {
     if (!classRegistrationList || !classRegistrationSummary) return;
     const classRecord = record || (state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null);
@@ -1975,8 +2089,9 @@
     }
     const snapshot = state.classRegistrationSnapshot;
     const registrants = Array.isArray(snapshot && snapshot.registrants) ? snapshot.registrants : [];
+    const pendingCount = registrants.filter((item) => getRegistrationApprovalStatus(item) !== "approved").length;
     classRegistrationSummary.textContent = snapshot
-      ? `${registrants.length} registration${registrants.length === 1 ? "" : "s"} waiting for review.`
+      ? `${pendingCount} registration${pendingCount === 1 ? "" : "s"} waiting for approval. ${registrants.length} online signup${registrants.length === 1 ? "" : "s"} total.`
       : "Refresh registrations after the class has been saved to the calendar.";
     if (!snapshot) {
       classRegistrationList.innerHTML = '<div class="management-empty">No registration data loaded yet.</div>';
@@ -1994,9 +2109,12 @@
     );
     classRegistrationList.innerHTML = registrants.map((registrant) => {
       const id = normalizeSiteText(registrant && registrant.id);
+      const approvalStatus = getRegistrationApprovalStatus(registrant);
       const alreadyAdded = enrolledRegistrationIds.has(id);
       const busy = id && id === state.classConvertingRegistrationId;
+      const approving = id && id === state.classApprovingRegistrationId;
       const details = [
+        approvalStatus === "approved" || alreadyAdded ? "Approved" : "Pending approval",
         normalizeSiteText(registrant && registrant.email),
         normalizeSiteText(registrant && registrant.phone),
         normalizeSiteText(registrant && registrant.certificationLevel),
@@ -2007,7 +2125,7 @@
             <strong>${escapeHtml(normalizeSiteText(registrant && registrant.name) || "Unnamed registrant")}</strong>
             <span>${escapeHtml(details.join(" | "))}</span>
           </div>
-          <button type="button" data-convert-registration="${escapeHtml(id)}" ${alreadyAdded || busy ? "disabled" : ""}>${alreadyAdded ? "Added" : busy ? "Adding..." : "Add Contact"}</button>
+          <button type="button" data-convert-registration="${escapeHtml(id)}" ${alreadyAdded || approvalStatus === "approved" || busy || approving ? "disabled" : ""}>${alreadyAdded || approvalStatus === "approved" ? "Approved" : busy || approving ? "Approving..." : "Approve to Roster"}</button>
         </div>
       `;
     }).join("");
@@ -2055,27 +2173,21 @@
     return saved;
   }
 
-  async function enrollContactInClass(contact, source = "in_house", sourceRegistrationId = "") {
-    const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
-    if (!current || current.recordType !== "class") {
-      setStatus(recordStatus, "Save or open a class before adding contacts.", "error");
-      return null;
-    }
-    if (!contact || !contact.id) return null;
-    const classId = slugify(getExtras(current).classId || current.id || current.title, "class");
+  async function addContactToClassRecord(contact, classRecord, source = "in_house", sourceRegistrationId = "") {
+    if (!contact || !contact.id || !classRecord || classRecord.recordType !== "class") return null;
+    const classId = getClassRecordId(classRecord);
     const existingEnrollments = getContactClassEnrollments(contact);
     if (existingEnrollments.some((entry) => normalizeSiteText(entry && entry.classId) === classId)) {
-      setStatus(recordStatus, "Contact is already enrolled in this class.", "error");
       return contact;
     }
-    const saved = await updateContactRecord(contact, {
+    return updateContactRecord(contact, {
       registrationSource: source === "self_registered" ? "self_registered" : (getExtras(contact).registrationSource || "in_house"),
       classEnrollments: [
         ...existingEnrollments,
         {
           classId,
-          classRecordId: current.id,
-          classTitle: current.title,
+          classRecordId: classRecord.id,
+          classTitle: classRecord.title,
           source,
           status: "enrolled",
           sourceRegistrationId,
@@ -2083,6 +2195,21 @@
         },
       ],
     });
+  }
+
+  async function enrollContactInClass(contact, source = "in_house", sourceRegistrationId = "") {
+    const current = state.selectedId ? state.records.find((item) => item.id === state.selectedId) : null;
+    if (!current || current.recordType !== "class") {
+      setStatus(recordStatus, "Save or open a class before adding contacts.", "error");
+      return null;
+    }
+    if (!contact || !contact.id) return null;
+    const classId = getClassRecordId(current);
+    if (getContactClassEnrollments(contact).some((entry) => normalizeSiteText(entry && entry.classId) === classId)) {
+      setStatus(recordStatus, "Contact is already enrolled in this class.", "error");
+      return contact;
+    }
+    const saved = await addContactToClassRecord(contact, current, source, sourceRegistrationId);
     fillForm(current);
     return saved;
   }
@@ -2215,17 +2342,33 @@
 
   async function convertRegistrationToContact(registrationId) {
     const classRecord = getActiveClassRecord();
+    const context = getPrimaryClassRegistrationContext(classRecord);
     const registrants = Array.isArray(state.classRegistrationSnapshot && state.classRegistrationSnapshot.registrants)
       ? state.classRegistrationSnapshot.registrants
       : [];
     const registrant = registrants.find((item) => normalizeSiteText(item && item.id) === normalizeSiteText(registrationId));
-    if (!registrant || !classRecord) return;
+    if (!registrant || !classRecord || !context) return;
+    state.classApprovingRegistrationId = normalizeSiteText(registrationId);
     state.classConvertingRegistrationId = normalizeSiteText(registrationId);
     renderClassRegistrationEscrow(classRecord);
-    const contact = await saveRegistrantAsContact(registrant, "Created from class registration escrow.");
-    state.classConvertingRegistrationId = "";
-    await enrollContactInClass(contact, "self_registered", normalizeSiteText(registrationId));
-    await syncClassCalendarAfterRosterChange(classRecord, "Registration imported as a contact and enrolled in class.");
+    try {
+      await approveRegistrationEntry({
+        context: {
+          ...context,
+          title: classRecord.title,
+          managementClassId: getClassRecordId(classRecord),
+        },
+        registrant,
+        actionKey: getRegistrationActionKey(context, registrationId),
+      }, { renderScope: "class" });
+      setStatus(recordStatus, "Registration approved and enrolled in class.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not approve this registration.", "error");
+    } finally {
+      state.classApprovingRegistrationId = "";
+      state.classConvertingRegistrationId = "";
+      renderClassRegistrationEscrow(classRecord);
+    }
   }
 
   function readFormRecord() {
@@ -2679,7 +2822,7 @@
     if (!item) return;
     const classId = normalizeSiteText(item.managementClassId);
     if (classId) {
-      const classRecord = state.records.find((record) => record.recordType === "class" && normalizeSiteText(getExtras(record).classId) === classId);
+      const classRecord = getClassRecordByClassId(classId);
       if (classRecord) {
         openEditor(classRecord);
         setStatus(recordStatus, "Class record opened for this calendar date.", "success");
@@ -2688,6 +2831,28 @@
     }
     openEditor(buildManagementRecordFromSiteEvent(item));
     setStatus(recordStatus, "Site calendar record opened.", "success");
+  }
+
+  function openRegistrationTarget(actionKey) {
+    const entry = findAllRegistrationEntry(actionKey);
+    const context = entry && entry.context;
+    if (!context) return;
+    const classRecord = getRegistrationContextClassRecord(context);
+    if (classRecord) {
+      openEditor(classRecord);
+      if (classRosterEl) classRosterEl.open = true;
+      setStatus(recordStatus, "Class roster opened for this registration.", "success");
+      return;
+    }
+    const index = state.siteEvents.findIndex((item) =>
+      normalizeSiteText(item && (item.sourceId || item.id)) === normalizeSiteText(context.sourceId) &&
+      normalizeSiteText(item && item.date) === normalizeSiteText(context.eventDate)
+    );
+    if (index >= 0) {
+      openCalendarRecord(String(index));
+      return;
+    }
+    setStatus(recordStatus, "Could not find the matching event for this registration.", "error");
   }
 
   async function deleteSelectedRecord() {
@@ -3018,6 +3183,20 @@
           event.preventDefault();
           event.stopPropagation();
           addRegistrationCardToContacts(addRegistrationButton.getAttribute("data-add-registration-contact") || "");
+          return;
+        }
+        const approveRegistrationButton = event.target.closest("[data-approve-registration]");
+        if (approveRegistrationButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          approveRegistrationCard(approveRegistrationButton.getAttribute("data-approve-registration") || "");
+          return;
+        }
+        const openRegistrationButton = event.target.closest("[data-open-registration-target]");
+        if (openRegistrationButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          openRegistrationTarget(openRegistrationButton.getAttribute("data-open-registration-target") || "");
           return;
         }
         const unregisterButton = event.target.closest("[data-unregister-card]");

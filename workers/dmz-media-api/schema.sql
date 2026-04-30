@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS event_registrations_v2 (
   cert_level TEXT NOT NULL,
   additional_guests INTEGER NOT NULL DEFAULT 0,
   party_size INTEGER NOT NULL DEFAULT 1,
+  approval_status TEXT NOT NULL DEFAULT 'pending',
   created_at TEXT NOT NULL
 );
 
