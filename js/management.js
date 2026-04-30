@@ -743,9 +743,24 @@
       isSnapshotRegistrationAtCapacity(snapshot);
   }
 
+  function getLoadedClassRegistrationSnapshot(record) {
+    const context = getPrimaryClassRegistrationContext(record);
+    if (!context) return null;
+    return state.allRegistrationSnapshots.find((snapshot) => {
+      const snapshotContext = snapshot && snapshot.context;
+      return normalizeSiteText(snapshotContext && snapshotContext.sourceId) === normalizeSiteText(context.sourceId) &&
+        normalizeSiteText(snapshotContext && snapshotContext.eventDate) === normalizeSiteText(context.eventDate);
+    }) || null;
+  }
+
   function renderClassRecordDetails(record) {
     if (!record || record.recordType !== "class") return "";
     const details = getClassSummaryDetails(record);
+    const registrationSnapshot = getLoadedClassRegistrationSnapshot(record);
+    const onlineRegistrants = Array.isArray(registrationSnapshot && registrationSnapshot.registrants)
+      ? registrationSnapshot.registrants
+      : [];
+    const pendingRegistrants = onlineRegistrants.filter((item) => getRegistrationApprovalStatus(item) !== "approved");
     const rosterPreview = details.rosterContacts
       .slice(0, 6)
       .map((contact) => normalizeSiteText(contact.contactName || contact.title || contact.contactEmail))
@@ -760,7 +775,16 @@
           <span><strong>Class ID</strong>${escapeHtml(details.classId)}</span>
           <span><strong>Enrolled</strong>${escapeHtml(details.rosterText)}</span>
           <span><strong>Remaining</strong>${escapeHtml(details.remainingText)}</span>
+          <span><strong>Pending Self Registrations</strong>${escapeHtml(registrationSnapshot ? String(pendingRegistrants.length) : "Not loaded")}</span>
         </div>
+        ${
+          pendingRegistrants.length
+            ? `<div class="management-class-detail-section">
+                <strong>Pending Approval</strong>
+                <p>${escapeHtml(pendingRegistrants.map((item) => normalizeSiteText(item && item.name) || "Unnamed registrant").join(", "))}</p>
+              </div>`
+            : ""
+        }
         ${
           details.scheduleLines.length
             ? `<div class="management-class-detail-section">
@@ -2602,6 +2626,7 @@
     }
     renderRecords();
     updateMetrics();
+    loadAllRegistrationSnapshots();
     return true;
   }
 
@@ -3217,7 +3242,7 @@
         state.filterType = button.getAttribute("data-filter-type") || "all";
         filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
         renderRecords();
-        if (state.filterType === "registration") loadAllRegistrationSnapshots();
+        if (state.filterType === "registration" || state.filterType === "class") loadAllRegistrationSnapshots();
       });
     });
     if (recordList) {
