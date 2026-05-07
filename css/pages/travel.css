@@ -305,8 +305,8 @@ body .page .destination-grid {
 .destination-title-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
   width: 100%;
 }
@@ -1770,24 +1770,19 @@ body.dest-authenticated .dest-admin-fab{
    GLOBE 2.0 — Destination Panel
    ========================= */
 
-/* Hero strip */
+/* Hero strip — hidden until a destination with a heroImage is selected */
 .dest-hero-strip {
+  display: none;
   border-radius: 18px;
   overflow: hidden;
-  height: 0;
-  max-height: 0;
-  opacity: 0;
-  margin-bottom: 0;
-  transition: height 320ms ease, max-height 320ms ease, opacity 280ms ease, margin-bottom 280ms ease;
+  height: 200px;
   position: relative;
   background: rgba(8, 14, 24, 0.6);
+  margin-bottom: 20px;
 }
 
 .dest-hero-strip.is-loaded {
-  height: 200px;
-  max-height: 200px;
-  opacity: 1;
-  margin-bottom: 20px;
+  display: block;
 }
 
 .dest-hero-img {
@@ -1802,16 +1797,22 @@ body.dest-authenticated .dest-admin-fab{
   inset: 0;
   background: linear-gradient(180deg,
     rgba(5, 11, 20, 0.0) 40%,
-    rgba(5, 11, 20, 0.72) 100%
+    rgba(5, 11, 20, 0.65) 100%
   );
-  display: flex;
-  align-items: flex-end;
-  padding: 14px 18px;
+  pointer-events: none;
 }
 
-/* Status badge */
+/* Title row: h2 on left, badge + button on right */
+.destination-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Status badge — always visible when it has content */
 .dest-status-badge {
-  display: inline-flex;
+  display: none;
   align-items: center;
   border-radius: 999px;
   font-size: 11px;
@@ -1820,20 +1821,10 @@ body.dest-authenticated .dest-admin-fab{
   text-transform: uppercase;
   padding: 5px 11px;
   border: 1px solid transparent;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 200ms ease, transform 200ms ease;
 }
 
-.dest-hero-strip.is-loaded .dest-status-badge {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Badge shown even without hero (alongside title) */
 .dest-status-badge:not(:empty) {
-  opacity: 1;
-  transform: translateY(0);
+  display: inline-flex;
 }
 
 .dest-status-badge.is-none {
