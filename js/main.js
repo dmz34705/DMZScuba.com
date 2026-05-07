@@ -232,7 +232,51 @@ console.log("main.js loaded");
     }
   }
 
+  function initSharedNav() {
+    const headers = document.querySelectorAll("header[data-site-nav]");
+    if (!headers.length) return;
+
+    const path = window.location.pathname;
+
+    function isActive(prefix) {
+      if (prefix === "/") return path === "/" || path === "/index.html";
+      return path === prefix || path.startsWith(prefix);
+    }
+
+    const navLinks = [
+      { href: "/", label: "Home" },
+      { href: "/pages/training/", label: "Training" },
+      { href: "/pages/travel/", label: "Travel" },
+      { href: "/pages/media/", label: "Media" },
+      { href: "/pages/events/", label: "Events" },
+      { href: "/pages/contact/", label: "Contact" },
+      { href: "/pages/about/", label: "About" },
+    ];
+
+    const linksHtml = navLinks
+      .map(({ href, label }) => {
+        const active = isActive(href);
+        const attrs = active ? ' class="is-active" aria-current="page"' : "";
+        return `<a${attrs} href="${href}">${label}</a>`;
+      })
+      .join("");
+
+    const navHtml =
+      `<div class="nav-container">` +
+      `<a class="logo" href="/" aria-label="DMZ Scuba Home">` +
+      `<img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" /></a>` +
+      `<div class="site-name">DMZ Scuba</div>` +
+      `<nav class="main-nav" aria-label="Primary">${linksHtml}` +
+      `<a class="nav-cta" href="/pages/contact/#dive-now">Dive Now</a></nav>` +
+      `</div>`;
+
+    headers.forEach((header) => {
+      header.innerHTML = navHtml;
+    });
+  }
+
   const init = () => {
+    initSharedNav();
     const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
     const hasPrefill = params.has("interest") || params.has("location") || params.has("course");
