@@ -1704,6 +1704,8 @@
     }
 
     const tripStatus = destinationTripStatusById.get(dest.id) || { state: TRIP_STATUS.none };
+    const destinationPanel = document.getElementById("destination");
+    if (destinationPanel) destinationPanel.hidden = false;
 
     // Core text fields
     const titleEl = document.getElementById("destTitle");
