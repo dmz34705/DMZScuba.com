@@ -13,10 +13,8 @@
     const maxW = wrap ? wrap.clientWidth : 920;
     const targetW = maxW;
 
-// Mobile = square, Desktop = cinematic
-const isMobile = window.innerWidth <= 768;
-const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Math.round(targetW * 0.56));
-
+    const isMobile = window.innerWidth <= 768;
+    const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Math.round(targetW * 0.56));
 
     canvas.style.width = targetW + "px";
     canvas.style.height = targetH + "px";
@@ -24,7 +22,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     canvas.width = targetW * DPR;
     canvas.height = targetH * DPR;
 
-    // Draw in CSS pixels
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
 
@@ -43,6 +40,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       lon: Number(d.lon),
       tags: Array.isArray(d.tags) ? d.tags : [],
       bullets: Array.isArray(d.bullets) ? d.bullets : [],
+      heroImage: typeof d.heroImage === "string" ? d.heroImage : "",
       isoImage: typeof d.isoImage === "string" ? d.isoImage : "",
       isoTitle: typeof d.isoTitle === "string" ? d.isoTitle : "",
       isoDesc: typeof d.isoDesc === "string" ? d.isoDesc : "",
@@ -64,7 +62,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     return String(value || "")
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[̀-ͯ]/g, "")
       .replace(/&/g, " and ")
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
@@ -331,6 +329,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       nextMap.set(dest.id, computeTripStatusForDestination(dest, travelEvents));
     });
     destinationTripStatusById = nextMap;
+    updateGlobeStats();
   }
 
   async function loadEventsPayload(url) {
@@ -361,6 +360,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     destinations = normalizeDestinations(nextItems || []);
     destinationsById = new Map(destinations.map((d) => [d.id, d]));
     renderDestinationList();
+    extractAllTags();
     initTravelStatuses();
   }
 
@@ -395,7 +395,8 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
     listEl.innerHTML = "";
 
-    const sorted = [...destinations].sort((a, b) =>
+    const visible = getVisibleDestinations();
+    const sorted = [...visible].sort((a, b) =>
       (a.name || "").localeCompare(b.name || "")
     );
 
@@ -427,13 +428,17 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       item.appendChild(tags);
       listEl.appendChild(item);
     });
+
+    // Show empty state if filtered to nothing
+    const emptyEl = document.getElementById("destinationListEmpty");
+    if (emptyEl) emptyEl.hidden = sorted.length > 0;
   }
 
   // -------------------------
   // Globe parameters
   // -------------------------
-  let rotY = 0;      // longitude rotation
-  let rotX = -0.20;  // tilt
+  let rotY = 0;
+  let rotX = -0.20;
 
   const GLOBE_CONFIG = {
     pinLonOffsetDeg: 1.75,
@@ -447,34 +452,22 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
   let isInteracting = false;
   const IDLE_ROTATE_SPEED = 0.00035;
   let rafId = null;
-  let autoRotateEnabled = true; // stops forever after first drag
+  let autoRotateEnabled = true;
 
-  // Clickable pin hit targets
   let pinHit = [];
-
-  // Desktop hover: which pin is currently under the cursor
   let hoverPinId = null;
-
   let pinDragging = null;
   let pinDragMoved = false;
 
-  // -------------------------
-  // Mobile cluster "inspect" (tap once reveals label, tap again selects)
-  // -------------------------
   let mobileInspectPinId = null;
 
-  // Cluster metadata (refreshed inside drawPins when labels are on)
-  let pinClusterOfId = new Map(); // pinId -> componentRootId
-  let pinRepIdByComp = new Map(); // componentRootId -> representativePinId
-  let pinOverlapIds = new Set();  // ids participating in any overlap
+  let pinClusterOfId = new Map();
+  let pinRepIdByComp = new Map();
+  let pinOverlapIds = new Set();
 
-  // -------------------------
-  // Zoom + focus (smooth targets)
-  // -------------------------
+  // Zoom
   let zoom = 1.0;
   let zoomTarget = 1.0;
-
-  // Debug (desktop wheel)
   let wheelDbgDY = 0;
   let wheelDbgOver = false;
 
@@ -482,9 +475,20 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
   const ZOOM_MAX = 6.0;
   const LABELS_SHOW_AT_ZOOM = 1.35;
 
-  // Smoothly animate rotation toward a target (reserved for future focus)
   let rotYTarget = rotY;
   let rotXTarget = rotX;
+
+  // 2.0: Inertia
+  let frameCount = 0;
+  let velX = 0;
+  let velY = 0;
+  const FRICTION = 0.88;
+  const VEL_STOP = 0.00006;
+
+  // 2.0: Filters + search
+  let activeFilters = new Set();
+  let searchQuery = "";
+  let allTags = [];
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -496,6 +500,164 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
   function zoomBy(factor) {
     setZoomTarget(zoomTarget * factor);
+  }
+
+  // -------------------------
+  // 2.0: Globe navigation
+  // -------------------------
+  function resetGlobeView() {
+    rotYTarget = 0;
+    rotXTarget = -0.20;
+    setZoomTarget(1.0);
+    velX = 0;
+    velY = 0;
+  }
+
+  function flyToDestination(dest) {
+    const lam = (-dest.lon * Math.PI) / 180;
+    const phi = (-dest.lat * Math.PI) / 180;
+    // Center this longitude on screen: rotY = lam - π/2
+    const targetRotY = lam - Math.PI / 2;
+    // Go the short way around
+    let dy = targetRotY - rotY;
+    while (dy > Math.PI) dy -= Math.PI * 2;
+    while (dy < -Math.PI) dy += Math.PI * 2;
+    rotYTarget = rotY + dy;
+    rotXTarget = clamp(phi * 0.65, -1.10, 1.10);
+    if (zoomTarget < 1.8) setZoomTarget(2.0);
+    velX = 0;
+    velY = 0;
+  }
+
+  // -------------------------
+  // 2.0: Filter + search system
+  // -------------------------
+  function getVisibleDestinations() {
+    let list = destinations;
+    if (activeFilters.size > 0) {
+      list = list.filter((d) => d.tags.some((t) => activeFilters.has(t)));
+    }
+    if (searchQuery) {
+      const q = normalizeText(searchQuery);
+      list = list.filter(
+        (d) =>
+          normalizeText(d.name).includes(q) ||
+          normalizeText(d.subtitle).includes(q)
+      );
+    }
+    return list;
+  }
+
+  function extractAllTags() {
+    const tagSet = new Set();
+    destinations.forEach((d) => d.tags.forEach((t) => { if (t) tagSet.add(t); }));
+    allTags = Array.from(tagSet).sort();
+    buildFilterPills();
+    updateGlobeStats();
+  }
+
+  function buildFilterPills() {
+    const container = document.getElementById("globeFilterPills");
+    if (!container) return;
+    container.innerHTML = "";
+
+    allTags.forEach((tag) => {
+      const btn = document.createElement("button");
+      btn.className = "globe-filter-pill" + (activeFilters.has(tag) ? " is-active" : "");
+      btn.type = "button";
+      btn.textContent = tag;
+      btn.addEventListener("click", () => {
+        if (activeFilters.has(tag)) activeFilters.delete(tag);
+        else activeFilters.add(tag);
+        buildFilterPills();
+        renderDestinationList();
+        updateGlobeStats();
+      });
+      container.appendChild(btn);
+    });
+
+    if (activeFilters.size > 0 || searchQuery.length > 0) {
+      const clearBtn = document.createElement("button");
+      clearBtn.className = "globe-filter-pill globe-filter-clear";
+      clearBtn.type = "button";
+      clearBtn.textContent = "Clear";
+      clearBtn.addEventListener("click", () => {
+        activeFilters.clear();
+        searchQuery = "";
+        const searchEl = document.getElementById("globeSearch");
+        if (searchEl) searchEl.value = "";
+        buildFilterPills();
+        renderDestinationList();
+        updateGlobeStats();
+      });
+      container.appendChild(clearBtn);
+    }
+  }
+
+  function updateGlobeStats() {
+    const statsEl = document.getElementById("globeStatsBar");
+    if (!statsEl) return;
+
+    let active = 0, soon = 0, planned = 0;
+    let nextDest = null, nextDays = Infinity;
+
+    destinations.forEach((d) => {
+      const status = destinationTripStatusById.get(d.id);
+      if (!status) return;
+      if (status.state === TRIP_STATUS.active) {
+        active++;
+      } else if (status.state === TRIP_STATUS.soon) {
+        soon++;
+        if (status.daysUntil !== null && status.daysUntil < nextDays) {
+          nextDays = status.daysUntil;
+          nextDest = d;
+        }
+      } else if (status.state === TRIP_STATUS.planned) {
+        planned++;
+        if (status.daysUntil !== null && status.daysUntil < nextDays) {
+          nextDays = status.daysUntil;
+          nextDest = d;
+        }
+      }
+    });
+
+    const total = destinations.length;
+    const parts = [`<span>${total} destination${total !== 1 ? "s" : ""}</span>`];
+    if (active > 0) parts.push(`<span class="globe-stat-active">${active} active</span>`);
+    if (soon > 0) parts.push(`<span class="globe-stat-soon">${soon} soon</span>`);
+    if (planned > 0) parts.push(`<span class="globe-stat-planned">${planned} planned</span>`);
+    if (nextDest && nextDays < Infinity) {
+      parts.push(`<span>next: <strong>${formatDestinationName(nextDest.name)}</strong> in ${nextDays}d</span>`);
+    }
+    statsEl.innerHTML = parts.join('<span class="globe-stat-dot">&middot;</span>');
+  }
+
+  function initSearchWiring() {
+    const searchEl = document.getElementById("globeSearch");
+    if (!searchEl) return;
+    searchEl.addEventListener("input", () => {
+      searchQuery = searchEl.value.trim();
+      buildFilterPills();
+      renderDestinationList();
+      updateGlobeStats();
+    });
+    searchEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const visible = getVisibleDestinations();
+      if (visible.length === 1) {
+        flyToDestination(visible[0]);
+        autoRotateEnabled = false;
+      }
+    });
+  }
+
+  function initHomeButton() {
+    const btn = document.getElementById("globeHomeBtn");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      resetGlobeView();
+      autoRotateEnabled = true;
+    });
   }
 
   // -------------------------
@@ -519,9 +681,9 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     };
   }
 
-  let globeTex = null;       // canvas containing the texture
-  let globeTexData = null;   // Uint8ClampedArray pixel data
-  let sphereBuf = null;      // offscreen sphere render
+  let globeTex = null;
+  let globeTexData = null;
+  let sphereBuf = null;
   let sphereBufCtx = null;
   let sphereSize = 0;
 
@@ -529,7 +691,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
   let earthImgLoading = false;
 
   function buildGlobeTexture(size = 768) {
-    // Procedural fallback if image fails to load
     const tex = document.createElement("canvas");
     tex.width = size;
     tex.height = size;
@@ -555,7 +716,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }
     tctx.globalAlpha = 1;
 
-    // simple “land”
     tctx.globalAlpha = 0.85;
     tctx.fillStyle = "rgba(35,140,85,1)";
     tctx.beginPath();
@@ -574,7 +734,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     earthImgLoading = true;
 
     const img = new Image();
-    img.src = "/assets/images/globe/earth.png"; // ensure this path exists
+    img.src = "/assets/images/globe/earth.png";
 
     img.onload = () => {
       const tex = document.createElement("canvas");
@@ -593,13 +753,11 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     img.onerror = () => {
       earthImgLoading = false;
       earthImgLoaded = false;
-      // fallback stays procedural
     };
   }
 
   function ensureSphereBuffer(sizePx) {
     if (sphereBuf && sphereSize === sizePx) return;
-
     sphereSize = sizePx;
     sphereBuf = document.createElement("canvas");
     sphereBuf.width = sizePx;
@@ -639,7 +797,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     const th = globeTex.height;
     const tdat = globeTexData;
 
-    // Inverse rotation (camera -> globe space)
     const cyR = Math.cos(-rotY), syR = Math.sin(-rotY);
     const cxR = Math.cos(-rotX), sxR = Math.sin(-rotX);
 
@@ -658,14 +815,12 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
           continue;
         }
 
-        const zz = Math.sqrt(1 - d2); // front hemisphere
+        const zz = Math.sqrt(1 - d2);
 
-        // Undo X rotation
         const y1 = yy * cxR - zz * sxR;
         const z1 = yy * sxR + zz * cxR;
         const x1 = xx;
 
-        // Undo Y rotation
         const x2 = x1 * cyR + z1 * syR;
         const z2 = -x1 * syR + z1 * cyR;
         const y2 = y1;
@@ -673,7 +828,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         const lon = Math.atan2(z2, x2);
         const lat = Math.asin(Math.max(-1, Math.min(1, y2)));
 
-        // U flip + V flip
         let u = 0.5 - (lon / (Math.PI * 2));
         let v = 0.5 + (lat / Math.PI);
 
@@ -780,6 +934,57 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
   }
 
   // -------------------------
+  // 2.0: Visual effects
+  // -------------------------
+  function drawStarField(w, h) {
+    const rnd = mulberry32(0xDEAD42);
+    const count = 180;
+    for (let i = 0; i < count; i++) {
+      const sx = rnd() * w;
+      const sy = rnd() * h;
+      const size = rnd() * 1.5 + 0.3;
+      const base = rnd() * 0.55 + 0.18;
+      const twinkle = base * (0.72 + 0.28 * Math.sin(frameCount * 0.022 + i * 1.73));
+      ctx.beginPath();
+      ctx.arc(sx, sy, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(210,228,255,${twinkle.toFixed(3)})`;
+      ctx.fill();
+    }
+  }
+
+  function drawAtmosphere(cx, cy, r) {
+    const inner = r * 0.92;
+    const outer = r * 1.16;
+    const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+    grad.addColorStop(0, "rgba(50,130,255,0.00)");
+    grad.addColorStop(0.40, "rgba(55,140,255,0.20)");
+    grad.addColorStop(0.72, "rgba(30,90,200,0.09)");
+    grad.addColorStop(1, "rgba(10,40,140,0.00)");
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function drawNightSide(cx, cy, r) {
+    // Simulate a fixed sun from upper-right; darkens the opposite hemisphere edges
+    const grad = ctx.createRadialGradient(
+      cx + r * 0.30, cy - r * 0.14, r * 0.30,
+      cx, cy, r * 1.01
+    );
+    grad.addColorStop(0,    "rgba(0,0,0,0.00)");
+    grad.addColorStop(0.58, "rgba(0,0,0,0.00)");
+    grad.addColorStop(1,    "rgba(0,4,18,0.52)");
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // -------------------------
   // Draw globe + grid
   // -------------------------
   function drawGlobe(cx, cy, r) {
@@ -790,25 +995,34 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, w, h);
 
-    // glow behind globe
+    // Star field behind the globe
+    drawStarField(w, h);
+
+    // Ambient glow halo
     ctx.beginPath();
     ctx.arc(cx, cy, r * 1.08, 0, Math.PI * 2);
     ctx.fillStyle = glow;
     ctx.fill();
 
-    // Earth body
+    // Earth texture sphere
     drawMappedEarth(cx, cy, r);
 
-    // outline
+    // Night-side depth gradient
+    drawNightSide(cx, cy, r);
+
+    // Atmospheric rim
+    drawAtmosphere(cx, cy, r);
+
+    // Globe outline
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = line;
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // grid
+    // Latitude grid
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(255,255,255,0.07)";
 
     for (let lat = -60; lat <= 60; lat += 30) {
       ctx.beginPath();
@@ -823,6 +1037,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       ctx.stroke();
     }
 
+    // Longitude grid
     for (let lon = -150; lon <= 180; lon += 30) {
       ctx.beginPath();
       let started = false;
@@ -845,7 +1060,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
     const showLabels = zoom >= LABELS_SHOW_AT_ZOOM;
 
-    // Clear cluster metadata unless recomputed this frame
     pinClusterOfId = new Map();
     pinRepIdByComp = new Map();
     pinOverlapIds = new Set();
@@ -854,7 +1068,9 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       return !(a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2);
     }
 
-    const pinProjections = destinations
+    const visibleDests = getVisibleDestinations();
+
+    const pinProjections = visibleDests
       .map((d) => ({ d, p: projectPinOnEarth(d.lat, d.lon, cx, cy, r) }))
       .filter((item) => item.p)
       .sort((a, b) => a.p.z - b.p.z); // far -> near
@@ -892,7 +1108,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
 
       const boxes = Array.from(labelBoxesById.values());
 
-      // Union-Find
       const parent = new Map();
       for (const b of boxes) parent.set(b.id, b.id);
 
@@ -920,7 +1135,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         }
       }
 
-      // Build members by root
       const membersByRoot = new Map();
       for (const b of boxes) {
         const root = find(b.id);
@@ -929,7 +1143,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         membersByRoot.get(root).push(b.id);
       }
 
-      // Representative label per overlapping cluster (highest z)
       for (const [root, members] of membersByRoot.entries()) {
         const overlappingMembers = members.filter((id) => overlapIds.has(id));
         if (overlappingMembers.length < 2) continue;
@@ -945,7 +1158,6 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         repIdByComp.set(root, bestId);
       }
 
-      // Export cluster metadata for mobile tap-to-inspect
       pinClusterOfId = compOfId;
       pinRepIdByComp = repIdByComp;
       pinOverlapIds = overlapIds;
@@ -957,40 +1169,59 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
       const s = Math.max(0.85, Math.min(1.25, 1.05 + p.z * 0.35));
       const pinR = 7 * s;
       const sink = 2.0 * s;
+      const py = p.y - 20 * s + sink;
 
-      // stem
+      // 2.0: Animated rings for active / soon pins (drawn behind the pin head)
+      if (tripStatus.state === TRIP_STATUS.active) {
+        const phase = (frameCount % 75) / 75;
+        const rippleR = pinR * (1 + phase * 2.4);
+        const rippleA = (1 - phase) * 0.70;
+        ctx.beginPath();
+        ctx.arc(p.x, py, rippleR, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(35,209,143,${rippleA.toFixed(3)})`;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+
+      if (tripStatus.state === TRIP_STATUS.soon) {
+        const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.06);
+        ctx.beginPath();
+        ctx.arc(p.x, py, pinR + 4, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,193,69,${(0.22 + pulse * 0.38).toFixed(3)})`;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
+
+      // Stem (from just below pin head down to earth surface)
       ctx.beginPath();
-      ctx.moveTo(p.x, p.y - 18 * s + sink);
-      ctx.lineTo(p.x, p.y - 6 * s + sink);
+      ctx.moveTo(p.x, py + 2 * s);
+      ctx.lineTo(p.x, py + 14 * s);
       ctx.strokeStyle = "rgba(0,0,0,0.35)";
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // head
+      // Pin head
       ctx.beginPath();
-      ctx.arc(p.x, p.y - 20 * s + sink, pinR, 0, Math.PI * 2);
+      ctx.arc(p.x, py, pinR, 0, Math.PI * 2);
       ctx.fillStyle = pinColor;
       ctx.fill();
 
-      // inner dot
+      // Inner dot
       ctx.beginPath();
-      ctx.arc(p.x, p.y - 20 * s + sink, 3.2 * s, 0, Math.PI * 2);
+      ctx.arc(p.x, py, 3.2 * s, 0, Math.PI * 2);
       ctx.fillStyle = PIN_INNER_DOT;
       ctx.fill();
 
-      // label
+      // Label
       if (showLabels) {
         const isOverlapping = overlapIds.has(d.id);
         let shouldShow = false;
 
         if (!isOverlapping) {
-          // Never overlapping: always show
           shouldShow = true;
         } else {
           const myComp = compOfId.get(d.id) ?? d.id;
           const hoverComp = hoverPinId ? (compOfId.get(hoverPinId) ?? hoverPinId) : null;
-
-          // Mobile inspect: show only inspected label in that cluster
           const inspectComp = mobileInspectPinId
             ? (compOfId.get(mobileInspectPinId) ?? mobileInspectPinId)
             : null;
@@ -998,10 +1229,8 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
           if (mobileInspectPinId && inspectComp === myComp) {
             shouldShow = d.id === mobileInspectPinId;
           } else if (hoverPinId && hoverComp === myComp) {
-            // Desktop hover: show only hovered label in that cluster
             shouldShow = d.id === hoverPinId;
           } else {
-            // Default: show representative label for overlapping cluster
             const rep = repIdByComp.get(myComp);
             shouldShow = rep ? d.id === rep : false;
           }
@@ -1019,17 +1248,17 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         }
       }
 
-      // hit target
+      // Hit target
       pinHit.push({
         id: d.id,
         name: formatDestinationName(d.name),
         x: p.x,
-        y: p.y - 20 * s + sink,
+        y: py,
         r: 16 * s,
       });
     }
 
-    // Draw hovered label last so it stays on top of other pins/labels.
+    // Hovered label pill (drawn last, always on top)
     if (showLabels && hoverPinId && labelBoxesById.has(hoverPinId)) {
       const b = labelBoxesById.get(hoverPinId);
       if (b) {
@@ -1053,7 +1282,7 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
         ctx.lineTo(pillX, pillY + radius);
         ctx.quadraticCurveTo(pillX, pillY, pillX + radius, pillY);
         ctx.closePath();
-        ctx.fillStyle = "rgba(5, 11, 20, 0.85)";
+        ctx.fillStyle = "rgba(5, 11, 20, 0.88)";
         ctx.fill();
         ctx.restore();
 
@@ -1066,13 +1295,13 @@ const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Ma
     }
   }
 
-function draw() {
+  function draw() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
-const isMobileView = window.innerWidth <= 768;
-const cx = w * 0.5;
-const cy = isMobileView ? h * 0.5 : h * 0.52;
+    const isMobileView = window.innerWidth <= 768;
+    const cx = w * 0.5;
+    const cy = isMobileView ? h * 0.5 : h * 0.52;
 
     const baseR = Math.min(w, h) * (isMobileView ? 0.38 : 0.34);
     const r = baseR * zoom;
@@ -1080,19 +1309,17 @@ const cy = isMobileView ? h * 0.5 : h * 0.52;
     drawGlobe(cx, cy, r);
     drawPins(cx, cy, r);
 
-// Desktop-only hint (mobile uses static text above the globe)
-if (window.innerWidth > 768) {
-  ctx.fillStyle = muted;
-  ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-  ctx.textAlign = "right";
-  ctx.fillText(
-    "Drag to rotate. Click a pin to view destination.",
-    w - 18,
-    h - 18
-  );
-}
-
-}
+    if (window.innerWidth > 768) {
+      ctx.fillStyle = muted;
+      ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(
+        "Drag · Scroll to zoom · Click a pin",
+        w - 18,
+        h - 18
+      );
+    }
+  }
 
   function getGlobeMetrics() {
     const w = canvas.clientWidth;
@@ -1105,25 +1332,47 @@ if (window.innerWidth > 768) {
     return { cx, cy, r };
   }
 
-
-
   // -------------------------
-  // Animation loop
+  // Animation loop (2.0: inertia + frame counter)
   // -------------------------
   function animate() {
+    frameCount++;
     zoom += (zoomTarget - zoom) * 0.10;
 
-    if (!dragging) {
-      rotY += (rotYTarget - rotY) * 0.10;
-      rotX += (rotXTarget - rotX) * 0.10;
-    } else {
+    if (dragging) {
       rotYTarget = rotY;
       rotXTarget = rotX;
-    }
-
-    if (autoRotateEnabled && !isInteracting) {
+    } else if (autoRotateEnabled && !isInteracting) {
+      velX = 0;
+      velY = 0;
       rotY += IDLE_ROTATE_SPEED;
       rotYTarget = rotY;
+    } else {
+      const dyTarget = rotYTarget - rotY;
+      const dxTarget = rotXTarget - rotX;
+      const flyingToTarget = Math.abs(dyTarget) + Math.abs(dxTarget) > 0.008;
+
+      if (flyingToTarget) {
+        // Lerp toward zoom-to-destination or keyboard-nav target
+        velX = 0;
+        velY = 0;
+        rotY += dyTarget * 0.12;
+        rotX += dxTarget * 0.12;
+      } else {
+        // Inertia coast after drag release
+        if (Math.abs(velX) > VEL_STOP || Math.abs(velY) > VEL_STOP) {
+          velX *= FRICTION;
+          velY *= FRICTION;
+          rotX += velX;
+          rotY += velY;
+          rotX = clamp(rotX, -1.10, 1.10);
+          rotXTarget = rotX;
+          rotYTarget = rotY;
+        } else {
+          velX = 0;
+          velY = 0;
+        }
+      }
     }
 
     draw();
@@ -1144,6 +1393,7 @@ if (window.innerWidth > 768) {
   function endDrag() {
     dragging = false;
     isInteracting = false;
+    // Velocity carries over — inertia handled in animate()
   }
 
   function startPinDrag(pinId) {
@@ -1169,28 +1419,25 @@ if (window.innerWidth > 768) {
     isInteracting = false;
   }
 
-function moveDrag(x, y) {
+  function moveDrag(x, y) {
     const dx = x - lastX;
     const dy = y - lastY;
     lastX = x;
     lastY = y;
 
-    // Adjust movement sensitivity based on zoom level
-    // When zoomed out, we want the movement to be faster (less sensitivity)
-    // When zoomed in, we want the movement to be slower (more sensitivity)
     const dragSpeedFactor = Math.max(0.005, Math.min(1, 1 / (zoom * 0.35)));
 
-    // Scale the drag movement based on the zoom level and drag sensitivity factor
-    rotY += dx * 0.0075 * dragSpeedFactor;
-    rotX -= dy * 0.0055 * dragSpeedFactor;
+    // Track velocity for inertia
+    velY = dx * 0.0075 * dragSpeedFactor;
+    velX = -(dy * 0.0055 * dragSpeedFactor);
 
-    // Constrain the rotation on the X-axis to prevent flipping
+    rotY += velY;
+    rotX += velX;
+
     const maxTilt = 1.10;
     if (rotX > maxTilt) rotX = maxTilt;
     if (rotX < -maxTilt) rotX = -maxTilt;
-}
-
-
+  }
 
   canvas.addEventListener("mousedown", (e) => {
     const admin = window.DMZDestinations;
@@ -1204,7 +1451,6 @@ function moveDrag(x, y) {
     startDrag(e.offsetX, e.offsetY);
   });
 
-  // Desktop hover label control
   canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -1239,29 +1485,20 @@ function moveDrag(x, y) {
   });
 
   window.addEventListener("mouseup", () => {
-    if (pinDragging) {
-      endPinDrag();
-      return;
-    }
+    if (pinDragging) { endPinDrag(); return; }
     endDrag();
   });
   window.addEventListener("mouseleave", () => {
-    if (pinDragging) {
-      endPinDrag();
-      return;
-    }
+    if (pinDragging) { endPinDrag(); return; }
     endDrag();
   });
   window.addEventListener("blur", () => {
-    if (pinDragging) {
-      endPinDrag();
-      return;
-    }
+    if (pinDragging) { endPinDrag(); return; }
     endDrag();
   });
 
   // -------------------------
-  // Wheel zoom (desktop/trackpad)
+  // Wheel zoom
   // -------------------------
   function handleWheelZoom(e) {
     const rect = canvas.getBoundingClientRect();
@@ -1286,6 +1523,8 @@ function moveDrag(x, y) {
 
     isInteracting = true;
     autoRotateEnabled = false;
+    velX = 0;
+    velY = 0;
     clearTimeout(canvas.__zoomIdleT);
     canvas.__zoomIdleT = setTimeout(() => (isInteracting = false), 250);
   }
@@ -1294,7 +1533,7 @@ function moveDrag(x, y) {
   canvas.addEventListener("wheel", handleWheelZoom, { passive: false });
 
   // -------------------------
-  // Touch: 1-finger rotate, 2-finger pinch zoom (+ tap to select pins)
+  // Touch: 1-finger rotate, 2-finger pinch zoom, tap to select
   // -------------------------
   let pinchActive = false;
   let pinchStartDist = 0;
@@ -1304,9 +1543,7 @@ function moveDrag(x, y) {
   let tapStartX = 0;
   let tapStartY = 0;
   let tapMoved = false;
-    // Prevent mobile synthetic click after a touch tap (avoids double action)
   let suppressNextClick = false;
-
 
   function touchDist(t1, t2) {
     const dx = t1.clientX - t2.clientX;
@@ -1323,8 +1560,6 @@ function moveDrag(x, y) {
       tapStartY = t.clientY;
       tapMoved = false;
 
-          // Do NOT start drag yet.
-      // We only start dragging after the user moves beyond TAP_SLOP_PX.
       dragging = false;
       isInteracting = true;
       lastX = t.clientX - rect.left;
@@ -1334,13 +1569,15 @@ function moveDrag(x, y) {
 
     } else if (e.touches.length === 2) {
       e.preventDefault();
-      mobileInspectPinId = null; // stop inspection when pinch starts
+      mobileInspectPinId = null;
 
       pinchActive = true;
       dragging = false;
       tapMoved = true;
       isInteracting = true;
       autoRotateEnabled = false;
+      velX = 0;
+      velY = 0;
 
       pinchStartDist = touchDist(e.touches[0], e.touches[1]);
       pinchStartZoom = zoomTarget;
@@ -1360,7 +1597,7 @@ function moveDrag(x, y) {
       return;
     }
 
-        if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1) return;
 
     e.preventDefault();
 
@@ -1368,13 +1605,10 @@ function moveDrag(x, y) {
     const dx = t.clientX - tapStartX;
     const dy = t.clientY - tapStartY;
 
-    // Once the user moves past slop, this is a drag.
     if (dx * dx + dy * dy > TAP_SLOP_PX * TAP_SLOP_PX) {
       if (!tapMoved) {
         tapMoved = true;
-        mobileInspectPinId = null; // stop inspection when dragging
-
-        // Start dragging only now (after slop threshold)
+        mobileInspectPinId = null;
         startDrag(lastX, lastY);
       }
     }
@@ -1382,7 +1616,6 @@ function moveDrag(x, y) {
     if (dragging) {
       moveDrag(t.clientX - rect.left, t.clientY - rect.top);
     } else {
-      // Keep last position updated so drag starts smoothly if slop is crossed
       lastX = t.clientX - rect.left;
       lastY = t.clientY - rect.top;
     }
@@ -1401,7 +1634,7 @@ function moveDrag(x, y) {
       handlePinTapMobile(x, y);
     }
 
-        if (dragging) endDrag();
+    if (dragging) endDrag();
     else isInteracting = false;
 
   }, { passive: true });
@@ -1418,58 +1651,45 @@ function moveDrag(x, y) {
     return null;
   }
 
-function handlePinTapMobile(x, y) {
-  const pin = pickPin(x, y);
+  function handlePinTapMobile(x, y) {
+    const pin = pickPin(x, y);
 
-  // Tap empty clears inspect
-  if (!pin) {
+    if (!pin) {
+      mobileInspectPinId = null;
+      return;
+    }
+
+    const myComp = pinClusterOfId.get(pin.id) ?? pin.id;
+    const isClustered = pinRepIdByComp.has(myComp);
+
+    let isBlank = false;
+
+    if (isClustered) {
+      if (mobileInspectPinId) {
+        const inspectComp =
+          pinClusterOfId.get(mobileInspectPinId) ?? mobileInspectPinId;
+        if (inspectComp === myComp) {
+          isBlank = pin.id !== mobileInspectPinId;
+        }
+      } else {
+        const rep = pinRepIdByComp.get(myComp);
+        if (rep) {
+          isBlank = pin.id !== rep;
+        }
+      }
+    }
+
+    if (isClustered && isBlank) {
+      mobileInspectPinId = pin.id;
+      if (zoomTarget < LABELS_SHOW_AT_ZOOM) {
+        setZoomTarget(LABELS_SHOW_AT_ZOOM);
+      }
+      return;
+    }
+
     mobileInspectPinId = null;
-    return;
+    handlePinSelect(x, y);
   }
-
-  // Determine cluster membership (overlap-based)
-  const myComp = pinClusterOfId.get(pin.id) ?? pin.id;
-  const isClustered = pinRepIdByComp.has(myComp);
-
-  // Determine if this pin is currently "blank"
-  // (i.e., not the label currently being shown for its cluster)
-  let isBlank = false;
-
-  if (isClustered) {
-    if (mobileInspectPinId) {
-      // If inspecting within this cluster, only inspected pin is non-blank
-      const inspectComp =
-        pinClusterOfId.get(mobileInspectPinId) ?? mobileInspectPinId;
-      if (inspectComp === myComp) {
-        isBlank = pin.id !== mobileInspectPinId;
-      }
-    } else {
-      // No inspect active: only representative is non-blank
-      const rep = pinRepIdByComp.get(myComp);
-      if (rep) {
-        isBlank = pin.id !== rep;
-      }
-    }
-  }
-
-  // Mobile hover-replication:
-  // Tapping a blank clustered pin reveals its label only
-  if (isClustered && isBlank) {
-    mobileInspectPinId = pin.id;
-
-    // Ensure labels are visible
-    if (zoomTarget < LABELS_SHOW_AT_ZOOM) {
-      setZoomTarget(LABELS_SHOW_AT_ZOOM);
-    }
-    return;
-  }
-
-  // Otherwise: normal select
-  mobileInspectPinId = null;
-  handlePinSelect(x, y);
-}
-
-
 
   function handlePinSelect(x, y) {
     const pin = pickPin(x, y);
@@ -1483,24 +1703,69 @@ function handlePinTapMobile(x, y) {
       admin.selectId(pin.id);
     }
 
+    const tripStatus = destinationTripStatusById.get(dest.id) || { state: TRIP_STATUS.none };
+
+    // Core text fields
     const titleEl = document.getElementById("destTitle");
     const subEl = document.getElementById("destSub");
     const ul = document.getElementById("destBullets");
-    const iso = document.getElementById("isoBox");
-    const isoImg = document.getElementById("isoImage");
-    const isoLabel = document.getElementById("isoLabel");
-    const isoTitle = document.getElementById("isoTitle");
-    const isoDesc = document.getElementById("isoDesc");
-      const isoLink = document.getElementById("isoLink");
-      const detailsLink = document.getElementById("seeDetails");
 
     if (titleEl) titleEl.textContent = formatDestinationName(dest.name);
     if (subEl) subEl.textContent = dest.subtitle || "";
-    if (isoTitle) isoTitle.textContent = dest.isoTitle || "Resort View (Isometric)";
-    if (isoDesc) {
-      isoDesc.textContent = dest.isoDesc || "Select a destination to load the resort view.";
+
+    // 2.0: Status badge
+    const badge = document.getElementById("destStatusBadge");
+    if (badge) {
+      const labels = {
+        none: "No Trip Planned",
+        planned: "Trip Planned",
+        soon: "Trip Soon",
+        active: "Active Trip",
+      };
+      badge.textContent = labels[tripStatus.state] || "";
+      badge.className = `dest-status-badge is-${tripStatus.state}`;
     }
 
+    // 2.0: Tags row
+    const tagsRow = document.getElementById("destTagsRow");
+    if (tagsRow) {
+      tagsRow.innerHTML = "";
+      (dest.tags || []).forEach((tag) => {
+        const chip = document.createElement("span");
+        chip.className = "destination-tag";
+        chip.textContent = tag;
+        tagsRow.appendChild(chip);
+      });
+    }
+
+    // 2.0: Trip info chip
+    const tripInfo = document.getElementById("destTripInfo");
+    if (tripInfo) {
+      if (tripStatus.state === TRIP_STATUS.active) {
+        tripInfo.innerHTML = '<span class="dest-trip-chip is-active">Trip in progress</span>';
+      } else if (tripStatus.daysUntil !== null) {
+        const d = tripStatus.daysUntil;
+        tripInfo.innerHTML = `<span class="dest-trip-chip is-${tripStatus.state}">Next trip in ${d} day${d !== 1 ? "s" : ""}</span>`;
+      } else {
+        tripInfo.innerHTML = "";
+      }
+    }
+
+    // 2.0: Hero strip
+    const heroStrip = document.getElementById("destHeroStrip");
+    const heroImg = document.getElementById("destHeroImg");
+    if (heroStrip && heroImg) {
+      if (dest.heroImage) {
+        heroImg.src = dest.heroImage;
+        heroImg.alt = `${formatDestinationName(dest.name)} diving`;
+        heroStrip.classList.add("is-loaded");
+      } else {
+        heroImg.removeAttribute("src");
+        heroStrip.classList.remove("is-loaded");
+      }
+    }
+
+    // Bullets
     if (ul) {
       ul.innerHTML = "";
       (dest.bullets || []).forEach((b) => {
@@ -1508,6 +1773,20 @@ function handlePinTapMobile(x, y) {
         li.textContent = b;
         ul.appendChild(li);
       });
+    }
+
+    // Iso box
+    const iso = document.getElementById("isoBox");
+    const isoImg = document.getElementById("isoImage");
+    const isoLabel = document.getElementById("isoLabel");
+    const isoTitle = document.getElementById("isoTitle");
+    const isoDesc = document.getElementById("isoDesc");
+    const isoLink = document.getElementById("isoLink");
+    const detailsLink = document.getElementById("seeDetails");
+
+    if (isoTitle) isoTitle.textContent = dest.isoTitle || "Resort View (Isometric)";
+    if (isoDesc) {
+      isoDesc.textContent = dest.isoDesc || "Select a destination to load the resort view.";
     }
 
     if (iso) {
@@ -1524,20 +1803,19 @@ function handlePinTapMobile(x, y) {
           if (isoLabel) isoLabel.textContent = `${formatDestinationName(dest.name)} photos coming soon.`;
         }
       }
-
       iso.classList.remove("is-pulse");
       void iso.offsetWidth;
       iso.classList.add("is-pulse");
     }
 
-      if (isoLink) {
-        isoLink.href = `./destination.html?id=${encodeURIComponent(dest.id || "")}`;
-      }
-      if (detailsLink) {
-        detailsLink.href = `./destination.html?id=${encodeURIComponent(dest.id || "")}`;
-        detailsLink.removeAttribute("aria-disabled");
-        detailsLink.removeAttribute("tabindex");
-      }
+    if (isoLink) {
+      isoLink.href = `./destination.html?id=${encodeURIComponent(dest.id || "")}`;
+    }
+    if (detailsLink) {
+      detailsLink.href = `./destination.html?id=${encodeURIComponent(dest.id || "")}`;
+      detailsLink.removeAttribute("aria-disabled");
+      detailsLink.removeAttribute("tabindex");
+    }
 
     const mediaLink = document.getElementById("relatedMediaLink");
     if (mediaLink) {
@@ -1545,47 +1823,100 @@ function handlePinTapMobile(x, y) {
       mediaLink.href = param ? `../media/index.html?location=${param}` : "../media/index.html";
     }
 
-    // Manual scroll with header offset + double rAF (Safari)
+    // 2.0: Fly globe to this destination
+    flyToDestination(dest);
+
+    // Scroll to destination panel
     const scrollToDestHeader = () => {
       const tEl = document.getElementById("destTitle");
       if (!tEl) return;
-
       const headerEl = document.querySelector(".site-header");
       const headerH = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 0;
       const pad = 12;
-
       const yPos = window.scrollY + tEl.getBoundingClientRect().top - headerH - pad;
-
       window.scrollTo({ top: Math.max(0, yPos), behavior: "smooth" });
     };
 
     requestAnimationFrame(() => requestAnimationFrame(scrollToDestHeader));
   }
 
-  // Desktop click selects immediately
   canvas.addEventListener("click", (e) => {
-  // Mobile browsers can fire a synthetic click after touchend.
-  // If a touch tap just ran, ignore this one click.
-  if (suppressNextClick) {
-    suppressNextClick = false;
-    return;
-  }
-  if (pinDragMoved) {
-    pinDragMoved = false;
-    return;
-  }
+    if (suppressNextClick) {
+      suppressNextClick = false;
+      return;
+    }
+    if (pinDragMoved) {
+      pinDragMoved = false;
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    handlePinSelect(x, y);
+  });
 
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  handlePinSelect(x, y);
-});
+  // -------------------------
+  // 2.0: Keyboard navigation
+  // -------------------------
+  document.addEventListener("keydown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+    if (!inView) return;
 
+    // Don't steal keys when user is typing in a form field (except the globe itself)
+    const active = document.activeElement;
+    if (active && active !== document.body && active.tagName !== "CANVAS" &&
+        !active.closest("#globeWrap")) return;
+
+    const ROT_STEP = 0.08;
+
+    switch (e.key) {
+      case "ArrowLeft":
+        rotYTarget -= ROT_STEP;
+        velX = 0; velY = 0;
+        autoRotateEnabled = false;
+        e.preventDefault();
+        break;
+      case "ArrowRight":
+        rotYTarget += ROT_STEP;
+        velX = 0; velY = 0;
+        autoRotateEnabled = false;
+        e.preventDefault();
+        break;
+      case "ArrowUp":
+        rotXTarget = clamp(rotXTarget - ROT_STEP, -1.10, 1.10);
+        velX = 0; velY = 0;
+        autoRotateEnabled = false;
+        e.preventDefault();
+        break;
+      case "ArrowDown":
+        rotXTarget = clamp(rotXTarget + ROT_STEP, -1.10, 1.10);
+        velX = 0; velY = 0;
+        autoRotateEnabled = false;
+        e.preventDefault();
+        break;
+      case "+":
+      case "=":
+        zoomBy(1.15);
+        autoRotateEnabled = false;
+        break;
+      case "-":
+        zoomBy(1 / 1.15);
+        break;
+      case "Escape":
+      case "Home":
+        resetGlobeView();
+        autoRotateEnabled = true;
+        break;
+    }
+  });
 
   // -------------------------
   // Boot
   // -------------------------
   initDestinations().then(() => {
+    initSearchWiring();
+    initHomeButton();
     animate();
   });
 })();
