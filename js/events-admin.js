@@ -151,16 +151,16 @@
   }
 
   function getToken() {
-    return window.sessionStorage.getItem(tokenStorageKey) || "";
+    return window.localStorage.getItem(tokenStorageKey) || "";
   }
 
   function setToken(token) {
     if (!token) {
-      window.sessionStorage.removeItem(tokenStorageKey);
+      window.localStorage.removeItem(tokenStorageKey);
       clearUiState();
       return;
     }
-    window.sessionStorage.setItem(tokenStorageKey, token);
+    window.localStorage.setItem(tokenStorageKey, token);
   }
 
   function isAuthed() {
@@ -465,7 +465,8 @@
     }
 
     if (triggerBtn) {
-      triggerBtn.textContent = authed ? "Edit Calendar" : "DMZ Login";
+      triggerBtn.style.display = authed ? "" : "none";
+      triggerBtn.textContent = "Edit Calendar";
       triggerBtn.setAttribute("aria-expanded", editMode ? "true" : "false");
     }
 
@@ -2499,70 +2500,8 @@
     showValidation("Worker-backed calendar cleared. Static file fallback is active again.");
   }
 
-  function buildLoginModal(onSuccess) {
-    if (document.querySelector(".events-auth-modal")) return;
-
-    const overlay = document.createElement("div");
-    overlay.className = "events-auth-modal";
-    overlay.innerHTML = `
-      <div class="events-auth-card">
-        <h3>DMZ Admin</h3>
-        <p>Sign in to edit the event calendar.</p>
-        <form class="events-auth-form">
-          <label>Username<input type="text" autocomplete="username" required /></label>
-          <label>Password<input type="password" autocomplete="current-password" required /></label>
-          <p class="events-auth-error" data-error></p>
-          <div class="events-auth-actions">
-            <button type="button" class="btn secondary events-auth-cancel">Cancel</button>
-            <button type="submit" class="btn primary">Sign In</button>
-          </div>
-        </form>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const form = overlay.querySelector("form");
-    const inputs = form ? form.querySelectorAll("input") : [];
-    const errorEl = overlay.querySelector("[data-error]");
-    const cancel = overlay.querySelector(".events-auth-cancel");
-
-    const close = () => overlay.remove();
-    if (cancel) cancel.addEventListener("click", close);
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) close();
-    });
-
-    if (form) {
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        if (errorEl) errorEl.textContent = "";
-        const user = inputs[0] ? inputs[0].value.trim() : "";
-        const pass = inputs[1] ? inputs[1].value : "";
-        const resp = await fetch(loginUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user, pass }),
-        }).catch(() => null);
-
-        if (!resp || !resp.ok) {
-          if (errorEl) errorEl.textContent = "Login failed.";
-          return;
-        }
-
-        const json = await resp.json().catch(() => ({}));
-        if (!json.token) {
-          if (errorEl) errorEl.textContent = "Login failed.";
-          return;
-        }
-
-        setToken(json.token);
-        syncAuthUi();
-        setEditMode(true);
-        setStatus("Ready", "ready");
-        close();
-        if (typeof onSuccess === "function") onSuccess();
-      });
-    }
+  function buildLoginModal(_onSuccess) {
+    window.location.href = "/management/?redirect=" + encodeURIComponent(window.location.href);
   }
 
   if (triggerBtn) {
@@ -2884,5 +2823,8 @@
     await validateStoredToken();
     syncAuthUi();
     await loadPayload();
+    if (isAuthed() && new URLSearchParams(window.location.search).get("editMode") === "1") {
+      setEditMode(true);
+    }
   })();
 })();

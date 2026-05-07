@@ -88,15 +88,15 @@
   };
 
   function getToken() {
-    return window.sessionStorage.getItem(tokenStorageKey) || "";
+    return window.localStorage.getItem(tokenStorageKey) || "";
   }
 
   function setToken(token) {
     if (!token) {
-      window.sessionStorage.removeItem(tokenStorageKey);
+      window.localStorage.removeItem(tokenStorageKey);
       return;
     }
-    window.sessionStorage.setItem(tokenStorageKey, token);
+    window.localStorage.setItem(tokenStorageKey, token);
   }
 
   function canWriteWithoutLogin() {
@@ -795,68 +795,8 @@
     }
   }
 
-  function buildLoginModal(onSuccess) {
-    if (document.querySelector(".media-auth-modal")) return;
-    const overlay = document.createElement("div");
-    overlay.className = "media-edit-modal media-auth-modal";
-    overlay.innerHTML = `
-      <div class="media-edit-modal-card">
-        <h3>DMZ Admin</h3>
-        <p class="media-edit-modal-hint">Sign in to edit destinations.</p>
-        <form class="media-edit-form">
-          <label>Username<input type="text" autocomplete="username" required /></label>
-          <label>Password<input type="password" autocomplete="current-password" required /></label>
-          <p class="media-edit-modal-hint" data-error style="color: rgba(226, 27, 35, 0.85)"></p>
-          <div class="media-edit-modal-actions">
-            <button type="button" class="media-edit-cancel">Cancel</button>
-            <button type="submit" class="media-edit-save">Sign In</button>
-          </div>
-        </form>
-      </div>`;
-    document.body.appendChild(overlay);
-
-    const form = overlay.querySelector("form");
-    const inputs = form ? form.querySelectorAll("input") : [];
-    const errorEl = overlay.querySelector("[data-error]");
-    const cancelBtn = overlay.querySelector(".media-edit-cancel");
-
-    const close = () => overlay.remove();
-    if (cancelBtn) cancelBtn.addEventListener("click", close);
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) close();
-    });
-
-    if (form) {
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        if (errorEl) errorEl.textContent = "";
-        const user = inputs[0] ? inputs[0].value.trim() : "";
-        const pass = inputs[1] ? inputs[1].value : "";
-        try {
-          const resp = await fetch(loginUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user, pass }),
-          });
-          if (!resp.ok) {
-            if (errorEl) errorEl.textContent = "Login failed.";
-            return;
-          }
-          const json = await resp.json().catch(() => ({}));
-          if (!json.token) {
-            if (errorEl) errorEl.textContent = "Login failed.";
-            return;
-          }
-          setToken(json.token);
-          syncAuthUi();
-          close();
-          setStatus("Ready", "ready");
-          if (typeof onSuccess === "function") onSuccess();
-        } catch (error) {
-          if (errorEl) errorEl.textContent = "Login request failed.";
-        }
-      });
-    }
+  function buildLoginModal(_onSuccess) {
+    window.location.href = "/management/?redirect=" + encodeURIComponent(window.location.href);
   }
 
   tabs.forEach((btn) => {
@@ -1043,4 +983,8 @@
   toggleAdminOpen(false);
   updateCurrentSelectionUi(null);
   loadItems();
+  if (isAuthed() && new URLSearchParams(window.location.search).get("editMode") === "1") {
+    toggleAdminOpen(true);
+    toggleEditMode(true);
+  }
 })();

@@ -58,15 +58,15 @@
   }
 
   function getToken() {
-    return window.sessionStorage.getItem(tokenStorageKey) || "";
+    return window.localStorage.getItem(tokenStorageKey) || "";
   }
 
   function setToken(token) {
     if (!token) {
-      window.sessionStorage.removeItem(tokenStorageKey);
+      window.localStorage.removeItem(tokenStorageKey);
       return;
     }
-    window.sessionStorage.setItem(tokenStorageKey, token);
+    window.localStorage.setItem(tokenStorageKey, token);
   }
 
   function setDirty(next) {
@@ -399,101 +399,8 @@
     return item;
   }
 
-  function buildLoginModal(onSuccess) {
-    if (document.querySelector(".media-auth-modal")) return;
-    const overlay = document.createElement("div");
-    overlay.className = "media-edit-modal media-auth-modal";
-    const card = document.createElement("div");
-    card.className = "media-edit-modal-card";
-
-    const heading = document.createElement("h3");
-    heading.textContent = "DMZ Media Admin";
-    const hint = document.createElement("p");
-    hint.className = "media-edit-modal-hint";
-    hint.textContent = "Sign in to manage the media library.";
-
-    const form = document.createElement("form");
-    form.className = "media-edit-form";
-
-    const userLabel = document.createElement("label");
-    userLabel.textContent = "Username";
-    const userInput = document.createElement("input");
-    userInput.type = "text";
-    userInput.autocomplete = "username";
-
-    const passLabel = document.createElement("label");
-    passLabel.textContent = "Password";
-    const passInput = document.createElement("input");
-    passInput.type = "password";
-    passInput.autocomplete = "current-password";
-
-    const error = document.createElement("p");
-    error.className = "media-edit-modal-hint";
-    error.style.color = "rgba(226, 27, 35, 0.85)";
-
-    const actions = document.createElement("div");
-    actions.className = "media-edit-modal-actions";
-    const cancelBtn = document.createElement("button");
-    cancelBtn.type = "button";
-    cancelBtn.className = "media-edit-cancel";
-    cancelBtn.textContent = "Cancel";
-    const saveBtn = document.createElement("button");
-    saveBtn.type = "submit";
-    saveBtn.className = "media-edit-save";
-    saveBtn.textContent = "Sign In";
-    actions.appendChild(cancelBtn);
-    actions.appendChild(saveBtn);
-
-    form.appendChild(userLabel);
-    form.appendChild(userInput);
-    form.appendChild(passLabel);
-    form.appendChild(passInput);
-    form.appendChild(error);
-    form.appendChild(actions);
-
-    card.appendChild(heading);
-    card.appendChild(hint);
-    card.appendChild(form);
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-    lockModalScroll();
-
-    function close() {
-      overlay.remove();
-      unlockModalScroll();
-    }
-
-    cancelBtn.addEventListener("click", close);
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) close();
-    });
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      error.textContent = "";
-      try {
-        const resp = await apiFetch("/api/admin/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user: userInput.value.trim(), pass: passInput.value }),
-        });
-        if (!resp.ok) {
-          error.textContent = "Login failed. Check credentials.";
-          return;
-        }
-        const data = await resp.json();
-        if (!data.token) {
-          error.textContent = "Login failed. Try again.";
-          return;
-        }
-        setToken(data.token);
-        close();
-        if (typeof onSuccess === "function") onSuccess();
-      } catch (err) {
-        console.error("Media login failed.", err);
-        error.textContent = "Login failed. Check the console for details.";
-      }
-    });
+  function buildLoginModal(_onSuccess) {
+    window.location.href = "/management/?redirect=" + encodeURIComponent(window.location.href);
   }
 
   function resolveUrl(url) {
@@ -1455,7 +1362,8 @@
         statusLabel.textContent = authed ? "Signed in" : "Signed out";
       }
       if (loginButton) {
-        loginButton.textContent = authed ? "Re-auth" : "DMZ Login";
+        loginButton.style.display = authed ? "" : "none";
+        loginButton.textContent = "Re-auth";
       }
     };
 
@@ -1743,9 +1651,17 @@
     }
   }
 
+  function maybeAutoActivate() {
+    if (getToken() && new URLSearchParams(window.location.search).get("editMode") === "1") {
+      const toggle = document.querySelector(".media-edit-toggle");
+      if (toggle && !document.body.classList.contains("media-edit-mode")) toggle.click();
+    }
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupEditToggle);
+    document.addEventListener("DOMContentLoaded", () => { setupEditToggle(); maybeAutoActivate(); });
   } else {
     setupEditToggle();
+    maybeAutoActivate();
   }
 })();

@@ -281,15 +281,15 @@
   };
 
   function getToken() {
-    return window.sessionStorage.getItem(tokenStorageKey) || "";
+    return window.localStorage.getItem(tokenStorageKey) || "";
   }
 
   function setToken(token) {
     if (!token) {
-      window.sessionStorage.removeItem(tokenStorageKey);
+      window.localStorage.removeItem(tokenStorageKey);
       return;
     }
-    window.sessionStorage.setItem(tokenStorageKey, token);
+    window.localStorage.setItem(tokenStorageKey, token);
   }
 
   function showAuthed(authed) {
@@ -2986,6 +2986,11 @@
     }
     setToken(data.token);
     setStatus(loginStatus, "");
+    const redirectTo = new URLSearchParams(window.location.search).get("redirect");
+    if (redirectTo && redirectTo.startsWith("/")) {
+      window.location.href = redirectTo;
+      return;
+    }
     showAuthed(true);
     await loadRecords();
     await loadSiteCalendar();

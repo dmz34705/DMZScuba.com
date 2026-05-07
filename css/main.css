@@ -67,51 +67,6 @@ a:focus-visible{
 }
 
 /* ============================================================
-   2) BUTTONS
-   ============================================================ */
-
-.btn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 18px;
-  border-radius: 14px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  border: 1px solid transparent;
-  transition:
-    transform 140ms ease,
-    box-shadow 140ms ease,
-    background 140ms ease,
-    border-color 140ms ease,
-    opacity 140ms ease;
-  user-select: none;
-}
-
-.btn.primary{
-  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
-  box-shadow: 0 14px 28px rgba(226, 27, 35, 0.18), 0 10px 26px rgba(0,0,0,0.45);
-}
-
-.btn.primary:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 16px 34px rgba(226, 27, 35, 0.22), 0 12px 30px rgba(0,0,0,0.55);
-}
-
-.btn.secondary{
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.16);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.45);
-}
-
-.btn.secondary:hover{
-  transform: translateY(-1px);
-  border-color: rgba(255,255,255,0.26);
-  background: rgba(255,255,255,0.08);
-}
-
-/* ============================================================
    3) HEADER / NAV
    ============================================================ */
 
