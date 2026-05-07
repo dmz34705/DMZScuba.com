@@ -2720,3 +2720,573 @@
     border-radius: 16px 16px 0 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NATIVE STUDIO EDITORS  (mstudio-*)
+   Shared by management-media-studio.js and management-travel-studio.js
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Panel wrapper */
+.mstudio-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.mstudio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.025);
+  flex-shrink: 0;
+}
+
+.mstudio-toolbar-left,
+.mstudio-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.mstudio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(234, 242, 255, 0.82);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.mstudio-btn:hover {
+  background: rgba(85, 185, 255, 0.13);
+  border-color: rgba(85, 185, 255, 0.45);
+  color: var(--text);
+}
+
+.mstudio-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mstudio-btn-primary {
+  background: rgba(228, 50, 60, 0.72);
+  border-color: rgba(228, 50, 60, 0.55);
+  color: #fff;
+}
+
+.mstudio-btn-primary:hover {
+  background: rgba(228, 50, 60, 0.9);
+  border-color: rgba(228, 50, 60, 0.8);
+  color: #fff;
+}
+
+.mstudio-btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.mstudio-dirty-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 190, 60, 0.9);
+  letter-spacing: 0.02em;
+}
+
+.mstudio-status-text {
+  font-size: 12px;
+  color: rgba(234, 242, 255, 0.6);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mstudio-status-text[data-stype="success"] { color: rgba(80, 220, 140, 0.9); }
+.mstudio-status-text[data-stype="error"]   { color: rgba(255, 90, 90, 0.95); }
+
+/* ── Workspace (sidebar | preview) ──────────────────────────────────────── */
+.mstudio-workspace {
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  flex: 1 1 0;
+  min-height: 0;
+  height: calc(100dvh - 340px);
+  min-height: 460px;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.mstudio-sidebar {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.mstudio-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.mstudio-search {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 5px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  outline: none;
+}
+
+.mstudio-search:focus { border-color: rgba(85, 185, 255, 0.45); }
+
+.mstudio-count {
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.4);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Item list ───────────────────────────────────────────────────────────── */
+.mstudio-list {
+  flex: 1 1 0;
+  overflow-y: auto;
+  padding: 5px;
+  min-height: 80px;
+}
+
+.mstudio-list::-webkit-scrollbar { width: 5px; }
+.mstudio-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+.mstudio-empty {
+  padding: 20px 10px;
+  text-align: center;
+  color: rgba(234, 242, 255, 0.38);
+  font-size: 12px;
+}
+
+.mstudio-list-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.mstudio-list-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mstudio-list-item.is-selected {
+  background: rgba(85, 185, 255, 0.12);
+  border-color: rgba(85, 185, 255, 0.35);
+}
+
+.mstudio-list-thumb {
+  width: 44px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  display: grid;
+  place-items: center;
+}
+
+.mstudio-list-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mstudio-thumb-ph {
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+.mstudio-dest-flag {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.mstudio-list-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mstudio-list-title {
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mstudio-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mstudio-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(234, 242, 255, 0.55);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mstudio-chip-type {
+  background: rgba(85, 185, 255, 0.1);
+  border-color: rgba(85, 185, 255, 0.25);
+  color: rgba(85, 185, 255, 0.9);
+}
+
+.mstudio-chip-dirty {
+  background: rgba(255, 180, 40, 0.1);
+  border-color: rgba(255, 180, 40, 0.28);
+  color: rgba(255, 190, 60, 0.9);
+}
+
+/* ── Edit pane ───────────────────────────────────────────────────────────── */
+.mstudio-edit-pane {
+  flex-shrink: 0;
+  max-height: 54%;
+  overflow-y: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mstudio-edit-pane::-webkit-scrollbar { width: 5px; }
+.mstudio-edit-pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.mstudio-hint {
+  color: rgba(234, 242, 255, 0.38);
+  font-size: 12px;
+  text-align: center;
+  padding: 14px 0;
+  margin: 0;
+}
+
+.mstudio-hint-sm {
+  font-size: 11px;
+  text-align: left;
+  padding: 4px 0 8px;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────────────── */
+.mstudio-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 2px;
+}
+
+.mstudio-form-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(147, 211, 255, 0.8);
+}
+
+.mstudio-delete-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 90, 90, 0.75);
+  background: none;
+  border: 1px solid rgba(255, 90, 90, 0.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.mstudio-delete-btn:hover {
+  background: rgba(255, 90, 90, 0.12);
+  color: rgba(255, 90, 90, 0.95);
+}
+
+.mstudio-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.55);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mstudio-label em {
+  font-style: normal;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.mstudio-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 9px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.12s;
+}
+
+.mstudio-input:focus {
+  border-color: rgba(85, 185, 255, 0.5);
+  background: rgba(85, 185, 255, 0.04);
+}
+
+.mstudio-textarea {
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.45;
+}
+
+.mstudio-json-editor {
+  font-family: 'Consolas', 'Fira Code', monospace;
+  font-size: 11px;
+  min-height: 220px;
+  line-height: 1.5;
+}
+
+.mstudio-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mstudio-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.45);
+  padding: 4px 0;
+}
+
+.mstudio-code {
+  font-family: monospace;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: rgba(147, 211, 255, 0.8);
+  word-break: break-all;
+}
+
+.mstudio-form-actions {
+  display: flex;
+  gap: 7px;
+  padding-top: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── Tabs (travel) ───────────────────────────────────────────────────────── */
+.mstudio-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mstudio-tabs button {
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(234, 242, 255, 0.6);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.mstudio-tabs button:hover {
+  background: rgba(85, 185, 255, 0.1);
+  border-color: rgba(85, 185, 255, 0.3);
+  color: var(--text);
+}
+
+.mstudio-tabs button.is-active {
+  background: rgba(85, 185, 255, 0.16);
+  border-color: rgba(85, 185, 255, 0.48);
+  color: var(--text);
+}
+
+.mstudio-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.mstudio-tab-panels {
+  flex: 1;
+}
+
+.mstudio-json-panel {
+  gap: 8px;
+}
+
+/* ── Preview column ──────────────────────────────────────────────────────── */
+.mstudio-preview-col {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.mstudio-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.mstudio-preview-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 255, 0.4);
+}
+
+.mstudio-preview-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mstudio-preview-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #f0f0f0;
+}
+
+/* ── Upload / add modal ──────────────────────────────────────────────────── */
+.mstudio-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 7, 14, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.mstudio-modal {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  border: 1px solid rgba(85, 185, 255, 0.28);
+  border-radius: 10px;
+  background: rgba(7, 19, 37, 0.97);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mstudio-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mstudio-modal-head h3 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
+.mstudio-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .mstudio-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+  }
+
+  .mstudio-sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: 50vh;
+  }
+
+  .mstudio-edit-pane {
+    max-height: none;
+  }
+
+  .mstudio-preview-col {
+    min-height: 340px;
+  }
+
+  .mstudio-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260429d" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260507a" />
 </head>
 
 <body class="management-page">
@@ -449,28 +449,130 @@
         </section>
       </section>
 
-      <section class="management-studio-panel" data-site-studio-panel="media" hidden>
-        <div class="management-studio-panel-head">
-          <div>
-            <p class="management-kicker">Media page</p>
-            <h2>Media Library Editor</h2>
-            <p>Edit, reorder, upload, sync Stream dates, export JSON, and publish the public media gallery.</p>
+      <!-- ═══ MEDIA STUDIO ═══════════════════════════════════════════ -->
+      <section class="management-studio-panel mstudio-panel" data-site-studio-panel="media" hidden>
+        <div class="mstudio-toolbar">
+          <div class="mstudio-toolbar-left">
+            <button class="mstudio-btn" type="button" data-ms-add>+ Add Item</button>
+            <button class="mstudio-btn" type="button" data-ms-upload>↑ Upload</button>
+            <button class="mstudio-btn" type="button" data-ms-sync>↻ Sync Stream</button>
+            <button class="mstudio-btn" type="button" data-ms-export>⤓ Export JSON</button>
           </div>
-          <a class="btn secondary" href="/pages/media/?editMode=1" target="_blank" rel="noopener">Open Full Page</a>
+          <div class="mstudio-toolbar-right">
+            <span class="mstudio-dirty-badge" data-ms-dirty hidden>● Unsaved changes</span>
+            <span class="mstudio-status-text" data-ms-status aria-live="polite"></span>
+            <a class="mstudio-btn" href="/pages/media/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
+            <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-publish>Publish to Site</button>
+          </div>
         </div>
-        <iframe class="management-studio-frame" title="DMZ Scuba media editor" data-site-studio-frame="media" data-src="/pages/media/?editMode=1"></iframe>
+
+        <div class="mstudio-workspace">
+          <div class="mstudio-sidebar">
+            <div class="mstudio-search-row">
+              <input class="mstudio-search" type="search" placeholder="Search media…" data-ms-search aria-label="Search media items" />
+              <span class="mstudio-count" data-ms-count></span>
+            </div>
+            <div class="mstudio-list" data-ms-list role="listbox" aria-label="Media items"></div>
+            <div class="mstudio-edit-pane" data-ms-edit-pane>
+              <p class="mstudio-hint" data-ms-hint>Select an item above to edit it.</p>
+              <div class="mstudio-form" data-ms-form hidden></div>
+            </div>
+          </div>
+
+          <div class="mstudio-preview-col">
+            <div class="mstudio-preview-bar">
+              <span class="mstudio-preview-label">Live Preview</span>
+              <div class="mstudio-preview-actions">
+                <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-refresh>↻ Refresh</button>
+                <a class="mstudio-btn mstudio-btn-sm" href="/pages/media/" target="_blank" rel="noopener">↗ Open</a>
+              </div>
+            </div>
+            <iframe class="mstudio-preview-frame" data-ms-preview title="Media page live preview"></iframe>
+          </div>
+        </div>
+
+        <!-- Add / Upload modal -->
+        <div class="mstudio-overlay" data-ms-upload-overlay hidden>
+          <div class="mstudio-modal">
+            <div class="mstudio-modal-head">
+              <h3>Add Media Item</h3>
+              <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-upload-close>✕ Close</button>
+            </div>
+            <p class="mstudio-hint mstudio-hint-sm">For large Cloudflare Stream uploads use the Full Editor. For URL-based items, fill in the fields below.</p>
+            <form class="mstudio-modal-form" data-ms-upload-form>
+              <label class="mstudio-label"><span>Title</span>
+                <input class="mstudio-input" type="text" name="title" required maxlength="120" placeholder="Wreck dive at Thunder Bay" />
+              </label>
+              <div class="mstudio-row-2">
+                <label class="mstudio-label"><span>Type</span>
+                  <select class="mstudio-input" name="type">
+                    <option value="video">Video</option>
+                    <option value="photo">Photo</option>
+                  </select>
+                </label>
+                <label class="mstudio-label"><span>Location</span>
+                  <input class="mstudio-input" type="text" name="location" maxlength="100" placeholder="Great Lakes, IL" />
+                </label>
+              </div>
+              <label class="mstudio-label"><span>Media URL</span>
+                <input class="mstudio-input" type="url" name="url" placeholder="/assets/media/video.mp4 or https://…" />
+              </label>
+              <label class="mstudio-label"><span>Thumbnail URL</span>
+                <input class="mstudio-input" type="url" name="thumbUrl" placeholder="/assets/media/thumbnails/thumb.jpg" />
+              </label>
+              <div class="mstudio-form-actions">
+                <button class="mstudio-btn mstudio-btn-primary" type="submit">Add Item</button>
+                <button class="mstudio-btn" type="button" data-ms-upload-close>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
-      <section class="management-studio-panel" data-site-studio-panel="travel" hidden>
-        <div class="management-studio-panel-head">
-          <div>
-            <p class="management-kicker">Travel page</p>
-            <h2>Travel Destination Editor</h2>
-            <p>Add destinations, edit globe/card/detail data, upload destination images, use advanced JSON, and publish changes.</p>
+      <!-- ═══ TRAVEL STUDIO ════════════════════════════════════════════ -->
+      <section class="management-studio-panel mstudio-panel" data-site-studio-panel="travel" hidden>
+        <div class="mstudio-toolbar">
+          <div class="mstudio-toolbar-left">
+            <button class="mstudio-btn" type="button" data-ts-add>+ Add Destination</button>
+            <button class="mstudio-btn" type="button" data-ts-delete-btn disabled>🗑 Delete</button>
           </div>
-          <a class="btn secondary" href="/pages/travel/?editMode=1" target="_blank" rel="noopener">Open Full Page</a>
+          <div class="mstudio-toolbar-right">
+            <span class="mstudio-dirty-badge" data-ts-dirty hidden>● Unsaved changes</span>
+            <span class="mstudio-status-text" data-ts-status aria-live="polite"></span>
+            <a class="mstudio-btn" href="/pages/travel/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
+            <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-publish>Publish to Site</button>
+          </div>
         </div>
-        <iframe class="management-studio-frame" title="DMZ Scuba travel destination editor" data-site-studio-frame="travel" data-src="/pages/travel/?editMode=1"></iframe>
+
+        <div class="mstudio-workspace">
+          <div class="mstudio-sidebar">
+            <div class="mstudio-list mstudio-dest-list" data-ts-list role="listbox" aria-label="Destinations"></div>
+            <div class="mstudio-edit-pane" data-ts-edit-pane>
+              <p class="mstudio-hint" data-ts-hint>Select a destination to edit.</p>
+              <div class="mstudio-tabs" data-ts-tabs hidden>
+                <button class="is-active" type="button" data-ts-tab="core">Core</button>
+                <button type="button" data-ts-tab="content">Content</button>
+                <button type="button" data-ts-tab="json">JSON</button>
+              </div>
+              <div class="mstudio-tab-panels" data-ts-panels hidden></div>
+              <div class="mstudio-form-actions" data-ts-actions hidden>
+                <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-save>Save Changes</button>
+                <button class="mstudio-btn" type="button" data-ts-discard>Discard</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mstudio-preview-col">
+            <div class="mstudio-preview-bar">
+              <span class="mstudio-preview-label">Live Preview</span>
+              <div class="mstudio-preview-actions">
+                <button class="mstudio-btn mstudio-btn-sm" type="button" data-ts-refresh>↻ Refresh</button>
+                <a class="mstudio-btn mstudio-btn-sm" href="/pages/travel/" target="_blank" rel="noopener">↗ Open</a>
+              </div>
+            </div>
+            <iframe class="mstudio-preview-frame" data-ts-preview title="Travel page live preview"></iframe>
+          </div>
+        </div>
       </section>
 
       <section class="management-studio-panel management-home-studio" data-site-studio-panel="home" hidden>
@@ -523,5 +625,7 @@
   </main>
 
   <script src="/js/management.js?v=20260429c" defer></script>
+  <script src="/js/management-media-studio.js?v=20260507a" defer></script>
+  <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
 </body>
 </html>
