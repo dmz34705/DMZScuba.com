@@ -394,6 +394,13 @@
   color: var(--muted);
 }
 
+.events-preview .event-card-preview-spots{
+  margin: 12px 0 0;
+  color: rgba(85,185,255,0.94);
+  font-size: 14px;
+  font-weight: 800;
+}
+
 .events-preview .event-card-actions{
   margin-top: 14px;
 }
