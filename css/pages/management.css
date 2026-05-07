@@ -35,6 +35,8 @@
 .management-login-card,
 .management-panel,
 .management-list-panel,
+.management-content-studio,
+.management-studio-panel,
 .management-site-tools,
 .management-metrics article {
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -739,6 +741,131 @@
   background: rgba(85, 185, 255, 0.13);
 }
 
+.management-content-studio {
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.management-studio-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.management-studio-tabs button {
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(234, 242, 255, 0.72);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.management-studio-tabs button:hover,
+.management-studio-tabs button.is-active {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.14);
+  color: var(--text);
+}
+
+.management-studio-panel {
+  display: grid;
+  gap: 14px;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.management-studio-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.management-studio-panel-head h2,
+.management-studio-panel-head p {
+  margin: 0;
+}
+
+.management-studio-panel-head h2 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.management-studio-panel-head p:not(.management-kicker) {
+  margin-top: 5px;
+  color: rgba(234, 242, 255, 0.64);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.management-studio-frame {
+  width: 100%;
+  min-height: 78vh;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: #050b14;
+}
+
+.management-studio-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.management-studio-cards article {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 16px;
+}
+
+.management-studio-cards h3,
+.management-studio-cards p {
+  margin: 0;
+}
+
+.management-studio-cards h3 {
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
+.management-studio-cards p {
+  margin-top: 8px;
+  color: rgba(234, 242, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.management-studio-cards a,
+.management-studio-cards button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 0 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.management-studio-cards a:hover,
+.management-studio-cards button:hover {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
+}
+
 .management-ticker-modal {
   position: fixed;
   inset: 0;
@@ -1354,6 +1481,20 @@
 }
 
 @media (max-width: 980px) {
+  .management-studio-tabs,
+  .management-studio-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .management-studio-panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .management-studio-frame {
+    min-height: 72vh;
+  }
+
   .management-workspace {
     grid-template-columns: 1fr;
   }

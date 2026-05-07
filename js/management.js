@@ -34,7 +34,7 @@
   const homeTickerForm = app.querySelector("[data-home-ticker-form]");
   const homeTickerLinesInput = app.querySelector("[data-home-ticker-lines]");
   const homeTickerStatus = app.querySelector("[data-home-ticker-status]");
-  const openHomeTickerButton = app.querySelector("[data-open-home-ticker]");
+  const openHomeTickerButtons = Array.from(app.querySelectorAll("[data-open-home-ticker]"));
   const closeHomeTickerButtons = Array.from(app.querySelectorAll("[data-close-home-ticker]"));
   const filterButtons = Array.from(app.querySelectorAll("[data-filter-type]"));
   const calendarStatus = app.querySelector("[data-calendar-status]");
@@ -55,6 +55,9 @@
   const classRegistrationSummary = app.querySelector("[data-class-registration-summary]");
   const classRegistrationList = app.querySelector("[data-class-registration-list]");
   const refreshClassRegistrationsButton = app.querySelector("[data-refresh-class-registrations]");
+  const siteStudioTabs = Array.from(app.querySelectorAll("[data-site-studio-tab]"));
+  const siteStudioOpenButtons = Array.from(app.querySelectorAll("[data-site-studio-open]"));
+  const siteStudioPanels = Array.from(app.querySelectorAll("[data-site-studio-panel]"));
   const extraFieldsSection = app.querySelector(".management-extra-fields");
   const classSessionTypes = ["classroom", "pool", "openWater"];
   const classSessionLabels = {
@@ -292,9 +295,33 @@
     window.localStorage.setItem(tokenStorageKey, token);
   }
 
+  function openSiteStudioPanel(panelName) {
+    const key = String(panelName || "operations").trim() || "operations";
+    const targetPanel = siteStudioPanels.find((panel) => panel.getAttribute("data-site-studio-panel") === key)
+      || siteStudioPanels.find((panel) => panel.getAttribute("data-site-studio-panel") === "operations");
+    if (!targetPanel) return;
+    const activeKey = targetPanel.getAttribute("data-site-studio-panel") || "operations";
+
+    siteStudioPanels.forEach((panel) => {
+      panel.hidden = panel !== targetPanel;
+    });
+    siteStudioTabs.forEach((tab) => {
+      const isActive = tab.getAttribute("data-site-studio-tab") === activeKey;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    const frame = targetPanel.querySelector("[data-site-studio-frame]");
+    if (frame && !frame.getAttribute("src")) {
+      const src = frame.getAttribute("data-src") || "";
+      if (src) frame.setAttribute("src", src);
+    }
+  }
+
   function showAuthed(authed) {
     if (loginSection) loginSection.hidden = authed;
     if (dashboard) dashboard.hidden = !authed;
+    if (authed) openSiteStudioPanel("operations");
   }
 
   function openEditorModal() {
@@ -3188,7 +3215,19 @@
     if (quickAddForm) quickAddForm.addEventListener("submit", quickAddTask);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderRecords);
-    if (openHomeTickerButton) openHomeTickerButton.addEventListener("click", openHomeTickerModal);
+    openHomeTickerButtons.forEach((button) => {
+      button.addEventListener("click", openHomeTickerModal);
+    });
+    siteStudioTabs.forEach((button) => {
+      button.addEventListener("click", () => {
+        openSiteStudioPanel(button.getAttribute("data-site-studio-tab") || "operations");
+      });
+    });
+    siteStudioOpenButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        openSiteStudioPanel(button.getAttribute("data-site-studio-open") || "operations");
+      });
+    });
     closeHomeTickerButtons.forEach((button) => {
       button.addEventListener("click", closeHomeTickerModal);
     });

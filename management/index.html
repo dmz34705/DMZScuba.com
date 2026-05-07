@@ -82,13 +82,22 @@
         <div class="management-site-links">
           <button type="button" data-open-home-ticker>Edit Home Ticker</button>
           <a href="/pages/events/?editMode=1" target="_blank" rel="noopener">Events + Registration</a>
-          <a href="/pages/media/?editMode=1" target="_blank" rel="noopener">Media Library</a>
-          <a href="/pages/travel/?editMode=1" target="_blank" rel="noopener">Travel Destinations</a>
+          <button type="button" data-site-studio-open="media">Media Library</button>
+          <button type="button" data-site-studio-open="travel">Travel Destinations</button>
           <a href="/pages/training/" target="_blank" rel="noopener">Training Pages</a>
         </div>
       </section>
 
-      <section class="management-workspace">
+      <section class="management-content-studio" aria-label="Management content studio">
+        <div class="management-studio-tabs" role="tablist" aria-label="Management workspace sections">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-site-studio-tab="operations">Operations</button>
+          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="media">Media Editor</button>
+          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="travel">Travel Editor</button>
+          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="home">Home Page</button>
+        </div>
+      </section>
+
+      <section class="management-workspace" data-site-studio-panel="operations">
         <aside class="management-panel" role="dialog" aria-modal="true" aria-labelledby="managementEditorTitle">
           <div class="management-panel-head">
             <h2 id="managementEditorTitle" data-editor-title>New Item</h2>
@@ -438,6 +447,53 @@
           </form>
           <div class="management-records" data-record-list aria-live="polite"></div>
         </section>
+      </section>
+
+      <section class="management-studio-panel" data-site-studio-panel="media" hidden>
+        <div class="management-studio-panel-head">
+          <div>
+            <p class="management-kicker">Media page</p>
+            <h2>Media Library Editor</h2>
+            <p>Edit, reorder, upload, sync Stream dates, export JSON, and publish the public media gallery.</p>
+          </div>
+          <a class="btn secondary" href="/pages/media/?editMode=1" target="_blank" rel="noopener">Open Full Page</a>
+        </div>
+        <iframe class="management-studio-frame" title="DMZ Scuba media editor" data-site-studio-frame="media" data-src="/pages/media/?editMode=1"></iframe>
+      </section>
+
+      <section class="management-studio-panel" data-site-studio-panel="travel" hidden>
+        <div class="management-studio-panel-head">
+          <div>
+            <p class="management-kicker">Travel page</p>
+            <h2>Travel Destination Editor</h2>
+            <p>Add destinations, edit globe/card/detail data, upload destination images, use advanced JSON, and publish changes.</p>
+          </div>
+          <a class="btn secondary" href="/pages/travel/?editMode=1" target="_blank" rel="noopener">Open Full Page</a>
+        </div>
+        <iframe class="management-studio-frame" title="DMZ Scuba travel destination editor" data-site-studio-frame="travel" data-src="/pages/travel/?editMode=1"></iframe>
+      </section>
+
+      <section class="management-studio-panel management-home-studio" data-site-studio-panel="home" hidden>
+        <div class="management-studio-panel-head">
+          <div>
+            <p class="management-kicker">Home page</p>
+            <h2>Homepage Editing</h2>
+            <p>Manage high-visibility homepage content from the console.</p>
+          </div>
+          <button class="btn primary" type="button" data-open-home-ticker>Edit Home Ticker</button>
+        </div>
+        <div class="management-studio-cards">
+          <article>
+            <h3>News ticker</h3>
+            <p>Update the rotating homepage ticker lines that visitors see near the hero.</p>
+            <button type="button" data-open-home-ticker>Edit Ticker</button>
+          </article>
+          <article>
+            <h3>Upcoming events</h3>
+            <p>Homepage event cards are driven by the Events + Registration calendar feed.</p>
+            <a href="/pages/events/?editMode=1" target="_blank" rel="noopener">Edit Events</a>
+          </article>
+        </div>
       </section>
 
       <section class="management-ticker-modal" data-home-ticker-modal role="dialog" aria-modal="true" aria-labelledby="managementTickerTitle" hidden>
