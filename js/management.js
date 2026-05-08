@@ -40,6 +40,7 @@
   const calendarStatus = app.querySelector("[data-calendar-status]");
   const refreshCalendarButton = app.querySelector("[data-refresh-calendar]");
   const showPastCalendarToggle = app.querySelector("[data-show-past-calendar]");
+  const openManagementCalendarButtons = app.querySelectorAll("[data-open-management-calendar]");
   const registrationManager = app.querySelector("[data-registration-manager]");
   const registrationSummary = app.querySelector("[data-registration-summary]");
   const registrationList = app.querySelector("[data-registration-list]");
@@ -204,6 +205,7 @@
         "classId",
         "capacity",
         "registrationClosed",
+        "registrationEmailContent",
         "classSchedule",
         "classRoster",
         "notes",
@@ -230,6 +232,7 @@
         "registrationEnabled",
         "registrationClosed",
         "capacity",
+        "registrationEmailContent",
         "notes",
       ],
     },
@@ -579,6 +582,15 @@
       .join("");
     const fallback = type === "inquiry" ? "new" : options[0];
     select.value = options.includes(current) ? current : fallback;
+  }
+
+  function openManagementCalendarList() {
+    state.filterType = "trip";
+    filterButtons.forEach((button) => {
+      button.classList.toggle("is-active", (button.getAttribute("data-filter-type") || "all") === "trip");
+    });
+    renderRecords();
+    if (recordList) recordList.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function syncTimeOptions() {
@@ -1330,6 +1342,7 @@
         eventLocation: normalizeSiteText(item.location),
         registrationEnabled: item.registrationEnabled ? "1" : "",
         registrationClosed: item.registrationClosed ? "1" : "",
+        registrationEmailContent: normalizeSiteText(item.registrationEmailContent),
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
         certification: existingExtras.certification || "",
         source: "Site calendar",
@@ -2499,6 +2512,7 @@
         recordForm.elements.registrationClosed && !recordForm.elements.registrationClosed.disabled
           ? (recordForm.elements.registrationClosed.checked ? "1" : "")
           : String(existingExtras.registrationClosed || ""),
+      registrationEmailContent: textValue("registrationEmailContent", existingExtras.registrationEmailContent),
       capacity: textValue("capacity", existingExtras.capacity),
       certification: textValue("certification", existingExtras.certification),
       amountOwed: textValue("amountOwed", existingExtras.amountOwed),
@@ -2714,6 +2728,7 @@
     const remaining = events.filter((item) => String(item && item.managementClassId || "").trim().toLowerCase() !== classId);
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
     const description = String(record.notes || "").trim();
+    const registrationEmailContent = String(extras.registrationEmailContent || "").trim();
     const roster = getClassRosterSnapshot({ ...record, extras: { ...extras, classId } }, classId);
     const generated = sessions.map((session, index) => {
       const primary = index === 0;
@@ -2733,6 +2748,7 @@
         registrationEnabled: primary && capacity > 0,
         registrationClosed: primary && (Boolean(extras.registrationClosed) || registrationClosed),
         registrationCapacity: primary ? capacity : 0,
+        registrationEmailContent: primary ? registrationEmailContent : "",
         ctaLabel: primary ? "Register For Class" : "",
         ctaHref: "",
         managementClassId: classId,
@@ -2877,6 +2893,7 @@
     item.registrationEnabled = Boolean(extras.registrationEnabled);
     item.registrationClosed = Boolean(extras.registrationClosed);
     item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
+    item.registrationEmailContent = extras.registrationEmailContent || "";
     item.managementPriority = record.priority || "";
     item.managementOwner = record.owner || "";
     item.managementContactName = record.contactName || "";
@@ -3215,6 +3232,9 @@
     if (quickAddForm) quickAddForm.addEventListener("submit", quickAddTask);
     if (refreshCalendarButton) refreshCalendarButton.addEventListener("click", () => loadSiteCalendar());
     if (showPastCalendarToggle) showPastCalendarToggle.addEventListener("change", renderRecords);
+    openManagementCalendarButtons.forEach((button) => {
+      button.addEventListener("click", openManagementCalendarList);
+    });
     openHomeTickerButtons.forEach((button) => {
       button.addEventListener("click", openHomeTickerModal);
     });
