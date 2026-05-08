@@ -1690,79 +1690,223 @@
   }
 }
 
+/* ── Mobile: native bottom-tab app layout ─────────────────────────────────── */
+
 @media (max-width: 680px) {
+
+  /* ── App shell: flex column — content fills top, tabs pin to bottom ── */
   .mgmt-app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    height: auto;
-    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
   }
 
-  .mgmt-sidebar {
-    height: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  .mgmt-brand {
-    padding: 12px 14px;
-    border-bottom: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  .mgmt-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 8px;
+  .mgmt-main {
+    order: 1;
     flex: 1;
+    height: 0; /* flex trick: take all remaining space */
+    overflow: hidden;
+  }
+
+  /* ── Sidebar → bottom tab bar ── */
+  .mgmt-sidebar {
+    order: 2;
+    height: auto;
+    flex-direction: row;
+    align-items: stretch;
+    overflow: hidden;
+    flex-shrink: 0;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(4, 11, 22, 0.99);
+  }
+
+  /* Hide sidebar elements that don't belong in a tab bar */
+  .mgmt-brand,
+  .mgmt-sidebar-stats,
+  .mgmt-sidebar-footer,
+  .mgmt-nav-label,
+  .mgmt-nav-secondary,
+  .mgmt-nav-section:last-child { display: none; }
+
+  /* Nav flattens into a single horizontal row */
+  .mgmt-nav {
+    flex: 1;
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
   }
 
   .mgmt-nav-section {
+    flex: 1;
     flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 4px;
+    padding: 0;
+    gap: 0;
+    margin: 0;
   }
 
-  .mgmt-nav-label { display: none; }
-
-  .mgmt-sidebar-stats,
-  .mgmt-sidebar-footer { display: none; }
-
-  .mgmt-main {
-    height: auto;
-    overflow: visible;
+  /* ── Bottom tab items ── */
+  .mgmt-nav-item {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 2px 6px;
+    border-radius: 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(234, 242, 255, 0.48);
+    gap: 2px;
+    min-height: 54px;
+    position: relative;
   }
 
+  .mgmt-nav-item:hover { background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.72); }
+
+  .mgmt-nav-item.is-active {
+    background: rgba(85, 185, 255, 0.07);
+    color: #cfeeff;
+    font-weight: 800;
+    border-radius: 0;
+  }
+
+  /* Active indicator bar at the top of the tab */
+  .mgmt-nav-item.is-active::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 6px;
+    right: 6px;
+    height: 2px;
+    background: rgba(85, 185, 255, 0.85);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Badge: show as small count text below label */
+  .mgmt-nav-badge {
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(85, 185, 255, 0.60);
+    line-height: 1;
+  }
+
+  .mgmt-nav-badge:empty { display: none; }
+
+  /* ── Panels: full-height, overflow-hidden, flex column ── */
   .mgmt-panel {
-    height: auto;
-    overflow: visible;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
-  .mgmt-panel.mstudio-panel {
-    height: auto;
-  }
+  .mgmt-panel.mstudio-panel { height: 100%; overflow: hidden; }
 
+  /* ── Operations body: scrolls on mobile ── */
   .mgmt-ops-body {
-    overflow: visible;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 14px 32px;
+    min-height: 0;
   }
 
+  /* ── Topbar: compact one-row header ── */
+  .mgmt-topbar {
+    flex-wrap: nowrap;
+    padding: 10px 14px 8px;
+    gap: 8px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    align-items: center;
+  }
+
+  .mgmt-topbar-left { flex-shrink: 0; }
+  .mgmt-panel-title { font-size: 17px; margin: 0; }
+
+  .mgmt-topbar-right { gap: 6px; flex-shrink: 0; }
+
+  .mgmt-search { flex: 1 1 auto; min-width: 0; }
+  .mgmt-search-input { width: 100%; min-width: 0; font-size: 13px; }
+
+  .mgmt-sort-select { max-width: 90px; font-size: 12px; padding: 5px 4px; }
+
+  .mgmt-new-btn { padding: 7px 10px; font-size: 12px; flex-shrink: 0; }
+
+  /* ── Ops toolbar: compact on mobile ── */
+  .mgmt-ops-toolbar { padding: 10px 0 0; gap: 10px; }
+  .mgmt-cal-row { flex-wrap: wrap; gap: 8px; }
+
+  /* ── Record edit drawer → full-width bottom sheet ── */
   .management-panel {
-    width: 100%;
+    top: auto;
+    bottom: 0;
     left: 0;
+    right: 0;
+    width: 100%;
+    height: 92dvh;
+    max-height: 92dvh;
     border-left: none;
     border-top: 1px solid rgba(85, 185, 255, 0.22);
     border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.52);
   }
 
+  /* Drag handle indicator at top of bottom sheet */
+  .management-panel-head {
+    padding-top: 26px;
+  }
+
+  .management-panel-head::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* Full-screen backdrop */
   .is-editor-open .mgmt-main::before {
     inset: 0;
-    right: 0;
     left: 0;
+    right: 0;
   }
 
+  /* ── Record cards: comfortable touch targets ── */
+  .management-record { padding: 9px 10px 9px 14px; }
+  .management-record.is-contact { padding: 9px 10px 9px 16px; }
+  .management-record h3,
+  .management-record.is-class h3 { font-size: 14px; }
+  .management-record.is-contact h3 { font-size: 15px; }
+
+  /* Hide inline status select on mobile — use drawer to change status */
+  .management-record-actions select { display: none; }
+
+  /* Pin button: larger touch target */
+  .management-pin-btn { font-size: 15px; padding: 7px 9px; }
+
+  /* ── Quick add: full-height touch targets ── */
+  .management-quick-add-input,
+  .management-quick-add-btn { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+
+  /* ── Contact copy lines: stacked on mobile ── */
+  .management-contact-card-lines { flex-direction: column; gap: 5px; }
+  .management-contact-copy-line { width: 100%; }
+
+  /* ── Ticker modal ── */
+  .management-ticker-card { border-radius: 12px; padding: 16px; }
+  .management-ticker-card .management-panel-head { top: -16px; margin: -16px -16px 14px; }
+
+  /* ── All multi-column grids → single column ── */
   .management-form-grid { grid-template-columns: 1fr; display: grid; }
   .management-class-session-row { grid-template-columns: 1fr; }
   .management-inquiry-detail-grid { grid-template-columns: 1fr; }
@@ -1772,16 +1916,18 @@
   .management-class-contact-actions, .management-class-registration-item,
   .management-registration-item { grid-template-columns: 1fr; }
   .management-registration-item .management-registration-actions { justify-content: flex-start; }
-
   .management-studio-cards { grid-template-columns: 1fr; }
   .management-calendar-item { flex-direction: column; display: flex; }
 }
 
+/* ── Very small phones ── */
 @media (max-width: 480px) {
-  .mgmt-topbar { flex-direction: column; align-items: stretch; gap: 8px; }
-  .mgmt-topbar-right { flex-wrap: wrap; }
+  .mgmt-topbar { flex-wrap: wrap; gap: 6px; }
+  .mgmt-topbar-right { width: 100%; }
   .mgmt-search-input { width: 100%; }
-  .mgmt-inquiry-stage { font-size: 9px; padding: 4px 3px; letter-spacing: 0; }
+  .mgmt-nav-item { font-size: 9.5px; min-height: 50px; }
+  .mgmt-nav-text { font-size: 9.5px; }
+  .management-management-panel { height: 95dvh; max-height: 95dvh; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
