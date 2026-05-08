@@ -403,6 +403,20 @@ function emailTextBlock(value) {
   return escapeHtml(value).replace(/\r?\n/g, "<br/>");
 }
 
+function buildEmailRichText(value) {
+  const blocks = String(value || "")
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  if (!blocks.length) return "";
+  return blocks
+    .map((block) => {
+      return `<p style="margin:0 0 14px 0;color:#dce8f8;font-size:14px;line-height:1.72;">${emailTextBlock(block)}</p>`;
+    })
+    .join("");
+}
+
 function buildEmailDetailRows(rows = []) {
   return rows
     .filter((row) => row && row.label)
@@ -410,8 +424,8 @@ function buildEmailDetailRows(rows = []) {
       const value = row.value === undefined || row.value === null || row.value === "" ? "-" : row.value;
       return `
         <tr>
-          <td style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:#8fb2d6;font-size:13px;font-weight:700;vertical-align:top;width:38%;">${escapeHtml(row.label)}</td>
-          <td style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:#eaf2ff;font-size:14px;line-height:1.55;vertical-align:top;">${emailTextBlock(value)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #1d324d;color:#9bd3ff;font-size:13px;font-weight:700;vertical-align:top;width:38%;">${escapeHtml(row.label)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid #1d324d;color:#f2f7ff;font-size:14px;line-height:1.55;vertical-align:top;">${emailTextBlock(value)}</td>
         </tr>
       `;
     })
@@ -421,20 +435,30 @@ function buildEmailDetailRows(rows = []) {
 function buildDmzEventEmailShell({ kicker, title, intro, rows = [], bodyHtml = "", footerHtml = "" }) {
   return `<!doctype html>
 <html>
-  <body style="margin:0;padding:0;background:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050b14;padding:22px 12px;">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    <style>
+      :root { color-scheme: dark; supported-color-schemes: dark; }
+      body, table, td, p, a { -webkit-text-size-adjust: 100%; }
+    </style>
+  </head>
+  <body bgcolor="#050b14" style="margin:0;padding:0;background-color:#050b14;color:#eaf2ff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#050b14" style="background-color:#050b14;padding:22px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;background:#071325;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#071325" style="max-width:640px;border:1px solid #1d324d;border-radius:18px;overflow:hidden;background-color:#071325;">
             <tr>
-              <td style="padding:24px;background:linear-gradient(180deg, rgba(85,185,255,0.18), rgba(7,19,37,1));border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td bgcolor="#0b2840" style="padding:24px;background-color:#0b2840;border-bottom:1px solid #1d324d;">
                 <p style="margin:0 0 8px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;">${escapeHtml(kicker)}</p>
-                <h1 style="margin:0;color:#eaf2ff;font-size:28px;line-height:1.2;font-weight:800;">${escapeHtml(title)}</h1>
-                ${intro ? `<p style="margin:12px 0 0 0;color:#dce8f8;font-size:15px;line-height:1.65;">${emailTextBlock(intro)}</p>` : ""}
+                <h1 style="margin:0;color:#ffffff;font-size:28px;line-height:1.2;font-weight:800;">${escapeHtml(title)}</h1>
+                ${intro ? `<p style="margin:12px 0 0 0;color:#eaf2ff;font-size:15px;line-height:1.65;">${emailTextBlock(intro)}</p>` : ""}
               </td>
             </tr>
             <tr>
-              <td style="padding:24px;">
+              <td bgcolor="#071325" style="padding:24px;background-color:#071325;">
                 ${rows.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${buildEmailDetailRows(rows)}</table>` : ""}
                 ${bodyHtml}
                 ${footerHtml}
@@ -525,9 +549,9 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
       { label: "Remaining Spots", value: remainingSpots },
     ],
     bodyHtml: description
-      ? `<div style="margin-top:18px;padding:16px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.045);"><p style="margin:0 0 8px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Event Details</p><p style="margin:0;color:#dce8f8;font-size:14px;line-height:1.65;">${emailTextBlock(description)}</p></div>`
+      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Event Details</p>${buildEmailRichText(description)}</div>`
       : "",
-    footerHtml: `<p style="margin:18px 0 0 0;color:#dce8f8;font-size:14px;line-height:1.65;">If you need to update anything before the event, email <a href="mailto:${escapeHtml(contactEmail)}" style="color:#9bd3ff;text-decoration:none;">${escapeHtml(contactEmail)}</a>.</p>`,
+    footerHtml: `<p style="margin:18px 0 0 0;color:#eaf2ff;font-size:14px;line-height:1.65;">If you need to update anything before the event, email <a href="mailto:${escapeHtml(contactEmail)}" style="color:#9bd3ff;text-decoration:none;">${escapeHtml(contactEmail)}</a>.</p>`,
   });
   return { subject, html, text };
 }
