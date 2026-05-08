@@ -530,7 +530,7 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
     `You're signed up for ${title}.`,
     scheduleLine ? `Schedule: ${scheduleLine}` : "",
     description ? "" : "",
-    description ? `Event Details: ${description}` : "",
+    description ? `Registration Details: ${description}` : "",
     `Party Size: ${partySize}`,
     `Remaining Spots: ${remainingSpots}`,
     "",
@@ -549,7 +549,7 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
       { label: "Remaining Spots", value: remainingSpots },
     ],
     bodyHtml: description
-      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Event Details</p>${buildEmailRichText(description)}</div>`
+      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Registration Details</p>${buildEmailRichText(description)}</div>`
       : "",
     footerHtml: `<p style="margin:18px 0 0 0;color:#eaf2ff;font-size:14px;line-height:1.65;">If you need to update anything before the event, email <a href="mailto:${escapeHtml(contactEmail)}" style="color:#9bd3ff;text-decoration:none;">${escapeHtml(contactEmail)}</a>.</p>`,
   });
@@ -1477,6 +1477,7 @@ function normalizeEventEntry(item, kind = "event") {
     registrationEnabled: Boolean(next.registrationEnabled),
     registrationClosed: Boolean(next.registrationClosed),
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
+    registrationEmailContent: String(next.registrationEmailContent || "").trim(),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
     managementPriority: String(next.managementPriority || "").trim(),
@@ -1663,6 +1664,11 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     if (!definition) return "";
     return String(definition.narrative || definition.heroSummary || "").trim();
   };
+  const getRegistrationEmailContentForItem = (item) => {
+    if (!item || typeof item !== "object") return "";
+    const content = String(item.registrationEmailContent || "").trim();
+    return content || getDescriptionForItem(item);
+  };
   const eventMatch = events.find((item) => item && item.id === sourceId && item.date === eventDate);
   if (eventMatch) {
     return {
@@ -1670,6 +1676,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       eventDate,
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
+      registrationEmailContent: getRegistrationEmailContentForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationClosed: Boolean(eventMatch.registrationClosed),
       registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
@@ -1684,6 +1691,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     eventDate,
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
+    registrationEmailContent: getRegistrationEmailContentForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationClosed: Boolean(templateMatch.registrationClosed),
     registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
@@ -1947,7 +1955,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const attendeeContent = buildEventRegistrationConfirmationEmail({
     title: config.title || "DMZ Scuba Event",
     scheduleLine,
-    description: config.description || "",
+    description: config.registrationEmailContent || "",
     contactEmail: toEmail,
     registrantName: firstName || registrantName,
     partySize,

@@ -92,6 +92,7 @@
   const fieldSummary = document.getElementById("eventsFieldSummary");
   const fieldRegistrationEnabled = document.getElementById("eventsFieldRegistrationEnabled");
   const fieldRegistrationCapacity = document.getElementById("eventsFieldRegistrationCapacity");
+  const fieldRegistrationEmailContent = document.getElementById("eventsFieldRegistrationEmailContent");
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
@@ -1377,6 +1378,7 @@
     if (fieldSummary) fieldSummary.value = "";
     if (fieldRegistrationEnabled) fieldRegistrationEnabled.checked = false;
     if (fieldRegistrationCapacity) fieldRegistrationCapacity.value = "0";
+    if (fieldRegistrationEmailContent) fieldRegistrationEmailContent.value = "";
     if (fieldCtaLabel) fieldCtaLabel.value = "";
     if (fieldCtaHref) fieldCtaHref.value = "";
     if (fieldInterval) fieldInterval.value = "1";
@@ -1635,6 +1637,9 @@
     if (fieldRegistrationCapacity) {
       fieldRegistrationCapacity.value = String(Math.max(0, Number(item.registrationCapacity) || 0));
     }
+    if (fieldRegistrationEmailContent) {
+      fieldRegistrationEmailContent.value = item.registrationEmailContent || "";
+    }
     const registrationContext = getEntryRegistrationContext(entry);
     if (!registrationContext) {
       resetRegistrationUiState();
@@ -1690,6 +1695,7 @@
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
       registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
       registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
+      registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
@@ -1991,6 +1997,7 @@
       summary: "",
       registrationEnabled: false,
       registrationCapacity: 0,
+      registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
     };
@@ -2013,6 +2020,7 @@
       summary: "",
       registrationEnabled: false,
       registrationCapacity: 0,
+      registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
     };
@@ -2042,6 +2050,7 @@
       summary: String((templateItem && templateItem.summary) || "").trim(),
       registrationEnabled: Boolean(templateItem && templateItem.registrationEnabled),
       registrationCapacity: Math.max(0, Number((templateItem && templateItem.registrationCapacity) || 0) || 0),
+      registrationEmailContent: String((templateItem && templateItem.registrationEmailContent) || "").trim(),
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
     };
@@ -2109,6 +2118,10 @@
     }
     if (field === "summary") {
       item.summary = value;
+      return true;
+    }
+    if (field === "registrationEmailContent") {
+      item.registrationEmailContent = value;
       return true;
     }
     if (field === "registrationEnabled") {
@@ -2777,6 +2790,7 @@
     fieldSummary,
     fieldRegistrationEnabled,
     fieldRegistrationCapacity,
+    fieldRegistrationEmailContent,
     fieldCtaLabel,
     fieldCtaHref,
     fieldInterval,
