@@ -746,8 +746,8 @@
 
 .management-records {
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 3px;
+  margin-top: 10px;
 }
 
 .management-empty,
@@ -770,17 +770,20 @@
 .management-record {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
   text-align: left;
   color: inherit;
   cursor: pointer;
+  align-items: start;
 }
 
 .management-record.is-contact {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   position: relative;
-  padding: 16px 18px 14px;
+  padding: 8px 10px 8px 16px;
   border-color: rgba(255, 255, 255, 0.12);
   background:
     linear-gradient(90deg, rgba(85, 185, 255, 0.13), rgba(85, 185, 255, 0) 46%),
@@ -790,15 +793,17 @@
 .management-record.is-contact::before {
   content: "";
   position: absolute;
-  inset: 14px auto 14px 0;
+  inset: 8px auto 8px 0;
   width: 3px;
   border-radius: 0 999px 999px 0;
   background: rgba(85, 185, 255, 0.78);
 }
 
 .management-record.is-class {
-  display: block;
-  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  padding: 7px 10px 7px 12px;
   border-color: rgba(66, 185, 156, 0.18);
   background:
     linear-gradient(90deg, rgba(66, 185, 156, 0.10), rgba(66, 185, 156, 0) 42%),
@@ -903,48 +908,55 @@
 }
 
 .management-record h3 {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.25;
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
-.management-record.is-contact h3 { margin-top: 6px; font-size: 18px; }
-.management-record.is-class h3   { margin-top: 4px; font-size: 18px; }
+.management-record.is-contact h3 { margin-top: 0; font-size: 15px; }
+.management-record.is-class h3   { margin-top: 2px; font-size: 14px; }
 
 .management-record p {
-  margin: 8px 0 0;
-  color: rgba(234, 242, 255, 0.68);
+  margin: 3px 0 0;
+  color: rgba(234, 242, 255, 0.65);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .management-record.is-contact p {
   max-width: 86ch;
-  color: rgba(234, 242, 255, 0.72);
-  font-size: 15px;
-  line-height: 1.45;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .management-record-meta,
 .management-record-badges {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .management-record-meta {
-  margin-top: 10px;
-  color: rgba(234, 242, 255, 0.6);
-  font-size: 13px;
+  margin-top: 4px;
+  color: rgba(234, 242, 255, 0.58);
+  font-size: 11.5px;
 }
 
 .management-record.is-contact .management-record-meta {
-  margin-top: 10px;
-  color: rgba(234, 242, 255, 0.62);
+  margin-top: 5px;
+  color: rgba(234, 242, 255, 0.60);
 }
 
 .management-record-actions {
   display: flex;
-  align-items: start;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-top: 1px;
 }
 
 .management-record-actions select {
@@ -953,10 +965,10 @@
   background: #071325;
   color: var(--text);
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 7px 10px;
-  min-width: 130px;
+  padding: 4px 8px;
+  min-width: 104px;
   cursor: pointer;
 }
 
@@ -967,15 +979,15 @@
 .management-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
+  min-height: 18px;
   border-radius: 999px;
-  padding: 4px 9px;
+  padding: 2px 7px;
   background: rgba(255, 255, 255, 0.08);
   color: rgba(234, 242, 255, 0.78);
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 850;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .management-badge.is-urgent, .management-badge.is-high { background: rgba(226, 27, 35, 0.18); color: #ffd7d9; }
@@ -1112,39 +1124,39 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 .management-contact-card-lines {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .management-contact-copy-line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  min-height: 48px;
+  min-height: 32px;
   border: 1px solid rgba(85, 185, 255, 0.16);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(5, 11, 20, 0.34);
-  padding: 8px 10px 8px 12px;
+  padding: 4px 8px 4px 10px;
 }
 
 .management-contact-copy-line span { min-width: 0; }
 .management-contact-copy-line strong { display: block; margin: 0 0 3px; color: rgba(155, 211, 255, 0.74); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
-.management-contact-copy-line a, .management-contact-copy-line em { color: rgba(234, 242, 255, 0.9); font-size: 14px; overflow-wrap: anywhere; text-decoration: none; }
+.management-contact-copy-line a, .management-contact-copy-line em { color: rgba(234, 242, 255, 0.9); font-size: 12.5px; overflow-wrap: anywhere; text-decoration: none; }
 .management-contact-copy-line.is-empty a, .management-contact-copy-line.is-empty em { color: rgba(234, 242, 255, 0.46); }
 
 .management-contact-copy-line button {
   border: 1px solid rgba(85, 185, 255, 0.28);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(85, 185, 255, 0.10);
   color: #cfeeff;
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 850;
-  padding: 7px 10px;
+  padding: 3px 8px;
   transition: background 0.16s, border-color 0.16s;
 }
 
@@ -1403,9 +1415,9 @@
    RECORD DETAIL SECTIONS
    ────────────────────────────────────────────────────────────────────────── */
 
-.management-record-details { margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; }
-.management-record.is-contact .management-record-details { margin-top: 12px; padding-top: 12px; }
-.management-record-details summary { color: rgba(234, 242, 255, 0.82); font-size: 13px; font-weight: 850; }
+.management-record-details { margin-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 7px; }
+.management-record.is-contact .management-record-details { margin-top: 8px; padding-top: 8px; }
+.management-record-details summary { color: rgba(234, 242, 255, 0.82); font-size: 12px; font-weight: 850; }
 .management-record.is-contact .management-record-details summary { color: #cfeeff; }
 
 .management-class-card-detail  { display: grid; gap: 8px; margin-top: 10px; }
@@ -1450,20 +1462,20 @@
    INQUIRY PIPELINE
    ────────────────────────────────────────────────────────────────────────── */
 
-.management-inquiry-pipeline { display: flex; gap: 3px; margin: 10px 0 4px; }
+.management-inquiry-pipeline { display: flex; gap: 2px; margin: 5px 0 2px; }
 
 .management-inquiry-stage {
   flex: 1;
   min-width: 0;
-  padding: 5px 6px;
-  font-size: 10px;
+  padding: 3px 5px;
+  font-size: 9.5px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: rgba(234, 242, 255, 0.28);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 5px;
+  border-radius: 4px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -1474,18 +1486,18 @@
 .management-inquiry-stage.is-current { color: #ffe5b3; background: rgba(245, 178, 62, 0.20); border-color: rgba(245, 178, 62, 0.40); box-shadow: 0 0 0 1px rgba(245, 178, 62, 0.18); }
 .management-inquiry-stage.is-dead    { color: #ffb3b8; background: rgba(226, 27, 35, 0.16); border-color: rgba(226, 27, 35, 0.32); box-shadow: 0 0 0 1px rgba(226, 27, 35, 0.14); }
 
-.management-inquiry-callout { display: grid; gap: 7px; margin-top: 8px; }
+.management-inquiry-callout { display: grid; gap: 4px; margin-top: 5px; }
 
 .management-inquiry-next-step {
   display: block;
-  padding: 7px 10px;
+  padding: 5px 8px;
   border: 1px solid rgba(245, 178, 62, 0.22);
   border-left: 3px solid rgba(245, 178, 62, 0.65);
-  border-radius: 6px;
+  border-radius: 5px;
   background: rgba(245, 178, 62, 0.06);
   color: rgba(234, 242, 255, 0.88);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .management-inquiry-callout-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; align-items: center; }
@@ -1543,12 +1555,12 @@
   border: none;
   background: none;
   color: rgba(234, 242, 255, 0.30);
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
-  padding: 6px 8px;
+  padding: 4px 6px;
   cursor: pointer;
   transition: color 0.15s, transform 0.1s;
-  border-radius: 6px;
+  border-radius: 5px;
 }
 
 .management-pin-btn:hover { color: rgba(245, 178, 62, 0.80); background: rgba(245, 178, 62, 0.10); }
