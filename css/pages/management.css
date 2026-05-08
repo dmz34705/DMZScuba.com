@@ -1,8 +1,13 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DMZ SCUBA — MANAGEMENT CONSOLE
+   App-shell layout: fixed left sidebar (220px) + scrollable main panel
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .management-page {
   min-height: 100vh;
   background:
-    linear-gradient(135deg, rgba(226, 27, 35, 0.14), rgba(5, 11, 20, 0) 34%),
-    radial-gradient(900px 460px at 85% 5%, rgba(66, 185, 156, 0.16), rgba(5, 11, 20, 0) 58%),
+    linear-gradient(135deg, rgba(226, 27, 35, 0.12), rgba(5, 11, 20, 0) 34%),
+    radial-gradient(900px 460px at 85% 5%, rgba(66, 185, 156, 0.14), rgba(5, 11, 20, 0) 58%),
     var(--bg);
 }
 
@@ -20,11 +25,530 @@
   display: none !important;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   APP SHELL
+   ────────────────────────────────────────────────────────────────────────── */
+
 .management-shell {
-  width: min(1420px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 44px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
 }
+
+.management-dashboard {
+  display: block;
+  position: relative;
+}
+
+.mgmt-app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+
+.mgmt-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow-y: auto;
+  background: rgba(4, 11, 22, 0.98);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  overscroll-behavior: contain;
+  flex-shrink: 0;
+}
+
+.mgmt-sidebar::-webkit-scrollbar { width: 4px; }
+.mgmt-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.mgmt-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 14px 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.mgmt-brand img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mgmt-brand-name {
+  font-size: 13.5px;
+  font-weight: 850;
+  color: rgba(234, 242, 255, 0.88);
+  letter-spacing: 0.01em;
+}
+
+/* ── Navigation ───────────────────────────────────────────────────────────── */
+
+.mgmt-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.mgmt-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 10px;
+}
+
+.mgmt-nav-label {
+  padding: 4px 8px 5px;
+  color: rgba(234, 242, 255, 0.30);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mgmt-nav-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(234, 242, 255, 0.58);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.mgmt-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(234, 242, 255, 0.90);
+}
+
+.mgmt-nav-item.is-active {
+  background: rgba(85, 185, 255, 0.14);
+  color: #cfeeff;
+  font-weight: 750;
+}
+
+.mgmt-nav-text {
+  flex: 1;
+}
+
+.mgmt-nav-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.34);
+  margin-left: 4px;
+}
+
+.mgmt-nav-item.is-active .mgmt-nav-badge {
+  color: rgba(85, 185, 255, 0.62);
+}
+
+/* ── Sidebar stats ────────────────────────────────────────────────────────── */
+
+.mgmt-sidebar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 8px 8px 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.mgmt-stat {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.026);
+  padding: 7px 9px;
+}
+
+.mgmt-stat span {
+  display: block;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1;
+  color: var(--text);
+}
+
+.mgmt-stat p {
+  margin: 3px 0 0;
+  color: rgba(234, 242, 255, 0.40);
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.mgmt-stat-balance {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mgmt-stat-balance p { margin: 0; }
+
+/* ── Sidebar footer ───────────────────────────────────────────────────────── */
+
+.mgmt-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.mgmt-sidebar-link {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(234, 242, 255, 0.44);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+
+.mgmt-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(234, 242, 255, 0.80);
+}
+
+.mgmt-sidebar-bottom {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mgmt-action-btn {
+  flex: 1;
+  padding: 8px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(234, 242, 255, 0.56);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.mgmt-action-btn:hover {
+  background: rgba(85, 185, 255, 0.09);
+  border-color: rgba(85, 185, 255, 0.32);
+  color: #cfeeff;
+}
+
+.mgmt-action-btn-danger:hover {
+  background: rgba(226, 27, 35, 0.11);
+  border-color: rgba(226, 27, 35, 0.34);
+  color: #ffb3b8;
+}
+
+/* ── Main content area ────────────────────────────────────────────────────── */
+
+.mgmt-main {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+}
+
+/* Backdrop: covers main area (not sidebar) when record drawer is open */
+.is-editor-open .mgmt-main::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: min(560px, 82vw);
+  bottom: 0;
+  left: 220px;
+  z-index: 35;
+  background: rgba(2, 7, 14, 0.55);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+
+/* ── Panel base ───────────────────────────────────────────────────────────── */
+
+.mgmt-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Topbar ───────────────────────────────────────────────────────────────── */
+
+.mgmt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(5, 11, 20, 0.96);
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.mgmt-topbar-left { min-width: 0; }
+
+.mgmt-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mgmt-panel-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.mgmt-search-input {
+  width: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+.mgmt-search-input:focus {
+  border-color: rgba(85, 185, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.09);
+  background: rgba(85, 185, 255, 0.035);
+}
+
+.mgmt-sort-select {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+.mgmt-sort-select option {
+  background: #071325;
+  color: var(--text);
+}
+
+.mgmt-new-btn {
+  padding: 8px 14px;
+  border: 1px solid rgba(226, 27, 35, 0.40);
+  border-radius: 8px;
+  background: rgba(226, 27, 35, 0.12);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s, border-color 0.14s;
+}
+
+.mgmt-new-btn:hover {
+  border-color: rgba(226, 27, 35, 0.72);
+  background: rgba(226, 27, 35, 0.24);
+}
+
+.mgmt-btn-sm {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(234, 242, 255, 0.68);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.mgmt-btn-sm:hover {
+  border-color: rgba(85, 185, 255, 0.40);
+  background: rgba(85, 185, 255, 0.09);
+  color: #cfeeff;
+}
+
+/* ── Operations body ──────────────────────────────────────────────────────── */
+
+.mgmt-ops-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 40px;
+  min-height: 0;
+}
+
+.mgmt-ops-body::-webkit-scrollbar { width: 6px; }
+.mgmt-ops-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+.mgmt-ops-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mgmt-cal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.mgmt-cal-status {
+  color: rgba(234, 242, 255, 0.48);
+  font-size: 12px;
+}
+
+.mgmt-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Home panel ───────────────────────────────────────────────────────────── */
+
+.mgmt-home-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+}
+
+/* ── Studio panel height (fills app shell) ────────────────────────────────── */
+
+.mgmt-panel.mstudio-panel {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.mgmt-main .mstudio-workspace {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Record editor: right-side drawer ────────────────────────────────────── */
+
+.management-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: min(560px, calc(100vw - 220px));
+  display: none;
+  overflow-y: auto;
+  background: rgba(5, 11, 20, 0.99);
+  border-left: 1px solid rgba(85, 185, 255, 0.22);
+  box-shadow: -14px 0 52px rgba(0, 0, 0, 0.46);
+  padding: 0;
+  border-radius: 0;
+}
+
+.is-editor-open .management-panel {
+  display: block;
+}
+
+.management-panel-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 11, 20, 0.99);
+  margin: 0;
+}
+
+.management-panel h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.management-panel-head h2 {
+  font-size: 17px;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
+
+.management-panel-head button {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.048);
+  color: rgba(234, 242, 255, 0.68);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.management-panel-head button:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LOGIN
+   ────────────────────────────────────────────────────────────────────────── */
 
 .management-login {
   min-height: calc(100vh - 72px);
@@ -32,21 +556,12 @@
   place-items: center;
 }
 
-.management-login-card,
-.management-panel,
-.management-list-panel,
-.management-content-studio,
-.management-studio-panel,
-.management-site-tools,
-.management-metrics article {
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  background: rgba(7, 19, 37, 0.86);
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
-}
-
 .management-login-card {
   width: min(420px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 8px;
+  background: rgba(7, 19, 37, 0.86);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
   padding: 30px;
 }
 
@@ -67,26 +582,29 @@
   text-transform: uppercase;
 }
 
-.management-login-card h1,
-.management-header h1,
-.management-panel h2 {
+.management-login-card h1 {
   margin: 0;
   letter-spacing: 0;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FORM FIELDS
+   ────────────────────────────────────────────────────────────────────────── */
 
 .management-login-form,
 .management-record-form,
 .management-ticker-form {
   display: grid;
   gap: 14px;
-  margin-top: 20px;
+  padding: 20px;
   min-width: 0;
 }
+
+.management-login-form { padding: 0; margin-top: 20px; }
 
 .management-login-form label,
 .management-record-form label,
 .management-ticker-form label,
-.management-search label,
 .management-sort {
   display: grid;
   gap: 7px;
@@ -99,17 +617,47 @@
 .management-record-form input,
 .management-record-form select,
 .management-record-form textarea,
-.management-ticker-form textarea,
-.management-search input,
-.management-sort select {
+.management-ticker-form textarea {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.055);
   color: var(--text);
   font: inherit;
-  padding: 12px 12px;
+  padding: 11px 12px;
   outline: none;
+}
+
+.management-login-form input:focus,
+.management-record-form input:focus,
+.management-record-form select:focus,
+.management-record-form textarea:focus,
+.management-ticker-form textarea:focus {
+  border-color: rgba(85, 185, 255, 0.72);
+  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.13);
+}
+
+.management-record-form select option {
+  background: #071325;
+  color: var(--text);
+}
+
+.management-record-form textarea,
+.management-ticker-form textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+.management-ticker-form textarea {
+  min-height: 260px;
+  line-height: 1.55;
+}
+
+.management-ticker-hint {
+  color: rgba(234, 242, 255, 0.48);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
 .management-copy-field {
@@ -146,818 +694,6 @@
   accent-color: var(--accent);
 }
 
-.management-record-form select option {
-  background: #071325;
-  color: var(--text);
-}
-
-.management-record-form textarea,
-.management-ticker-form textarea {
-  resize: vertical;
-  min-height: 140px;
-}
-
-.management-ticker-form textarea {
-  min-height: 260px;
-  line-height: 1.55;
-}
-
-.management-ticker-hint {
-  color: rgba(234, 242, 255, 0.48);
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.management-login-form input:focus,
-.management-record-form input:focus,
-.management-record-form select:focus,
-.management-record-form textarea:focus,
-.management-ticker-form textarea:focus,
-.management-search input:focus,
-.management-sort select:focus {
-  border-color: rgba(85, 185, 255, 0.72);
-  box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.13);
-}
-
-.management-sort select option {
-  background: #071325;
-  color: var(--text);
-}
-
-.management-form-status {
-  min-height: 20px;
-  margin: 0;
-  color: rgba(234, 242, 255, 0.68);
-  font-size: 13px;
-}
-
-.management-form-status.is-error {
-  color: #ffb3b8;
-}
-
-.management-form-status.is-success {
-  color: #9ff0ce;
-}
-
-.management-registration-manager {
-  display: grid;
-  gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  padding: 14px;
-}
-
-.management-registration-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.management-registration-head h3,
-.management-registration-head p {
-  margin: 0;
-}
-
-.management-registration-head h3 {
-  font-size: 16px;
-  letter-spacing: 0;
-}
-
-.management-registration-head p {
-  margin-top: 4px;
-  color: rgba(234, 242, 255, 0.64);
-  font-size: 13px;
-}
-
-.management-registration-list {
-  display: grid;
-  gap: 8px;
-}
-
-.management-registration-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 10px;
-  background: rgba(5, 11, 20, 0.36);
-}
-
-.management-registration-item div {
-  display: grid;
-  gap: 3px;
-}
-
-.management-registration-item strong {
-  color: var(--text);
-  font-size: 14px;
-}
-
-.management-registration-item span {
-  color: rgba(234, 242, 255, 0.62);
-  font-size: 12px;
-}
-
-.management-registration-item button {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.management-registration-item button:hover:not(:disabled) {
-  border-color: rgba(226, 27, 35, 0.58);
-  background: rgba(226, 27, 35, 0.14);
-}
-
-.management-registration-item .management-registration-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.management-registration-actions button:first-child:hover:not(:disabled) {
-  border-color: rgba(85, 185, 255, 0.58);
-  background: rgba(85, 185, 255, 0.14);
-}
-
-.management-class-schedule,
-.management-class-roster,
-.management-contact-classes {
-  display: block;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  padding: 14px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.management-class-schedule[open],
-.management-class-roster[open],
-.management-contact-classes[open] {
-  display: grid;
-  gap: 14px;
-}
-
-.management-class-schedule > summary,
-.management-class-roster > summary,
-.management-contact-classes > summary,
-.management-record-details > summary {
-  cursor: pointer;
-  list-style-position: outside;
-}
-
-.management-class-schedule > summary::marker,
-.management-class-roster > summary::marker,
-.management-contact-classes > summary::marker,
-.management-record-details > summary::marker {
-  color: rgba(85, 185, 255, 0.82);
-}
-
-.management-class-schedule-head h3,
-.management-class-schedule-head p,
-.management-class-roster-head h3,
-.management-class-roster-head p,
-.management-class-session-head h4 {
-  margin: 0;
-}
-
-.management-class-schedule-head p,
-.management-class-roster-head p,
-.management-class-registration-review p {
-  margin-top: 4px;
-  color: rgba(234, 242, 255, 0.62);
-  font-size: 13px;
-}
-
-.management-class-session-group {
-  display: grid;
-  gap: 8px;
-}
-
-.management-class-session-head,
-.management-class-session-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.management-class-session-head h4 {
-  font-size: 14px;
-  letter-spacing: 0;
-}
-
-.management-class-session-head button,
-.management-class-session-row button {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.management-class-session-row {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: end;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  padding: 10px;
-  background: rgba(5, 11, 20, 0.3);
-  min-width: 0;
-}
-
-.management-class-session-row label {
-  display: grid;
-  gap: 5px;
-  color: rgba(234, 242, 255, 0.68);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.management-class-session-row label span {
-  line-height: 1;
-}
-
-.management-class-session-row input,
-.management-class-session-row select {
-  min-width: 0;
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  padding: 10px;
-  outline: none;
-}
-
-.management-class-session-location {
-  min-width: 0;
-  grid-column: 1 / -1;
-}
-
-.management-class-session-row button {
-  grid-column: 1 / -1;
-  justify-self: end;
-  min-height: 38px;
-}
-
-.management-class-contact-add {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.management-contact-classes .management-class-contact-add {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-}
-
-.management-contact-classes .management-class-contact-add select[multiple] {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
-.management-class-contact-add select,
-.management-class-contact-add button,
-.management-class-contact-item button,
-.management-class-registration-item button {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 9px 10px;
-}
-
-.management-class-contact-add select[multiple] {
-  min-height: 104px;
-}
-
-.management-contact-classes .management-class-contact-add select:not([multiple]),
-.management-contact-classes .management-class-contact-add button {
-  min-height: 42px;
-  align-self: start;
-}
-
-.management-class-contact-list,
-.management-class-registration-review,
-[data-class-registration-list] {
-  display: grid;
-  gap: 8px;
-}
-
-.management-class-contact-item,
-.management-class-registration-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  padding: 10px;
-  background: rgba(5, 11, 20, 0.3);
-}
-
-.management-class-contact-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.management-class-contact-item strong,
-.management-class-registration-item strong {
-  display: block;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.management-class-contact-item span,
-.management-class-registration-item span {
-  display: block;
-  margin-top: 3px;
-  color: rgba(234, 242, 255, 0.62);
-  font-size: 12px;
-}
-
-.management-dashboard {
-  display: grid;
-  gap: 18px;
-}
-
-.management-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 10px 0 2px;
-}
-
-.management-header h1 {
-  font-size: clamp(32px, 5vw, 58px);
-  line-height: 1;
-}
-
-.management-header-actions,
-.management-form-actions,
-.management-panel-head,
-.management-list-tools {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.management-metrics {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.management-metrics article {
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.management-metrics span {
-  display: block;
-  font-size: 32px;
-  line-height: 1;
-  font-weight: 850;
-}
-
-.management-metrics p {
-  margin: 8px 0 0;
-  color: rgba(234, 242, 255, 0.66);
-  font-size: 13px;
-  font-weight: 750;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.management-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-  min-width: 0;
-}
-
-.management-site-tools {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  border-radius: 8px;
-  padding: 16px 18px;
-}
-
-.management-site-tools h2 {
-  margin: 0;
-  font-size: 22px;
-  letter-spacing: 0;
-}
-
-.management-calendar-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.management-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(234, 242, 255, 0.78);
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.management-toggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-}
-
-.management-calendar-item {
-  display: grid;
-  grid-template-columns: minmax(116px, 0.12fr) minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: start;
-  border: 1px solid rgba(85, 185, 255, 0.14);
-  border-radius: 8px;
-  background:
-    linear-gradient(90deg, rgba(85, 185, 255, 0.10), rgba(85, 185, 255, 0) 44%),
-    rgba(255, 255, 255, 0.045);
-  padding: 14px;
-  cursor: pointer;
-}
-
-.management-calendar-item:hover {
-  border-color: rgba(85, 185, 255, 0.38);
-  background:
-    linear-gradient(90deg, rgba(85, 185, 255, 0.16), rgba(85, 185, 255, 0.03) 50%),
-    rgba(85, 185, 255, 0.06);
-}
-
-.management-calendar-item.is-past {
-  opacity: 0.72;
-}
-
-.management-calendar-date-block {
-  border: 1px solid rgba(85, 185, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(5, 11, 20, 0.34);
-  padding: 10px;
-}
-
-.management-calendar-date-block strong {
-  display: block;
-  color: rgba(234, 242, 255, 0.92);
-  font-size: 20px;
-  line-height: 1.1;
-}
-
-.management-calendar-date-block span {
-  display: block;
-  margin-top: 6px;
-  color: rgba(155, 211, 255, 0.74);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.management-calendar-main {
-  min-width: 0;
-}
-
-.management-calendar-item h3 {
-  margin: 8px 0 0;
-  font-size: 18px;
-  line-height: 1.25;
-}
-
-.management-calendar-item p {
-  margin: 10px 0 0;
-  color: rgba(234, 242, 255, 0.68);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.management-calendar-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.management-calendar-stat-grid span {
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  background: rgba(5, 11, 20, 0.26);
-  color: rgba(234, 242, 255, 0.82);
-  font-size: 13px;
-  padding: 9px 10px;
-}
-
-.management-calendar-stat-grid strong {
-  display: block;
-  margin-bottom: 3px;
-  color: rgba(155, 211, 255, 0.74);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.management-calendar-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.management-calendar-actions a {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.management-calendar-actions a:hover {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.13);
-}
-
-.management-site-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  justify-content: flex-end;
-}
-
-.management-site-links a,
-.management-site-links button {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 9px 11px;
-  cursor: pointer;
-}
-
-.management-site-links a:hover,
-.management-site-links button:hover {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.13);
-}
-
-.management-content-studio {
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.management-studio-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.management-studio-tabs button {
-  min-height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  color: rgba(234, 242, 255, 0.72);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 850;
-  cursor: pointer;
-}
-
-.management-studio-tabs button:hover,
-.management-studio-tabs button.is-active {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.14);
-  color: var(--text);
-}
-
-.management-studio-panel {
-  display: grid;
-  gap: 14px;
-  border-radius: 8px;
-  padding: 16px;
-  min-width: 0;
-}
-
-.management-studio-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.management-studio-panel-head h2,
-.management-studio-panel-head p {
-  margin: 0;
-}
-
-.management-studio-panel-head h2 {
-  font-size: 24px;
-  letter-spacing: 0;
-}
-
-.management-studio-panel-head p:not(.management-kicker) {
-  margin-top: 5px;
-  color: rgba(234, 242, 255, 0.64);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.management-studio-frame {
-  width: 100%;
-  min-height: 78vh;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: #050b14;
-}
-
-.management-studio-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.management-studio-cards article {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.045);
-  padding: 16px;
-}
-
-.management-studio-cards h3,
-.management-studio-cards p {
-  margin: 0;
-}
-
-.management-studio-cards h3 {
-  font-size: 17px;
-  letter-spacing: 0;
-}
-
-.management-studio-cards p {
-  margin-top: 8px;
-  color: rgba(234, 242, 255, 0.62);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.management-studio-cards a,
-.management-studio-cards button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  margin-top: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 850;
-  padding: 0 12px;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.management-studio-cards a:hover,
-.management-studio-cards button:hover {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.13);
-}
-
-.management-ticker-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(2, 7, 14, 0.74);
-  backdrop-filter: blur(6px);
-}
-
-.management-ticker-card {
-  width: min(720px, 100%);
-  max-height: calc(100vh - 36px);
-  overflow: auto;
-  border: 1px solid rgba(85, 185, 255, 0.28);
-  border-radius: 8px;
-  background: rgba(7, 19, 37, 0.96);
-  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.42);
-  padding: 20px;
-}
-
-.management-ticker-card .management-panel-head {
-  top: -20px;
-  margin: -20px -20px 18px;
-}
-
-.management-panel,
-.management-list-panel {
-  border-radius: 8px;
-  padding: 18px;
-  min-width: 0;
-}
-
-.management-panel {
-  position: fixed;
-  inset: 24px;
-  z-index: 40;
-  display: none;
-  width: min(920px, calc(100vw - 32px));
-  max-height: calc(100vh - 48px);
-  margin: 0 auto;
-  overflow: auto;
-  border-color: rgba(85, 185, 255, 0.28);
-}
-
-.is-editor-open .management-panel {
-  display: block;
-}
-
-.is-editor-open .management-workspace::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 35;
-  background: rgba(2, 7, 14, 0.74);
-  backdrop-filter: blur(6px);
-}
-
-.management-panel-head {
-  position: sticky;
-  top: -18px;
-  z-index: 2;
-  justify-content: space-between;
-  margin: -18px -18px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(7, 19, 37, 0.96);
-  padding: 18px;
-}
-
-.management-panel-head button,
-.management-new-record,
-.management-filters button {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 750;
-  padding: 9px 11px;
-  cursor: pointer;
-}
-
-.management-panel-head button:hover,
-.management-new-record:hover,
-.management-filters button:hover,
-.management-filters button.is-active {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.13);
-}
-
 .management-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -974,35 +710,39 @@
   min-width: 0;
 }
 
+.management-extra-fields:not(.management-field-hidden)::before {
+  content: "Additional Details";
+  display: block;
+  color: rgba(155, 211, 255, 0.74);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: -2px;
+}
+
+.management-form-status {
+  min-height: 20px;
+  margin: 0;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 13px;
+  padding: 0 20px;
+}
+
+.management-form-status.is-error { color: #ffb3b8; }
+.management-form-status.is-success { color: #9ff0ce; }
+
 .management-form-actions {
-  flex-wrap: wrap;
-}
-
-.management-list-panel {
-  min-height: 640px;
-}
-
-.management-list-tools {
-  justify-content: space-between;
-  align-items: end;
-  flex-wrap: wrap;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-}
-
-.management-search {
-  flex: 1 1 300px;
-}
-
-.management-sort {
-  flex: 0 1 220px;
-}
-
-.management-filters {
   display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
+  padding: 0 20px 20px;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RECORD LIST & CARDS
+   ────────────────────────────────────────────────────────────────────────── */
 
 .management-records {
   display: grid;
@@ -1065,6 +805,43 @@
     rgba(255, 255, 255, 0.045);
 }
 
+.management-record.is-inquiry {
+  border-color: rgba(245, 178, 62, 0.22);
+  border-left: 3px solid rgba(245, 178, 62, 0.72);
+  background:
+    linear-gradient(90deg, rgba(245, 178, 62, 0.07), rgba(245, 178, 62, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-task {
+  border-color: rgba(149, 117, 205, 0.22);
+  border-left: 3px solid rgba(149, 117, 205, 0.72);
+  background:
+    linear-gradient(90deg, rgba(149, 117, 205, 0.07), rgba(149, 117, 205, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-trip {
+  border-color: rgba(85, 210, 230, 0.22);
+  border-left: 3px solid rgba(85, 210, 230, 0.72);
+  background:
+    linear-gradient(90deg, rgba(85, 210, 230, 0.07), rgba(85, 210, 230, 0) 40%),
+    rgba(255, 255, 255, 0.045);
+  padding-left: 14px;
+}
+
+.management-record.is-registration {
+  cursor: default;
+  border-color: rgba(245, 178, 62, 0.18);
+  background:
+    linear-gradient(90deg, rgba(245, 178, 62, 0.10), rgba(245, 178, 62, 0) 42%),
+    rgba(255, 255, 255, 0.045);
+}
+
+.management-record-site { border-style: dashed; }
+
 .management-record:hover,
 .management-record.is-selected {
   border-color: rgba(85, 185, 255, 0.48);
@@ -1086,12 +863,31 @@
     rgba(66, 185, 156, 0.06);
 }
 
-.management-record.is-registration {
-  cursor: default;
-  border-color: rgba(245, 178, 62, 0.18);
+.management-record.is-inquiry:hover,
+.management-record.is-inquiry.is-selected {
+  border-color: rgba(245, 178, 62, 0.42);
+  border-left-color: rgba(245, 178, 62, 0.88);
   background:
-    linear-gradient(90deg, rgba(245, 178, 62, 0.10), rgba(245, 178, 62, 0) 42%),
-    rgba(255, 255, 255, 0.045);
+    linear-gradient(90deg, rgba(245, 178, 62, 0.13), rgba(245, 178, 62, 0.02) 46%),
+    rgba(245, 178, 62, 0.055);
+}
+
+.management-record.is-task:hover,
+.management-record.is-task.is-selected {
+  border-color: rgba(149, 117, 205, 0.42);
+  border-left-color: rgba(149, 117, 205, 0.88);
+  background:
+    linear-gradient(90deg, rgba(149, 117, 205, 0.13), rgba(149, 117, 205, 0.02) 46%),
+    rgba(149, 117, 205, 0.055);
+}
+
+.management-record.is-trip:hover,
+.management-record.is-trip.is-selected {
+  border-color: rgba(85, 210, 230, 0.42);
+  border-left-color: rgba(85, 210, 230, 0.88);
+  background:
+    linear-gradient(90deg, rgba(85, 210, 230, 0.13), rgba(85, 210, 230, 0.02) 46%),
+    rgba(85, 210, 230, 0.055);
 }
 
 .management-record.is-registration:hover {
@@ -1101,25 +897,9 @@
     rgba(245, 178, 62, 0.06);
 }
 
-.management-registration-card-event {
-  display: grid;
-  gap: 3px;
-  margin-top: 12px;
-  color: rgba(234, 242, 255, 0.7);
-  font-size: 13px;
-}
-
-.management-registration-card-event strong {
-  color: var(--text);
-  font-size: 14px;
-}
-
-.management-registration-card-event span {
-  overflow-wrap: anywhere;
-}
-
-.management-record-site {
-  border-style: dashed;
+.management-record.is-pinned {
+  border-color: rgba(245, 178, 62, 0.30);
+  background: rgba(245, 178, 62, 0.05);
 }
 
 .management-record h3 {
@@ -1128,15 +908,8 @@
   line-height: 1.25;
 }
 
-.management-record.is-contact h3 {
-  margin-top: 6px;
-  font-size: 18px;
-}
-
-.management-record.is-class h3 {
-  margin-top: 4px;
-  font-size: 18px;
-}
+.management-record.is-contact h3 { margin-top: 6px; font-size: 18px; }
+.management-record.is-class h3   { margin-top: 4px; font-size: 18px; }
 
 .management-record p {
   margin: 8px 0 0;
@@ -1169,6 +942,175 @@
   color: rgba(234, 242, 255, 0.62);
 }
 
+.management-record-actions {
+  display: flex;
+  align-items: start;
+}
+
+.management-record-actions select {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 20px;
+  background: #071325;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 10px;
+  min-width: 130px;
+  cursor: pointer;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   BADGES
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(234, 242, 255, 0.78);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.management-badge.is-urgent, .management-badge.is-high { background: rgba(226, 27, 35, 0.18); color: #ffd7d9; }
+.management-badge.is-complete { background: rgba(66, 185, 156, 0.18); color: #c5ffe9; }
+.management-badge.is-waiting { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
+.management-badge.is-to_contact, .management-badge.is-reached_out { background: rgba(85, 185, 255, 0.16); color: #cfeeff; }
+.management-badge.is-gathering_details, .management-badge.is-planning,
+.management-badge.is-payment, .management-badge.is-timing { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
+.management-badge.is-dead_end, .management-badge.is-not_fit, .management-badge.is-archived {
+  background: rgba(255, 255, 255, 0.08); color: rgba(234, 242, 255, 0.66);
+}
+.management-badge.is-contact    { background: rgba(85, 185, 255, 0.16); color: #cfeeff; }
+.management-badge.is-inquiry    { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
+.management-badge.is-class      { background: rgba(66, 185, 156, 0.18); color: #c5ffe9; }
+.management-badge.is-trip       { background: rgba(85, 210, 230, 0.16); color: #b3f0ff; }
+.management-badge.is-task       { background: rgba(149, 117, 205, 0.18); color: #dfd0ff; }
+.management-badge.is-registration { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
+.management-badge.is-new       { background: rgba(85, 185, 255, 0.11); color: #cfeeff; }
+.management-badge.is-active    { background: rgba(66, 185, 156, 0.15); color: #c5ffe9; }
+.management-badge.is-scheduled { background: rgba(66, 185, 156, 0.13); color: #c5ffe9; }
+.management-badge.is-normal    { background: rgba(255, 255, 255, 0.05); color: rgba(234, 242, 255, 0.62); }
+.management-badge.is-low       { background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.48); }
+.management-badge.is-overdue   { background: rgba(226, 27, 35, 0.22); color: #ffb3b8; border: 1px solid rgba(226, 27, 35, 0.38); font-weight: 900; letter-spacing: 0.04em; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CALENDAR ITEMS (rendered by management.js)
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-calendar-item {
+  display: grid;
+  grid-template-columns: minmax(116px, 0.12fr) minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  border: 1px solid rgba(85, 185, 255, 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(85, 185, 255, 0.10), rgba(85, 185, 255, 0) 44%),
+    rgba(255, 255, 255, 0.045);
+  padding: 14px;
+  cursor: pointer;
+}
+
+.management-calendar-item:hover {
+  border-color: rgba(85, 185, 255, 0.38);
+  background:
+    linear-gradient(90deg, rgba(85, 185, 255, 0.16), rgba(85, 185, 255, 0.03) 50%),
+    rgba(85, 185, 255, 0.06);
+}
+
+.management-calendar-item.is-past { opacity: 0.72; }
+
+.management-calendar-date-block {
+  border: 1px solid rgba(85, 185, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(5, 11, 20, 0.34);
+  padding: 10px;
+}
+
+.management-calendar-date-block strong { display: block; color: rgba(234, 242, 255, 0.92); font-size: 20px; line-height: 1.1; }
+.management-calendar-date-block span  { display: block; margin-top: 6px; color: rgba(155, 211, 255, 0.74); font-size: 12px; font-weight: 800; }
+.management-calendar-main { min-width: 0; }
+.management-calendar-item h3 { margin: 8px 0 0; font-size: 18px; line-height: 1.25; }
+.management-calendar-item p  { margin: 10px 0 0; color: rgba(234, 242, 255, 0.68); font-size: 13px; line-height: 1.5; }
+
+.management-calendar-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.management-calendar-stat-grid span {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(5, 11, 20, 0.26);
+  color: rgba(234, 242, 255, 0.82);
+  font-size: 13px;
+  padding: 9px 10px;
+}
+
+.management-calendar-stat-grid strong {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(155, 211, 255, 0.74);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.management-calendar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.management-calendar-actions a {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.management-calendar-actions a:hover {
+  border-color: rgba(85, 185, 255, 0.52);
+  background: rgba(85, 185, 255, 0.13);
+}
+
+.management-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(234, 242, 255, 0.78);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.management-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CONTACT / COPY LINES
+   ────────────────────────────────────────────────────────────────────────── */
+
 .management-contact-card-lines {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1188,40 +1130,10 @@
   padding: 8px 10px 8px 12px;
 }
 
-.management-contact-copy-line span {
-  min-width: 0;
-}
-
-.management-contact-copy-line strong {
-  display: block;
-  margin: 0 0 3px;
-  color: rgba(155, 211, 255, 0.74);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.management-contact-detail-grid strong {
-  display: block;
-  margin-bottom: 3px;
-  color: rgba(234, 242, 255, 0.68);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.management-contact-copy-line a,
-.management-contact-copy-line em {
-  color: rgba(234, 242, 255, 0.9);
-  font-size: 14px;
-  overflow-wrap: anywhere;
-  text-decoration: none;
-}
-
-.management-contact-copy-line.is-empty a,
-.management-contact-copy-line.is-empty em {
-  color: rgba(234, 242, 255, 0.46);
-}
+.management-contact-copy-line span { min-width: 0; }
+.management-contact-copy-line strong { display: block; margin: 0 0 3px; color: rgba(155, 211, 255, 0.74); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.management-contact-copy-line a, .management-contact-copy-line em { color: rgba(234, 242, 255, 0.9); font-size: 14px; overflow-wrap: anywhere; text-decoration: none; }
+.management-contact-copy-line.is-empty a, .management-contact-copy-line.is-empty em { color: rgba(234, 242, 255, 0.46); }
 
 .management-contact-copy-line button {
   border: 1px solid rgba(85, 185, 255, 0.28);
@@ -1233,47 +1145,11 @@
   font-size: 12px;
   font-weight: 850;
   padding: 7px 10px;
-  transition: background 0.16s ease, border-color 0.16s ease;
+  transition: background 0.16s, border-color 0.16s;
 }
 
-.management-contact-copy-line button:hover:not(:disabled) {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.18);
-}
-
-.management-contact-copy-line button:disabled {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(234, 242, 255, 0.36);
-  cursor: not-allowed;
-}
-
-.management-record-details {
-  margin-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 10px;
-}
-
-.management-record.is-contact .management-record-details {
-  margin-top: 12px;
-  padding-top: 12px;
-}
-
-.management-record-details summary {
-  color: rgba(234, 242, 255, 0.82);
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.management-record.is-contact .management-record-details summary {
-  color: #cfeeff;
-}
-
-.management-class-card-detail {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-}
+.management-contact-copy-line button:hover:not(:disabled) { border-color: rgba(85, 185, 255, 0.52); background: rgba(85, 185, 255, 0.18); }
+.management-contact-copy-line button:disabled { border-color: rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.36); cursor: not-allowed; }
 
 .management-contact-detail-grid {
   display: grid;
@@ -1288,6 +1164,15 @@
   padding: 10px;
 }
 
+.management-contact-detail-grid strong {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .management-contact-detail-grid span {
   display: block;
   color: rgba(234, 242, 255, 0.82);
@@ -1297,57 +1182,233 @@
   white-space: pre-wrap;
 }
 
-.management-inquiry-detail-grid {
+/* ──────────────────────────────────────────────────────────────────────────
+   REGISTRATION MANAGER
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-registration-manager {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 12px;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px;
 }
 
-.management-inquiry-detail-grid section {
+.management-registration-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.management-registration-head h3, .management-registration-head p { margin: 0; }
+.management-registration-head h3 { font-size: 16px; letter-spacing: 0; }
+.management-registration-head p  { margin-top: 4px; color: rgba(234, 242, 255, 0.64); font-size: 13px; }
+
+.management-registration-list { display: grid; gap: 8px; }
+
+.management-registration-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(5, 11, 20, 0.36);
+}
+
+.management-registration-item div { display: grid; gap: 3px; }
+.management-registration-item strong { color: var(--text); font-size: 14px; }
+.management-registration-item span   { color: rgba(234, 242, 255, 0.62); font-size: 12px; }
+
+.management-registration-item button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-registration-item button:hover:not(:disabled) { border-color: rgba(226, 27, 35, 0.58); background: rgba(226, 27, 35, 0.14); }
+
+.management-registration-item .management-registration-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.management-registration-actions button:first-child:hover:not(:disabled) { border-color: rgba(85, 185, 255, 0.58); background: rgba(85, 185, 255, 0.14); }
+
+.management-registration-card-event { display: grid; gap: 3px; margin-top: 12px; color: rgba(234, 242, 255, 0.7); font-size: 13px; }
+.management-registration-card-event strong { color: var(--text); font-size: 14px; }
+.management-registration-card-event span { overflow-wrap: anywhere; }
+
+.management-registration-card-actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+.management-registration-card-actions button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-registration-card-actions button:hover:not(:disabled) { border-color: rgba(226, 27, 35, 0.58); background: rgba(226, 27, 35, 0.14); }
+.management-registration-card-actions button:first-child:hover:not(:disabled) { border-color: rgba(85, 185, 255, 0.58); background: rgba(85, 185, 255, 0.14); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CLASS SCHEDULE / ROSTER / CONTACT CLASSES
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-class-schedule,
+.management-class-roster,
+.management-contact-classes {
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.management-class-schedule[open],
+.management-class-roster[open],
+.management-contact-classes[open] { display: grid; gap: 14px; }
+
+.management-class-schedule > summary,
+.management-class-roster > summary,
+.management-contact-classes > summary,
+.management-record-details > summary { cursor: pointer; list-style-position: outside; }
+
+.management-class-schedule > summary::marker,
+.management-class-roster > summary::marker,
+.management-contact-classes > summary::marker,
+.management-record-details > summary::marker { color: rgba(85, 185, 255, 0.82); }
+
+.management-class-schedule-head h3, .management-class-schedule-head p,
+.management-class-roster-head h3,   .management-class-roster-head p,
+.management-class-session-head h4 { margin: 0; }
+
+.management-class-schedule-head p,
+.management-class-roster-head p,
+.management-class-registration-review p { margin-top: 4px; color: rgba(234, 242, 255, 0.62); font-size: 13px; }
+
+.management-class-session-group { display: grid; gap: 8px; }
+
+.management-class-session-head,
+.management-class-session-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.management-class-session-head h4 { font-size: 14px; letter-spacing: 0; }
+
+.management-class-session-head button,
+.management-class-session-row button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.management-class-session-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
-  background: rgba(5, 11, 20, 0.28);
   padding: 10px;
+  background: rgba(5, 11, 20, 0.3);
+  min-width: 0;
 }
 
-.management-inquiry-detail-grid h4 {
-  margin: 0 0 8px;
-  color: rgba(155, 211, 255, 0.82);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.management-class-session-row label { display: grid; gap: 5px; color: rgba(234, 242, 255, 0.68); font-size: 12px; font-weight: 800; }
+.management-class-session-row label span { line-height: 1; }
+
+.management-class-session-row input,
+.management-class-session-row select {
+  min-width: 0; width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  padding: 10px;
+  outline: none;
 }
 
-.management-inquiry-detail-grid section > div {
+.management-class-session-location { min-width: 0; grid-column: 1 / -1; }
+.management-class-session-row button { grid-column: 1 / -1; justify-self: end; min-height: 38px; }
+
+.management-class-contact-add {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
 }
 
-.management-inquiry-detail-grid strong {
-  display: block;
-  margin-bottom: 2px;
-  color: rgba(234, 242, 255, 0.58);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.management-contact-classes .management-class-contact-add { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+.management-contact-classes .management-class-contact-add select[multiple] { grid-column: 1 / -1; width: 100%; }
+
+.management-class-contact-add select,
+.management-class-contact-add button,
+.management-class-contact-item button,
+.management-class-registration-item button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 10px;
 }
 
-.management-inquiry-detail-grid span,
-.management-inquiry-detail-grid p {
-  display: block;
-  margin: 0;
-  color: rgba(234, 242, 255, 0.84);
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
+.management-class-contact-add select[multiple] { min-height: 104px; }
+.management-contact-classes .management-class-contact-add select:not([multiple]),
+.management-contact-classes .management-class-contact-add button { min-height: 42px; align-self: start; }
+
+.management-class-contact-list,
+.management-class-registration-review,
+[data-class-registration-list] { display: grid; gap: 8px; }
+
+.management-class-contact-item,
+.management-class-registration-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(5, 11, 20, 0.3);
 }
 
-.management-inquiry-detail-grid .management-inquiry-notes {
-  grid-column: 1 / -1;
-}
+.management-class-contact-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.management-class-contact-item strong, .management-class-registration-item strong { display: block; color: var(--text); font-size: 13px; }
+.management-class-contact-item span,   .management-class-registration-item span   { display: block; margin-top: 3px; color: rgba(234, 242, 255, 0.62); font-size: 12px; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   RECORD DETAIL SECTIONS
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-record-details { margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px; }
+.management-record.is-contact .management-record-details { margin-top: 12px; padding-top: 12px; }
+.management-record-details summary { color: rgba(234, 242, 255, 0.82); font-size: 13px; font-weight: 850; }
+.management-record.is-contact .management-record-details summary { color: #cfeeff; }
+
+.management-class-card-detail  { display: grid; gap: 8px; margin-top: 10px; }
 
 .management-class-detail-grid {
   display: grid;
@@ -1363,426 +1424,33 @@
   padding: 8px 10px;
 }
 
-.management-class-detail-grid span {
-  color: rgba(234, 242, 255, 0.9);
-  font-size: 16px;
-  font-weight: 850;
-}
-
-.management-class-detail-grid strong,
-.management-class-detail-section strong {
-  display: block;
-  margin-bottom: 3px;
+.management-class-detail-grid span { color: rgba(234, 242, 255, 0.9); font-size: 16px; font-weight: 850; }
+.management-class-detail-grid strong, .management-class-detail-section strong {
+  display: block; margin-bottom: 3px;
   color: rgba(159, 240, 206, 0.78);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
 }
+.management-class-detail-section p { margin: 4px 0 0; color: rgba(234, 242, 255, 0.82); font-size: 13px; line-height: 1.35; }
 
-.management-class-detail-section p {
-  margin: 4px 0 0;
-  color: rgba(234, 242, 255, 0.82);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.management-badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  border-radius: 999px;
-  padding: 4px 9px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(234, 242, 255, 0.78);
-  font-size: 12px;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.management-badge.is-urgent,
-.management-badge.is-high {
-  background: rgba(226, 27, 35, 0.18);
-  color: #ffd7d9;
-}
-
-.management-badge.is-complete {
-  background: rgba(66, 185, 156, 0.18);
-  color: #c5ffe9;
-}
-
-.management-badge.is-waiting {
-  background: rgba(245, 178, 62, 0.18);
-  color: #ffe5b3;
-}
-
-.management-badge.is-to_contact,
-.management-badge.is-reached_out {
-  background: rgba(85, 185, 255, 0.16);
-  color: #cfeeff;
-}
-
-.management-badge.is-gathering_details,
-.management-badge.is-planning,
-.management-badge.is-payment,
-.management-badge.is-timing {
-  background: rgba(245, 178, 62, 0.18);
-  color: #ffe5b3;
-}
-
-.management-badge.is-dead_end,
-.management-badge.is-not_fit,
-.management-badge.is-archived {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(234, 242, 255, 0.66);
-}
-
-.management-record-actions {
-  display: flex;
-  align-items: start;
-}
-
-.management-record-actions select {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: #071325;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  padding: 8px;
-}
-
-.management-registration-card-actions {
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.management-registration-card-actions button {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.management-registration-card-actions button:hover:not(:disabled) {
-  border-color: rgba(226, 27, 35, 0.58);
-  background: rgba(226, 27, 35, 0.14);
-}
-
-.management-registration-card-actions button:first-child:hover:not(:disabled) {
-  border-color: rgba(85, 185, 255, 0.58);
-  background: rgba(85, 185, 255, 0.14);
-}
-
-@media (max-width: 980px) {
-  .management-studio-tabs,
-  .management-studio-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .management-studio-panel-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-studio-frame {
-    min-height: 72vh;
-  }
-
-  .management-workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .management-panel {
-    inset: 14px;
-    width: calc(100vw - 28px);
-    max-height: calc(100vh - 28px);
-  }
-
-  .management-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .management-site-tools {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .management-calendar-item {
-    align-items: stretch;
-    flex-direction: column;
-    display: flex;
-  }
-
-  .management-calendar-controls {
-    justify-content: flex-start;
-  }
-
-  .management-site-links {
-    justify-content: flex-start;
-  }
-
-  .management-class-session-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 680px) {
-  .management-shell {
-    width: min(100% - 20px, 1420px);
-    padding-top: 14px;
-  }
-
-  .management-header,
-  .management-record {
-    grid-template-columns: 1fr;
-  }
-
-  .management-header {
-    display: grid;
-  }
-
-  .management-header-actions,
-  .management-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .management-form-grid {
-    display: grid;
-  }
-
-  .management-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-record {
-    display: grid;
-  }
-
-  .management-class-session-row {
-    grid-template-columns: 1fr;
-  }
-
-  .management-class-contact-add,
-  .management-class-contact-item,
-  .management-class-contact-actions,
-  .management-class-registration-item,
-  .management-registration-item,
-  .management-class-detail-grid,
-  .management-inquiry-detail-grid,
-  .management-inquiry-detail-grid section > div {
-    grid-template-columns: 1fr;
-  }
-
-  .management-registration-item .management-registration-actions {
-    justify-content: flex-start;
-  }
-}
-
-/* ============================================================
-   Visual & Layout Improvements
-   ============================================================ */
-
-/* ---- Two-row toolbar: grid replaces flat flex ---- */
-.management-list-tools {
+.management-inquiry-detail-grid {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  align-items: end;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  margin-top: 12px;
 }
 
-.management-new-record {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: end;
-  border-color: rgba(226, 27, 35, 0.42);
-  background: rgba(226, 27, 35, 0.13);
-  font-weight: 800;
-}
+.management-inquiry-detail-grid section { border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 8px; background: rgba(5, 11, 20, 0.28); padding: 10px; }
+.management-inquiry-detail-grid h4 { margin: 0 0 8px; color: rgba(155, 211, 255, 0.82); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.management-inquiry-detail-grid section > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.management-inquiry-detail-grid strong { display: block; margin-bottom: 2px; color: rgba(234, 242, 255, 0.58); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.management-inquiry-detail-grid span, .management-inquiry-detail-grid p { display: block; margin: 0; color: rgba(234, 242, 255, 0.84); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+.management-inquiry-detail-grid .management-inquiry-notes { grid-column: 1 / -1; }
 
-.management-new-record:hover {
-  border-color: rgba(226, 27, 35, 0.72);
-  background: rgba(226, 27, 35, 0.24);
-}
+/* ──────────────────────────────────────────────────────────────────────────
+   INQUIRY PIPELINE
+   ────────────────────────────────────────────────────────────────────────── */
 
-.management-search {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.management-sort {
-  grid-column: 3;
-  grid-row: 1;
-  align-self: end;
-}
-
-.management-filters {
-  grid-column: 1 / 3;
-  grid-row: 2;
-  align-self: center;
-}
-
-.management-calendar-controls {
-  grid-column: 3;
-  grid-row: 2;
-  align-self: center;
-  justify-self: end;
-}
-
-/* ---- Filter buttons: pill tabs ---- */
-.management-filters button {
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.management-filters button:hover {
-  border-color: rgba(85, 185, 255, 0.38);
-  background: rgba(85, 185, 255, 0.10);
-}
-
-.management-filters button.is-active {
-  border-color: rgba(85, 185, 255, 0.56);
-  background: rgba(85, 185, 255, 0.20);
-  color: #cfeeff;
-}
-
-/* ---- Metric tiles: colored left accents per category ---- */
-.management-metrics article:nth-child(1) { border-left: 3px solid rgba(226, 27, 35, 0.65); }
-.management-metrics article:nth-child(2) { border-left: 3px solid rgba(85, 185, 255, 0.65); }
-.management-metrics article:nth-child(3) { border-left: 3px solid rgba(245, 178, 62, 0.65); }
-.management-metrics article:nth-child(4) { border-left: 3px solid rgba(66, 185, 156, 0.65); }
-.management-metrics article:nth-child(5) { border-left: 3px solid rgba(85, 210, 230, 0.65); }
-.management-metrics article:nth-child(6) { border-left: 3px solid rgba(226, 27, 35, 0.45); }
-
-/* ---- Inquiry records: amber left bar ---- */
-.management-record.is-inquiry {
-  border-color: rgba(245, 178, 62, 0.22);
-  border-left: 3px solid rgba(245, 178, 62, 0.72);
-  background:
-    linear-gradient(90deg, rgba(245, 178, 62, 0.07), rgba(245, 178, 62, 0) 40%),
-    rgba(255, 255, 255, 0.045);
-  padding-left: 14px;
-}
-
-.management-record.is-inquiry:hover,
-.management-record.is-inquiry.is-selected {
-  border-color: rgba(245, 178, 62, 0.42);
-  border-left-color: rgba(245, 178, 62, 0.88);
-  background:
-    linear-gradient(90deg, rgba(245, 178, 62, 0.13), rgba(245, 178, 62, 0.02) 46%),
-    rgba(245, 178, 62, 0.055);
-}
-
-/* ---- Task records: violet left bar ---- */
-.management-record.is-task {
-  border-color: rgba(149, 117, 205, 0.22);
-  border-left: 3px solid rgba(149, 117, 205, 0.72);
-  background:
-    linear-gradient(90deg, rgba(149, 117, 205, 0.07), rgba(149, 117, 205, 0) 40%),
-    rgba(255, 255, 255, 0.045);
-  padding-left: 14px;
-}
-
-.management-record.is-task:hover,
-.management-record.is-task.is-selected {
-  border-color: rgba(149, 117, 205, 0.42);
-  border-left-color: rgba(149, 117, 205, 0.88);
-  background:
-    linear-gradient(90deg, rgba(149, 117, 205, 0.13), rgba(149, 117, 205, 0.02) 46%),
-    rgba(149, 117, 205, 0.055);
-}
-
-/* ---- Trip records: cyan left bar ---- */
-.management-record.is-trip {
-  border-color: rgba(85, 210, 230, 0.22);
-  border-left: 3px solid rgba(85, 210, 230, 0.72);
-  background:
-    linear-gradient(90deg, rgba(85, 210, 230, 0.07), rgba(85, 210, 230, 0) 40%),
-    rgba(255, 255, 255, 0.045);
-  padding-left: 14px;
-}
-
-.management-record.is-trip:hover,
-.management-record.is-trip.is-selected {
-  border-color: rgba(85, 210, 230, 0.42);
-  border-left-color: rgba(85, 210, 230, 0.88);
-  background:
-    linear-gradient(90deg, rgba(85, 210, 230, 0.13), rgba(85, 210, 230, 0.02) 46%),
-    rgba(85, 210, 230, 0.055);
-}
-
-/* ---- Type badge colors ---- */
-.management-badge.is-contact { background: rgba(85, 185, 255, 0.16); color: #cfeeff; }
-.management-badge.is-inquiry { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
-.management-badge.is-class   { background: rgba(66, 185, 156, 0.18); color: #c5ffe9; }
-.management-badge.is-trip    { background: rgba(85, 210, 230, 0.16); color: #b3f0ff; }
-.management-badge.is-task    { background: rgba(149, 117, 205, 0.18); color: #dfd0ff; }
-.management-badge.is-registration { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
-
-/* ---- Status badge fills (previously unstyled values) ---- */
-.management-badge.is-new       { background: rgba(85, 185, 255, 0.11); color: #cfeeff; }
-.management-badge.is-active    { background: rgba(66, 185, 156, 0.15); color: #c5ffe9; }
-.management-badge.is-scheduled { background: rgba(66, 185, 156, 0.13); color: #c5ffe9; }
-.management-badge.is-normal    { background: rgba(255, 255, 255, 0.05); color: rgba(234, 242, 255, 0.62); }
-.management-badge.is-low       { background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.48); }
-
-/* ---- Quick-status select: pill style ---- */
-.management-record-actions select {
-  border-radius: 20px;
-  padding: 7px 10px;
-  font-size: 12px;
-  font-weight: 800;
-  min-width: 130px;
-  cursor: pointer;
-}
-
-/* ---- Extra-fields section label via pseudo-element ---- */
-.management-extra-fields:not(.management-field-hidden)::before {
-  content: "Additional Details";
-  display: block;
-  color: rgba(155, 211, 255, 0.74);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: -2px;
-}
-
-/* ---- Responsive: single-column toolbar on narrow screens ---- */
-@media (max-width: 680px) {
-  .management-list-tools {
-    grid-template-columns: 1fr;
-  }
-
-  .management-new-record       { grid-column: 1; grid-row: 1; }
-  .management-search           { grid-column: 1; grid-row: 2; }
-  .management-sort             { grid-column: 1; grid-row: 3; }
-  .management-filters          { grid-column: 1; grid-row: 4; }
-  .management-calendar-controls { grid-column: 1; grid-row: 5; justify-self: start; }
-}
-
-/* ============================================================
-   Inquiry Progress Visualization
-   ============================================================ */
-
-/* ---- Pipeline step bar ---- */
-.management-inquiry-pipeline {
-  display: flex;
-  gap: 3px;
-  margin: 10px 0 4px;
-}
+.management-inquiry-pipeline { display: flex; gap: 3px; margin: 10px 0 4px; }
 
 .management-inquiry-stage {
   flex: 1;
@@ -1802,32 +1470,11 @@
   text-overflow: ellipsis;
 }
 
-.management-inquiry-stage.is-done {
-  color: rgba(245, 178, 62, 0.65);
-  background: rgba(245, 178, 62, 0.09);
-  border-color: rgba(245, 178, 62, 0.18);
-}
+.management-inquiry-stage.is-done    { color: rgba(245, 178, 62, 0.65); background: rgba(245, 178, 62, 0.09); border-color: rgba(245, 178, 62, 0.18); }
+.management-inquiry-stage.is-current { color: #ffe5b3; background: rgba(245, 178, 62, 0.20); border-color: rgba(245, 178, 62, 0.40); box-shadow: 0 0 0 1px rgba(245, 178, 62, 0.18); }
+.management-inquiry-stage.is-dead    { color: #ffb3b8; background: rgba(226, 27, 35, 0.16); border-color: rgba(226, 27, 35, 0.32); box-shadow: 0 0 0 1px rgba(226, 27, 35, 0.14); }
 
-.management-inquiry-stage.is-current {
-  color: #ffe5b3;
-  background: rgba(245, 178, 62, 0.20);
-  border-color: rgba(245, 178, 62, 0.40);
-  box-shadow: 0 0 0 1px rgba(245, 178, 62, 0.18);
-}
-
-.management-inquiry-stage.is-dead {
-  color: #ffb3b8;
-  background: rgba(226, 27, 35, 0.16);
-  border-color: rgba(226, 27, 35, 0.32);
-  box-shadow: 0 0 0 1px rgba(226, 27, 35, 0.14);
-}
-
-/* ---- Next step + meta callout ---- */
-.management-inquiry-callout {
-  display: grid;
-  gap: 7px;
-  margin-top: 8px;
-}
+.management-inquiry-callout { display: grid; gap: 7px; margin-top: 8px; }
 
 .management-inquiry-next-step {
   display: block;
@@ -1841,86 +1488,24 @@
   line-height: 1.4;
 }
 
-.management-inquiry-callout-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 10px;
-  align-items: center;
-}
+.management-inquiry-callout-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; align-items: center; }
+.management-inquiry-callout-meta span { color: rgba(234, 242, 255, 0.60); font-size: 12px; }
+.management-inquiry-due         { color: rgba(245, 178, 62, 0.82) !important; font-weight: 800; }
+.management-inquiry-due.is-due-soon { color: #ffb3b8 !important; }
+.management-inquiry-balance     { color: rgba(245, 178, 62, 0.82) !important; font-weight: 800; }
 
-.management-inquiry-callout-meta span {
-  color: rgba(234, 242, 255, 0.60);
-  font-size: 12px;
-}
+/* ──────────────────────────────────────────────────────────────────────────
+   QUICK-ADD / PIN / TIMESTAMP / CHARACTER COUNTER
+   ────────────────────────────────────────────────────────────────────────── */
 
-.management-inquiry-due {
-  color: rgba(245, 178, 62, 0.82) !important;
-  font-weight: 800;
-}
-
-.management-inquiry-due.is-due-soon {
-  color: #ffb3b8 !important;
-}
-
-.management-inquiry-balance {
-  color: rgba(245, 178, 62, 0.82) !important;
-  font-weight: 800;
-}
-
-@media (max-width: 680px) {
-  .management-inquiry-stage {
-    font-size: 9px;
-    padding: 4px 3px;
-    letter-spacing: 0;
-  }
-}
-
-/* ---- Overdue badge ---- */
-.management-badge.is-overdue {
-  background: rgba(226, 27, 35, 0.22);
-  color: #ffb3b8;
-  border: 1px solid rgba(226, 27, 35, 0.38);
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
-
-/* ---- Pin button on cards ---- */
-.management-pin-btn {
-  flex-shrink: 0;
-  border: none;
-  background: none;
-  color: rgba(234, 242, 255, 0.30);
-  font-size: 16px;
-  line-height: 1;
-  padding: 6px 8px;
-  cursor: pointer;
-  transition: color 0.15s, transform 0.1s;
-  border-radius: 6px;
-}
-.management-pin-btn:hover {
-  color: rgba(245, 178, 62, 0.80);
-  background: rgba(245, 178, 62, 0.10);
-}
-.management-pin-btn.is-pinned {
-  color: #f5b23e;
-}
-.management-record.is-pinned {
-  border-color: rgba(245, 178, 62, 0.30);
-  background: rgba(245, 178, 62, 0.05);
-}
-
-/* ---- Quick-add task bar ---- */
 .management-quick-add {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
-  margin-top: 12px;
-  margin-bottom: 4px;
 }
-.management-quick-add.is-loading {
-  opacity: 0.6;
-  pointer-events: none;
-}
+
+.management-quick-add.is-loading { opacity: 0.6; pointer-events: none; }
+
 .management-quick-add-input {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.11);
@@ -1932,10 +1517,12 @@
   padding: 10px 12px;
   outline: none;
 }
+
 .management-quick-add-input:focus {
   border-color: rgba(85, 185, 255, 0.55);
   box-shadow: 0 0 0 3px rgba(85, 185, 255, 0.11);
 }
+
 .management-quick-add-btn {
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
@@ -1948,15 +1535,27 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.management-quick-add-btn:hover {
-  border-color: rgba(85, 185, 255, 0.52);
-  background: rgba(85, 185, 255, 0.13);
+
+.management-quick-add-btn:hover { border-color: rgba(85, 185, 255, 0.52); background: rgba(85, 185, 255, 0.13); }
+
+.management-pin-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: rgba(234, 242, 255, 0.30);
+  font-size: 16px;
+  line-height: 1;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.1s;
+  border-radius: 6px;
 }
 
-/* ---- Timestamp button in notes label ---- */
-.management-notes-label {
-  position: relative;
-}
+.management-pin-btn:hover { color: rgba(245, 178, 62, 0.80); background: rgba(245, 178, 62, 0.10); }
+.management-pin-btn.is-pinned { color: #f5b23e; }
+
+.management-notes-label { position: relative; }
+
 .management-timestamp-btn {
   position: absolute;
   top: 0;
@@ -1972,771 +1571,205 @@
   cursor: pointer;
   line-height: 1.4;
 }
-.management-timestamp-btn:hover {
-  border-color: rgba(85, 185, 255, 0.45);
-  background: rgba(85, 185, 255, 0.10);
+
+.management-timestamp-btn:hover { border-color: rgba(85, 185, 255, 0.45); background: rgba(85, 185, 255, 0.10); color: var(--text); }
+
+.management-character-counter { display: block; margin-top: 6px; color: rgba(234, 242, 255, 0.54); font-size: 11px; font-weight: 700; line-height: 1.35; text-align: right; }
+.management-character-counter.is-warning { color: #f5b23e; }
+.management-character-counter.is-full    { color: #ff8b8b; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   HOME STUDIO CARDS
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-studio-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 720px;
+}
+
+.management-studio-cards article {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  background: rgba(7, 19, 37, 0.86);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.20);
+  padding: 20px;
+}
+
+.management-studio-cards h3, .management-studio-cards p { margin: 0; }
+.management-studio-cards h3 { font-size: 17px; letter-spacing: 0; }
+.management-studio-cards p  { margin-top: 8px; color: rgba(234, 242, 255, 0.62); font-size: 13px; line-height: 1.5; }
+
+.management-studio-cards a,
+.management-studio-cards button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin-top: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
   color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 0 12px;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.management-character-counter {
-  display: block;
-  margin-top: 6px;
-  color: rgba(234, 242, 255, 0.54);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: right;
+.management-studio-cards a:hover,
+.management-studio-cards button:hover { border-color: rgba(85, 185, 255, 0.52); background: rgba(85, 185, 255, 0.13); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   TICKER MODAL
+   ────────────────────────────────────────────────────────────────────────── */
+
+.management-ticker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 7, 14, 0.74);
+  backdrop-filter: blur(6px);
 }
 
-.management-character-counter.is-warning {
-  color: #f5b23e;
+.management-ticker-card {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border: 1px solid rgba(85, 185, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(7, 19, 37, 0.96);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.42);
+  padding: 20px;
 }
 
-.management-character-counter.is-full {
-  color: #ff8b8b;
+.management-ticker-card .management-panel-head {
+  position: sticky;
+  top: -20px;
+  margin: -20px -20px 18px;
 }
 
-/* ---- Filter count badge ---- */
-.management-filters button [data-filter-count] {
-  color: rgba(234, 242, 255, 0.50);
-  font-size: 11px;
-  font-weight: 700;
-}
-.management-filters button.is-active [data-filter-count] {
-  color: rgba(85, 185, 255, 0.75);
-}
+/* ──────────────────────────────────────────────────────────────────────────
+   RESPONSIVE
+   ────────────────────────────────────────────────────────────────────────── */
 
-/* ============================================================
-   Mobile enhancements - up to 767px
-   Everything above this point is the unchanged desktop layout.
-   ============================================================ */
-
-@keyframes mgmt-sheet-up {
-  from { transform: translateY(36px); opacity: 0.5; }
-  to   { transform: translateY(0);    opacity: 1;   }
-}
-
-@media (max-width: 767px) {
-
-  /* Shell */
-  .management-shell {
-    width: calc(100% - 20px);
-    padding: 14px 0 max(env(safe-area-inset-bottom, 0px), 40px);
+@media (max-width: 900px) {
+  .mgmt-app {
+    grid-template-columns: 180px 1fr;
   }
 
-  .management-dashboard {
-    gap: 14px;
+  .is-editor-open .mgmt-main::before {
+    left: 180px;
+    right: min(480px, 80vw);
   }
 
-  /* Header */
-  .management-header {
-    display: flex;
+  .management-panel {
+    width: min(480px, calc(100vw - 180px));
+  }
+
+  .mgmt-search-input {
+    width: 160px;
+  }
+}
+
+@media (max-width: 680px) {
+  .mgmt-app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+    overflow: visible;
+  }
+
+  .mgmt-sidebar {
+    height: auto;
     flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 4px 0 0;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   }
 
-  .management-header h1 {
-    font-size: 26px;
+  .mgmt-brand {
+    padding: 12px 14px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
   }
 
-  .management-header-actions {
-    flex-shrink: 0;
-    flex-wrap: nowrap;
-    gap: 7px;
+  .mgmt-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px;
+    flex: 1;
   }
 
-  .management-header-actions button {
-    min-height: 40px;
-    padding: 8px 11px;
-    font-size: 12px;
-  }
-
-  /* Metrics: 3 columns by 2 rows */
-  .management-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .management-metrics article {
-    padding: 10px 10px 12px;
-  }
-
-  .management-metrics span {
-    font-size: 22px;
-  }
-
-  .management-metrics p {
-    font-size: 9px;
-    margin-top: 5px;
-    letter-spacing: 0.04em;
-  }
-
-  /* Site tools */
-  .management-site-tools {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px;
-  }
-
-  .management-site-tools h2 {
-    font-size: 17px;
-  }
-
-  .management-site-links {
-    justify-content: flex-start;
-    gap: 7px;
-  }
-
-  .management-site-links a,
-  .management-site-links button {
-    min-height: 44px;
-    padding: 10px 12px;
-    font-size: 12px;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  /* List toolbar: New and Sort, then Search, then Filters */
-  .management-list-tools {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto auto;
-    gap: 9px;
-    padding-bottom: 12px;
-  }
-
-  .management-new-record {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 44px;
-    font-size: 13px;
-  }
-
-  .management-sort {
-    grid-column: 2;
-    grid-row: 1;
-    flex: none;
-    align-self: stretch;
-    min-width: 0;
-  }
-
-  .management-sort select {
-    height: 100%;
-    min-height: 44px;
-    padding: 0 8px;
-    font-size: 12px;
-    max-width: 130px;
-  }
-
-  .management-search {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    flex: none;
-  }
-
-  /* 16px prevents iOS auto-zoom on focus */
-  .management-search input,
-  .management-search input[type="search"] {
-    font-size: 16px;
-    min-height: 44px;
-    padding: 12px;
-  }
-
-  /* Filter pills become a horizontal scroll strip */
-  .management-filters {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 6px;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch;
-    /* Fade right edge to hint at more pills */
-    mask-image: linear-gradient(to right, black 0%, black calc(100% - 22px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 0%, black calc(100% - 22px), transparent 100%);
-  }
-
-  .management-filters::-webkit-scrollbar { display: none; }
-
-  .management-filters button {
-    flex-shrink: 0;
-    white-space: nowrap;
-    min-height: 38px;
-    padding: 5px 12px;
-    touch-action: manipulation;
-  }
-
-  .management-calendar-controls {
-    grid-column: 1 / -1;
-    grid-row: 4;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
-  }
-
-  /* Quick-add bar */
-  .management-quick-add-input {
-    font-size: 16px; /* iOS zoom prevention */
-    min-height: 44px;
-  }
-
-  .management-quick-add-btn {
-    min-height: 44px;
-  }
-
-  /* Record cards */
-  .management-record {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 12px 12px;
-    touch-action: manipulation;
-  }
-
-  .management-record.is-contact,
-  .management-record.is-class {
-    padding: 14px 14px 12px;
-  }
-
-  .management-record-actions {
-    flex-direction: column;
-    align-items: flex-end;
+  .mgmt-nav-section {
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 4px;
-    padding-top: 2px;
+    margin-bottom: 4px;
   }
 
-  .management-record-actions select {
-    min-width: 100px;
-    font-size: 11px;
-    padding: 5px 7px;
+  .mgmt-nav-label { display: none; }
+
+  .mgmt-sidebar-stats,
+  .mgmt-sidebar-footer { display: none; }
+
+  .mgmt-main {
+    height: auto;
+    overflow: visible;
   }
 
-  .management-pin-btn {
-    padding: 3px 6px;
-    min-height: 30px;
-    font-size: 15px;
+  .mgmt-panel {
+    height: auto;
+    overflow: visible;
   }
 
-  /* Bottom-sheet editor panel */
-  .management-panel {
-    inset: auto 0 0 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 92vh;
-    max-height: 92dvh;
-    border-radius: 20px 20px 0 0;
-    border-bottom: none;
-    margin: 0;
-    padding: 0 16px max(env(safe-area-inset-bottom, 0px), 24px);
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+  .mgmt-panel.mstudio-panel {
+    height: auto;
   }
 
-  .is-editor-open .management-panel {
-    display: block;
-    animation: mgmt-sheet-up 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  }
-
-  /* Panel head: re-anchor to top, add drag handle */
-  .management-panel .management-panel-head {
-    top: 0;
-    margin: 0 -16px 16px;
-    padding: 24px 16px 14px;
-    border-radius: 20px 20px 0 0;
-  }
-
-  /* Drag-handle indicator (position: sticky is a containing block) */
-  .management-panel .management-panel-head::before {
-    content: "";
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.22);
-    pointer-events: none;
-  }
-
-  /* Inputs: 16px font-size prevents iOS auto-zoom */
-  .management-record-form input,
-  .management-record-form select,
-  .management-record-form textarea {
-    font-size: 16px;
-    min-height: 44px;
-  }
-
-  .management-record-form textarea {
-    min-height: 100px;
-  }
-
-  /* Form labels slightly larger for readability */
-  .management-record-form label,
-  .management-ticker-form label {
-    font-size: 14px;
-  }
-
-  /* Form actions: full-width stacked buttons */
-  .management-form-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .management-form-actions button {
-    width: 100%;
-    min-height: 50px;
-    font-size: 15px;
-    touch-action: manipulation;
-  }
-
-  /* Ticker modal as bottom sheet */
-  .management-ticker-modal {
-    padding: 0;
-    align-items: flex-end;
-  }
-
-  .management-ticker-card {
-    width: 100%;
-    max-height: 90vh;
-    max-height: 90dvh;
-    border-radius: 20px 20px 0 0;
-    border-bottom: none;
-    padding: 0 16px max(env(safe-area-inset-bottom, 0px), 24px);
-    animation: mgmt-sheet-up 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  }
-
-  .management-ticker-card .management-panel-head {
-    top: 0;
-    margin: 0 -16px 16px;
-    padding: 24px 16px 14px;
-    border-radius: 20px 20px 0 0;
-  }
-
-  .management-ticker-card .management-panel-head::before {
-    content: "";
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.22);
-    pointer-events: none;
-  }
-
-  .management-ticker-form textarea {
-    font-size: 16px;
-    min-height: 200px;
-  }
-
-  /* Calendar items */
-  .management-calendar-item {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .management-calendar-date-block {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .management-calendar-date-block strong {
-    font-size: 17px;
-  }
-
-  /* Contact copy lines */
-  .management-contact-card-lines {
-    grid-template-columns: 1fr;
-  }
-
-  /* Class session dates */
-  .management-class-session-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* Registration items: stack actions below info */
-  .management-registration-item {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .management-registration-item .management-registration-actions {
-    justify-content: flex-start;
-  }
-
-  /* Inquiry pipeline: compact */
-  .management-inquiry-stage {
-    font-size: 9px;
-    padding: 4px 3px;
-    letter-spacing: 0;
-  }
-
-  /* Login card */
-  .management-login-card {
-    padding: 24px 20px;
-  }
-
-}
-
-/* Extra-small phones, up to 390px */
-@media (max-width: 390px) {
-  .management-metrics span    { font-size: 19px; }
-  .management-metrics p       { font-size: 8px; letter-spacing: 0; }
-  .management-metrics article { padding: 8px 8px 10px; }
-
-  .management-panel,
-  .management-ticker-card {
-    max-height: 96dvh;
-    max-height: 96vh;
-  }
-}
-
-/* ============================================================
-   Mobile polish pass
-   These overrides only apply to the management console on
-   phone-sized screens. Desktop layout and behavior stay intact.
-   ============================================================ */
-
-@media (max-width: 767px) {
-  .management-page {
-    overflow-x: hidden;
-  }
-
-  .management-shell {
-    width: 100%;
-    padding: 12px 10px max(env(safe-area-inset-bottom, 0px), 32px);
-  }
-
-  .management-login {
-    min-height: calc(100dvh - 24px);
-  }
-
-  .management-login-card {
-    width: 100%;
-    padding: 22px 18px;
-  }
-
-  .management-login-card img {
-    width: 70px;
-    height: 70px;
-  }
-
-  .management-header {
-    align-items: start;
-  }
-
-  .management-header-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-header-actions button {
-    white-space: nowrap;
-  }
-
-  .management-kicker {
-    font-size: 10px;
-  }
-
-  .management-site-tools,
-  .management-list-panel {
-    padding: 12px;
-  }
-
-  .management-site-links {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-site-links a,
-  .management-site-links button {
-    justify-content: center;
-    min-width: 0;
-    text-align: center;
-  }
-
-  .management-list-tools {
-    position: sticky;
-    top: 0;
-    z-index: 8;
-    margin: -12px -12px 0;
-    padding: 12px;
-    border-radius: 8px 8px 0 0;
-    background: rgba(7, 19, 37, 0.97);
-    backdrop-filter: blur(10px);
-  }
-
-  .management-sort {
-    min-width: 128px;
-  }
-
-  .management-sort select {
-    max-width: none;
-  }
-
-  .management-filters {
-    margin-right: -12px;
-    padding-right: 28px;
-  }
-
-  .management-calendar-controls {
-    display: flex;
-    width: 100%;
-  }
-
-  .management-toggle {
-    min-height: 36px;
-  }
-
-  .management-records {
-    gap: 12px;
-  }
-
-  .management-record {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .management-record-actions {
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .management-record-actions select {
-    width: 100%;
-    min-height: 42px;
-    font-size: 13px;
-  }
-
-  .management-pin-btn {
-    justify-self: start;
-    width: 44px;
-    min-height: 38px;
-  }
-
-  .management-record h3,
-  .management-record.is-contact h3,
-  .management-record.is-class h3 {
-    font-size: 17px;
-    line-height: 1.25;
-  }
-
-  .management-record-badges,
-  .management-record-meta,
-  .management-inquiry-callout-meta {
-    gap: 6px;
-  }
-
-  .management-badge {
-    min-height: 24px;
-    padding: 3px 8px;
-    font-size: 10px;
-  }
-
-  .management-contact-copy-line {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .management-contact-copy-line button,
-  .management-copy-field button {
-    min-height: 42px;
-  }
-
-  .management-inquiry-pipeline {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5px;
-  }
-
-  .management-inquiry-stage {
-    min-height: 30px;
-    display: grid;
-    place-items: center;
-    white-space: normal;
-    line-height: 1.1;
-  }
-
-  .management-inquiry-next-step {
-    font-size: 13px;
-  }
-
-  .management-calendar-stat-grid,
-  .management-class-detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-calendar-actions,
-  .management-registration-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .management-calendar-actions a,
-  .management-registration-actions button {
-    flex: 1 1 auto;
-    min-height: 42px;
-    text-align: center;
+  .mgmt-ops-body {
+    overflow: visible;
   }
 
   .management-panel {
+    width: 100%;
     left: 0;
+    border-left: none;
+    border-top: 1px solid rgba(85, 185, 255, 0.22);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .is-editor-open .mgmt-main::before {
+    inset: 0;
     right: 0;
-    bottom: 0;
-    width: 100%;
-    max-height: min(92dvh, 760px);
-    overflow-y: auto;
+    left: 0;
   }
 
-  .management-panel-head {
-    align-items: start;
-  }
+  .management-form-grid { grid-template-columns: 1fr; display: grid; }
+  .management-class-session-row { grid-template-columns: 1fr; }
+  .management-inquiry-detail-grid { grid-template-columns: 1fr; }
+  .management-inquiry-detail-grid section > div { grid-template-columns: 1fr; }
+  .management-class-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .management-class-contact-add, .management-class-contact-item,
+  .management-class-contact-actions, .management-class-registration-item,
+  .management-registration-item { grid-template-columns: 1fr; }
+  .management-registration-item .management-registration-actions { justify-content: flex-start; }
 
-  .management-panel-head h2 {
-    font-size: 20px;
-    line-height: 1.2;
-  }
-
-  .management-panel-head button {
-    min-height: 42px;
-  }
-
-  .management-record-form {
-    gap: 12px;
-  }
-
-  .management-record-form input,
-  .management-record-form select,
-  .management-record-form textarea,
-  .management-ticker-form textarea,
-  .management-class-contact-add select {
-    font-size: 16px;
-  }
-
-  .management-copy-field {
-    grid-template-columns: 1fr;
-  }
-
-  .management-extra-fields,
-  .management-class-schedule,
-  .management-class-roster,
-  .management-contact-classes,
-  .management-registration-manager {
-    padding: 12px;
-  }
-
-  .management-class-session-head {
-    align-items: start;
-  }
-
-  .management-class-session-row,
-  .management-class-contact-add,
-  .management-contact-classes .management-class-contact-add,
-  .management-class-contact-item,
-  .management-class-registration-item {
-    grid-template-columns: 1fr;
-  }
-
-  .management-class-session-row button,
-  .management-class-contact-add button,
-  .management-class-contact-item button,
-  .management-class-registration-item button {
-    width: 100%;
-    min-height: 42px;
-  }
-
-  .management-contact-classes .management-class-contact-add select[multiple] {
-    min-height: 148px;
-  }
-
-  .management-inquiry-detail-grid,
-  .management-inquiry-detail-grid section > div,
-  .management-contact-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .management-timestamp-btn {
-    position: static;
-    width: max-content;
-    margin-top: 6px;
-  }
-
-  .management-ticker-card {
-    overflow-y: auto;
-  }
+  .management-studio-cards { grid-template-columns: 1fr; }
+  .management-calendar-item { flex-direction: column; display: flex; }
 }
 
 @media (max-width: 480px) {
-  .management-header {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .management-header-actions {
-    width: 100%;
-  }
-
-  .management-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-site-links {
-    grid-template-columns: 1fr;
-  }
-
-  .management-list-tools {
-    grid-template-columns: 1fr;
-  }
-
-  .management-new-record,
-  .management-sort,
-  .management-search,
-  .management-filters,
-  .management-calendar-controls {
-    grid-column: 1 / -1;
-  }
-
-  .management-new-record { grid-row: 1; }
-  .management-sort { grid-row: 2; }
-  .management-search { grid-row: 3; }
-  .management-filters { grid-row: 4; }
-  .management-calendar-controls { grid-row: 5; }
-
-  .management-sort select {
-    width: 100%;
-  }
-
-  .management-calendar-stat-grid,
-  .management-class-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .management-inquiry-pipeline {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .management-panel,
-  .management-ticker-card {
-    max-height: 96dvh;
-    border-radius: 16px 16px 0 0;
-  }
-
-  .management-panel .management-panel-head,
-  .management-ticker-card .management-panel-head {
-    border-radius: 16px 16px 0 0;
-  }
+  .mgmt-topbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .mgmt-topbar-right { flex-wrap: wrap; }
+  .mgmt-search-input { width: 100%; }
+  .mgmt-inquiry-stage { font-size: 9px; padding: 4px 3px; letter-spacing: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2758,185 +1791,161 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.025);
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 11, 20, 0.8);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .mstudio-toolbar-left,
 .mstudio-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .mstudio-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.055);
   color: rgba(234, 242, 255, 0.82);
   font: inherit;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 700;
+  padding: 6px 10px;
   cursor: pointer;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.1s, border-color 0.1s;
   white-space: nowrap;
-  line-height: 1;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
 .mstudio-btn:hover {
-  background: rgba(85, 185, 255, 0.13);
-  border-color: rgba(85, 185, 255, 0.45);
+  background: rgba(85, 185, 255, 0.10);
+  border-color: rgba(85, 185, 255, 0.35);
   color: var(--text);
 }
 
-.mstudio-btn:disabled {
-  opacity: 0.38;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
 .mstudio-btn-primary {
-  background: rgba(228, 50, 60, 0.72);
-  border-color: rgba(228, 50, 60, 0.55);
-  color: #fff;
+  background: rgba(85, 185, 255, 0.18);
+  border-color: rgba(85, 185, 255, 0.45);
+  color: #cfeeff;
+  font-weight: 800;
 }
 
 .mstudio-btn-primary:hover {
-  background: rgba(228, 50, 60, 0.9);
-  border-color: rgba(228, 50, 60, 0.8);
-  color: #fff;
+  background: rgba(85, 185, 255, 0.28);
+  border-color: rgba(85, 185, 255, 0.65);
 }
 
 .mstudio-btn-sm {
-  padding: 4px 10px;
   font-size: 11px;
+  padding: 4px 8px;
 }
 
 .mstudio-dirty-badge {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 190, 60, 0.9);
-  letter-spacing: 0.02em;
+  color: rgba(255, 190, 60, 0.85);
+  background: rgba(255, 180, 40, 0.08);
+  border: 1px solid rgba(255, 180, 40, 0.22);
+  border-radius: 5px;
+  padding: 3px 8px;
 }
 
 .mstudio-status-text {
-  font-size: 12px;
-  color: rgba(234, 242, 255, 0.6);
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.45);
 }
 
-.mstudio-status-text[data-stype="success"] { color: rgba(80, 220, 140, 0.9); }
-.mstudio-status-text[data-stype="error"]   { color: rgba(255, 90, 90, 0.95); }
-
-/* ── Workspace (sidebar | preview) ──────────────────────────────────────── */
+/* ── Workspace grid ──────────────────────────────────────────────────────── */
 .mstudio-workspace {
   display: grid;
   grid-template-columns: 310px 1fr;
-  flex: 1 1 0;
+  height: auto;
+  flex: 1;
   min-height: 0;
-  height: calc(100dvh - 340px);
-  min-height: 460px;
   overflow: hidden;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+/* ── Sidebar (list + edit pane) ──────────────────────────────────────────── */
 .mstudio-sidebar {
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  min-height: 0;
 }
 
 .mstudio-search-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
 .mstudio-search {
   flex: 1;
-  background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.048);
   color: var(--text);
   font: inherit;
   font-size: 12px;
-  padding: 5px 9px;
+  padding: 6px 9px;
   outline: none;
 }
 
-.mstudio-search:focus { border-color: rgba(85, 185, 255, 0.45); }
+.mstudio-search:focus {
+  border-color: rgba(85, 185, 255, 0.5);
+}
 
 .mstudio-count {
   font-size: 11px;
-  color: rgba(234, 242, 255, 0.4);
-  font-weight: 700;
-  flex-shrink: 0;
+  color: rgba(234, 242, 255, 0.38);
+  white-space: nowrap;
 }
 
 /* ── Item list ───────────────────────────────────────────────────────────── */
 .mstudio-list {
   flex: 1 1 0;
   overflow-y: auto;
-  padding: 5px;
-  min-height: 80px;
+  min-height: 0;
 }
 
 .mstudio-list::-webkit-scrollbar { width: 5px; }
-.mstudio-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.mstudio-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
 
-.mstudio-empty {
-  padding: 20px 10px;
-  text-align: center;
-  color: rgba(234, 242, 255, 0.38);
-  font-size: 12px;
-}
+.mstudio-dest-list .mstudio-list-item { grid-template-columns: 1fr; }
 
 .mstudio-list-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
   align-items: center;
-  gap: 9px;
   padding: 7px 8px;
-  border-radius: 6px;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.1s, border-color 0.1s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.1s;
 }
 
-.mstudio-list-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.mstudio-list-item.is-selected {
-  background: rgba(85, 185, 255, 0.12);
-  border-color: rgba(85, 185, 255, 0.35);
-}
+.mstudio-list-item:hover  { background: rgba(255, 255, 255, 0.04); }
+.mstudio-list-item.is-selected { background: rgba(85, 185, 255, 0.10); }
 
 .mstudio-list-thumb {
   width: 44px;
   height: 32px;
   border-radius: 4px;
   overflow: hidden;
-  flex-shrink: 0;
   background: rgba(255, 255, 255, 0.06);
-  display: grid;
-  place-items: center;
+  flex-shrink: 0;
 }
 
 .mstudio-list-thumb img {
@@ -2945,57 +1954,34 @@
   object-fit: cover;
 }
 
-.mstudio-thumb-ph {
-  font-size: 16px;
-  opacity: 0.6;
-}
-
-.mstudio-dest-flag {
-  font-size: 20px;
-  flex-shrink: 0;
-  width: 28px;
-  text-align: center;
+.mstudio-list-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mstudio-list-meta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.mstudio-list-title {
-  font-size: 12px;
-  font-weight: 750;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mstudio-chips {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  margin-top: 3px;
 }
 
 .mstudio-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   color: rgba(234, 242, 255, 0.55);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .mstudio-chip-type {
-  background: rgba(85, 185, 255, 0.1);
+  background: rgba(85, 185, 255, 0.08);
   border-color: rgba(85, 185, 255, 0.25);
   color: rgba(85, 185, 255, 0.9);
 }
@@ -3021,19 +2007,8 @@
 .mstudio-edit-pane::-webkit-scrollbar { width: 5px; }
 .mstudio-edit-pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
-.mstudio-hint {
-  color: rgba(234, 242, 255, 0.38);
-  font-size: 12px;
-  text-align: center;
-  padding: 14px 0;
-  margin: 0;
-}
-
-.mstudio-hint-sm {
-  font-size: 11px;
-  text-align: left;
-  padding: 4px 0 8px;
-}
+.mstudio-hint { color: rgba(234, 242, 255, 0.38); font-size: 12px; text-align: center; padding: 14px 0; margin: 0; }
+.mstudio-hint-sm { font-size: 11px; text-align: left; padding: 4px 0 8px; }
 
 /* ── Form fields ─────────────────────────────────────────────────────────── */
 .mstudio-form-header {
@@ -3045,17 +2020,10 @@
   margin-bottom: 2px;
 }
 
-.mstudio-form-eyebrow {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(147, 211, 255, 0.8);
-}
+.mstudio-form-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(147, 211, 255, 0.8); }
 
 .mstudio-delete-btn {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11px; font-weight: 700;
   color: rgba(255, 90, 90, 0.75);
   background: none;
   border: 1px solid rgba(255, 90, 90, 0.25);
@@ -3065,26 +2033,10 @@
   transition: background 0.1s, color 0.1s;
 }
 
-.mstudio-delete-btn:hover {
-  background: rgba(255, 90, 90, 0.12);
-  color: rgba(255, 90, 90, 0.95);
-}
+.mstudio-delete-btn:hover { background: rgba(255, 90, 90, 0.12); color: rgba(255, 90, 90, 0.95); }
 
-.mstudio-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11px;
-  color: rgba(234, 242, 255, 0.55);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.mstudio-label em {
-  font-style: normal;
-  font-weight: 500;
-  opacity: 0.7;
-}
+.mstudio-label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: rgba(234, 242, 255, 0.55); font-weight: 700; letter-spacing: 0.04em; }
+.mstudio-label em { font-style: normal; font-weight: 500; opacity: 0.7; }
 
 .mstudio-input {
   background: rgba(255, 255, 255, 0.05);
@@ -3096,116 +2048,35 @@
   padding: 6px 9px;
   outline: none;
   width: 100%;
-  box-sizing: border-box;
   transition: border-color 0.12s;
 }
 
-.mstudio-input:focus {
-  border-color: rgba(85, 185, 255, 0.5);
-  background: rgba(85, 185, 255, 0.04);
-}
+.mstudio-input:focus { border-color: rgba(85, 185, 255, 0.5); background: rgba(85, 185, 255, 0.04); }
 
-.mstudio-textarea {
-  resize: vertical;
-  min-height: 56px;
-  line-height: 1.45;
-}
+.mstudio-textarea { resize: vertical; min-height: 56px; line-height: 1.45; }
+.mstudio-json-editor { font-family: 'Consolas', 'Fira Code', monospace; font-size: 11px; min-height: 220px; line-height: 1.5; }
 
-.mstudio-json-editor {
-  font-family: 'Consolas', 'Fira Code', monospace;
-  font-size: 11px;
-  min-height: 220px;
-  line-height: 1.5;
-}
+.mstudio-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-.mstudio-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
+.mstudio-meta-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(234, 242, 255, 0.45); padding: 4px 0; }
 
-.mstudio-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: rgba(234, 242, 255, 0.45);
-  padding: 4px 0;
-}
+.mstudio-code { font-family: monospace; font-size: 10px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 2px 6px; color: rgba(147, 211, 255, 0.8); word-break: break-all; }
 
-.mstudio-code {
-  font-family: monospace;
-  font-size: 10px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  padding: 2px 6px;
-  color: rgba(147, 211, 255, 0.8);
-  word-break: break-all;
-}
-
-.mstudio-form-actions {
-  display: flex;
-  gap: 7px;
-  padding-top: 4px;
-  flex-wrap: wrap;
-}
+.mstudio-form-actions { display: flex; gap: 7px; padding-top: 4px; flex-wrap: wrap; }
 
 /* ── Tabs (travel) ───────────────────────────────────────────────────────── */
-.mstudio-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 6px 0 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
+.mstudio-tabs { display: flex; gap: 4px; padding: 6px 0 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 
-.mstudio-tabs button {
-  padding: 5px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(234, 242, 255, 0.6);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.1s;
-}
+.mstudio-tabs button { padding: 5px 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; background: rgba(255,255,255,0.04); color: rgba(234,242,255,0.6); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; transition: all 0.1s; }
+.mstudio-tabs button:hover { background: rgba(85,185,255,0.1); border-color: rgba(85,185,255,0.3); color: var(--text); }
+.mstudio-tabs button.is-active { background: rgba(85,185,255,0.16); border-color: rgba(85,185,255,0.48); color: var(--text); }
 
-.mstudio-tabs button:hover {
-  background: rgba(85, 185, 255, 0.1);
-  border-color: rgba(85, 185, 255, 0.3);
-  color: var(--text);
-}
-
-.mstudio-tabs button.is-active {
-  background: rgba(85, 185, 255, 0.16);
-  border-color: rgba(85, 185, 255, 0.48);
-  color: var(--text);
-}
-
-.mstudio-tab-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 6px;
-}
-
-.mstudio-tab-panels {
-  flex: 1;
-}
-
-.mstudio-json-panel {
-  gap: 8px;
-}
+.mstudio-tab-panel { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
+.mstudio-tab-panels { flex: 1; }
+.mstudio-json-panel { gap: 8px; }
 
 /* ── Preview column ──────────────────────────────────────────────────────── */
-.mstudio-preview-col {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-}
+.mstudio-preview-col { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
 .mstudio-preview-bar {
   display: flex;
@@ -3217,25 +2088,9 @@
   flex-shrink: 0;
 }
 
-.mstudio-preview-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: rgba(234, 242, 255, 0.4);
-}
-
-.mstudio-preview-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.mstudio-preview-frame {
-  flex: 1;
-  width: 100%;
-  border: none;
-  background: #f0f0f0;
-}
+.mstudio-preview-label { font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(234,242,255,0.4); }
+.mstudio-preview-actions { display: flex; gap: 6px; }
+.mstudio-preview-frame { flex: 1; width: 100%; border: none; background: #f0f0f0; }
 
 /* ── Upload / add modal ──────────────────────────────────────────────────── */
 .mstudio-overlay {
@@ -3263,23 +2118,9 @@
   gap: 12px;
 }
 
-.mstudio-modal-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.mstudio-modal-head h3 {
-  margin: 0;
-  font-size: 17px;
-  letter-spacing: 0;
-}
-
-.mstudio-modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.mstudio-modal-head { display: flex; align-items: center; justify-content: space-between; }
+.mstudio-modal-head h3 { margin: 0; font-size: 17px; letter-spacing: 0; }
+.mstudio-modal-form { display: flex; flex-direction: column; gap: 10px; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
@@ -3295,13 +2136,8 @@
     max-height: 50vh;
   }
 
-  .mstudio-edit-pane {
-    max-height: none;
-  }
-
-  .mstudio-preview-col {
-    min-height: 340px;
-  }
+  .mstudio-edit-pane { max-height: none; }
+  .mstudio-preview-col { min-height: 340px; }
 
   .mstudio-toolbar {
     flex-direction: column;

@@ -10,11 +10,13 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260507a" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260507b" />
 </head>
 
 <body class="management-page">
   <main class="management-shell" data-management-app>
+
+    <!-- ═══ LOGIN ═══════════════════════════════════════════════════════ -->
     <section class="management-login" data-management-login>
       <div class="management-login-card">
         <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
@@ -35,607 +37,678 @@
       </div>
     </section>
 
+    <!-- ═══ DASHBOARD ════════════════════════════════════════════════════ -->
     <section class="management-dashboard" data-management-dashboard hidden>
-      <header class="management-header">
-        <div>
-          <p class="management-kicker">DMZ Scuba</p>
-          <h1>Management</h1>
-        </div>
-        <div class="management-header-actions">
-          <button class="btn secondary" type="button" data-refresh-records>Refresh</button>
-          <button class="btn secondary" type="button" data-logout>Log Out</button>
-        </div>
-      </header>
+      <div class="mgmt-app">
 
-      <section class="management-metrics" aria-label="Management summary">
-        <article>
-          <span data-metric="open">0</span>
-          <p>Open Items</p>
-        </article>
-        <article>
-          <span data-metric="contact">0</span>
-          <p>Contacts</p>
-        </article>
-        <article>
-          <span data-metric="inquiry">0</span>
-          <p>Inquiries</p>
-        </article>
-        <article>
-          <span data-metric="class">0</span>
-          <p>Classes</p>
-        </article>
-        <article>
-          <span data-metric="trip">0</span>
-          <p>Calendar</p>
-        </article>
-        <article>
-          <span data-metric="owed">$0</span>
-          <p>Open Balance</p>
-        </article>
-      </section>
+        <!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+        <aside class="mgmt-sidebar">
 
-      <section class="management-site-tools" aria-label="Site editing shortcuts">
-        <div>
-          <p class="management-kicker">Site tools</p>
-          <h2>Editable Site Areas</h2>
-        </div>
-        <div class="management-site-links">
-          <button type="button" data-open-home-ticker>Edit Home Ticker</button>
-          <button type="button" data-open-management-calendar>Calendar + Registration</button>
-          <button type="button" data-site-studio-open="media">Media Library</button>
-          <button type="button" data-site-studio-open="travel">Travel Destinations</button>
-          <a href="/pages/training/" target="_blank" rel="noopener">Training Pages</a>
-        </div>
-      </section>
-
-      <section class="management-content-studio" aria-label="Management content studio">
-        <div class="management-studio-tabs" role="tablist" aria-label="Management workspace sections">
-          <button class="is-active" type="button" role="tab" aria-selected="true" data-site-studio-tab="operations">Operations</button>
-          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="media">Media Editor</button>
-          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="travel">Travel Editor</button>
-          <button type="button" role="tab" aria-selected="false" data-site-studio-tab="home">Home Page</button>
-        </div>
-      </section>
-
-      <section class="management-workspace" data-site-studio-panel="operations">
-        <aside class="management-panel" role="dialog" aria-modal="true" aria-labelledby="managementEditorTitle">
-          <div class="management-panel-head">
-            <h2 id="managementEditorTitle" data-editor-title>New Item</h2>
-            <button type="button" data-cancel-edit>Cancel</button>
+          <div class="mgmt-brand">
+            <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba" />
+            <span class="mgmt-brand-name">DMZ Admin</span>
           </div>
-          <form class="management-record-form" data-record-form>
-            <input type="hidden" name="id" />
-            <label data-field="recordType">
-              Type
-              <select name="recordType">
-                <option value="contact">Customer / Contact Profile</option>
-                <option value="inquiry">Inquiry</option>
-                <option value="class">Class</option>
-                <option value="trip">Calendar</option>
-                <option value="task">Business Task</option>
-              </select>
-            </label>
-            <label data-field="title">
-              Title
-              <input type="text" name="title" maxlength="180" required placeholder="Open Water student follow-up" />
-            </label>
-            <div class="management-form-grid">
-              <label data-field="status">
-                Status
-                <select name="status">
-                  <option value="new">New</option>
-                  <option value="active">Active</option>
-                  <option value="waiting">Waiting</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="complete">Complete</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </label>
-              <label data-field="priority">
-                Priority
-                <select name="priority">
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="low">Low</option>
-                </select>
-              </label>
+
+          <nav class="mgmt-nav" aria-label="Management navigation">
+
+            <div class="mgmt-nav-section">
+              <span class="mgmt-nav-label">Operations</span>
+
+              <button class="mgmt-nav-item is-active" type="button"
+                      data-filter-type="all" data-site-studio-tab="operations">
+                <span class="mgmt-nav-text">Agenda</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="contact" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Contacts</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="inquiry" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Inquiries</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="class" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Classes</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="trip" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Calendar</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="task" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Tasks</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button"
+                      data-filter-type="registration" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Signups</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
             </div>
-            <label data-field="owner">
-              Owner
-              <input type="text" name="owner" maxlength="120" placeholder="Zachary" />
-            </label>
-            <div class="management-form-grid">
-              <label data-field="firstName">
-                First Name
-                <input type="text" name="firstName" maxlength="80" />
-              </label>
-              <label data-field="lastName">
-                Last Name
-                <input type="text" name="lastName" maxlength="80" />
-              </label>
+
+            <div class="mgmt-nav-section">
+              <span class="mgmt-nav-label">Content</span>
+
+              <button class="mgmt-nav-item" type="button" data-site-studio-tab="media">
+                <span class="mgmt-nav-text">Media Library</span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button" data-site-studio-tab="travel">
+                <span class="mgmt-nav-text">Travel</span>
+              </button>
+
+              <button class="mgmt-nav-item" type="button" data-site-studio-tab="home">
+                <span class="mgmt-nav-text">Home Page</span>
+              </button>
             </div>
-            <div class="management-form-grid">
-              <label data-field="contactName">
-                Contact Name
-                <input type="text" name="contactName" maxlength="160" />
-              </label>
-              <label data-field="contactEmail">
-                Contact Email
-                <span class="management-copy-field">
-                  <input type="email" name="contactEmail" maxlength="180" />
-                  <button type="button" data-copy-field="contactEmail">Copy</button>
-                </span>
-              </label>
+
+          </nav>
+
+          <!-- Metrics in sidebar -->
+          <section class="mgmt-sidebar-stats" aria-label="Management summary">
+            <div class="mgmt-stat"><span data-metric="open">0</span><p>Open</p></div>
+            <div class="mgmt-stat"><span data-metric="contact">0</span><p>Contacts</p></div>
+            <div class="mgmt-stat"><span data-metric="inquiry">0</span><p>Inquiries</p></div>
+            <div class="mgmt-stat"><span data-metric="class">0</span><p>Classes</p></div>
+            <div class="mgmt-stat"><span data-metric="trip">0</span><p>Calendar</p></div>
+            <div class="mgmt-stat mgmt-stat-balance"><span data-metric="owed">$0</span><p>Balance</p></div>
+          </section>
+
+          <!-- Sidebar footer: quick links + auth actions -->
+          <footer class="mgmt-sidebar-footer">
+            <button class="mgmt-sidebar-link" type="button" data-open-home-ticker>Edit Ticker</button>
+            <button class="mgmt-sidebar-link" type="button"
+                    data-open-management-calendar data-site-studio-open="operations">Calendar + Registration</button>
+            <a class="mgmt-sidebar-link" href="/pages/training/" target="_blank" rel="noopener">Training Pages ↗</a>
+            <div class="mgmt-sidebar-bottom">
+              <button class="mgmt-action-btn" type="button" data-refresh-records>↻ Refresh</button>
+              <button class="mgmt-action-btn mgmt-action-btn-danger" type="button" data-logout>Log Out</button>
             </div>
-            <div class="management-form-grid">
-              <label data-field="contactPhone">
-                Contact Phone
-                <span class="management-copy-field">
-                  <input type="tel" name="contactPhone" maxlength="60" />
-                  <button type="button" data-copy-field="contactPhone">Copy</button>
-                </span>
-              </label>
-              <label data-field="dueDate">
-                Due Date
-                <input type="date" name="dueDate" />
-              </label>
-            </div>
-            <label data-field="relatedEvent">
-              Related Class, Trip, or Event
-              <input type="text" name="relatedEvent" maxlength="180" />
-            </label>
-            <section class="management-extra-fields" aria-label="Operational details">
-              <div class="management-form-grid">
-                <label data-field="stage">
-                  Stage
-                  <select name="stage">
-                    <option value="">Not Set</option>
-                    <option value="lead">Lead</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="quoted">Quoted</option>
-                    <option value="deposit">Deposit / Commitment</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </label>
-                <label data-field="inquiryDirection">
-                  Direction
-                  <select name="inquiryDirection">
-                    <option value="">Not Set</option>
-                    <option value="outgoing">Outgoing Outreach</option>
-                    <option value="incoming">Incoming Inquiry</option>
-                  </select>
-                </label>
-              </div>
-              <div class="management-form-grid">
-                <label data-field="inquiryCategory">
-                  Inquiry Category
-                  <select name="inquiryCategory">
-                    <option value="">Not Set</option>
-                    <option value="pool">Pool / Facility</option>
-                    <option value="program_manager">Program Manager</option>
-                    <option value="agency">Agency</option>
-                    <option value="vendor">Vendor</option>
-                    <option value="customer">Customer / Student</option>
-                    <option value="travel_partner">Travel Partner</option>
-                    <option value="community_partner">Community Partner</option>
-                    <option value="other">Other</option>
-                  </select>
-                </label>
-                <label data-field="source">
-                  Source
-                  <input type="text" name="source" maxlength="120" placeholder="Website, referral, phone, Facebook" />
-                </label>
-              </div>
-              <div class="management-form-grid">
-                <label data-field="startDate">
-                  Start Date
-                  <input type="date" name="startDate" />
-                </label>
-                <label data-field="endDate">
-                  End Date
-                  <input type="date" name="endDate" />
-                </label>
-              </div>
-              <div class="management-form-grid">
-                <label data-field="startTime">
-                  Start Time
-                  <select name="startTime" data-time-select></select>
-                </label>
-                <label data-field="endTime">
-                  End Time
-                  <select name="endTime" data-time-select></select>
-                </label>
-              </div>
-              <div class="management-form-grid">
-                <label data-field="eventTag">
-                  Tag
-                  <select name="eventTag">
-                    <option value="Training">Training</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Local Dive">Local Dive</option>
-                    <option value="Workshop">Workshop</option>
-                    <option value="Community">Community</option>
-                  </select>
-                </label>
-                <label data-field="eventLocation">
-                  Location
-                  <input type="text" name="eventLocation" maxlength="180" />
-                </label>
-              </div>
-              <label data-field="classId">
-                Class ID
-                <input type="text" name="classId" maxlength="80" placeholder="open-water-may-2026" />
-              </label>
-              <details class="management-class-schedule" data-field="classSchedule" data-class-schedule>
-                <summary class="management-class-schedule-head">
-                  <div>
-                    <h3>Class Schedule</h3>
-                    <p>Each date can have its own time and location. The first class date is the registration date on the public calendar.</p>
-                  </div>
-                </summary>
-                <div class="management-class-session-group">
-                  <div class="management-class-session-head">
-                    <h4>Classroom Dates</h4>
-                    <button type="button" data-add-class-session="classroom">Add Date</button>
-                  </div>
-                  <div data-class-session-list="classroom"></div>
-                </div>
-                <div class="management-class-session-group">
-                  <div class="management-class-session-head">
-                    <h4>Pool Dates</h4>
-                    <button type="button" data-add-class-session="pool">Add Date</button>
-                  </div>
-                  <div data-class-session-list="pool"></div>
-                </div>
-                <div class="management-class-session-group">
-                  <div class="management-class-session-head">
-                    <h4>Open Water Dates</h4>
-                    <button type="button" data-add-class-session="openWater">Add Date</button>
-                  </div>
-                  <div data-class-session-list="openWater"></div>
-                </div>
-              </details>
-              <details class="management-class-roster" data-field="classRoster" data-class-roster>
-                <summary class="management-class-roster-head">
-                  <div>
-                    <h3>Class Roster</h3>
-                    <p>Uses the same management contact records. Imports from registration escrow are tagged as self-registered.</p>
-                  </div>
-                </summary>
-                <div class="management-class-contact-add">
-                  <select data-class-contact-select aria-label="Select contact to add"></select>
-                  <button type="button" data-add-class-contact>Add Contact</button>
-                </div>
-                <div class="management-class-contact-list" data-class-contact-list></div>
-                <div class="management-class-registration-review">
-                  <div class="management-class-session-head">
-                    <h4>Registration Escrow</h4>
-                    <button type="button" data-refresh-class-registrations>Refresh Registrations</button>
-                  </div>
-                  <p data-class-registration-summary>No registration data loaded.</p>
-                  <div data-class-registration-list></div>
-                </div>
-              </details>
-              <div class="management-form-grid">
-                <label data-field="capacity">
-                  Capacity / Roster Size
-                  <input type="number" min="0" step="1" name="capacity" />
-                </label>
-                <label data-field="registrationEnabled" class="management-checkbox-field">
-                  <span>Enable Registration</span>
-                  <input type="checkbox" name="registrationEnabled" value="1" />
-                </label>
-                <label data-field="registrationClosed" class="management-checkbox-field">
-                  <span>Close Registration</span>
-                  <input type="checkbox" name="registrationClosed" value="1" />
-                </label>
-                <label data-field="certification">
-                  Certification / Level
-                  <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
-                </label>
-              </div>
-              <label data-field="registrationEmailSubject">
-                Registration Email Subject
-                <input type="text" name="registrationEmailSubject" maxlength="180" placeholder="You're signed up for {{event_title}}" />
-                <span class="management-character-counter" data-character-counter-for="registrationEmailSubject"></span>
-              </label>
-              <label data-field="registrationEmailContent" class="management-notes-label">
-                Registration Email Message
-                <textarea name="registrationEmailContent" rows="10" maxlength="12000" placeholder="Private confirmation details sent after someone registers."></textarea>
-                <span class="management-character-counter" data-character-counter-for="registrationEmailContent"></span>
-              </label>
-              <details class="management-contact-classes" data-field="contactClasses" data-contact-classes>
-                <summary class="management-class-roster-head">
-                  <div>
-                    <h3>Student Classes</h3>
-                    <p>Add one or more class records to this contact. The class roster updates from the same enrollment record.</p>
-                  </div>
-                </summary>
-                <div class="management-class-contact-add">
-                  <select data-contact-class-select aria-label="Select classes to add" multiple size="6"></select>
-                  <select data-contact-class-status aria-label="Class enrollment status">
-                    <option value="enrolled">Enrolled</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                  <button type="button" data-add-contact-classes>Add Classes</button>
-                </div>
-                <div class="management-class-contact-list" data-contact-class-list></div>
-              </details>
-              <section class="management-registration-manager" data-registration-manager hidden>
-                <div class="management-registration-head">
-                  <div>
-                    <h3>Registration Escrow</h3>
-                    <p data-registration-summary>No signup data loaded.</p>
-                  </div>
-                  <button class="btn secondary" type="button" data-refresh-registrations>Refresh Signups</button>
-                </div>
-                <div class="management-registration-list" data-registration-list></div>
-              </section>
-              <div class="management-form-grid">
-                <label data-field="amountOwed">
-                  Total Owed
-                  <input type="number" min="0" step="0.01" name="amountOwed" />
-                </label>
-                <label data-field="amountPaid">
-                  Amount Paid
-                  <input type="number" min="0" step="0.01" name="amountPaid" />
-                </label>
-              </div>
-              <label data-field="nextStep">
-                Next Step
-                <input type="text" name="nextStep" maxlength="220" placeholder="Send forms, confirm dates, collect balance..." />
-              </label>
-              <label data-field="outcomeReason">
-                Close Reason
-                <select name="outcomeReason">
-                  <option value="">Not Closed</option>
-                  <option value="no_response">No Response / No-Show</option>
-                  <option value="not_a_fit">Not a Good Fit</option>
-                  <option value="completed">Completed / Won</option>
-                  <option value="paused">Paused for Later</option>
-                  <option value="duplicate">Duplicate</option>
-                </select>
-              </label>
-            </section>
-            <label data-field="notes" class="management-notes-label">
-              Notes / Progress
-              <button type="button" class="management-timestamp-btn" data-insert-timestamp title="Insert today's date">Stamp Date</button>
-              <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
-            </label>
-            <div class="management-form-actions">
-              <button class="btn primary" type="submit">Save Item</button>
-              <button class="btn secondary" type="button" data-duplicate-record hidden>Duplicate</button>
-              <button class="btn secondary" type="button" data-delete-record hidden>Delete</button>
-            </div>
-            <p class="management-form-status" data-record-status aria-live="polite"></p>
-          </form>
+          </footer>
+
         </aside>
 
-        <section class="management-list-panel">
-          <div class="management-list-tools">
-            <button class="management-new-record" type="button" data-new-record>New Item</button>
-            <div class="management-search">
-              <label for="managementSearch">Search</label>
-              <input id="managementSearch" type="search" data-search-records placeholder="Name, email, class, trip, note..." />
+        <!-- ── MAIN CONTENT AREA ────────────────────────────────────────── -->
+        <div class="mgmt-main">
+
+          <!-- ─ OPERATIONS ──────────────────────────────────── -->
+          <section class="mgmt-panel" data-site-studio-panel="operations">
+
+            <div class="mgmt-topbar">
+              <div class="mgmt-topbar-left">
+                <h1 class="mgmt-panel-title">Operations</h1>
+              </div>
+              <div class="mgmt-topbar-right">
+                <div class="mgmt-search">
+                  <label class="mgmt-sr-only" for="managementSearch">Search records</label>
+                  <input id="managementSearch" class="mgmt-search-input" type="search"
+                         data-search-records placeholder="Search records…" />
+                </div>
+                <div class="mgmt-sort">
+                  <label class="mgmt-sr-only" for="managementSort">Sort by</label>
+                  <select id="managementSort" class="mgmt-sort-select" data-sort-records>
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="alpha">A–Z</option>
+                    <option value="alpha_desc">Z–A</option>
+                    <option value="updated">Recently Updated</option>
+                    <option value="priority">Priority</option>
+                    <option value="due">Due Soon</option>
+                    <option value="progress">Progress</option>
+                    <option value="balance">Balance</option>
+                  </select>
+                </div>
+                <button class="mgmt-new-btn" type="button" data-new-record>+ New</button>
+              </div>
             </div>
-            <label class="management-sort" for="managementSort">
-              Sort
-              <select id="managementSort" data-sort-records>
-                <option value="newest">Newest Created</option>
-                <option value="oldest">Oldest Created</option>
-                <option value="alpha">Alphabetical A-Z</option>
-                <option value="alpha_desc">Alphabetical Z-A</option>
-                <option value="updated">Recently Updated</option>
-                <option value="priority">Priority / Urgency</option>
-                <option value="due">Follow-Up Due Soon</option>
-                <option value="progress">Progress</option>
-                <option value="balance">Balance Owed</option>
+
+            <div class="mgmt-ops-body">
+              <div class="mgmt-ops-toolbar">
+                <form class="management-quick-add" data-quick-add-task aria-label="Quick add task">
+                  <input class="management-quick-add-input" type="text" data-quick-task-input
+                         maxlength="180" placeholder="Quick add task… press Enter to save" autocomplete="off" />
+                  <button class="management-quick-add-btn" type="submit">Add Task</button>
+                </form>
+                <div class="mgmt-cal-row">
+                  <label class="management-toggle">
+                    <input type="checkbox" data-show-past-calendar />
+                    <span>Show past calendar</span>
+                  </label>
+                  <button class="mgmt-btn-sm" type="button" data-refresh-calendar>Refresh Calendar</button>
+                  <span class="mgmt-cal-status" data-calendar-status aria-live="polite"></span>
+                </div>
+              </div>
+              <div class="management-records" data-record-list aria-live="polite"></div>
+            </div>
+
+          </section>
+
+          <!-- ─ MEDIA STUDIO ────────────────────────────────── -->
+          <section class="mgmt-panel mstudio-panel" data-site-studio-panel="media" hidden>
+            <div class="mstudio-toolbar">
+              <div class="mstudio-toolbar-left">
+                <button class="mstudio-btn" type="button" data-ms-add>+ Add Item</button>
+                <button class="mstudio-btn" type="button" data-ms-upload>↑ Upload</button>
+                <button class="mstudio-btn" type="button" data-ms-sync>↻ Sync Stream</button>
+                <button class="mstudio-btn" type="button" data-ms-export>⤓ Export JSON</button>
+              </div>
+              <div class="mstudio-toolbar-right">
+                <span class="mstudio-dirty-badge" data-ms-dirty hidden>● Unsaved changes</span>
+                <span class="mstudio-status-text" data-ms-status aria-live="polite"></span>
+                <a class="mstudio-btn" href="/pages/media/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
+                <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-publish>Publish to Site</button>
+              </div>
+            </div>
+
+            <div class="mstudio-workspace">
+              <div class="mstudio-sidebar">
+                <div class="mstudio-search-row">
+                  <input class="mstudio-search" type="search" placeholder="Search media…" data-ms-search aria-label="Search media items" />
+                  <span class="mstudio-count" data-ms-count></span>
+                </div>
+                <div class="mstudio-list" data-ms-list role="listbox" aria-label="Media items"></div>
+                <div class="mstudio-edit-pane" data-ms-edit-pane>
+                  <p class="mstudio-hint" data-ms-hint>Select an item above to edit it.</p>
+                  <div class="mstudio-form" data-ms-form hidden></div>
+                </div>
+              </div>
+
+              <div class="mstudio-preview-col">
+                <div class="mstudio-preview-bar">
+                  <span class="mstudio-preview-label">Live Preview</span>
+                  <div class="mstudio-preview-actions">
+                    <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-refresh>↻ Refresh</button>
+                    <a class="mstudio-btn mstudio-btn-sm" href="/pages/media/" target="_blank" rel="noopener">↗ Open</a>
+                  </div>
+                </div>
+                <iframe class="mstudio-preview-frame" data-ms-preview title="Media page live preview"></iframe>
+              </div>
+            </div>
+
+            <!-- Upload modal -->
+            <div class="mstudio-overlay" data-ms-upload-overlay hidden>
+              <div class="mstudio-modal">
+                <div class="mstudio-modal-head">
+                  <h3>Add Media Item</h3>
+                  <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-upload-close>✕ Close</button>
+                </div>
+                <p class="mstudio-hint mstudio-hint-sm">For large Cloudflare Stream uploads use the Full Editor. For URL-based items, fill in the fields below.</p>
+                <form class="mstudio-modal-form" data-ms-upload-form>
+                  <label class="mstudio-label"><span>Title</span>
+                    <input class="mstudio-input" type="text" name="title" required maxlength="120" placeholder="Wreck dive at Thunder Bay" />
+                  </label>
+                  <div class="mstudio-row-2">
+                    <label class="mstudio-label"><span>Type</span>
+                      <select class="mstudio-input" name="type">
+                        <option value="video">Video</option>
+                        <option value="photo">Photo</option>
+                      </select>
+                    </label>
+                    <label class="mstudio-label"><span>Location</span>
+                      <input class="mstudio-input" type="text" name="location" maxlength="100" placeholder="Great Lakes, IL" />
+                    </label>
+                  </div>
+                  <label class="mstudio-label"><span>Media URL</span>
+                    <input class="mstudio-input" type="url" name="url" placeholder="/assets/media/video.mp4 or https://…" />
+                  </label>
+                  <label class="mstudio-label"><span>Thumbnail URL</span>
+                    <input class="mstudio-input" type="url" name="thumbUrl" placeholder="/assets/media/thumbnails/thumb.jpg" />
+                  </label>
+                  <div class="mstudio-form-actions">
+                    <button class="mstudio-btn mstudio-btn-primary" type="submit">Add Item</button>
+                    <button class="mstudio-btn" type="button" data-ms-upload-close>Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─ TRAVEL STUDIO ───────────────────────────────── -->
+          <section class="mgmt-panel mstudio-panel" data-site-studio-panel="travel" hidden>
+            <div class="mstudio-toolbar">
+              <div class="mstudio-toolbar-left">
+                <button class="mstudio-btn" type="button" data-ts-add>+ Add Destination</button>
+                <button class="mstudio-btn" type="button" data-ts-delete-btn disabled>🗑 Delete</button>
+              </div>
+              <div class="mstudio-toolbar-right">
+                <span class="mstudio-dirty-badge" data-ts-dirty hidden>● Unsaved changes</span>
+                <span class="mstudio-status-text" data-ts-status aria-live="polite"></span>
+                <a class="mstudio-btn" href="/pages/travel/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
+                <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-publish>Publish to Site</button>
+              </div>
+            </div>
+
+            <div class="mstudio-workspace">
+              <div class="mstudio-sidebar">
+                <div class="mstudio-list mstudio-dest-list" data-ts-list role="listbox" aria-label="Destinations"></div>
+                <div class="mstudio-edit-pane" data-ts-edit-pane>
+                  <p class="mstudio-hint" data-ts-hint>Select a destination to edit.</p>
+                  <div class="mstudio-tabs" data-ts-tabs hidden>
+                    <button class="is-active" type="button" data-ts-tab="core">Core</button>
+                    <button type="button" data-ts-tab="content">Content</button>
+                    <button type="button" data-ts-tab="json">JSON</button>
+                  </div>
+                  <div class="mstudio-tab-panels" data-ts-panels hidden></div>
+                  <div class="mstudio-form-actions" data-ts-actions hidden>
+                    <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-save>Save Changes</button>
+                    <button class="mstudio-btn" type="button" data-ts-discard>Discard</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mstudio-preview-col">
+                <div class="mstudio-preview-bar">
+                  <span class="mstudio-preview-label">Live Preview</span>
+                  <div class="mstudio-preview-actions">
+                    <button class="mstudio-btn mstudio-btn-sm" type="button" data-ts-refresh>↻ Refresh</button>
+                    <a class="mstudio-btn mstudio-btn-sm" href="/pages/travel/" target="_blank" rel="noopener">↗ Open</a>
+                  </div>
+                </div>
+                <iframe class="mstudio-preview-frame" data-ts-preview title="Travel page live preview"></iframe>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─ HOME PAGE ───────────────────────────────────── -->
+          <section class="mgmt-panel mgmt-home-panel" data-site-studio-panel="home" hidden>
+            <div class="mgmt-topbar">
+              <div class="mgmt-topbar-left">
+                <h1 class="mgmt-panel-title">Home Page</h1>
+              </div>
+            </div>
+            <div class="mgmt-home-body">
+              <div class="management-studio-cards">
+                <article>
+                  <p class="management-kicker">News ticker</p>
+                  <h3>Homepage Ticker</h3>
+                  <p>Update the rotating ticker lines that visitors see near the hero section.</p>
+                  <button type="button" data-open-home-ticker>Edit Ticker</button>
+                </article>
+                <article>
+                  <p class="management-kicker">Events</p>
+                  <h3>Upcoming Events</h3>
+                  <p>Homepage event cards are driven by the management calendar records.</p>
+                  <button type="button" data-open-management-calendar data-site-studio-open="operations">Edit Calendar</button>
+                </article>
+              </div>
+            </div>
+          </section>
+
+        </div><!-- /.mgmt-main -->
+      </div><!-- /.mgmt-app -->
+
+      <!-- ═══ RECORD EDIT DRAWER ══════════════════════════════════════════ -->
+      <aside class="management-panel" role="dialog" aria-modal="true" aria-labelledby="managementEditorTitle">
+        <div class="management-panel-head">
+          <h2 id="managementEditorTitle" data-editor-title>New Item</h2>
+          <button type="button" data-cancel-edit>✕ Close</button>
+        </div>
+        <form class="management-record-form" data-record-form>
+          <input type="hidden" name="id" />
+          <label data-field="recordType">
+            Type
+            <select name="recordType">
+              <option value="contact">Customer / Contact Profile</option>
+              <option value="inquiry">Inquiry</option>
+              <option value="class">Class</option>
+              <option value="trip">Calendar</option>
+              <option value="task">Business Task</option>
+            </select>
+          </label>
+          <label data-field="title">
+            Title
+            <input type="text" name="title" maxlength="180" required placeholder="Open Water student follow-up" />
+          </label>
+          <div class="management-form-grid">
+            <label data-field="status">
+              Status
+              <select name="status">
+                <option value="new">New</option>
+                <option value="active">Active</option>
+                <option value="waiting">Waiting</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="complete">Complete</option>
+                <option value="archived">Archived</option>
               </select>
             </label>
-            <div class="management-filters" role="group" aria-label="Record filters">
-              <button type="button" class="is-active" data-filter-type="all">Agenda<span data-filter-count></span></button>
-              <button type="button" data-filter-type="registration">Registrations<span data-filter-count></span></button>
-              <button type="button" data-filter-type="contact">Contacts<span data-filter-count></span></button>
-              <button type="button" data-filter-type="inquiry">Inquiries<span data-filter-count></span></button>
-              <button type="button" data-filter-type="class">Classes<span data-filter-count></span></button>
-              <button type="button" data-filter-type="trip">Calendar<span data-filter-count></span></button>
-              <button type="button" data-filter-type="task">Tasks<span data-filter-count></span></button>
-            </div>
-            <div class="management-calendar-controls">
-              <label class="management-toggle">
-                <input type="checkbox" data-show-past-calendar />
-                <span>Show past calendar</span>
+            <label data-field="priority">
+              Priority
+              <select name="priority">
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+          </div>
+          <label data-field="owner">
+            Owner
+            <input type="text" name="owner" maxlength="120" placeholder="Zachary" />
+          </label>
+          <div class="management-form-grid">
+            <label data-field="firstName">
+              First Name
+              <input type="text" name="firstName" maxlength="80" />
+            </label>
+            <label data-field="lastName">
+              Last Name
+              <input type="text" name="lastName" maxlength="80" />
+            </label>
+          </div>
+          <div class="management-form-grid">
+            <label data-field="contactName">
+              Contact Name
+              <input type="text" name="contactName" maxlength="160" />
+            </label>
+            <label data-field="contactEmail">
+              Contact Email
+              <span class="management-copy-field">
+                <input type="email" name="contactEmail" maxlength="180" />
+                <button type="button" data-copy-field="contactEmail">Copy</button>
+              </span>
+            </label>
+          </div>
+          <div class="management-form-grid">
+            <label data-field="contactPhone">
+              Contact Phone
+              <span class="management-copy-field">
+                <input type="tel" name="contactPhone" maxlength="60" />
+                <button type="button" data-copy-field="contactPhone">Copy</button>
+              </span>
+            </label>
+            <label data-field="dueDate">
+              Due Date
+              <input type="date" name="dueDate" />
+            </label>
+          </div>
+          <label data-field="relatedEvent">
+            Related Class, Trip, or Event
+            <input type="text" name="relatedEvent" maxlength="180" />
+          </label>
+          <section class="management-extra-fields" aria-label="Operational details">
+            <div class="management-form-grid">
+              <label data-field="stage">
+                Stage
+                <select name="stage">
+                  <option value="">Not Set</option>
+                  <option value="lead">Lead</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="quoted">Quoted</option>
+                  <option value="deposit">Deposit / Commitment</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                </select>
               </label>
-              <button class="btn secondary" type="button" data-refresh-calendar>Refresh Calendar</button>
-            </div>
-          </div>
-          <form class="management-quick-add" data-quick-add-task aria-label="Quick add task">
-            <input type="text" class="management-quick-add-input" data-quick-task-input maxlength="180" placeholder="Quick add task… press Enter to save" autocomplete="off" />
-            <button class="management-quick-add-btn" type="submit">Add Task</button>
-          </form>
-          <div class="management-records" data-record-list aria-live="polite"></div>
-        </section>
-      </section>
-
-      <!-- ═══ MEDIA STUDIO ═══════════════════════════════════════════ -->
-      <section class="management-studio-panel mstudio-panel" data-site-studio-panel="media" hidden>
-        <div class="mstudio-toolbar">
-          <div class="mstudio-toolbar-left">
-            <button class="mstudio-btn" type="button" data-ms-add>+ Add Item</button>
-            <button class="mstudio-btn" type="button" data-ms-upload>↑ Upload</button>
-            <button class="mstudio-btn" type="button" data-ms-sync>↻ Sync Stream</button>
-            <button class="mstudio-btn" type="button" data-ms-export>⤓ Export JSON</button>
-          </div>
-          <div class="mstudio-toolbar-right">
-            <span class="mstudio-dirty-badge" data-ms-dirty hidden>● Unsaved changes</span>
-            <span class="mstudio-status-text" data-ms-status aria-live="polite"></span>
-            <a class="mstudio-btn" href="/pages/media/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
-            <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-publish>Publish to Site</button>
-          </div>
-        </div>
-
-        <div class="mstudio-workspace">
-          <div class="mstudio-sidebar">
-            <div class="mstudio-search-row">
-              <input class="mstudio-search" type="search" placeholder="Search media…" data-ms-search aria-label="Search media items" />
-              <span class="mstudio-count" data-ms-count></span>
-            </div>
-            <div class="mstudio-list" data-ms-list role="listbox" aria-label="Media items"></div>
-            <div class="mstudio-edit-pane" data-ms-edit-pane>
-              <p class="mstudio-hint" data-ms-hint>Select an item above to edit it.</p>
-              <div class="mstudio-form" data-ms-form hidden></div>
-            </div>
-          </div>
-
-          <div class="mstudio-preview-col">
-            <div class="mstudio-preview-bar">
-              <span class="mstudio-preview-label">Live Preview</span>
-              <div class="mstudio-preview-actions">
-                <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-refresh>↻ Refresh</button>
-                <a class="mstudio-btn mstudio-btn-sm" href="/pages/media/" target="_blank" rel="noopener">↗ Open</a>
-              </div>
-            </div>
-            <iframe class="mstudio-preview-frame" data-ms-preview title="Media page live preview"></iframe>
-          </div>
-        </div>
-
-        <!-- Add / Upload modal -->
-        <div class="mstudio-overlay" data-ms-upload-overlay hidden>
-          <div class="mstudio-modal">
-            <div class="mstudio-modal-head">
-              <h3>Add Media Item</h3>
-              <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-upload-close>✕ Close</button>
-            </div>
-            <p class="mstudio-hint mstudio-hint-sm">For large Cloudflare Stream uploads use the Full Editor. For URL-based items, fill in the fields below.</p>
-            <form class="mstudio-modal-form" data-ms-upload-form>
-              <label class="mstudio-label"><span>Title</span>
-                <input class="mstudio-input" type="text" name="title" required maxlength="120" placeholder="Wreck dive at Thunder Bay" />
+              <label data-field="inquiryDirection">
+                Direction
+                <select name="inquiryDirection">
+                  <option value="">Not Set</option>
+                  <option value="outgoing">Outgoing Outreach</option>
+                  <option value="incoming">Incoming Inquiry</option>
+                </select>
               </label>
-              <div class="mstudio-row-2">
-                <label class="mstudio-label"><span>Type</span>
-                  <select class="mstudio-input" name="type">
-                    <option value="video">Video</option>
-                    <option value="photo">Photo</option>
-                  </select>
-                </label>
-                <label class="mstudio-label"><span>Location</span>
-                  <input class="mstudio-input" type="text" name="location" maxlength="100" placeholder="Great Lakes, IL" />
-                </label>
-              </div>
-              <label class="mstudio-label"><span>Media URL</span>
-                <input class="mstudio-input" type="url" name="url" placeholder="/assets/media/video.mp4 or https://…" />
-              </label>
-              <label class="mstudio-label"><span>Thumbnail URL</span>
-                <input class="mstudio-input" type="url" name="thumbUrl" placeholder="/assets/media/thumbnails/thumb.jpg" />
-              </label>
-              <div class="mstudio-form-actions">
-                <button class="mstudio-btn mstudio-btn-primary" type="submit">Add Item</button>
-                <button class="mstudio-btn" type="button" data-ms-upload-close>Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ TRAVEL STUDIO ════════════════════════════════════════════ -->
-      <section class="management-studio-panel mstudio-panel" data-site-studio-panel="travel" hidden>
-        <div class="mstudio-toolbar">
-          <div class="mstudio-toolbar-left">
-            <button class="mstudio-btn" type="button" data-ts-add>+ Add Destination</button>
-            <button class="mstudio-btn" type="button" data-ts-delete-btn disabled>🗑 Delete</button>
-          </div>
-          <div class="mstudio-toolbar-right">
-            <span class="mstudio-dirty-badge" data-ts-dirty hidden>● Unsaved changes</span>
-            <span class="mstudio-status-text" data-ts-status aria-live="polite"></span>
-            <a class="mstudio-btn" href="/pages/travel/?editMode=1" target="_blank" rel="noopener">↗ Full Editor</a>
-            <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-publish>Publish to Site</button>
-          </div>
-        </div>
-
-        <div class="mstudio-workspace">
-          <div class="mstudio-sidebar">
-            <div class="mstudio-list mstudio-dest-list" data-ts-list role="listbox" aria-label="Destinations"></div>
-            <div class="mstudio-edit-pane" data-ts-edit-pane>
-              <p class="mstudio-hint" data-ts-hint>Select a destination to edit.</p>
-              <div class="mstudio-tabs" data-ts-tabs hidden>
-                <button class="is-active" type="button" data-ts-tab="core">Core</button>
-                <button type="button" data-ts-tab="content">Content</button>
-                <button type="button" data-ts-tab="json">JSON</button>
-              </div>
-              <div class="mstudio-tab-panels" data-ts-panels hidden></div>
-              <div class="mstudio-form-actions" data-ts-actions hidden>
-                <button class="mstudio-btn mstudio-btn-primary" type="button" data-ts-save>Save Changes</button>
-                <button class="mstudio-btn" type="button" data-ts-discard>Discard</button>
-              </div>
             </div>
-          </div>
-
-          <div class="mstudio-preview-col">
-            <div class="mstudio-preview-bar">
-              <span class="mstudio-preview-label">Live Preview</span>
-              <div class="mstudio-preview-actions">
-                <button class="mstudio-btn mstudio-btn-sm" type="button" data-ts-refresh>↻ Refresh</button>
-                <a class="mstudio-btn mstudio-btn-sm" href="/pages/travel/" target="_blank" rel="noopener">↗ Open</a>
-              </div>
+            <div class="management-form-grid">
+              <label data-field="inquiryCategory">
+                Inquiry Category
+                <select name="inquiryCategory">
+                  <option value="">Not Set</option>
+                  <option value="pool">Pool / Facility</option>
+                  <option value="program_manager">Program Manager</option>
+                  <option value="agency">Agency</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="customer">Customer / Student</option>
+                  <option value="travel_partner">Travel Partner</option>
+                  <option value="community_partner">Community Partner</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label data-field="source">
+                Source
+                <input type="text" name="source" maxlength="120" placeholder="Website, referral, phone, Facebook" />
+              </label>
             </div>
-            <iframe class="mstudio-preview-frame" data-ts-preview title="Travel page live preview"></iframe>
+            <div class="management-form-grid">
+              <label data-field="startDate">
+                Start Date
+                <input type="date" name="startDate" />
+              </label>
+              <label data-field="endDate">
+                End Date
+                <input type="date" name="endDate" />
+              </label>
+            </div>
+            <div class="management-form-grid">
+              <label data-field="startTime">
+                Start Time
+                <select name="startTime" data-time-select></select>
+              </label>
+              <label data-field="endTime">
+                End Time
+                <select name="endTime" data-time-select></select>
+              </label>
+            </div>
+            <div class="management-form-grid">
+              <label data-field="eventTag">
+                Tag
+                <select name="eventTag">
+                  <option value="Training">Training</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Local Dive">Local Dive</option>
+                  <option value="Workshop">Workshop</option>
+                  <option value="Community">Community</option>
+                </select>
+              </label>
+              <label data-field="eventLocation">
+                Location
+                <input type="text" name="eventLocation" maxlength="180" />
+              </label>
+            </div>
+            <label data-field="classId">
+              Class ID
+              <input type="text" name="classId" maxlength="80" placeholder="open-water-may-2026" />
+            </label>
+            <details class="management-class-schedule" data-field="classSchedule" data-class-schedule>
+              <summary class="management-class-schedule-head">
+                <div>
+                  <h3>Class Schedule</h3>
+                  <p>Each date can have its own time and location. The first class date is the registration date on the public calendar.</p>
+                </div>
+              </summary>
+              <div class="management-class-session-group">
+                <div class="management-class-session-head">
+                  <h4>Classroom Dates</h4>
+                  <button type="button" data-add-class-session="classroom">Add Date</button>
+                </div>
+                <div data-class-session-list="classroom"></div>
+              </div>
+              <div class="management-class-session-group">
+                <div class="management-class-session-head">
+                  <h4>Pool Dates</h4>
+                  <button type="button" data-add-class-session="pool">Add Date</button>
+                </div>
+                <div data-class-session-list="pool"></div>
+              </div>
+              <div class="management-class-session-group">
+                <div class="management-class-session-head">
+                  <h4>Open Water Dates</h4>
+                  <button type="button" data-add-class-session="openWater">Add Date</button>
+                </div>
+                <div data-class-session-list="openWater"></div>
+              </div>
+            </details>
+            <details class="management-class-roster" data-field="classRoster" data-class-roster>
+              <summary class="management-class-roster-head">
+                <div>
+                  <h3>Class Roster</h3>
+                  <p>Uses the same management contact records. Imports from registration escrow are tagged as self-registered.</p>
+                </div>
+              </summary>
+              <div class="management-class-contact-add">
+                <select data-class-contact-select aria-label="Select contact to add"></select>
+                <button type="button" data-add-class-contact>Add Contact</button>
+              </div>
+              <div class="management-class-contact-list" data-class-contact-list></div>
+              <div class="management-class-registration-review">
+                <div class="management-class-session-head">
+                  <h4>Registration Escrow</h4>
+                  <button type="button" data-refresh-class-registrations>Refresh Registrations</button>
+                </div>
+                <p data-class-registration-summary>No registration data loaded.</p>
+                <div data-class-registration-list></div>
+              </div>
+            </details>
+            <div class="management-form-grid">
+              <label data-field="capacity">
+                Capacity / Roster Size
+                <input type="number" min="0" step="1" name="capacity" />
+              </label>
+              <label data-field="registrationEnabled" class="management-checkbox-field">
+                <span>Enable Registration</span>
+                <input type="checkbox" name="registrationEnabled" value="1" />
+              </label>
+              <label data-field="registrationClosed" class="management-checkbox-field">
+                <span>Close Registration</span>
+                <input type="checkbox" name="registrationClosed" value="1" />
+              </label>
+              <label data-field="certification">
+                Certification / Level
+                <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
+              </label>
+            </div>
+            <label data-field="registrationEmailSubject">
+              Registration Email Subject
+              <input type="text" name="registrationEmailSubject" maxlength="180" placeholder="You're signed up for {{event_title}}" />
+              <span class="management-character-counter" data-character-counter-for="registrationEmailSubject"></span>
+            </label>
+            <label data-field="registrationEmailContent" class="management-notes-label">
+              Registration Email Message
+              <textarea name="registrationEmailContent" rows="10" maxlength="12000" placeholder="Private confirmation details sent after someone registers."></textarea>
+              <span class="management-character-counter" data-character-counter-for="registrationEmailContent"></span>
+            </label>
+            <details class="management-contact-classes" data-field="contactClasses" data-contact-classes>
+              <summary class="management-class-roster-head">
+                <div>
+                  <h3>Student Classes</h3>
+                  <p>Add one or more class records to this contact. The class roster updates from the same enrollment record.</p>
+                </div>
+              </summary>
+              <div class="management-class-contact-add">
+                <select data-contact-class-select aria-label="Select classes to add" multiple size="6"></select>
+                <select data-contact-class-status aria-label="Class enrollment status">
+                  <option value="enrolled">Enrolled</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <button type="button" data-add-contact-classes>Add Classes</button>
+              </div>
+              <div class="management-class-contact-list" data-contact-class-list></div>
+            </details>
+            <section class="management-registration-manager" data-registration-manager hidden>
+              <div class="management-registration-head">
+                <div>
+                  <h3>Registration Escrow</h3>
+                  <p data-registration-summary>No signup data loaded.</p>
+                </div>
+                <button class="btn secondary" type="button" data-refresh-registrations>Refresh Signups</button>
+              </div>
+              <div class="management-registration-list" data-registration-list></div>
+            </section>
+            <div class="management-form-grid">
+              <label data-field="amountOwed">
+                Total Owed
+                <input type="number" min="0" step="0.01" name="amountOwed" />
+              </label>
+              <label data-field="amountPaid">
+                Amount Paid
+                <input type="number" min="0" step="0.01" name="amountPaid" />
+              </label>
+            </div>
+            <label data-field="nextStep">
+              Next Step
+              <input type="text" name="nextStep" maxlength="220" placeholder="Send forms, confirm dates, collect balance..." />
+            </label>
+            <label data-field="outcomeReason">
+              Close Reason
+              <select name="outcomeReason">
+                <option value="">Not Closed</option>
+                <option value="no_response">No Response / No-Show</option>
+                <option value="not_a_fit">Not a Good Fit</option>
+                <option value="completed">Completed / Won</option>
+                <option value="paused">Paused for Later</option>
+                <option value="duplicate">Duplicate</option>
+              </select>
+            </label>
+          </section>
+          <label data-field="notes" class="management-notes-label">
+            Notes / Progress
+            <button type="button" class="management-timestamp-btn" data-insert-timestamp title="Insert today's date">Stamp Date</button>
+            <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
+          </label>
+          <div class="management-form-actions">
+            <button class="btn primary" type="submit">Save Item</button>
+            <button class="btn secondary" type="button" data-duplicate-record hidden>Duplicate</button>
+            <button class="btn secondary" type="button" data-delete-record hidden>Delete</button>
           </div>
-        </div>
-      </section>
+          <p class="management-form-status" data-record-status aria-live="polite"></p>
+        </form>
+      </aside>
 
-      <section class="management-studio-panel management-home-studio" data-site-studio-panel="home" hidden>
-        <div class="management-studio-panel-head">
+    </section><!-- /.management-dashboard -->
+
+    <!-- ═══ TICKER MODAL ════════════════════════════════════════════════ -->
+    <section class="management-ticker-modal" data-home-ticker-modal role="dialog"
+             aria-modal="true" aria-labelledby="managementTickerTitle" hidden>
+      <div class="management-ticker-card">
+        <div class="management-panel-head">
           <div>
             <p class="management-kicker">Home page</p>
-            <h2>Homepage Editing</h2>
-            <p>Manage high-visibility homepage content from the console.</p>
+            <h2 id="managementTickerTitle">News Ticker</h2>
           </div>
-          <button class="btn primary" type="button" data-open-home-ticker>Edit Home Ticker</button>
+          <button type="button" data-close-home-ticker>Cancel</button>
         </div>
-        <div class="management-studio-cards">
-          <article>
-            <h3>News ticker</h3>
-            <p>Update the rotating homepage ticker lines that visitors see near the hero.</p>
-            <button type="button" data-open-home-ticker>Edit Ticker</button>
-          </article>
-          <article>
-            <h3>Upcoming events</h3>
-            <p>Homepage event cards are driven by the management console calendar records.</p>
-            <button type="button" data-open-management-calendar>Edit Calendar</button>
-          </article>
-        </div>
-      </section>
-
-      <section class="management-ticker-modal" data-home-ticker-modal role="dialog" aria-modal="true" aria-labelledby="managementTickerTitle" hidden>
-        <div class="management-ticker-card">
-          <div class="management-panel-head">
-            <div>
-              <p class="management-kicker">Home page</p>
-              <h2 id="managementTickerTitle">News Ticker</h2>
-            </div>
-            <button type="button" data-close-home-ticker>Cancel</button>
+        <form class="management-ticker-form" data-home-ticker-form>
+          <label>
+            Ticker Lines
+            <span class="management-ticker-hint">One line per update. Saves immediately to the live site.</span>
+            <textarea rows="10" data-home-ticker-lines
+                      placeholder="Open Water seats available this month.&#10;April pool sessions are filling now.&#10;Reach out early for travel briefings."></textarea>
+          </label>
+          <p class="management-form-status" data-home-ticker-status aria-live="polite"></p>
+          <div class="management-form-actions">
+            <button class="btn primary" type="submit">Save to Site</button>
+            <button class="btn secondary" type="button" data-close-home-ticker>Cancel</button>
           </div>
-          <form class="management-ticker-form" data-home-ticker-form>
-            <label>
-              Ticker Lines
-              <span class="management-ticker-hint">One line per update. Saves immediately to the live site.</span>
-              <textarea rows="10" data-home-ticker-lines placeholder="Open Water seats available this month.&#10;April pool sessions are filling now.&#10;Reach out early for travel briefings."></textarea>
-            </label>
-            <p class="management-form-status" data-home-ticker-status aria-live="polite"></p>
-            <div class="management-form-actions">
-              <button class="btn primary" type="submit">Save to Site</button>
-              <button class="btn secondary" type="button" data-close-home-ticker>Cancel</button>
-            </div>
-          </form>
-        </div>
-      </section>
+        </form>
+      </div>
     </section>
+
   </main>
 
   <script src="/js/management.js?v=20260429c" defer></script>
   <script src="/js/management-media-studio.js?v=20260507a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
+  <script>
+    // Nav coordinator: clear Operations filter active states when switching to Content sections
+    (function () {
+      var filterBtns = document.querySelectorAll('[data-filter-type]');
+      ['media', 'travel', 'home'].forEach(function (key) {
+        var tab = document.querySelector('[data-site-studio-tab="' + key + '"]');
+        if (tab) tab.addEventListener('click', function () {
+          filterBtns.forEach(function (b) { b.classList.remove('is-active'); });
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
