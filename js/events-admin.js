@@ -92,6 +92,7 @@
   const fieldSummary = document.getElementById("eventsFieldSummary");
   const fieldRegistrationEnabled = document.getElementById("eventsFieldRegistrationEnabled");
   const fieldRegistrationCapacity = document.getElementById("eventsFieldRegistrationCapacity");
+  const fieldRegistrationEmailSubject = document.getElementById("eventsFieldRegistrationEmailSubject");
   const fieldRegistrationEmailContent = document.getElementById("eventsFieldRegistrationEmailContent");
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
@@ -1378,6 +1379,7 @@
     if (fieldSummary) fieldSummary.value = "";
     if (fieldRegistrationEnabled) fieldRegistrationEnabled.checked = false;
     if (fieldRegistrationCapacity) fieldRegistrationCapacity.value = "0";
+    if (fieldRegistrationEmailSubject) fieldRegistrationEmailSubject.value = "";
     if (fieldRegistrationEmailContent) fieldRegistrationEmailContent.value = "";
     if (fieldCtaLabel) fieldCtaLabel.value = "";
     if (fieldCtaHref) fieldCtaHref.value = "";
@@ -1637,6 +1639,9 @@
     if (fieldRegistrationCapacity) {
       fieldRegistrationCapacity.value = String(Math.max(0, Number(item.registrationCapacity) || 0));
     }
+    if (fieldRegistrationEmailSubject) {
+      fieldRegistrationEmailSubject.value = item.registrationEmailSubject || "";
+    }
     if (fieldRegistrationEmailContent) {
       fieldRegistrationEmailContent.value = item.registrationEmailContent || "";
     }
@@ -1695,6 +1700,7 @@
       summary: String((fieldSummary && fieldSummary.value) || "").trim(),
       registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
       registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
+      registrationEmailSubject: String((fieldRegistrationEmailSubject && fieldRegistrationEmailSubject.value) || "").trim(),
       registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
@@ -1997,6 +2003,7 @@
       summary: "",
       registrationEnabled: false,
       registrationCapacity: 0,
+      registrationEmailSubject: "",
       registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
@@ -2020,6 +2027,7 @@
       summary: "",
       registrationEnabled: false,
       registrationCapacity: 0,
+      registrationEmailSubject: "",
       registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
@@ -2050,6 +2058,7 @@
       summary: String((templateItem && templateItem.summary) || "").trim(),
       registrationEnabled: Boolean(templateItem && templateItem.registrationEnabled),
       registrationCapacity: Math.max(0, Number((templateItem && templateItem.registrationCapacity) || 0) || 0),
+      registrationEmailSubject: String((templateItem && templateItem.registrationEmailSubject) || "").trim(),
       registrationEmailContent: String((templateItem && templateItem.registrationEmailContent) || "").trim(),
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
@@ -2122,6 +2131,10 @@
     }
     if (field === "registrationEmailContent") {
       item.registrationEmailContent = value;
+      return true;
+    }
+    if (field === "registrationEmailSubject") {
+      item.registrationEmailSubject = value;
       return true;
     }
     if (field === "registrationEnabled") {
@@ -2790,6 +2803,7 @@
     fieldSummary,
     fieldRegistrationEnabled,
     fieldRegistrationCapacity,
+    fieldRegistrationEmailSubject,
     fieldRegistrationEmailContent,
     fieldCtaLabel,
     fieldCtaHref,

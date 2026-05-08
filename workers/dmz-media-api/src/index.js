@@ -549,7 +549,8 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
   const contactEmail = String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com";
   const partySize = Math.max(1, Number(details.partySize) || 1);
   const remainingSpots = Math.max(0, Number(details.remainingSpots) || 0);
-  const subject = `You're signed up for ${title}`;
+  const customSubject = applyEventRegistrationMergeTags(details.subject || "", details).trim();
+  const subject = customSubject || `You're signed up for ${title}`;
   const text = [
     `Hi ${registrantName},`,
     "",
@@ -1503,6 +1504,7 @@ function normalizeEventEntry(item, kind = "event") {
     registrationEnabled: Boolean(next.registrationEnabled),
     registrationClosed: Boolean(next.registrationClosed),
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
+    registrationEmailSubject: String(next.registrationEmailSubject || "").trim(),
     registrationEmailContent: String(next.registrationEmailContent || "").trim(),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
@@ -1695,6 +1697,10 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     const content = String(item.registrationEmailContent || "").trim();
     return content || getDescriptionForItem(item);
   };
+  const getRegistrationEmailSubjectForItem = (item) => {
+    if (!item || typeof item !== "object") return "";
+    return String(item.registrationEmailSubject || "").trim();
+  };
   const eventMatch = events.find((item) => item && item.id === sourceId && item.date === eventDate);
   if (eventMatch) {
     return {
@@ -1702,6 +1708,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       eventDate,
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
+      registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
       registrationEmailContent: getRegistrationEmailContentForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationClosed: Boolean(eventMatch.registrationClosed),
@@ -1717,6 +1724,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     eventDate,
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
+    registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
     registrationEmailContent: getRegistrationEmailContentForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationClosed: Boolean(templateMatch.registrationClosed),
@@ -1958,6 +1966,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
 
   const notifyContent = buildEventRegistrationNotifyEmail({
     title: config.title || "DMZ Scuba Event",
+    subject: config.registrationEmailSubject || "",
     scheduleLine,
     registrantName,
     email,
