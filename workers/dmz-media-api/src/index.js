@@ -515,11 +515,37 @@ function buildEventRegistrationNotifyEmail(details = {}) {
   return { subject, html, text };
 }
 
+function applyEventRegistrationMergeTags(value, details = {}) {
+  const firstName = String(details.firstName || details.registrantName || "Diver").trim();
+  const lastName = String(details.lastName || "").trim();
+  const fullName = String(details.fullName || [firstName, lastName].filter(Boolean).join(" ")).trim();
+  const tags = {
+    first_name: firstName,
+    firstname: firstName,
+    last_name: lastName,
+    lastname: lastName,
+    full_name: fullName || firstName,
+    name: fullName || firstName,
+    event_title: String(details.title || "").trim(),
+    title: String(details.title || "").trim(),
+    event_date: String(details.eventDate || "").trim(),
+    date: String(details.eventDate || "").trim(),
+    schedule: String(details.scheduleLine || "").trim(),
+    party_size: String(Math.max(1, Number(details.partySize) || 1)),
+    spots_remaining: String(Math.max(0, Number(details.remainingSpots) || 0)),
+    contact_email: String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com",
+  };
+  return String(value || "").replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+    const normalized = String(key || "").trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(tags, normalized) ? tags[normalized] : match;
+  });
+}
+
 function buildEventRegistrationConfirmationEmail(details = {}) {
   const title = String(details.title || "your DMZ Scuba event").trim();
   const scheduleLine = String(details.scheduleLine || "").trim();
   const registrantName = String(details.registrantName || "Diver").trim();
-  const description = String(details.description || "").trim();
+  const description = applyEventRegistrationMergeTags(details.description || "", details).trim();
   const contactEmail = String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com";
   const partySize = Math.max(1, Number(details.partySize) || 1);
   const remainingSpots = Math.max(0, Number(details.remainingSpots) || 0);
@@ -1955,9 +1981,13 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const attendeeContent = buildEventRegistrationConfirmationEmail({
     title: config.title || "DMZ Scuba Event",
     scheduleLine,
+    eventDate,
     description: config.registrationEmailContent || "",
     contactEmail: toEmail,
     registrantName: firstName || registrantName,
+    firstName,
+    lastName,
+    fullName: registrantName,
     partySize,
     remainingSpots: snapshotAfter.remainingSpots,
   });
