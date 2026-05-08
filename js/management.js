@@ -559,6 +559,29 @@
     if (field && "placeholder" in field) field.placeholder = placeholder || "";
   }
 
+  function updateCharacterCounter(fieldName) {
+    if (!recordForm || !fieldName) return;
+    const field = recordForm.elements[fieldName];
+    const counter = app.querySelector(`[data-character-counter-for="${fieldName}"]`);
+    if (!field || !counter) return;
+    const maxLength = Math.max(0, Number(field.getAttribute("maxlength") || 0) || 0);
+    if (!maxLength) {
+      counter.textContent = "";
+      counter.classList.remove("is-warning", "is-full");
+      return;
+    }
+    const used = String(field.value || "").length;
+    const remaining = Math.max(0, maxLength - used);
+    counter.textContent = `${remaining.toLocaleString()} characters remaining`;
+    counter.classList.toggle("is-warning", remaining <= Math.ceil(maxLength * 0.1) && remaining > 0);
+    counter.classList.toggle("is-full", remaining === 0);
+  }
+
+  function updateRegistrationEmailCounters() {
+    updateCharacterCounter("registrationEmailSubject");
+    updateCharacterCounter("registrationEmailContent");
+  }
+
   function syncPriorityOptions(type) {
     const select = recordForm && recordForm.elements.priority;
     if (!select) return;
@@ -2615,6 +2638,7 @@
       resetRegistrationManager();
       if (item.recordType === "class" && item.id) loadClassRegistrationEscrow();
     }
+    updateRegistrationEmailCounters();
     if (deleteButton) deleteButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
     const duplicateButton = app.querySelector("[data-duplicate-record]");
     if (duplicateButton) duplicateButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
@@ -3166,10 +3190,19 @@
   function bindEvents() {
     if (loginForm) loginForm.addEventListener("submit", login);
     if (recordForm) recordForm.addEventListener("submit", saveRecord);
+    if (recordForm) {
+      recordForm.addEventListener("input", (event) => {
+        const name = event.target && event.target.name;
+        if (name === "registrationEmailSubject" || name === "registrationEmailContent") {
+          updateCharacterCounter(name);
+        }
+      });
+    }
     if (recordForm && recordForm.elements.recordType) {
       recordForm.elements.recordType.addEventListener("change", () => {
         applyTypeConfig(recordForm.elements.recordType.value || "contact", Boolean(state.selectedId));
         if (recordForm.elements.recordType.value === "class" && classScheduleEl) renderClassSchedule(readClassSessions());
+        updateRegistrationEmailCounters();
       });
     }
     if (classScheduleEl) {
