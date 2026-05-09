@@ -2397,11 +2397,54 @@ kbd {
   }
 
   /* ── Record cards: comfortable touch targets ── */
-  .management-record { padding: 9px 10px 9px 14px; }
-  .management-record.is-contact { padding: 9px 10px 9px 16px; }
+  .management-record {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.045);
+  }
+  .management-record.is-contact { padding: 13px 14px; }
   .management-record h3,
-  .management-record.is-class h3 { font-size: 14px; }
-  .management-record.is-contact h3 { font-size: 15px; }
+  .management-record.is-class h3 {
+    font-size: 15px;
+    line-height: 1.22;
+  }
+  .management-record.is-contact h3 { font-size: 16px; }
+  .management-record-badges { gap: 6px; }
+  .management-badge {
+    min-height: 20px;
+    padding: 3px 7px;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+  .management-record-meta {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .management-record-meta span {
+    display: block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .management-record-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    padding-top: 0;
+  }
+  .management-record-actions button,
+  .management-record-actions a {
+    justify-content: center;
+    min-height: 42px;
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
 
   /* Hide inline status select and quick-advance on mobile — use drawer to change status */
   .management-record-actions select,
@@ -2422,7 +2465,96 @@ kbd {
   .management-contact-card-lines { flex-direction: column; gap: 5px; }
   .management-contact-copy-line { width: 100%; }
 
-  /* ── Ticker modal ── */
+  /* Signups: purpose-built mobile cards */
+  .management-registration-card {
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid rgba(245, 178, 62, 0.24);
+    border-left: 3px solid rgba(245, 178, 62, 0.72);
+    background:
+      linear-gradient(135deg, rgba(245, 178, 62, 0.12), rgba(85, 185, 255, 0.045) 52%, rgba(5, 11, 20, 0.34)),
+      rgba(255, 255, 255, 0.045);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  }
+  .management-registration-card:hover {
+    border-color: rgba(245, 178, 62, 0.34);
+    background:
+      linear-gradient(135deg, rgba(245, 178, 62, 0.14), rgba(85, 185, 255, 0.055) 52%, rgba(5, 11, 20, 0.38)),
+      rgba(255, 255, 255, 0.05);
+  }
+  .management-registration-card .management-record-badges { margin-bottom: 8px; }
+  .management-registration-card h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 850;
+    line-height: 1.16;
+  }
+  .management-registration-card .management-contact-card-lines {
+    display: grid;
+    gap: 7px;
+    margin-top: 11px;
+  }
+  .management-registration-card .management-contact-copy-line {
+    display: grid;
+    grid-template-columns: minmax(58px, auto) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 8px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    background: rgba(5, 11, 20, 0.32);
+  }
+  .management-registration-card .management-contact-copy-line strong {
+    color: rgba(234, 242, 255, 0.54);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .management-registration-card .management-contact-copy-line span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: rgba(234, 242, 255, 0.88);
+    font-size: 12.5px;
+  }
+  .management-registration-card-event {
+    gap: 5px;
+    margin-top: 12px;
+    padding: 11px 12px;
+    border: 1px solid rgba(85, 185, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(7, 19, 37, 0.58);
+  }
+  .management-registration-card-event strong {
+    font-size: 13.5px;
+    line-height: 1.25;
+  }
+  .management-registration-card-event span {
+    color: rgba(234, 242, 255, 0.66);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .management-registration-card .management-record-meta { grid-template-columns: 1fr; }
+  .management-registration-card .management-record-meta span {
+    padding: 7px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    color: rgba(234, 242, 255, 0.72);
+  }
+  .management-registration-card-actions {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+  .management-registration-card-actions button {
+    min-height: 44px;
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  /* Ticker modal */
   .management-ticker-card { border-radius: 12px; padding: 16px; }
   .management-ticker-card .management-panel-head { top: -16px; margin: -16px -16px 14px; }
 
