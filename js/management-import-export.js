@@ -7,6 +7,7 @@
   // Mirror management.js URL-building exactly (managementUrl is not exposed to window)
   const _apiRoot = (document.body.dataset.adminApi || document.body.dataset.mediaApi) || "";
   const MANAGEMENT_URL = _apiRoot ? `${_apiRoot}/api/admin/management` : "/api/admin/management";
+  const TOKEN_STORAGE_KEY = "dmzMediaToken";
 
   // ── Column auto-map: normalized header → record field path ──────────────────
   const COLUMN_MAP = {
@@ -33,6 +34,7 @@
     "amountpaid": "extras.amountPaid", "amount paid": "extras.amountPaid", "amount_paid": "extras.amountPaid", "paid": "extras.amountPaid",
     // CRM
     "source": "extras.source",
+    "unsubscribed": "extras.unsubscribed",
     "stage": "extras.stage",
     "nextstep": "extras.nextStep", "next step": "extras.nextStep", "next_step": "extras.nextStep",
     "notes": "notes",
@@ -251,13 +253,29 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
+  function getToken() {
+    try {
+      return window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  async function adminFetch(url, options = {}) {
+    const headers = options.headers ? { ...options.headers } : {};
+    const token = getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return fetch(url, { ...options, headers });
+  }
+
   // ── Export ────────────────────────────────────────────────────────────────────
   exportBtn.addEventListener("click", async () => {
     const type = exportTypeEl.value;
     exportStatus.textContent = "Fetching records…";
     exportBtn.disabled = true;
     try {
-      const res  = await fetch(MANAGEMENT_URL);
+      const res  = await adminFetch(MANAGEMENT_URL);
+      if (res.status === 401) throw new Error("Please log in again before exporting.");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       let records = data.items || [];
@@ -418,6 +436,7 @@
 
     const BATCH = 5;
     let done = 0, failed = 0;
+    let firstError = "";
 
     function setProgress(n, total) {
       const pct = Math.round((n / total) * 100);
@@ -431,14 +450,19 @@
       const batch = records.slice(i, i + BATCH);
       await Promise.all(batch.map(async rec => {
         try {
-          const res = await fetch(MANAGEMENT_URL, {
+          const res = await adminFetch(MANAGEMENT_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ record: rec }),
           });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          if (res.status === 401) throw new Error("Please log in again before importing.");
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error((data && data.error) || `HTTP ${res.status}`);
+          }
           done++;
-        } catch {
+        } catch (error) {
+          if (!firstError) firstError = error && error.message ? error.message : "Unknown error";
           failed++;
         }
         setProgress(done + failed, records.length);
@@ -448,7 +472,7 @@
     progressLabel.textContent = `Done: ${done} imported${failed ? `, ${failed} failed` : ""}.`;
     progressBar.style.width = "100%";
     importStatus.textContent = failed
-      ? `⚠ ${failed} record${failed !== 1 ? "s" : ""} failed to import. ${done} succeeded.`
+      ? `⚠ ${failed} record${failed !== 1 ? "s" : ""} failed to import. ${done} succeeded.${firstError ? ` First error: ${firstError}` : ""}`
       : `✓ ${done} record${done !== 1 ? "s" : ""} imported successfully.`;
 
     importBtn.disabled = false;
