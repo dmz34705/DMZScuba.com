@@ -2578,6 +2578,191 @@ kbd {
   .mgmt-dash-stat.is-balance .mgmt-dash-stat-val { font-size: 16px; }
   .mgmt-dash-grid { grid-template-columns: 1fr; gap: 10px; }
   .mgmt-dash-row { padding: 9px 12px; min-height: 44px; }
+
+  /* ── Bulk select: mobile adjustments ── */
+  .mgmt-bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .mgmt-bulk-bar-right { flex-wrap: wrap; gap: 8px; }
+
+  .mgmt-bulk-status-wrap select { font-size: 13px; padding: 7px 8px; flex: 1; }
+  .mgmt-bulk-apply { min-height: 40px; font-size: 13px; flex: 1; }
+
+  /* Larger touch target checkbox, shifted for mobile card padding */
+  .mgmt-bulk-check {
+    left: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .is-bulk-mode .management-record { padding-left: 46px !important; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   BULK SELECT
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Bulk action bar — sits between the operations topbar and the ops-body */
+.mgmt-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 20px;
+  background: rgba(85, 185, 255, 0.06);
+  border-bottom: 1px solid rgba(85, 185, 255, 0.16);
+  flex-shrink: 0;
+}
+
+.mgmt-bulk-bar-left,
+.mgmt-bulk-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mgmt-bulk-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.78);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.mgmt-bulk-sel-all {
+  border: none;
+  background: none;
+  color: rgba(85, 185, 255, 0.76);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.mgmt-bulk-sel-all:hover {
+  background: rgba(85, 185, 255, 0.10);
+  color: #cfeeff;
+}
+
+.mgmt-bulk-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.58);
+  white-space: nowrap;
+}
+
+.mgmt-bulk-status-wrap select {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.mgmt-bulk-apply {
+  border: 1px solid rgba(85, 185, 255, 0.40);
+  border-radius: 7px;
+  background: rgba(85, 185, 255, 0.12);
+  color: #cfeeff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.mgmt-bulk-apply:hover:not(:disabled) {
+  background: rgba(85, 185, 255, 0.22);
+  border-color: rgba(85, 185, 255, 0.60);
+}
+
+.mgmt-bulk-apply:disabled { opacity: 0.38; cursor: default; }
+
+.mgmt-bulk-cancel {
+  border: none;
+  background: none;
+  color: rgba(234, 242, 255, 0.40);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.mgmt-bulk-cancel:hover { background: rgba(255,255,255,0.07); color: rgba(234,242,255,0.80); }
+
+/* ── Checkbox on each card ── */
+
+.management-record { position: relative; }
+
+.mgmt-bulk-check {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(5, 11, 20, 0.65);
+  cursor: pointer;
+  z-index: 3;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: transparent;
+  padding: 0;
+  line-height: 1;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.is-bulk-mode .mgmt-bulk-check { display: flex; }
+
+.mgmt-bulk-check:hover { border-color: rgba(255, 255, 255, 0.50); }
+
+.mgmt-bulk-check.is-checked {
+  border-color: rgba(85, 185, 255, 0.70);
+  background: rgba(85, 185, 255, 0.22);
+  color: #cfeeff;
+}
+
+.mgmt-bulk-check.is-checked:hover {
+  background: rgba(85, 185, 255, 0.32);
+  border-color: rgba(85, 185, 255, 0.88);
+}
+
+.mgmt-bulk-check::after { content: "✓"; }
+
+/* Shift card content right to make room for the checkbox */
+.is-bulk-mode .management-record { padding-left: 36px !important; }
+
+/* Checked card gets a selection highlight */
+.management-record.is-bulk-checked {
+  border-color: rgba(85, 185, 255, 0.42) !important;
+  background: rgba(85, 185, 255, 0.09) !important;
+  box-shadow: inset 0 0 0 1px rgba(85, 185, 255, 0.16);
 }
 
 /* ── Very small phones ── */
