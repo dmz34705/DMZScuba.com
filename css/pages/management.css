@@ -2117,10 +2117,12 @@ kbd {
     overflow: hidden;
     flex-shrink: 0;
     border-right: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.10);
-    padding: 0;
+    border-top: 1px solid rgba(85, 185, 255, 0.18);
+    padding: 6px 8px 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(4, 11, 22, 0.99);
+    background:
+      linear-gradient(180deg, rgba(13, 36, 58, 0.98), rgba(4, 11, 22, 0.99));
+    box-shadow: 0 -16px 34px rgba(0, 0, 0, 0.42);
   }
 
   /* Hide sidebar elements that don't belong in a tab bar */
@@ -2148,8 +2150,8 @@ kbd {
     margin: 0;
   }
 
-  /* Operations section takes 5 flex units so its 5 tabs each equal Dashboard's 1 */
-  .mgmt-nav-section:first-of-type { flex: 5; }
+  /* Operations section takes 4 flex units so its 4 visible tabs each equal Dashboard's 1 */
+  .mgmt-nav-section:first-of-type { flex: 4; }
 
   /* More toggle: visible in tab bar, equal width slot */
   [data-more-toggle] {
@@ -2160,38 +2162,41 @@ kbd {
     justify-content: center;
     font-size: 10px;
     font-weight: 700;
-    min-height: 54px;
-    padding: 8px 2px 6px;
-    border-radius: 0;
-    gap: 2px;
-    color: rgba(234, 242, 255, 0.48);
+    min-height: 58px;
+    padding: 8px 3px 7px;
+    border-radius: 12px;
+    gap: 3px;
+    color: rgba(234, 242, 255, 0.58);
   }
 
   [data-more-toggle].is-active {
-    background: rgba(85, 185, 255, 0.07);
-    color: #cfeeff;
+    background: rgba(85, 185, 255, 0.14);
+    color: #eaf7ff;
   }
 
   [data-more-toggle].is-active::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 6px;
-    right: 6px;
-    height: 2px;
+    top: 5px;
+    left: 50%;
+    width: 18px;
+    height: 3px;
+    transform: translateX(-50%);
     background: rgba(85, 185, 255, 0.85);
-    border-radius: 0 0 2px 2px;
+    border-radius: 999px;
   }
 
   /* More panel: slides up from above the tab bar */
   .mgmt-nav-more-panel {
     display: block;
     position: fixed;
-    bottom: calc(54px + env(safe-area-inset-bottom, 0px));
-    left: 0;
-    right: 0;
-    background: rgba(4, 11, 22, 0.99);
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 10px;
+    right: 10px;
+    overflow: hidden;
+    background: rgba(6, 17, 32, 0.98);
+    border: 1px solid rgba(85, 185, 255, 0.18);
+    border-radius: 16px;
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
     z-index: 200;
   }
@@ -2200,9 +2205,9 @@ kbd {
     display: flex;
     align-items: center;
     width: 100%;
-    min-height: 54px;
-    padding: 0 24px;
-    gap: 14px;
+    min-height: 50px;
+    padding: 0 18px;
+    gap: 12px;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 0;
@@ -2218,7 +2223,7 @@ kbd {
 
   .mgmt-nav-more-item:last-child { border-bottom: none; }
   .mgmt-nav-more-item:hover,
-  .mgmt-nav-more-item:active { background: rgba(255, 255, 255, 0.05); }
+  .mgmt-nav-more-item:active { background: rgba(85, 185, 255, 0.10); }
 
   .mgmt-nav-more-item .mgmt-nav-badge {
     font-size: 11px;
@@ -2239,15 +2244,15 @@ kbd {
     background: transparent;
     border-radius: 0;
     padding: 8px 2px 6px;
-    min-height: 54px;
-    gap: 2px;
+    min-height: 58px;
+    gap: 3px;
   }
 
   .mgmt-nav-home:hover { background: rgba(255, 255, 255, 0.04); }
 
   .mgmt-nav-home.is-active {
-    background: rgba(66, 185, 156, 0.10);
-    border-radius: 0;
+    background: rgba(66, 185, 156, 0.14);
+    border-radius: 12px;
   }
 
   /* Teal top indicator bar on the active home tab */
@@ -2265,34 +2270,35 @@ kbd {
     align-items: center;
     justify-content: center;
     padding: 8px 2px 6px;
-    border-radius: 0;
+    border-radius: 12px;
     font-size: 10px;
     font-weight: 700;
-    color: rgba(234, 242, 255, 0.48);
-    gap: 2px;
-    min-height: 54px;
+    color: rgba(234, 242, 255, 0.58);
+    gap: 3px;
+    min-height: 58px;
     position: relative;
   }
 
-  .mgmt-nav-item:hover { background: rgba(255, 255, 255, 0.04); color: rgba(234, 242, 255, 0.72); }
+  .mgmt-nav-item:hover { background: rgba(255, 255, 255, 0.055); color: rgba(234, 242, 255, 0.82); }
 
   .mgmt-nav-item.is-active {
-    background: rgba(85, 185, 255, 0.07);
-    color: #cfeeff;
+    background: rgba(85, 185, 255, 0.14);
+    color: #eaf7ff;
     font-weight: 800;
-    border-radius: 0;
+    border-radius: 12px;
   }
 
   /* Active indicator bar at the top of the tab */
   .mgmt-nav-item.is-active::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 6px;
-    right: 6px;
-    height: 2px;
+    top: 5px;
+    left: 50%;
+    width: 18px;
+    height: 3px;
+    transform: translateX(-50%);
     background: rgba(85, 185, 255, 0.85);
-    border-radius: 0 0 2px 2px;
+    border-radius: 999px;
   }
 
   /* Badge: show as small count text below label */
