@@ -1587,6 +1587,43 @@
 .management-pin-btn:hover { color: rgba(245, 178, 62, 0.80); background: rgba(245, 178, 62, 0.10); }
 .management-pin-btn.is-pinned { color: #f5b23e; }
 
+/* ── Quick advance button — one-tap status advance on the card ── */
+.mgmt-qa-btn {
+  flex-shrink: 0;
+  border: 1px solid rgba(85, 185, 255, 0.30);
+  border-radius: 20px;
+  background: rgba(85, 185, 255, 0.07);
+  color: rgba(85, 185, 255, 0.88);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  letter-spacing: 0.01em;
+}
+
+.mgmt-qa-btn:hover {
+  background: rgba(85, 185, 255, 0.15);
+  border-color: rgba(85, 185, 255, 0.55);
+  color: #cfeeff;
+}
+
+.mgmt-qa-btn.is-done {
+  border-color: rgba(66, 185, 156, 0.35);
+  background: rgba(66, 185, 156, 0.07);
+  color: rgba(66, 185, 156, 0.88);
+}
+
+.mgmt-qa-btn.is-done:hover {
+  background: rgba(66, 185, 156, 0.17);
+  border-color: rgba(66, 185, 156, 0.60);
+  color: rgba(150, 245, 215, 0.95);
+}
+
+.mgmt-qa-btn:disabled { opacity: 0.50; cursor: default; }
+
 .management-notes-label { position: relative; }
 
 .management-timestamp-btn {
@@ -2127,8 +2164,9 @@
   .management-record.is-class h3 { font-size: 14px; }
   .management-record.is-contact h3 { font-size: 15px; }
 
-  /* Hide inline status select on mobile — use drawer to change status */
-  .management-record-actions select { display: none; }
+  /* Hide inline status select and quick-advance on mobile — use drawer to change status */
+  .management-record-actions select,
+  .mgmt-qa-btn { display: none; }
 
   /* Pin button: larger touch target */
   .management-pin-btn { font-size: 15px; padding: 7px 9px; }
