@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260508e" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260508f" />
 </head>
 
 <body class="management-page">
@@ -669,6 +669,13 @@
             <button type="button" class="management-timestamp-btn" data-insert-timestamp title="Insert today's date">Stamp Date</button>
             <textarea name="notes" rows="8" maxlength="4000" placeholder="Last contact, next step, payment status, forms needed, roster notes..."></textarea>
           </label>
+          <div class="mgmt-note-logger" data-note-logger hidden>
+            <input class="mgmt-note-logger-input" type="text"
+                   data-note-logger-input
+                   placeholder="Quick log entry… Enter or + Log to stamp &amp; prepend"
+                   maxlength="600" autocomplete="off" />
+            <button class="mgmt-note-logger-btn" type="button" data-note-logger-submit>+ Log</button>
+          </div>
           <div class="management-form-actions">
             <button class="btn primary" type="submit">Save Item</button>
             <button class="btn secondary" type="button" data-duplicate-record hidden>Duplicate</button>
@@ -714,6 +721,7 @@
   <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
   <script src="/js/management-dashboard.js?v=20260508d" defer></script>
   <script src="/js/management-quick-advance.js?v=20260508e" defer></script>
+  <script src="/js/management-note-logger.js?v=20260508f" defer></script>
   <script>
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {

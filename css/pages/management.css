@@ -1644,6 +1644,44 @@
 
 .management-timestamp-btn:hover { border-color: rgba(85, 185, 255, 0.45); background: rgba(85, 185, 255, 0.10); color: var(--text); }
 
+/* ── Log entry appender ─────────────────────────────────────────────────────── */
+
+.mgmt-note-logger {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  margin-top: -6px; /* pull up slightly — sits right under the notes textarea */
+}
+
+.mgmt-note-logger-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px !important;
+  padding: 6px 10px !important;
+  border-radius: 7px !important;
+}
+
+.mgmt-note-logger-btn {
+  flex-shrink: 0;
+  border: 1px solid rgba(85, 185, 255, 0.28);
+  border-radius: 7px;
+  background: rgba(85, 185, 255, 0.07);
+  color: rgba(85, 185, 255, 0.88);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.mgmt-note-logger-btn:hover {
+  background: rgba(85, 185, 255, 0.15);
+  border-color: rgba(85, 185, 255, 0.55);
+  color: #cfeeff;
+}
+
 .management-character-counter { display: block; margin-top: 6px; color: rgba(234, 242, 255, 0.54); font-size: 11px; font-weight: 700; line-height: 1.35; text-align: right; }
 .management-character-counter.is-warning { color: #f5b23e; }
 .management-character-counter.is-full    { color: #ff8b8b; }
@@ -2174,6 +2212,10 @@
   /* ── Quick add: full-height touch targets ── */
   .management-quick-add-input,
   .management-quick-add-btn { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+
+  /* ── Log entry appender: 44px touch targets ── */
+  .mgmt-note-logger-input { min-height: 44px !important; font-size: 14px !important; padding: 10px 12px !important; }
+  .mgmt-note-logger-btn { min-height: 44px; font-size: 14px; padding: 10px 14px; }
 
   /* ── Contact copy lines: stacked on mobile ── */
   .management-contact-card-lines { flex-direction: column; gap: 5px; }
