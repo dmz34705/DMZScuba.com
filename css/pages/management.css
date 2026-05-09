@@ -1636,6 +1636,190 @@
 .management-studio-cards button:hover { border-color: rgba(85, 185, 255, 0.52); background: rgba(85, 185, 255, 0.13); }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   DASHBOARD
+   ────────────────────────────────────────────────────────────────────────── */
+
+.mgmt-dashboard {
+  margin-bottom: 32px;
+}
+
+/* ── Stat row ── */
+.mgmt-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.mgmt-dash-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 14px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+  min-height: 72px;
+  transition: border-color 0.15s;
+}
+
+.mgmt-dash-stat.is-urgent {
+  border-color: rgba(226, 27, 35, 0.38);
+  background: rgba(226, 27, 35, 0.08);
+}
+
+.mgmt-dash-stat.is-warn {
+  border-color: rgba(245, 178, 62, 0.35);
+  background: rgba(245, 178, 62, 0.07);
+}
+
+.mgmt-dash-stat.is-balance {
+  border-color: rgba(66, 185, 156, 0.30);
+  background: rgba(66, 185, 156, 0.06);
+}
+
+.mgmt-dash-stat-val {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.mgmt-dash-stat.is-urgent .mgmt-dash-stat-val { color: #ffb3b8; }
+.mgmt-dash-stat.is-warn   .mgmt-dash-stat-val { color: #ffe5b3; }
+.mgmt-dash-stat.is-balance .mgmt-dash-stat-val { color: #c5ffe9; font-size: 18px; }
+
+.mgmt-dash-stat-lbl {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(234, 242, 255, 0.50);
+}
+
+/* ── Section grid ── */
+.mgmt-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.mgmt-dash-section {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
+}
+
+.mgmt-dash-section-hd {
+  margin: 0;
+  padding: 10px 14px 9px;
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(234, 242, 255, 0.52);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* ── Record rows ── */
+.mgmt-dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mgmt-dash-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.1s;
+  min-height: 40px;
+}
+
+.mgmt-dash-row:last-child { border-bottom: none; }
+
+.mgmt-dash-row:hover { background: rgba(85, 185, 255, 0.07); }
+
+.mgmt-dash-row.is-overdue { background: rgba(226, 27, 35, 0.05); }
+.mgmt-dash-row.is-overdue:hover { background: rgba(226, 27, 35, 0.10); }
+.mgmt-dash-row.is-today { background: rgba(245, 178, 62, 0.05); }
+.mgmt-dash-row.is-today:hover { background: rgba(245, 178, 62, 0.10); }
+
+.mgmt-dash-row-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(234, 242, 255, 0.68);
+}
+
+.mgmt-dash-type-contact  { background: rgba(85, 185, 255, 0.14); color: #cfeeff; }
+.mgmt-dash-type-inquiry  { background: rgba(245, 178, 62, 0.15); color: #ffe5b3; }
+.mgmt-dash-type-class    { background: rgba(66, 185, 156, 0.15); color: #c5ffe9; }
+.mgmt-dash-type-trip     { background: rgba(85, 210, 230, 0.15); color: #b3f0ff; }
+.mgmt-dash-type-task     { background: rgba(149, 117, 205, 0.15); color: #dfd0ff; }
+
+.mgmt-dash-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(234, 242, 255, 0.90);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mgmt-dash-row.is-overdue .mgmt-dash-row-title { color: #ffb3b8; }
+.mgmt-dash-row.is-today   .mgmt-dash-row-title { color: #ffe5b3; }
+
+.mgmt-dash-row-meta {
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.48);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Status / empty messages ── */
+.mgmt-dash-msg {
+  margin: 0;
+  padding: 12px 14px;
+  color: rgba(234, 242, 255, 0.52);
+  font-size: 13px;
+}
+
+.mgmt-dash-msg.is-good { color: rgba(66, 185, 156, 0.80); }
+
+/* ── Studio quick-links divider ── */
+.mgmt-dash-studio { margin-top: 8px; }
+
+.mgmt-dash-studio-hd {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(234, 242, 255, 0.40);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    TICKER MODAL
    ────────────────────────────────────────────────────────────────────────── */
 
@@ -1918,6 +2102,14 @@
   .management-registration-item .management-registration-actions { justify-content: flex-start; }
   .management-studio-cards { grid-template-columns: 1fr; }
   .management-calendar-item { flex-direction: column; display: flex; }
+
+  /* Dashboard: 2-column stats, 1-column sections */
+  .mgmt-dash-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mgmt-dash-stat { min-height: 60px; padding: 10px 8px; }
+  .mgmt-dash-stat-val { font-size: 20px; }
+  .mgmt-dash-stat.is-balance .mgmt-dash-stat-val { font-size: 16px; }
+  .mgmt-dash-grid { grid-template-columns: 1fr; gap: 10px; }
+  .mgmt-dash-row { padding: 9px 12px; min-height: 44px; }
 }
 
 /* ── Very small phones ── */

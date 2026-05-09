@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260508b" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260508c" />
 </head>
 
 <body class="management-page">
@@ -109,7 +109,7 @@
               </button>
 
               <button class="mgmt-nav-item" type="button" data-site-studio-tab="home">
-                <span class="mgmt-nav-text">Home Page</span>
+                <span class="mgmt-nav-text">Dashboard</span>
               </button>
             </div>
 
@@ -320,27 +320,38 @@
             </div>
           </section>
 
-          <!-- ─ HOME PAGE ───────────────────────────────────── -->
+          <!-- ─ DASHBOARD ──────────────────────────────────── -->
           <section class="mgmt-panel mgmt-home-panel" data-site-studio-panel="home" hidden>
             <div class="mgmt-topbar">
               <div class="mgmt-topbar-left">
-                <h1 class="mgmt-panel-title">Home Page</h1>
+                <h1 class="mgmt-panel-title">Dashboard</h1>
+              </div>
+              <div class="mgmt-topbar-right">
+                <button class="mgmt-btn-sm" type="button" data-dashboard-refresh>↻ Refresh</button>
               </div>
             </div>
             <div class="mgmt-home-body">
-              <div class="management-studio-cards">
-                <article>
-                  <p class="management-kicker">News ticker</p>
-                  <h3>Homepage Ticker</h3>
-                  <p>Update the rotating ticker lines that visitors see near the hero section.</p>
-                  <button type="button" data-open-home-ticker>Edit Ticker</button>
-                </article>
-                <article>
-                  <p class="management-kicker">Events</p>
-                  <h3>Upcoming Events</h3>
-                  <p>Homepage event cards are driven by the management calendar records.</p>
-                  <button type="button" data-open-management-calendar data-site-studio-open="operations">Edit Calendar</button>
-                </article>
+              <!-- Live dashboard — populated by management-dashboard.js -->
+              <div class="mgmt-dashboard" data-mgmt-dashboard aria-live="polite">
+                <p class="mgmt-dash-msg">Loading dashboard…</p>
+              </div>
+              <!-- Site content quick links -->
+              <div class="mgmt-dash-studio">
+                <h3 class="mgmt-dash-studio-hd">Site Content</h3>
+                <div class="management-studio-cards">
+                  <article>
+                    <p class="management-kicker">News ticker</p>
+                    <h3>Homepage Ticker</h3>
+                    <p>Update the rotating ticker lines that visitors see near the hero section.</p>
+                    <button type="button" data-open-home-ticker>Edit Ticker</button>
+                  </article>
+                  <article>
+                    <p class="management-kicker">Events</p>
+                    <h3>Upcoming Events</h3>
+                    <p>Homepage event cards are driven by the management calendar records.</p>
+                    <button type="button" data-open-management-calendar data-site-studio-open="operations">Edit Calendar</button>
+                  </article>
+                </div>
               </div>
             </div>
           </section>
@@ -698,6 +709,7 @@
   <script src="/js/management.js?v=20260429c" defer></script>
   <script src="/js/management-media-studio.js?v=20260507a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
+  <script src="/js/management-dashboard.js?v=20260508c" defer></script>
   <script>
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {
