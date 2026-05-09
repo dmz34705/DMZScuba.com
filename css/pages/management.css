@@ -796,7 +796,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
-  padding: 7px 10px 7px 12px;
+  padding: 7px 38px 7px 12px;
   text-align: left;
   color: inherit;
   cursor: pointer;
@@ -808,7 +808,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   position: relative;
-  padding: 8px 10px 8px 16px;
+  padding: 8px 38px 8px 16px;
   border-color: rgba(255, 255, 255, 0.12);
   background:
     linear-gradient(90deg, rgba(85, 185, 255, 0.13), rgba(85, 185, 255, 0) 46%),
@@ -828,7 +828,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
-  padding: 7px 10px 7px 12px;
+  padding: 7px 38px 7px 12px;
   border-color: rgba(66, 185, 156, 0.18);
   background:
     linear-gradient(90deg, rgba(66, 185, 156, 0.10), rgba(66, 185, 156, 0) 42%),
@@ -842,6 +842,7 @@
     linear-gradient(90deg, rgba(245, 178, 62, 0.07), rgba(245, 178, 62, 0) 40%),
     rgba(255, 255, 255, 0.045);
   padding-left: 14px;
+  padding-right: 38px;
 }
 
 .management-record.is-task {
@@ -851,6 +852,7 @@
     linear-gradient(90deg, rgba(149, 117, 205, 0.07), rgba(149, 117, 205, 0) 40%),
     rgba(255, 255, 255, 0.045);
   padding-left: 14px;
+  padding-right: 38px;
 }
 
 .management-record.is-trip {
@@ -860,6 +862,7 @@
     linear-gradient(90deg, rgba(85, 210, 230, 0.07), rgba(85, 210, 230, 0) 40%),
     rgba(255, 255, 255, 0.045);
   padding-left: 14px;
+  padding-right: 38px;
 }
 
 .management-record.is-registration {
@@ -1577,14 +1580,22 @@
 .management-quick-add-btn:hover { border-color: rgba(85, 185, 255, 0.52); background: rgba(85, 185, 255, 0.13); }
 
 .management-pin-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   border: none;
   background: none;
   color: rgba(234, 242, 255, 0.24);
   font-size: 15px;
   line-height: 1;
-  padding: 5px;
+  padding: 0;
   cursor: pointer;
+  display: inline-grid;
+  place-items: center;
   transition: color 0.15s, transform 0.1s;
   border-radius: 999px;
 }
@@ -2402,11 +2413,11 @@ kbd {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
-    padding: 13px 14px;
+    padding: 13px 42px 13px 14px;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.045);
   }
-  .management-record.is-contact { padding: 13px 14px; }
+  .management-record.is-contact { padding: 13px 42px 13px 14px; }
   .management-record h3,
   .management-record.is-class h3 {
     font-size: 15px;
@@ -2461,6 +2472,8 @@ kbd {
     background: transparent;
     color: rgba(234, 242, 255, 0.22);
     font-size: 17px;
+    top: 8px;
+    right: 8px;
   }
 
   /* ── Quick add: full-height touch targets ── */
@@ -3457,7 +3470,7 @@ kbd {
   }
 
   .management-record {
-    padding: 14px;
+    padding: 14px 42px 14px 14px;
     border-color: rgba(255, 255, 255, 0.105);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.032)),
@@ -3472,6 +3485,7 @@ kbd {
   .management-record.is-trip,
   .management-record.is-registration {
     padding-left: 14px;
+    padding-right: 42px;
     border-left-width: 1px;
   }
 
@@ -3538,7 +3552,11 @@ kbd {
 
   .management-record-actions .management-pin-btn {
     width: 34px;
+    height: 34px;
     min-height: 34px;
+    position: absolute;
+    top: 8px;
+    right: 8px;
     justify-self: end;
     border: none;
     background: transparent;
