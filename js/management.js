@@ -893,6 +893,19 @@
     `;
   }
 
+  function renderMobileCardDetails(label, content) {
+    const body = String(content || "").trim();
+    if (!body) return "";
+    return `
+      <details class="management-record-details management-card-expand">
+        <summary>${escapeHtml(label || "Details")}</summary>
+        <div class="management-card-expand-body">
+          ${body}
+        </div>
+      </details>
+    `;
+  }
+
   function renderContactRecordDetails(record) {
     if (!record || record.recordType !== "contact") return "";
     const extras = getExtras(record);
@@ -1714,6 +1727,19 @@
         context.eventDate ? formatDate(context.eventDate) : "",
         context.location,
       ].filter(Boolean).join(" | ");
+      const registrationCardDetails = `
+        <div class="management-contact-card-lines">
+          ${renderContactCopyLine("Email", email, "email")}
+          ${renderContactCopyLine("Phone", phone, "phone")}
+        </div>
+        <div class="management-registration-card-event">
+          <strong>${escapeHtml(context.title || "DMZ Scuba Event")}</strong>
+          <span>${escapeHtml(eventLine)}</span>
+        </div>
+        <div class="management-record-meta">
+          ${detailItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+        </div>
+      `;
       const unregisterButton = canUnregister
         ? `<button type="button" data-unregister-card="${escapeHtml(actionKey)}" ${!registrantId || deleting || state.allRegistrationsLoading ? "disabled" : ""}>${deleting ? "Unregistering..." : "Unregister from Event"}</button>`
         : "";
@@ -1726,17 +1752,7 @@
               ${context.type ? `<span class="management-badge is-trip">${escapeHtml(context.type)}</span>` : ""}
             </div>
             <h3>${escapeHtml(fullName)}</h3>
-            <div class="management-contact-card-lines">
-              ${renderContactCopyLine("Email", email, "email")}
-              ${renderContactCopyLine("Phone", phone, "phone")}
-            </div>
-            <div class="management-registration-card-event">
-              <strong>${escapeHtml(context.title || "DMZ Scuba Event")}</strong>
-              <span>${escapeHtml(eventLine)}</span>
-            </div>
-            <div class="management-record-meta">
-              ${detailItems.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
-            </div>
+            ${renderMobileCardDetails("Signup details", registrationCardDetails)}
           </div>
           <div class="management-record-actions management-registration-card-actions">
             <button type="button" data-open-registration-target="${escapeHtml(actionKey)}">${classRecord ? "Open Roster" : "Open Event"}</button>
@@ -1856,6 +1872,21 @@
                 ${renderContactCopyLine("Phone", record.contactPhone, "phone")}
               </div>`
             : "";
+        const cardDetailsLabel = record.recordType === "contact"
+          ? "Contact details"
+          : record.recordType === "inquiry"
+            ? "Inquiry details"
+            : record.recordType === "class"
+              ? "Class details"
+              : "Item details";
+        const cardDetails = [
+          summary ? `<p class="management-card-note">${escapeHtml(summary)}</p>` : "",
+          contactCopy,
+          meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : "",
+          classDetails,
+          contactDetails,
+          inquiryDetails,
+        ].filter(Boolean).join("");
         const overdueFlag = isOverdue(record) ? `<span class="management-badge is-overdue">Overdue</span>` : "";
         const pinnedFlag = record.pinned ? " is-pinned" : "";
         return `
@@ -1874,12 +1905,7 @@
               <h3>${escapeHtml(record.title)}</h3>
               ${inquiryPipeline}
               ${inquiryCallout}
-              ${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
-              ${contactCopy}
-              ${meta.length ? `<div class="management-record-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>` : ""}
-              ${classDetails}
-              ${contactDetails}
-              ${inquiryDetails}
+              ${renderMobileCardDetails(cardDetailsLabel, cardDetails)}
             </div>
             <div class="management-record-actions">
               <button class="management-pin-btn ${record.pinned ? "is-pinned" : ""}" type="button" data-pin-record="${escapeHtml(record.id)}" aria-label="${record.pinned ? "Unpin" : "Pin"} ${escapeHtml(record.title)}" title="${record.pinned ? "Unpin" : "Pin"}">${record.pinned ? "★" : "☆"}</button>
