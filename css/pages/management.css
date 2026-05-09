@@ -159,6 +159,10 @@
   color: rgba(85, 185, 255, 0.62);
 }
 
+/* ── More toggle: desktop-only hidden (visible only in mobile tab bar) ── */
+[data-more-toggle],
+.mgmt-nav-more-panel { display: none; }
+
 /* ── Dashboard home button — top of nav, flagged as the default home screen ── */
 .mgmt-nav-home {
   font-size: 13.5px;
@@ -2125,7 +2129,7 @@ kbd {
   .mgmt-sidebar-footer,
   .mgmt-nav-label,
   .mgmt-nav-secondary,
-  .mgmt-nav-section:last-child { display: none; }
+  .mgmt-nav-section:last-of-type { display: none; }
 
   /* Nav flattens into a single horizontal row */
   .mgmt-nav {
@@ -2146,6 +2150,82 @@ kbd {
 
   /* Operations section takes 5 flex units so its 5 tabs each equal Dashboard's 1 */
   .mgmt-nav-section:first-of-type { flex: 5; }
+
+  /* More toggle: visible in tab bar, equal width slot */
+  [data-more-toggle] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    min-height: 54px;
+    padding: 8px 2px 6px;
+    border-radius: 0;
+    gap: 2px;
+    color: rgba(234, 242, 255, 0.48);
+  }
+
+  [data-more-toggle].is-active {
+    background: rgba(85, 185, 255, 0.07);
+    color: #cfeeff;
+  }
+
+  [data-more-toggle].is-active::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 6px;
+    right: 6px;
+    height: 2px;
+    background: rgba(85, 185, 255, 0.85);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* More panel: slides up from above the tab bar */
+  .mgmt-nav-more-panel {
+    display: block;
+    position: fixed;
+    bottom: calc(54px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    background: rgba(4, 11, 22, 0.99);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+    z-index: 200;
+  }
+
+  .mgmt-nav-more-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 54px;
+    padding: 0 24px;
+    gap: 14px;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    background: transparent;
+    color: rgba(234, 242, 255, 0.72);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.10s;
+  }
+
+  .mgmt-nav-more-item:last-child { border-bottom: none; }
+  .mgmt-nav-more-item:hover,
+  .mgmt-nav-more-item:active { background: rgba(255, 255, 255, 0.05); }
+
+  .mgmt-nav-more-item .mgmt-nav-badge {
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(85, 185, 255, 0.70);
+    margin-left: auto;
+  }
 
   /* Dashboard home tab: one equal slot in the tab bar */
   .mgmt-nav-home {

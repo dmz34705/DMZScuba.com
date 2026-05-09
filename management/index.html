@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260508g" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260508h" />
 </head>
 
 <body class="management-page">
@@ -115,6 +115,11 @@
               </button>
 
             </div>
+
+            <button class="mgmt-nav-item mgmt-nav-primary" type="button"
+                    data-more-toggle aria-expanded="false" aria-haspopup="true">
+              <span class="mgmt-nav-text">More</span>
+            </button>
 
           </nav>
 
@@ -361,6 +366,19 @@
           </section>
 
         </div><!-- /.mgmt-main -->
+
+        <!-- More panel: hidden on desktop, slides above tab bar on mobile -->
+        <div class="mgmt-nav-more-panel" data-more-panel hidden>
+          <button class="mgmt-nav-more-item" type="button" data-more-item="task">
+            <span class="mgmt-nav-text">Tasks</span>
+            <span class="mgmt-nav-badge" data-more-badge="task"></span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-item="registration">
+            <span class="mgmt-nav-text">Signups</span>
+            <span class="mgmt-nav-badge" data-more-badge="registration"></span>
+          </button>
+        </div>
+
       </div><!-- /.mgmt-app -->
 
       <!-- ═══ RECORD EDIT DRAWER ══════════════════════════════════════════ -->
@@ -757,6 +775,7 @@
   <script src="/js/management-quick-advance.js?v=20260508e" defer></script>
   <script src="/js/management-note-logger.js?v=20260508f" defer></script>
   <script src="/js/management-keyboard.js?v=20260508g" defer></script>
+  <script src="/js/management-more.js?v=20260508h" defer></script>
   <script>
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {
