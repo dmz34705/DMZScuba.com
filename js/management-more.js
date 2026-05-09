@@ -48,8 +48,8 @@
     }
   });
 
-  // Close when any primary nav tab is clicked (switching away)
-  app.querySelectorAll(".mgmt-nav-primary").forEach(btn => {
+  // Close when any primary nav tab is clicked (switching away) — exclude the toggle itself
+  app.querySelectorAll(".mgmt-nav-primary:not([data-more-toggle])").forEach(btn => {
     btn.addEventListener("click", close);
   });
 
