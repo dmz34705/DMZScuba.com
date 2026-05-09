@@ -162,18 +162,19 @@
 
     // ── Build HTML ────────────────────────────────────────────────────────────
 
-    const statCard = (val, lbl, mod) => `
-      <div class="mgmt-dash-stat${mod ? " " + mod : ""}">
+    const statCard = (val, lbl, mod, scope) => `
+      <div class="mgmt-dash-stat${mod ? " " + mod : ""}" data-dash-scope="${esc(scope)}"
+           role="button" tabindex="0" title="Show ${esc(lbl)}">
         <span class="mgmt-dash-stat-val">${esc(String(val))}</span>
         <span class="mgmt-dash-stat-lbl">${esc(lbl)}</span>
       </div>`;
 
     const statsHtml = `
       <div class="mgmt-dash-stats">
-        ${statCard(overdue.length,      "Overdue",      overdue.length  ? "is-urgent" : "is-ok")}
-        ${statCard(dueToday.length,     "Due Today",    dueToday.length ? "is-warn"   : "is-ok")}
-        ${statCard(workItems.length,    "Open Items",   "")}
-        ${statCard(fmtMoney(balance),   "Open Balance", balance > 0     ? "is-balance" : "")}
+        ${statCard(overdue.length,      "Overdue",      overdue.length  ? "is-urgent" : "is-ok", "overdue")}
+        ${statCard(dueToday.length,     "Due Today",    dueToday.length ? "is-warn"   : "is-ok", "due_today")}
+        ${statCard(workItems.length,    "Open Items",   "", "open_items")}
+        ${statCard(fmtMoney(balance),   "Open Balance", balance > 0     ? "is-balance" : "", "open_balance")}
       </div>`;
 
     const attentionHtml = attention.length
@@ -238,6 +239,18 @@
       el.addEventListener("click", open);
       el.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+      });
+    });
+
+    dashEl.querySelectorAll("[data-dash-scope]").forEach(el => {
+      const openScope = () => {
+        app.dispatchEvent(new CustomEvent("dmzManagementFocus", {
+          detail: { scope: el.getAttribute("data-dash-scope") || "" },
+        }));
+      };
+      el.addEventListener("click", openScope);
+      el.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openScope(); }
       });
     });
   }

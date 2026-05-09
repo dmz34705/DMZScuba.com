@@ -1775,7 +1775,16 @@
   background: rgba(255, 255, 255, 0.04);
   text-align: center;
   min-height: 72px;
-  transition: border-color 0.15s;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.mgmt-dash-stat:hover,
+.mgmt-dash-stat:focus-visible {
+  border-color: rgba(85, 185, 255, 0.38);
+  background: rgba(85, 185, 255, 0.08);
+  outline: none;
+  transform: translateY(-1px);
 }
 
 .mgmt-dash-stat.is-urgent {

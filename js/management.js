@@ -99,7 +99,7 @@
     not_a_fit: "Not a Good Fit",
     completed: "Completed / Won",
   };
-  const closedStatuses = new Set(["complete", "archived", "dead_end", "not_fit"]);
+  const closedStatuses = new Set(["complete", "completed", "archived", "cancelled", "dead_end", "not_fit"]);
   const inquiryPipelineStages = [
     { keys: new Set(["new", "to_contact"]), label: "Lead" },
     { keys: new Set(["reached_out"]), label: "Contacted" },
@@ -283,6 +283,7 @@
     classConvertingRegistrationId: "",
     classApprovingRegistrationId: "",
     filterType: "all",
+    focusScope: "",
     sortBy: "newest",
     search: "",
     loading: false,
@@ -520,6 +521,10 @@
   function isOverdue(record) {
     if (!record.dueDate || closedStatuses.has(record.status)) return false;
     return record.dueDate < todayKey();
+  }
+
+  function isOpenRecord(record) {
+    return record && !closedStatuses.has(record.status);
   }
 
   function isInputFocused() {
@@ -1536,6 +1541,15 @@
   function getVisibleRecords() {
     return state.records
       .filter((record) => !isSiteBackedManagementRecord(record))
+      .filter((record) => {
+        if (!state.focusScope) return true;
+        if (record.recordType === "contact") return false;
+        if (state.focusScope === "overdue") return isOpenRecord(record) && isOverdue(record);
+        if (state.focusScope === "due_today") return isOpenRecord(record) && record.dueDate === todayKey();
+        if (state.focusScope === "open_items") return isOpenRecord(record);
+        if (state.focusScope === "open_balance") return isOpenRecord(record) && getBalance(record) > 0;
+        return true;
+      })
       .filter((record) => record.recordType === "contact"
         ? state.filterType === "contact"
         : state.filterType === "all" || record.recordType === state.filterType)
@@ -1545,6 +1559,7 @@
   }
 
   function getVisibleSiteEventsForRecords() {
+    if (state.focusScope) return [];
     if (!["all", "class", "trip"].includes(state.filterType)) return [];
     if (state.filterType === "class") return [];
     const currentTodayKey = todayKey();
@@ -1797,7 +1812,7 @@
     const visibleRecords = getVisibleRecords();
     const visibleSiteEvents = getVisibleSiteEventsForRecords();
     if (!visibleRecords.length && !visibleSiteEvents.length) {
-      recordList.innerHTML = '<div class="management-empty">No matching management items yet.</div>';
+      recordList.innerHTML = `<div class="management-empty">${state.focusScope ? "No matching dashboard items right now." : "No matching management items yet."}</div>`;
       return;
     }
 
@@ -3332,6 +3347,7 @@
     if (searchInput) {
       searchInput.addEventListener("input", () => {
         state.search = searchInput.value || "";
+        state.focusScope = "";
         renderRecords();
       });
     }
@@ -3344,10 +3360,28 @@
     filterButtons.forEach((button) => {
       button.addEventListener("click", () => {
         state.filterType = button.getAttribute("data-filter-type") || "all";
+        state.focusScope = "";
         filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
         renderRecords();
         if (state.filterType === "registration" || state.filterType === "class") loadAllRegistrationSnapshots();
       });
+    });
+    app.addEventListener("dmzManagementFocus", (event) => {
+      const scope = String((event && event.detail && event.detail.scope) || "").trim();
+      if (!scope) return;
+      state.focusScope = scope;
+      state.filterType = "all";
+      state.search = "";
+      if (searchInput) searchInput.value = "";
+      if (scope === "open_balance") state.sortBy = "balance";
+      else if (scope === "overdue" || scope === "due_today") state.sortBy = "due";
+      if (sortSelect) sortSelect.value = state.sortBy;
+      filterButtons.forEach((item) => {
+        item.classList.toggle("is-active", (item.getAttribute("data-filter-type") || "") === "all");
+      });
+      openSiteStudioPanel("operations");
+      renderRecords();
+      if (recordList) recordList.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     if (recordList) {
       recordList.addEventListener("click", (event) => {
