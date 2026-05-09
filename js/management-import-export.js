@@ -4,10 +4,9 @@
   const app = document.querySelector("[data-management-app]");
   if (!app) return;
 
-  const API_URL_KEY = "managementApiUrl";
-  function getApiUrl() {
-    return localStorage.getItem(API_URL_KEY) || window.managementUrl || "";
-  }
+  // Mirror management.js URL-building exactly (managementUrl is not exposed to window)
+  const _apiRoot = (document.body.dataset.adminApi || document.body.dataset.mediaApi) || "";
+  const MANAGEMENT_URL = _apiRoot ? `${_apiRoot}/api/admin/management` : "/api/admin/management";
 
   // ── Column auto-map: normalized header → record field path ──────────────────
   const COLUMN_MAP = {
@@ -258,9 +257,7 @@
     exportStatus.textContent = "Fetching records…";
     exportBtn.disabled = true;
     try {
-      const apiUrl = getApiUrl();
-      if (!apiUrl) throw new Error("API URL not found. Open a record first to initialize the connection.");
-      const res  = await fetch(apiUrl);
+      const res  = await fetch(MANAGEMENT_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       let records = data.items || [];
@@ -401,8 +398,6 @@
 
   importBtn.addEventListener("click", async () => {
     if (!parsedRows.length) return;
-    const apiUrl = getApiUrl();
-    if (!apiUrl) { importStatus.textContent = "API URL not found. Open a record first."; return; }
 
     // Collect manual overrides
     const overrideMapping = new Map();
@@ -436,7 +431,7 @@
       const batch = records.slice(i, i + BATCH);
       await Promise.all(batch.map(async rec => {
         try {
-          const res = await fetch(apiUrl, {
+          const res = await fetch(MANAGEMENT_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ record: rec }),
@@ -465,20 +460,4 @@
     }
   });
 
-  // ── Sync managementUrl ────────────────────────────────────────────────────────
-  // management.js sets window.managementUrl at runtime — try to capture it
-  const _origFetch = window.fetch;
-  let urlCaptured = false;
-  window.fetch = function (...args) {
-    if (!urlCaptured && typeof args[0] === "string" && args[0].includes("management")) {
-      try {
-        const url = new URL(args[0]);
-        if (!args[1] || args[1].method === "GET" || !args[1].method) {
-          localStorage.setItem(API_URL_KEY, url.origin + url.pathname);
-          urlCaptured = true;
-        }
-      } catch {}
-    }
-    return _origFetch.apply(this, args);
-  };
 })();
