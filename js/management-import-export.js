@@ -395,6 +395,9 @@
 
     // Default type
     if (!rec.recordType) rec.recordType = defaultType;
+    if (!String(rec.extras.source || "").trim()) {
+      rec.extras.source = "Imported from CSV";
+    }
 
     // Auto-build title for contacts
     if (rec.recordType === "contact" && !rec.title) {
