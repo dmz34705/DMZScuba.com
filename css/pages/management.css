@@ -159,6 +159,27 @@
   color: rgba(85, 185, 255, 0.62);
 }
 
+/* ── Dashboard home button — top of nav, flagged as the default home screen ── */
+.mgmt-nav-home {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgba(234, 242, 255, 0.78);
+  background: rgba(66, 185, 156, 0.05);
+  margin-bottom: 2px;
+}
+
+.mgmt-nav-home:hover {
+  background: rgba(66, 185, 156, 0.11);
+  color: rgba(234, 242, 255, 0.95);
+}
+
+.mgmt-nav-home.is-active {
+  background: rgba(66, 185, 156, 0.16);
+  color: rgba(160, 245, 215, 0.95);
+}
+
+.mgmt-nav-home-mobile { display: none; }
+
 /* ── Sidebar stats ────────────────────────────────────────────────────────── */
 
 .mgmt-sidebar-stats {
@@ -1932,6 +1953,40 @@
     gap: 0;
     margin: 0;
   }
+
+  /* Operations section takes 5 flex units so its 5 tabs each equal Dashboard's 1 */
+  .mgmt-nav-section:first-of-type { flex: 5; }
+
+  /* Dashboard home tab: one equal slot in the tab bar */
+  .mgmt-nav-home {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 0;
+    background: transparent;
+    border-radius: 0;
+    padding: 8px 2px 6px;
+    min-height: 54px;
+    gap: 2px;
+  }
+
+  .mgmt-nav-home:hover { background: rgba(255, 255, 255, 0.04); }
+
+  .mgmt-nav-home.is-active {
+    background: rgba(66, 185, 156, 0.10);
+    border-radius: 0;
+  }
+
+  /* Teal top indicator bar on the active home tab */
+  .mgmt-nav-home.is-active::after {
+    background: rgba(66, 185, 156, 0.85);
+  }
+
+  .mgmt-nav-home-desktop { display: none; }
+  .mgmt-nav-home-mobile { display: inline; }
 
   /* ── Bottom tab items ── */
   .mgmt-nav-item {
