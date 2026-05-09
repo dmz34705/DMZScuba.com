@@ -3614,6 +3614,14 @@ kbd {
     border-top-color: rgba(255, 255, 255, 0.07);
   }
 
+  .management-calendar-item .management-card-expand {
+    margin-top: 9px;
+  }
+
+  .management-calendar-item .management-card-expand[open] > .management-card-expand-body {
+    gap: 9px;
+  }
+
   .management-record-actions {
     grid-template-columns: 1fr;
     gap: 8px;

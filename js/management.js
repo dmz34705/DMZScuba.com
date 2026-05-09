@@ -1483,6 +1483,12 @@
       ["Capacity", spotsText],
       ["Registration", registrationText],
     ];
+    const calendarDetails = `
+      <div class="management-calendar-stat-grid">
+        ${statItems.map(([label, value]) => `<span><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`).join("")}
+      </div>
+      ${summary ? `<p class="management-card-note">${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
+    `;
     const eventUrl = `/pages/events/index.html?event=${encodeURIComponent(item.id || item.sourceId || "")}&date=${encodeURIComponent(item.date || "")}`;
     return `
       <article class="management-calendar-item ${isPast ? "is-past" : ""}" data-calendar-index="${sourceIndex}">
@@ -1498,10 +1504,7 @@
             ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
           </div>
           <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
-          <div class="management-calendar-stat-grid">
-            ${statItems.map(([label, value]) => `<span><strong>${escapeHtml(label)}</strong>${escapeHtml(value)}</span>`).join("")}
-          </div>
-          ${summary ? `<p>${escapeHtml(summary.length > 220 ? `${summary.slice(0, 220)}...` : summary)}</p>` : ""}
+          ${renderMobileCardDetails("Event details", calendarDetails)}
         </div>
         <div class="management-calendar-actions">
           <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
