@@ -1580,16 +1580,16 @@
   flex-shrink: 0;
   border: none;
   background: none;
-  color: rgba(234, 242, 255, 0.30);
-  font-size: 14px;
+  color: rgba(234, 242, 255, 0.24);
+  font-size: 15px;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 5px;
   cursor: pointer;
   transition: color 0.15s, transform 0.1s;
-  border-radius: 5px;
+  border-radius: 999px;
 }
 
-.management-pin-btn:hover { color: rgba(245, 178, 62, 0.80); background: rgba(245, 178, 62, 0.10); }
+.management-pin-btn:hover { color: rgba(245, 178, 62, 0.72); background: transparent; }
 .management-pin-btn.is-pinned { color: #f5b23e; }
 
 /* ── Quick advance button — one-tap status advance on the card ── */
@@ -2451,8 +2451,17 @@ kbd {
   .management-record-actions select,
   .mgmt-qa-btn { display: none; }
 
-  /* Pin button: larger touch target */
-  .management-pin-btn { font-size: 15px; padding: 7px 9px; }
+  /* Pin star: visible without adding another boxed control. */
+  .management-pin-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    background: transparent;
+    color: rgba(234, 242, 255, 0.22);
+    font-size: 17px;
+  }
 
   /* ── Quick add: full-height touch targets ── */
   .management-quick-add-input,
@@ -3525,6 +3534,20 @@ kbd {
     color: #d7f0ff;
     font-size: 12px;
     font-weight: 850;
+  }
+
+  .management-record-actions .management-pin-btn {
+    width: 34px;
+    min-height: 34px;
+    justify-self: end;
+    border: none;
+    background: transparent;
+    color: rgba(234, 242, 255, 0.24);
+    font-size: 17px;
+  }
+
+  .management-record-actions .management-pin-btn.is-pinned {
+    color: #f5b23e;
   }
 
   .management-registration-card {
