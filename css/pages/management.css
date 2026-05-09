@@ -1916,6 +1916,121 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   KEYBOARD SHORTCUTS OVERLAY
+   ────────────────────────────────────────────────────────────────────────── */
+
+.mgmt-shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.mgmt-shortcuts-card {
+  background: rgba(7, 17, 34, 0.98);
+  border: 1px solid rgba(85, 185, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.60);
+  width: min(460px, 100%);
+}
+
+.mgmt-shortcuts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.mgmt-shortcuts-head h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: rgba(234, 242, 255, 0.88);
+  letter-spacing: 0.01em;
+}
+
+.mgmt-shortcuts-close {
+  border: none;
+  background: none;
+  color: rgba(234, 242, 255, 0.38);
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.mgmt-shortcuts-close:hover {
+  color: rgba(234, 242, 255, 0.80);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.mgmt-shortcuts-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 18px 20px 22px;
+}
+
+.mgmt-shortcuts-body section { padding-right: 16px; }
+.mgmt-shortcuts-body section + section {
+  padding-left: 16px;
+  padding-right: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mgmt-shortcuts-body h4 {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(234, 242, 255, 0.28);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.mgmt-shortcuts-body dl { display: grid; gap: 7px; }
+
+.mgmt-shortcuts-body dl > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mgmt-shortcuts-body dt {
+  flex-shrink: 0;
+  min-width: 56px;
+  display: flex;
+  gap: 3px;
+  justify-content: flex-end;
+}
+
+.mgmt-shortcuts-body dd {
+  margin: 0;
+  font-size: 12.5px;
+  color: rgba(234, 242, 255, 0.60);
+}
+
+kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 800;
+  color: rgba(234, 242, 255, 0.78);
+  line-height: 1.55;
+  white-space: nowrap;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    TICKER MODAL
    ────────────────────────────────────────────────────────────────────────── */
 

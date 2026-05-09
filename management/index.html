@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/main.css" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260508f" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260508g" />
 </head>
 
 <body class="management-page">
@@ -134,6 +134,7 @@
             <button class="mgmt-sidebar-link" type="button"
                     data-open-management-calendar data-site-studio-open="operations">Calendar + Registration</button>
             <a class="mgmt-sidebar-link" href="/pages/training/" target="_blank" rel="noopener">Training Pages ↗</a>
+            <button class="mgmt-sidebar-link" type="button" data-open-shortcuts>Shortcuts</button>
             <div class="mgmt-sidebar-bottom">
               <button class="mgmt-action-btn" type="button" data-refresh-records>↻ Refresh</button>
               <button class="mgmt-action-btn mgmt-action-btn-danger" type="button" data-logout>Log Out</button>
@@ -713,6 +714,39 @@
         </form>
       </div>
     </section>
+
+    <!-- ═══ KEYBOARD SHORTCUTS OVERLAY ══════════════════════════════════════ -->
+    <div class="mgmt-shortcuts-overlay" data-shortcuts-overlay hidden>
+      <div class="mgmt-shortcuts-card" role="dialog" aria-label="Keyboard shortcuts" aria-modal="true">
+        <div class="mgmt-shortcuts-head">
+          <h3>Keyboard Shortcuts</h3>
+          <button type="button" class="mgmt-shortcuts-close" data-shortcuts-close>✕</button>
+        </div>
+        <div class="mgmt-shortcuts-body">
+          <section>
+            <h4>Navigate</h4>
+            <dl>
+              <div><dt><kbd>1</kbd></dt><dd>Dashboard</dd></div>
+              <div><dt><kbd>2</kbd></dt><dd>Agenda</dd></div>
+              <div><dt><kbd>3</kbd></dt><dd>Contacts</dd></div>
+              <div><dt><kbd>4</kbd></dt><dd>Inquiries</dd></div>
+              <div><dt><kbd>5</kbd></dt><dd>Classes</dd></div>
+              <div><dt><kbd>6</kbd></dt><dd>Calendar</dd></div>
+            </dl>
+          </section>
+          <section>
+            <h4>Actions</h4>
+            <dl>
+              <div><dt><kbd>N</kbd></dt><dd>New record</dd></div>
+              <div><dt><kbd>Esc</kbd></dt><dd>Close drawer</dd></div>
+              <div><dt><kbd>/</kbd></dt><dd>Search</dd></div>
+              <div><dt><kbd>⌘F</kbd> <kbd>Ctrl+F</kbd></dt><dd>Search</dd></div>
+              <div><dt><kbd>?</kbd></dt><dd>This help</dd></div>
+            </dl>
+          </section>
+        </div>
+      </div>
+    </div>
 
   </main>
 
