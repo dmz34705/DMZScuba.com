@@ -1671,6 +1671,40 @@ function normalizeRegistrationText(value, maxLen = 120) {
   return String(value || "").trim().slice(0, maxLen);
 }
 
+function isDateKey(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
+function getChicagoTodayKey() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${lookup.year}-${lookup.month}-${lookup.day}`;
+}
+
+function addDaysToDateKey(value, days) {
+  if (!isDateKey(value)) return "";
+  const [year, month, day] = String(value).split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+}
+
+function getRegistrationEndDate(item, eventDate) {
+  const explicitEnd = String((item && item.endDate) || "").trim();
+  if (isDateKey(explicitEnd) && explicitEnd >= eventDate) return explicitEnd;
+  const durationDays = Math.max(1, Number((item && item.durationDays) || 1) || 1);
+  return durationDays > 1 ? addDaysToDateKey(eventDate, durationDays - 1) : eventDate;
+}
+
+function isRegistrationPast(config) {
+  const endDate = String((config && (config.endDate || config.eventDate)) || "").trim();
+  return isDateKey(endDate) && endDate < getChicagoTodayKey();
+}
+
 function buildRegistrantLabel(firstName, lastName) {
   const first = normalizeRegistrationText(firstName, 40);
   const last = normalizeRegistrationText(lastName, 40);
@@ -1706,6 +1740,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     return {
       sourceId,
       eventDate,
+      endDate: getRegistrationEndDate(eventMatch, eventDate),
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
       registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
@@ -1722,6 +1757,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
   return {
     sourceId,
     eventDate,
+    endDate: getRegistrationEndDate(templateMatch, eventDate),
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
     registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
@@ -1856,7 +1892,7 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
     sourceId,
     eventDate,
     registrationEnabled: Boolean(config && config.registrationEnabled),
-    registrationClosed: Boolean(config && config.registrationClosed),
+    registrationClosed: Boolean(config && config.registrationClosed) || isRegistrationPast(config),
     registrationCapacity: capacity,
     usedSpots,
     remainingSpots,
@@ -1903,6 +1939,9 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   }
   if (config.registrationClosed) {
     return jsonResponse({ ok: false, error: "Registration has closed for this event." }, 409, { "Cache-Control": "no-store" });
+  }
+  if (isRegistrationPast(config)) {
+    return jsonResponse({ ok: false, error: "Registration has closed because this event has passed." }, 409, { "Cache-Control": "no-store" });
   }
 
   const firstName = normalizeRegistrationText(body && body.firstName, 60);

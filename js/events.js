@@ -330,6 +330,11 @@
     return normalizeText(eventItem && eventItem.date);
   }
 
+  function isEventRegistrationPast(eventItem) {
+    const endDate = eventLastDateKey(eventItem);
+    return Boolean(endDate && endDate < dateKey(startOfDay(new Date())));
+  }
+
   function isRegistrationEnabled(eventItem) {
     const enabled = Boolean(eventItem && eventItem.registrationEnabled);
     const capacity = Math.max(0, Number((eventItem && eventItem.registrationCapacity) || 0) || 0);
@@ -337,7 +342,7 @@
   }
 
   function isRegistrationClosed(eventItem) {
-    return Boolean(eventItem && eventItem.registrationClosed);
+    return Boolean((eventItem && eventItem.registrationClosed) || isEventRegistrationPast(eventItem));
   }
 
   function getRegistrationApprovalStatus(registrant) {

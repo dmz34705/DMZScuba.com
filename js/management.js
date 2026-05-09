@@ -1470,7 +1470,8 @@
       .join(" - ");
     const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
     const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
-    const registrationText = item.registrationClosed
+    const registrationClosed = Boolean(item.registrationClosed || (item.registrationEnabled && isPast));
+    const registrationText = registrationClosed
       ? "Registration closed"
       : item.registrationEnabled
         ? "Registration open"
@@ -1500,7 +1501,7 @@
           <div class="management-record-badges">
             <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
             ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
-            ${item.registrationClosed ? '<span class="management-badge is-waiting">Registration Closed</span>' : item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
+            ${registrationClosed ? '<span class="management-badge is-waiting">Registration Closed</span>' : item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
             ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
           </div>
           <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
