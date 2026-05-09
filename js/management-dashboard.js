@@ -255,7 +255,7 @@
     render(records);
   }
 
-  // Watch for home panel becoming visible
+  // Watch for home panel becoming visible → refresh data
   let prevHidden = true;
   new MutationObserver(() => {
     const nowHidden = dashPanel.hidden;
@@ -273,4 +273,22 @@
   // Refresh button
   const refreshBtn = dashPanel ? dashPanel.querySelector("[data-dashboard-refresh]") : null;
   if (refreshBtn) refreshBtn.addEventListener("click", refresh);
+
+  // Auto-navigate to Dashboard on login.
+  // management.js calls openSiteStudioPanel("operations") synchronously inside
+  // showAuthed(), so we wait one tick (setTimeout 0) to override it after.
+  const dashboardSection = app.querySelector("[data-management-dashboard]");
+  if (dashboardSection) {
+    let wasHiddenAtLogin = dashboardSection.hidden;
+    new MutationObserver(() => {
+      const isNowVisible = !dashboardSection.hidden;
+      if (wasHiddenAtLogin && isNowVisible) {
+        setTimeout(() => {
+          const homeTab = app.querySelector('[data-site-studio-tab="home"]');
+          if (homeTab) homeTab.click();
+        }, 0);
+      }
+      wasHiddenAtLogin = dashboardSection.hidden;
+    }).observe(dashboardSection, { attributes: true, attributeFilter: ["hidden"] });
+  }
 })();
