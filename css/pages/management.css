@@ -2760,13 +2760,15 @@ kbd {
 
 /* ── Hide Done toggle ──────────────────────────────────────────────────────── */
 
-.mgmt-hide-done-btn.is-active {
+.mgmt-hide-done-btn.is-active,
+[data-past-cal-toggle].is-active {
   border-color: rgba(66, 185, 156, 0.40);
   background: rgba(66, 185, 156, 0.09);
   color: rgba(66, 185, 156, 0.92);
 }
 
-.mgmt-hide-done-btn.is-active:hover {
+.mgmt-hide-done-btn.is-active:hover,
+[data-past-cal-toggle].is-active:hover {
   border-color: rgba(66, 185, 156, 0.60);
   background: rgba(66, 185, 156, 0.16);
   color: rgba(150, 245, 215, 0.95);
