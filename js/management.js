@@ -1284,6 +1284,24 @@
     return extras.siteSource === "events";
   }
 
+  function getUniqueSiteEventId(title, dateValue) {
+    const base = slugify([title, dateValue].filter(Boolean).join(" "), "calendar-event");
+    const existingIds = new Set(
+      [
+        ...(Array.isArray(state.eventsPayload && state.eventsPayload.events) ? state.eventsPayload.events : []),
+        ...(Array.isArray(state.eventsPayload && state.eventsPayload.templates) ? state.eventsPayload.templates : []),
+      ]
+        .map((item) => normalizeSiteText(item && item.id).toLowerCase())
+        .filter(Boolean)
+    );
+    if (!existingIds.has(base)) return base;
+    for (let index = 2; index < 1000; index += 1) {
+      const candidate = `${base}-${index}`;
+      if (!existingIds.has(candidate)) return candidate;
+    }
+    return `${base}-${Date.now().toString().slice(-5)}`;
+  }
+
   function getUpcomingSiteEventCounts() {
     const counts = { class: 0, trip: 0, open: 0 };
     const currentTodayKey = todayKey();
@@ -2874,6 +2892,18 @@
       }
       return;
     }
+    if (record.recordType === "trip" && !record.id) {
+      try {
+        const saved = await createSiteEventRecord(record);
+        fillForm(saved);
+        setStatus(recordStatus, "Calendar item added to site calendar.", "success");
+        renderRecords();
+        closeEditorModal();
+      } catch (error) {
+        setStatus(recordStatus, error && error.message ? error.message : "Could not add site calendar record.", "error");
+      }
+      return;
+    }
     if (record.recordType === "trip") {
       setStatus(recordStatus, "Open a calendar record from the Site Calendar list before editing calendar items.", "error");
       return;
@@ -2938,6 +2968,17 @@
     return saved;
   }
 
+  function refreshSiteEventState(payload) {
+    state.eventsPayload = payload || state.eventsPayload;
+    state.allSiteEvents = expandSiteEventPayload(state.eventsPayload).filter((entry) =>
+      ["class", "trip"].includes(classifySiteEvent(entry))
+    );
+    state.siteEvents = state.allSiteEvents;
+    state.allRegistrationSnapshots = [];
+    state.allRegistrationsLoaded = false;
+    updateMetrics();
+  }
+
   function findSiteEventPayloadItem(record) {
     const extras = getExtras(record);
     if (!state.eventsPayload) return null;
@@ -2951,6 +2992,68 @@
       return String(entry.date || "").trim() === eventDate;
     });
     return item ? { item, listName } : null;
+  }
+
+  async function publishSiteEventPayload(errorMessage) {
+    if (state.eventsPayload) state.eventsPayload.updated = todayKey();
+    const resp = await apiFetch(adminEventsUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: state.eventsPayload }),
+    }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok) throw new Error(data.error || errorMessage || "Could not save site calendar.");
+    refreshSiteEventState(data.payload || state.eventsPayload);
+    return data.payload || state.eventsPayload;
+  }
+
+  async function createSiteEventRecord(record) {
+    if (!state.eventsPayload) {
+      await loadSiteCalendar({ silent: true });
+    }
+    if (!state.eventsPayload) throw new Error("Could not load site calendar.");
+    if (!Array.isArray(state.eventsPayload.events)) state.eventsPayload.events = [];
+    const extras = getExtras(record);
+    const startDate = normalizeSiteText(extras.startDate);
+    if (!startDate) throw new Error("Start date is required for new calendar items.");
+    const endDate = normalizeSiteText(extras.endDate) || startDate;
+    const id = getUniqueSiteEventId(record.title, startDate);
+    const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
+    const item = {
+      id,
+      eventId: slugify(record.title, id),
+      title: record.title,
+      date: startDate,
+      endDate: endDate >= startDate ? endDate : startDate,
+      time: normalizeSiteText(extras.startTime),
+      endTime: normalizeSiteText(extras.endTime),
+      type: normalizeSiteText(extras.eventTag) || "Training",
+      status: normalizeSiteText(record.status) || "scheduled",
+      location: normalizeSiteText(extras.eventLocation),
+      summary: normalizeSiteText(record.notes),
+      registrationEnabled: Boolean(extras.registrationEnabled),
+      registrationClosed: Boolean(extras.registrationClosed),
+      registrationCapacity: capacity,
+      registrationEmailSubject: normalizeSiteText(extras.registrationEmailSubject),
+      registrationEmailContent: normalizeSiteText(extras.registrationEmailContent),
+      ctaLabel: extras.registrationEnabled ? "Register For Event" : "",
+      ctaHref: "",
+      managementPriority: normalizeSiteText(record.priority),
+      managementOwner: normalizeSiteText(record.owner),
+      managementContactName: normalizeSiteText(record.contactName),
+      managementContactEmail: normalizeSiteText(record.contactEmail),
+      managementContactPhone: normalizeSiteText(record.contactPhone),
+      managementDueDate: normalizeSiteText(record.dueDate),
+      managementAmountOwed: normalizeSiteText(extras.amountOwed),
+      managementAmountPaid: normalizeSiteText(extras.amountPaid),
+      managementNextStep: normalizeSiteText(extras.nextStep),
+      managementNotes: normalizeSiteText(record.notes),
+    };
+    state.eventsPayload.events = [...state.eventsPayload.events, item]
+      .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+    await publishSiteEventPayload("Could not add site calendar record.");
+    const refreshed = state.siteEvents.find((entry) => getSiteEventKey(entry) === [id, startDate].join("|"));
+    return buildManagementRecordFromSiteEvent(refreshed || { ...item, sourceId: id, eventKind: "event" });
   }
 
   async function saveSiteEventRecord(record) {
@@ -2988,18 +3091,7 @@
       item.endDate = extras.endDate || item.startDate;
     }
 
-    const resp = await apiFetch(adminEventsUrl, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ payload: state.eventsPayload }),
-    }).catch(() => null);
-    const data = resp ? await resp.json().catch(() => ({})) : {};
-    if (!resp || !resp.ok) throw new Error(data.error || "Could not save site calendar.");
-    state.eventsPayload = data.payload || state.eventsPayload;
-    state.allSiteEvents = expandSiteEventPayload(state.eventsPayload).filter((entry) =>
-      ["class", "trip"].includes(classifySiteEvent(entry))
-    );
-    state.siteEvents = state.allSiteEvents;
+    await publishSiteEventPayload("Could not save site calendar.");
     const updatedEventDate = match.listName === "events" ? item.date : (extras.eventDate || extras.startDate || item.startDate);
     const refreshed = state.siteEvents.find((entry) => getSiteEventKey(entry) === [extras.sourceId || "", updatedEventDate || ""].join("|"));
     return buildManagementRecordFromSiteEvent(refreshed || item);
