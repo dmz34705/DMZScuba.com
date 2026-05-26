@@ -93,6 +93,7 @@
   const fieldRegistrationEnabled = document.getElementById("eventsFieldRegistrationEnabled");
   const fieldRegistrationCapacity = document.getElementById("eventsFieldRegistrationCapacity");
   const fieldRegistrationEmailSubject = document.getElementById("eventsFieldRegistrationEmailSubject");
+  const fieldRegistrationEmailIsHtml = document.getElementById("eventsFieldRegistrationEmailIsHtml");
   const fieldRegistrationEmailContent = document.getElementById("eventsFieldRegistrationEmailContent");
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
@@ -1642,6 +1643,9 @@
     if (fieldRegistrationEmailSubject) {
       fieldRegistrationEmailSubject.value = item.registrationEmailSubject || "";
     }
+    if (fieldRegistrationEmailIsHtml) {
+      fieldRegistrationEmailIsHtml.checked = Boolean(item.registrationEmailIsHtml);
+    }
     if (fieldRegistrationEmailContent) {
       fieldRegistrationEmailContent.value = item.registrationEmailContent || "";
     }
@@ -1701,6 +1705,7 @@
       registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
       registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
       registrationEmailSubject: String((fieldRegistrationEmailSubject && fieldRegistrationEmailSubject.value) || "").trim(),
+      registrationEmailIsHtml: Boolean(fieldRegistrationEmailIsHtml && fieldRegistrationEmailIsHtml.checked),
       registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
@@ -2004,6 +2009,7 @@
       registrationEnabled: false,
       registrationCapacity: 0,
       registrationEmailSubject: "",
+      registrationEmailIsHtml: false,
       registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
@@ -2028,6 +2034,7 @@
       registrationEnabled: false,
       registrationCapacity: 0,
       registrationEmailSubject: "",
+      registrationEmailIsHtml: false,
       registrationEmailContent: "",
       ctaLabel: "",
       ctaHref: "",
@@ -2059,6 +2066,7 @@
       registrationEnabled: Boolean(templateItem && templateItem.registrationEnabled),
       registrationCapacity: Math.max(0, Number((templateItem && templateItem.registrationCapacity) || 0) || 0),
       registrationEmailSubject: String((templateItem && templateItem.registrationEmailSubject) || "").trim(),
+      registrationEmailIsHtml: Boolean(templateItem && templateItem.registrationEmailIsHtml),
       registrationEmailContent: String((templateItem && templateItem.registrationEmailContent) || "").trim(),
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),

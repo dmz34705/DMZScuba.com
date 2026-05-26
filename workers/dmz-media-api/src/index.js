@@ -417,6 +417,23 @@ function buildEmailRichText(value) {
     .join("");
 }
 
+function htmlToPlainText(value) {
+  return String(value || "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|section|article|tr|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function buildEmailDetailRows(rows = []) {
   return rows
     .filter((row) => row && row.label)
@@ -546,6 +563,8 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
   const scheduleLine = String(details.scheduleLine || "").trim();
   const registrantName = String(details.registrantName || "Diver").trim();
   const description = applyEventRegistrationMergeTags(details.description || "", details).trim();
+  const descriptionIsHtml = Boolean(details.descriptionIsHtml);
+  const descriptionText = descriptionIsHtml ? htmlToPlainText(description) : description;
   const contactEmail = String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com";
   const partySize = Math.max(1, Number(details.partySize) || 1);
   const remainingSpots = Math.max(0, Number(details.remainingSpots) || 0);
@@ -556,8 +575,8 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
     "",
     `You're signed up for ${title}.`,
     scheduleLine ? `Schedule: ${scheduleLine}` : "",
-    description ? "" : "",
-    description ? `Registration Details: ${description}` : "",
+    descriptionText ? "" : "",
+    descriptionText ? `Registration Details: ${descriptionText}` : "",
     `Party Size: ${partySize}`,
     `Remaining Spots: ${remainingSpots}`,
     "",
@@ -576,7 +595,7 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
       { label: "Remaining Spots", value: remainingSpots },
     ],
     bodyHtml: description
-      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Registration Details</p>${buildEmailRichText(description)}</div>`
+      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Registration Details</p>${descriptionIsHtml ? description : buildEmailRichText(description)}</div>`
       : "",
     footerHtml: `<p style="margin:18px 0 0 0;color:#eaf2ff;font-size:14px;line-height:1.65;">If you need to update anything before the event, email <a href="mailto:${escapeHtml(contactEmail)}" style="color:#9bd3ff;text-decoration:none;">${escapeHtml(contactEmail)}</a>.</p>`,
   });
@@ -1505,6 +1524,7 @@ function normalizeEventEntry(item, kind = "event") {
     registrationClosed: Boolean(next.registrationClosed),
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
     registrationEmailSubject: String(next.registrationEmailSubject || "").trim(),
+    registrationEmailIsHtml: Boolean(next.registrationEmailIsHtml),
     registrationEmailContent: String(next.registrationEmailContent || "").trim(),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
@@ -1744,6 +1764,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
       registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
+      registrationEmailIsHtml: Boolean(eventMatch.registrationEmailIsHtml),
       registrationEmailContent: getRegistrationEmailContentForItem(eventMatch),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationClosed: Boolean(eventMatch.registrationClosed),
@@ -1761,6 +1782,7 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
     registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
+    registrationEmailIsHtml: Boolean(templateMatch.registrationEmailIsHtml),
     registrationEmailContent: getRegistrationEmailContentForItem(templateMatch),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationClosed: Boolean(templateMatch.registrationClosed),
@@ -2028,9 +2050,11 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
 
   const attendeeContent = buildEventRegistrationConfirmationEmail({
     title: config.title || "DMZ Scuba Event",
+    subject: config.registrationEmailSubject || "",
     scheduleLine,
     eventDate,
     description: config.registrationEmailContent || "",
+    descriptionIsHtml: Boolean(config.registrationEmailIsHtml),
     contactEmail: toEmail,
     registrantName: firstName || registrantName,
     firstName,

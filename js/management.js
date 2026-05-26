@@ -206,6 +206,7 @@
         "capacity",
         "registrationClosed",
         "registrationEmailSubject",
+        "registrationEmailIsHtml",
         "registrationEmailContent",
         "classSchedule",
         "classRoster",
@@ -234,6 +235,7 @@
         "registrationClosed",
         "capacity",
         "registrationEmailSubject",
+        "registrationEmailIsHtml",
         "registrationEmailContent",
         "notes",
       ],
@@ -1404,6 +1406,7 @@
         registrationEnabled: item.registrationEnabled ? "1" : "",
         registrationClosed: item.registrationClosed ? "1" : "",
         registrationEmailSubject: normalizeSiteText(item.registrationEmailSubject),
+        registrationEmailIsHtml: item.registrationEmailIsHtml ? "1" : "",
         registrationEmailContent: normalizeSiteText(item.registrationEmailContent),
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
         certification: existingExtras.certification || "",
@@ -2602,6 +2605,10 @@
           ? (recordForm.elements.registrationClosed.checked ? "1" : "")
           : String(existingExtras.registrationClosed || ""),
       registrationEmailSubject: textValue("registrationEmailSubject", existingExtras.registrationEmailSubject),
+      registrationEmailIsHtml:
+        recordForm.elements.registrationEmailIsHtml && !recordForm.elements.registrationEmailIsHtml.disabled
+          ? (recordForm.elements.registrationEmailIsHtml.checked ? "1" : "")
+          : String(existingExtras.registrationEmailIsHtml || ""),
       registrationEmailContent: textValue("registrationEmailContent", existingExtras.registrationEmailContent),
       capacity: textValue("capacity", existingExtras.capacity),
       certification: textValue("certification", existingExtras.certification),
@@ -2820,6 +2827,7 @@
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
     const description = String(record.notes || "").trim();
     const registrationEmailSubject = String(extras.registrationEmailSubject || "").trim();
+    const registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     const registrationEmailContent = String(extras.registrationEmailContent || "").trim();
     const roster = getClassRosterSnapshot({ ...record, extras: { ...extras, classId } }, classId);
     const generated = sessions.map((session, index) => {
@@ -2841,6 +2849,7 @@
         registrationClosed: primary && (Boolean(extras.registrationClosed) || registrationClosed),
         registrationCapacity: primary ? capacity : 0,
         registrationEmailSubject: primary ? registrationEmailSubject : "",
+        registrationEmailIsHtml: primary && registrationEmailIsHtml,
         registrationEmailContent: primary ? registrationEmailContent : "",
         ctaLabel: primary ? "Register For Class" : "",
         ctaHref: "",
@@ -3035,6 +3044,7 @@
       registrationClosed: Boolean(extras.registrationClosed),
       registrationCapacity: capacity,
       registrationEmailSubject: normalizeSiteText(extras.registrationEmailSubject),
+      registrationEmailIsHtml: Boolean(extras.registrationEmailIsHtml),
       registrationEmailContent: normalizeSiteText(extras.registrationEmailContent),
       ctaLabel: extras.registrationEnabled ? "Register For Event" : "",
       ctaHref: "",
@@ -3072,6 +3082,7 @@
     item.registrationClosed = Boolean(extras.registrationClosed);
     item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
     item.registrationEmailSubject = extras.registrationEmailSubject || "";
+    item.registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     item.registrationEmailContent = extras.registrationEmailContent || "";
     item.managementPriority = record.priority || "";
     item.managementOwner = record.owner || "";

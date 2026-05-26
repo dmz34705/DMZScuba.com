@@ -635,6 +635,10 @@
               <input type="text" name="registrationEmailSubject" maxlength="180" placeholder="You're signed up for {{event_title}}" />
               <span class="management-character-counter" data-character-counter-for="registrationEmailSubject"></span>
             </label>
+            <label data-field="registrationEmailIsHtml" class="management-checkbox-field">
+              <span>Registration message is HTML</span>
+              <input type="checkbox" name="registrationEmailIsHtml" value="1" />
+            </label>
             <label data-field="registrationEmailContent" class="management-notes-label">
               Registration Email Message
               <textarea name="registrationEmailContent" rows="10" maxlength="12000" placeholder="Private confirmation details sent after someone registers."></textarea>
