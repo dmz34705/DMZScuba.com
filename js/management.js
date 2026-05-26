@@ -2697,11 +2697,11 @@
           ? (recordForm.elements.registrationClosed.checked ? "1" : "")
           : String(existingExtras.registrationClosed || ""),
       registrationEmailSubject: textValue("registrationEmailSubject", existingExtras.registrationEmailSubject),
+      registrationEmailTemplateId: textValue("registrationEmailTemplateId", existingExtras.registrationEmailTemplateId),
       registrationEmailUseTemplate:
         recordForm.elements.registrationEmailUseTemplate && !recordForm.elements.registrationEmailUseTemplate.disabled
-          ? (recordForm.elements.registrationEmailUseTemplate.checked ? "1" : "")
+          ? (recordForm.elements.registrationEmailUseTemplate.checked || Boolean(textValue("registrationEmailTemplateId", existingExtras.registrationEmailTemplateId)) ? "1" : "")
           : String(existingExtras.registrationEmailUseTemplate || ""),
-      registrationEmailTemplateId: textValue("registrationEmailTemplateId", existingExtras.registrationEmailTemplateId),
       registrationEmailIsHtml:
         recordForm.elements.registrationEmailIsHtml && !recordForm.elements.registrationEmailIsHtml.disabled
           ? (recordForm.elements.registrationEmailIsHtml.checked ? "1" : "")

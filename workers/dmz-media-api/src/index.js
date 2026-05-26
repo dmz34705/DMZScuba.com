@@ -2158,7 +2158,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
     from: `${fromName} <${fromEmail}>`,
     to: [email],
     reply_to: [toEmail],
-    ...(config.registrationEmailUseTemplate && config.registrationEmailTemplateId
+    ...(config.registrationEmailTemplateId
       ? {
           subject: attendeeSubject,
           template: {

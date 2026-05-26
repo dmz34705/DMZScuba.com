@@ -1721,8 +1721,9 @@
       registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
       registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
       registrationEmailSubject: String((fieldRegistrationEmailSubject && fieldRegistrationEmailSubject.value) || "").trim(),
-      registrationEmailUseTemplate: Boolean(fieldRegistrationEmailUseTemplate && fieldRegistrationEmailUseTemplate.checked),
       registrationEmailTemplateId: String((fieldRegistrationEmailTemplateId && fieldRegistrationEmailTemplateId.value) || "").trim(),
+      registrationEmailUseTemplate: Boolean(fieldRegistrationEmailUseTemplate && fieldRegistrationEmailUseTemplate.checked) ||
+        Boolean(String((fieldRegistrationEmailTemplateId && fieldRegistrationEmailTemplateId.value) || "").trim()),
       registrationEmailIsHtml: Boolean(fieldRegistrationEmailIsHtml && fieldRegistrationEmailIsHtml.checked),
       registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
       registrationEmailUseFullHtml: Boolean(fieldRegistrationEmailUseFullHtml && fieldRegistrationEmailUseFullHtml.checked),
