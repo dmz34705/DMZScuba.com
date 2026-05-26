@@ -2161,8 +2161,10 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
     ...(config.registrationEmailUseTemplate && config.registrationEmailTemplateId
       ? {
           subject: attendeeSubject,
-          template: String(config.registrationEmailTemplateId || "").trim(),
-          variables: buildEventRegistrationTemplateVariables(attendeeDetails),
+          template: {
+            id: String(config.registrationEmailTemplateId || "").trim(),
+            variables: buildEventRegistrationTemplateVariables(attendeeDetails),
+          },
         }
       : (() => {
           const attendeeContent = buildEventRegistrationConfirmationEmail(attendeeDetails);
