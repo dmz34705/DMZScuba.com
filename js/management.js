@@ -206,6 +206,8 @@
         "capacity",
         "registrationClosed",
         "registrationEmailSubject",
+        "registrationEmailUseTemplate",
+        "registrationEmailTemplateId",
         "registrationEmailIsHtml",
         "registrationEmailContent",
         "registrationEmailUseFullHtml",
@@ -237,6 +239,8 @@
         "registrationClosed",
         "capacity",
         "registrationEmailSubject",
+        "registrationEmailUseTemplate",
+        "registrationEmailTemplateId",
         "registrationEmailIsHtml",
         "registrationEmailContent",
         "registrationEmailUseFullHtml",
@@ -1411,6 +1415,8 @@
         registrationEnabled: item.registrationEnabled ? "1" : "",
         registrationClosed: item.registrationClosed ? "1" : "",
         registrationEmailSubject: normalizeSiteText(item.registrationEmailSubject),
+        registrationEmailUseTemplate: item.registrationEmailUseTemplate ? "1" : "",
+        registrationEmailTemplateId: normalizeSiteText(item.registrationEmailTemplateId),
         registrationEmailIsHtml: item.registrationEmailIsHtml ? "1" : "",
         registrationEmailContent: normalizeSiteText(item.registrationEmailContent),
         registrationEmailUseFullHtml: item.registrationEmailUseFullHtml ? "1" : "",
@@ -2612,6 +2618,11 @@
           ? (recordForm.elements.registrationClosed.checked ? "1" : "")
           : String(existingExtras.registrationClosed || ""),
       registrationEmailSubject: textValue("registrationEmailSubject", existingExtras.registrationEmailSubject),
+      registrationEmailUseTemplate:
+        recordForm.elements.registrationEmailUseTemplate && !recordForm.elements.registrationEmailUseTemplate.disabled
+          ? (recordForm.elements.registrationEmailUseTemplate.checked ? "1" : "")
+          : String(existingExtras.registrationEmailUseTemplate || ""),
+      registrationEmailTemplateId: textValue("registrationEmailTemplateId", existingExtras.registrationEmailTemplateId),
       registrationEmailIsHtml:
         recordForm.elements.registrationEmailIsHtml && !recordForm.elements.registrationEmailIsHtml.disabled
           ? (recordForm.elements.registrationEmailIsHtml.checked ? "1" : "")
@@ -2839,6 +2850,8 @@
     const capacity = Math.max(0, Math.trunc(Number(extras.capacity || 0) || 0));
     const description = String(record.notes || "").trim();
     const registrationEmailSubject = String(extras.registrationEmailSubject || "").trim();
+    const registrationEmailUseTemplate = Boolean(extras.registrationEmailUseTemplate);
+    const registrationEmailTemplateId = String(extras.registrationEmailTemplateId || "").trim();
     const registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     const registrationEmailContent = String(extras.registrationEmailContent || "").trim();
     const registrationEmailUseFullHtml = Boolean(extras.registrationEmailUseFullHtml);
@@ -2863,6 +2876,8 @@
         registrationClosed: primary && (Boolean(extras.registrationClosed) || registrationClosed),
         registrationCapacity: primary ? capacity : 0,
         registrationEmailSubject: primary ? registrationEmailSubject : "",
+        registrationEmailUseTemplate: primary && registrationEmailUseTemplate,
+        registrationEmailTemplateId: primary ? registrationEmailTemplateId : "",
         registrationEmailIsHtml: primary && registrationEmailIsHtml,
         registrationEmailContent: primary ? registrationEmailContent : "",
         registrationEmailUseFullHtml: primary && registrationEmailUseFullHtml,
@@ -3060,6 +3075,8 @@
       registrationClosed: Boolean(extras.registrationClosed),
       registrationCapacity: capacity,
       registrationEmailSubject: normalizeSiteText(extras.registrationEmailSubject),
+      registrationEmailUseTemplate: Boolean(extras.registrationEmailUseTemplate),
+      registrationEmailTemplateId: normalizeSiteText(extras.registrationEmailTemplateId),
       registrationEmailIsHtml: Boolean(extras.registrationEmailIsHtml),
       registrationEmailContent: normalizeSiteText(extras.registrationEmailContent),
       registrationEmailUseFullHtml: Boolean(extras.registrationEmailUseFullHtml),
@@ -3100,6 +3117,8 @@
     item.registrationClosed = Boolean(extras.registrationClosed);
     item.registrationCapacity = Math.max(0, Math.trunc(Number(extras.capacity || item.registrationCapacity || 0) || 0));
     item.registrationEmailSubject = extras.registrationEmailSubject || "";
+    item.registrationEmailUseTemplate = Boolean(extras.registrationEmailUseTemplate);
+    item.registrationEmailTemplateId = extras.registrationEmailTemplateId || "";
     item.registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     item.registrationEmailContent = extras.registrationEmailContent || "";
     item.registrationEmailUseFullHtml = Boolean(extras.registrationEmailUseFullHtml);

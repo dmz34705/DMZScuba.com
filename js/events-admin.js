@@ -93,6 +93,8 @@
   const fieldRegistrationEnabled = document.getElementById("eventsFieldRegistrationEnabled");
   const fieldRegistrationCapacity = document.getElementById("eventsFieldRegistrationCapacity");
   const fieldRegistrationEmailSubject = document.getElementById("eventsFieldRegistrationEmailSubject");
+  const fieldRegistrationEmailUseTemplate = document.getElementById("eventsFieldRegistrationEmailUseTemplate");
+  const fieldRegistrationEmailTemplateId = document.getElementById("eventsFieldRegistrationEmailTemplateId");
   const fieldRegistrationEmailIsHtml = document.getElementById("eventsFieldRegistrationEmailIsHtml");
   const fieldRegistrationEmailContent = document.getElementById("eventsFieldRegistrationEmailContent");
   const fieldRegistrationEmailUseFullHtml = document.getElementById("eventsFieldRegistrationEmailUseFullHtml");
@@ -1645,6 +1647,12 @@
     if (fieldRegistrationEmailSubject) {
       fieldRegistrationEmailSubject.value = item.registrationEmailSubject || "";
     }
+    if (fieldRegistrationEmailUseTemplate) {
+      fieldRegistrationEmailUseTemplate.checked = Boolean(item.registrationEmailUseTemplate);
+    }
+    if (fieldRegistrationEmailTemplateId) {
+      fieldRegistrationEmailTemplateId.value = item.registrationEmailTemplateId || "";
+    }
     if (fieldRegistrationEmailIsHtml) {
       fieldRegistrationEmailIsHtml.checked = Boolean(item.registrationEmailIsHtml);
     }
@@ -1713,6 +1721,8 @@
       registrationEnabled: Boolean(fieldRegistrationEnabled && fieldRegistrationEnabled.checked),
       registrationCapacity: Math.max(0, Number((fieldRegistrationCapacity && fieldRegistrationCapacity.value) || 0) || 0),
       registrationEmailSubject: String((fieldRegistrationEmailSubject && fieldRegistrationEmailSubject.value) || "").trim(),
+      registrationEmailUseTemplate: Boolean(fieldRegistrationEmailUseTemplate && fieldRegistrationEmailUseTemplate.checked),
+      registrationEmailTemplateId: String((fieldRegistrationEmailTemplateId && fieldRegistrationEmailTemplateId.value) || "").trim(),
       registrationEmailIsHtml: Boolean(fieldRegistrationEmailIsHtml && fieldRegistrationEmailIsHtml.checked),
       registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
       registrationEmailUseFullHtml: Boolean(fieldRegistrationEmailUseFullHtml && fieldRegistrationEmailUseFullHtml.checked),
@@ -2019,6 +2029,8 @@
       registrationEnabled: false,
       registrationCapacity: 0,
       registrationEmailSubject: "",
+      registrationEmailUseTemplate: false,
+      registrationEmailTemplateId: "",
       registrationEmailIsHtml: false,
       registrationEmailContent: "",
       registrationEmailUseFullHtml: false,
@@ -2046,6 +2058,8 @@
       registrationEnabled: false,
       registrationCapacity: 0,
       registrationEmailSubject: "",
+      registrationEmailUseTemplate: false,
+      registrationEmailTemplateId: "",
       registrationEmailIsHtml: false,
       registrationEmailContent: "",
       registrationEmailUseFullHtml: false,
@@ -2080,6 +2094,8 @@
       registrationEnabled: Boolean(templateItem && templateItem.registrationEnabled),
       registrationCapacity: Math.max(0, Number((templateItem && templateItem.registrationCapacity) || 0) || 0),
       registrationEmailSubject: String((templateItem && templateItem.registrationEmailSubject) || "").trim(),
+      registrationEmailUseTemplate: Boolean(templateItem && templateItem.registrationEmailUseTemplate),
+      registrationEmailTemplateId: String((templateItem && templateItem.registrationEmailTemplateId) || "").trim(),
       registrationEmailIsHtml: Boolean(templateItem && templateItem.registrationEmailIsHtml),
       registrationEmailContent: String((templateItem && templateItem.registrationEmailContent) || "").trim(),
       registrationEmailUseFullHtml: Boolean(templateItem && templateItem.registrationEmailUseFullHtml),

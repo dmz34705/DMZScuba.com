@@ -635,6 +635,14 @@
               <input type="text" name="registrationEmailSubject" maxlength="180" placeholder="You're signed up for {{event_title}}" />
               <span class="management-character-counter" data-character-counter-for="registrationEmailSubject"></span>
             </label>
+            <label data-field="registrationEmailUseTemplate" class="management-checkbox-field">
+              <span>Use Resend template</span>
+              <input type="checkbox" name="registrationEmailUseTemplate" value="1" />
+            </label>
+            <label data-field="registrationEmailTemplateId">
+              Resend Template ID
+              <input type="text" name="registrationEmailTemplateId" maxlength="180" placeholder="tmpl_..." />
+            </label>
             <label data-field="registrationEmailIsHtml" class="management-checkbox-field">
               <span>Registration message is HTML</span>
               <input type="checkbox" name="registrationEmailIsHtml" value="1" />

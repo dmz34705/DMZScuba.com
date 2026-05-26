@@ -558,6 +558,31 @@ function applyEventRegistrationMergeTags(value, details = {}) {
   });
 }
 
+function buildEventRegistrationTemplateVariables(details = {}) {
+  const firstName = String(details.firstName || details.registrantName || "Diver").trim();
+  const lastName = String(details.lastName || "").trim();
+  const fullName = String(details.fullName || [firstName, lastName].filter(Boolean).join(" ")).trim() || firstName;
+  return {
+    first_name: firstName,
+    firstname: firstName,
+    last_name: lastName,
+    lastname: lastName,
+    full_name: fullName,
+    name: fullName,
+    event_title: String(details.title || "").trim(),
+    title: String(details.title || "").trim(),
+    event_date: String(details.eventDate || "").trim(),
+    date: String(details.eventDate || "").trim(),
+    schedule: String(details.scheduleLine || "").trim(),
+    party_size: String(Math.max(1, Number(details.partySize) || 1)),
+    spots_remaining: String(Math.max(0, Number(details.remainingSpots) || 0)),
+    contact_email: String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com",
+    registrant_email: String(details.email || "").trim(),
+    phone: String(details.phone || "").trim(),
+    certification: String(details.certLevel || "").trim(),
+  };
+}
+
 function buildEventRegistrationConfirmationEmail(details = {}) {
   const title = String(details.title || "your DMZ Scuba event").trim();
   const scheduleLine = String(details.scheduleLine || "").trim();
@@ -1533,6 +1558,8 @@ function normalizeEventEntry(item, kind = "event") {
     registrationClosed: Boolean(next.registrationClosed),
     registrationCapacity: Math.max(0, Math.trunc(Number(next.registrationCapacity) || 0)),
     registrationEmailSubject: String(next.registrationEmailSubject || "").trim(),
+    registrationEmailUseTemplate: Boolean(next.registrationEmailUseTemplate),
+    registrationEmailTemplateId: String(next.registrationEmailTemplateId || "").trim(),
     registrationEmailIsHtml: Boolean(next.registrationEmailIsHtml),
     registrationEmailContent: String(next.registrationEmailContent || "").trim(),
     registrationEmailUseFullHtml: Boolean(next.registrationEmailUseFullHtml),
@@ -1775,6 +1802,8 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       title: String(eventMatch.title || "").trim(),
       description: getDescriptionForItem(eventMatch),
       registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
+      registrationEmailUseTemplate: Boolean(eventMatch.registrationEmailUseTemplate),
+      registrationEmailTemplateId: String(eventMatch.registrationEmailTemplateId || "").trim(),
       registrationEmailIsHtml: Boolean(eventMatch.registrationEmailIsHtml),
       registrationEmailContent: getRegistrationEmailContentForItem(eventMatch),
       registrationEmailUseFullHtml: Boolean(eventMatch.registrationEmailUseFullHtml),
@@ -1795,6 +1824,8 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     title: String(templateMatch.title || "").trim(),
     description: getDescriptionForItem(templateMatch),
     registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
+    registrationEmailUseTemplate: Boolean(templateMatch.registrationEmailUseTemplate),
+    registrationEmailTemplateId: String(templateMatch.registrationEmailTemplateId || "").trim(),
     registrationEmailIsHtml: Boolean(templateMatch.registrationEmailIsHtml),
     registrationEmailContent: getRegistrationEmailContentForItem(templateMatch),
     registrationEmailUseFullHtml: Boolean(templateMatch.registrationEmailUseFullHtml),
@@ -2063,7 +2094,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const notifyResult = await sendResendEmail(env, notifyPayload, "Event notify email");
   notifyEmailSent = Boolean(notifyResult.ok);
 
-  const attendeeContent = buildEventRegistrationConfirmationEmail({
+  const attendeeDetails = {
     title: config.title || "DMZ Scuba Event",
     subject: config.registrationEmailSubject || "",
     scheduleLine,
@@ -2077,16 +2108,34 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
     firstName,
     lastName,
     fullName: registrantName,
+    email,
+    phone,
+    certLevel,
     partySize,
     remainingSpots: snapshotAfter.remainingSpots,
-  });
+  };
+  const attendeeSubject = applyEventRegistrationMergeTags(
+    config.registrationEmailSubject || `You're signed up for {{event_title}}`,
+    attendeeDetails
+  ).trim();
   const attendeePayload = {
     from: `${fromName} <${fromEmail}>`,
     to: [email],
-    subject: attendeeContent.subject,
-    html: attendeeContent.html,
-    text: attendeeContent.text,
     reply_to: [toEmail],
+    ...(config.registrationEmailUseTemplate && config.registrationEmailTemplateId
+      ? {
+          subject: attendeeSubject,
+          template: String(config.registrationEmailTemplateId || "").trim(),
+          variables: buildEventRegistrationTemplateVariables(attendeeDetails),
+        }
+      : (() => {
+          const attendeeContent = buildEventRegistrationConfirmationEmail(attendeeDetails);
+          return {
+            subject: attendeeContent.subject,
+            html: attendeeContent.html,
+            text: attendeeContent.text,
+          };
+        })()),
   };
   const attendeeResult = await sendResendEmail(env, attendeePayload, "Event attendee confirmation email");
   attendeeEmailSent = Boolean(attendeeResult.ok);
