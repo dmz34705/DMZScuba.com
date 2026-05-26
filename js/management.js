@@ -540,6 +540,25 @@
     return record && !closedStatuses.has(record.status);
   }
 
+  function getEffectiveClassStatus(record) {
+    if (!record || record.recordType !== "class") return normalizeSiteText(record && record.status) || "scheduled";
+    const currentStatus = normalizeSiteText(record.status) || "scheduled";
+    if (currentStatus === "archived" || currentStatus === "complete") return currentStatus;
+    const sessions = getOrderedClassSessions(record);
+    const dates = sessions.map((session) => session.date).filter(Boolean).sort();
+    if (!dates.length) return currentStatus;
+    const currentTodayKey = todayKey();
+    const firstDate = dates[0];
+    const lastDate = dates[dates.length - 1];
+    if (lastDate < currentTodayKey) return "complete";
+    if (firstDate <= currentTodayKey && lastDate >= currentTodayKey) return "active";
+    return currentStatus;
+  }
+
+  function getEffectiveRecordStatus(record) {
+    return record && record.recordType === "class" ? getEffectiveClassStatus(record) : normalizeSiteText(record && record.status);
+  }
+
   function isInputFocused() {
     const active = document.activeElement;
     if (!active) return false;
@@ -1880,6 +1899,7 @@
     const recordMarkup = visibleRecords
       .map((record) => {
         const isContact = record.recordType === "contact";
+        const displayStatus = getEffectiveRecordStatus(record) || record.status || "scheduled";
         const extras = getExtras(record);
         const balance = getBalance(record);
         const contactEnrollments = isContact ? getContactClassEnrollments(record) : [];
@@ -1942,7 +1962,7 @@
                 ${
                   record.recordType === "contact"
                     ? ""
-                    : `<span class="management-badge is-${escapeHtml(record.status)}">${escapeHtml(formatLabel(record.status))}</span>`
+                    : `<span class="management-badge is-${escapeHtml(displayStatus)}">${escapeHtml(formatLabel(displayStatus))}</span>`
                 }
                 <span class="management-badge is-${escapeHtml(record.priority)}">${escapeHtml(formatLabel(record.priority))}</span>
                 ${overdueFlag}
@@ -1959,7 +1979,7 @@
                   ? ""
                   : `<select data-status-change="${escapeHtml(record.id)}" aria-label="Change status for ${escapeHtml(record.title)}">
                 ${getStatusOptions(record.recordType)
-                  .map((status) => `<option value="${status}" ${record.status === status ? "selected" : ""}>${formatLabel(status)}</option>`)
+                  .map((status) => `<option value="${status}" ${displayStatus === status ? "selected" : ""}>${formatLabel(status)}</option>`)
                   .join("")}
               </select>`
               }
@@ -2796,7 +2816,7 @@
         recordType === "contact"
           ? "active"
           : recordType === "class"
-            ? "scheduled"
+            ? getEffectiveClassStatus({ ...(existing || {}), recordType, status: normalizeSiteText(existing && existing.status) || "scheduled", title, extras })
             : textValue("status", existing && existing.status) || "new",
       priority,
       owner: textValue("owner", existing && existing.owner),
@@ -3002,7 +3022,7 @@
         time: session.startTime,
         endTime: session.endTime,
         type: "Training",
-        status: record.status || "scheduled",
+        status: getEffectiveRecordStatus(record) || "scheduled",
         location: session.location,
         summary: description,
         registrationEnabled: primary && capacity > 0,
@@ -3379,7 +3399,7 @@
 
   async function updateRecordStatus(id, status) {
     const record = state.records.find((item) => item.id === id);
-    if (!record || record.status === status) return;
+    if (!record || (record.status === status && getEffectiveRecordStatus(record) === status)) return;
     const next = { ...record, status };
     const resp = await apiFetch(`${managementUrl}/${encodeURIComponent(id)}`, {
       method: "PUT",
