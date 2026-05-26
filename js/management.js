@@ -282,6 +282,7 @@
     registrationLoading: false,
     registrationDeletingId: "",
     registrationConvertingId: "",
+    registrationApprovingId: "",
     allRegistrationSnapshots: [],
     allRegistrationsLoading: false,
     allRegistrationsLoaded: false,
@@ -1255,6 +1256,7 @@
     state.registrationLoading = false;
     state.registrationDeletingId = "";
     state.registrationConvertingId = "";
+    state.registrationApprovingId = "";
     renderRegistrationManager();
   }
 
@@ -2043,14 +2045,17 @@
         ].filter(Boolean);
         const deleting = registrantId && registrantId === state.registrationDeletingId;
         const converting = registrantId && registrantId === state.registrationConvertingId;
+        const approving = registrantId && registrantId === state.registrationApprovingId;
         const alreadyContact = registrantEmail && contactEmails.has(registrantEmail);
+        const approvalStatus = getRegistrationApprovalStatus(registrant);
         return `
           <div class="management-registration-item">
             <div>
               <strong>${escapeHtml(normalizeSiteText(registrant && registrant.name) || "Unnamed registrant")}</strong>
-              <span>${escapeHtml(details.join(" | "))}</span>
+              <span>${escapeHtml([approvalStatus === "approved" ? "Approved" : "Pending approval", ...details].join(" | "))}</span>
             </div>
             <div class="management-registration-actions">
+              <button type="button" data-approve-event-registration="${escapeHtml(registrantId)}" ${!registrantId || approvalStatus === "approved" || approving || state.registrationLoading ? "disabled" : ""}>${approvalStatus === "approved" ? "Approved" : approving ? "Approving..." : "Approve"}</button>
               <button type="button" data-convert-event-registration="${escapeHtml(registrantId)}" ${!registrantId || alreadyContact || converting || state.registrationLoading ? "disabled" : ""}>${alreadyContact ? "Added" : converting ? "Adding..." : "Add Contact"}</button>
               <button type="button" data-remove-registration="${escapeHtml(registrantId)}" ${!registrantId || deleting || state.registrationLoading ? "disabled" : ""}>${deleting ? "Removing..." : "Unregister"}</button>
             </div>
@@ -2100,8 +2105,30 @@
       return;
     }
     state.registrationSnapshot = data;
+    syncActiveRegistrationStateFromSnapshot(data);
     setStatus(recordStatus, "Registration removed.", "success");
     renderRegistrationManager();
+  }
+
+  async function approveEventRegistration(registrationId) {
+    const context = getActiveRegistrationContext();
+    const safeId = normalizeSiteText(registrationId);
+    if (!context || !safeId) return;
+    state.registrationApprovingId = safeId;
+    renderRegistrationManager();
+    try {
+      const data = await updateRegistrationApproval(context, safeId, "approved");
+      state.registrationSnapshot = data;
+      syncActiveRegistrationStateFromSnapshot(data);
+      updateAllRegistrationSnapshot(context, data);
+      setStatus(recordStatus, "Registration approved.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not approve this registration.", "error");
+    } finally {
+      state.registrationApprovingId = "";
+      renderRegistrationManager();
+      renderRecords();
+    }
   }
 
   function findAllRegistrationEntry(actionKey) {
@@ -2135,6 +2162,16 @@
       }
       return snapshot;
     });
+    syncSiteEventRegistrationClosed(context, data);
+    const activeContext = getActiveRegistrationContext();
+    if (
+      activeContext &&
+      normalizeSiteText(activeContext.sourceId) === normalizeSiteText(context.sourceId) &&
+      normalizeSiteText(activeContext.eventDate) === normalizeSiteText(context.eventDate)
+    ) {
+      state.registrationSnapshot = data;
+      syncActiveRegistrationStateFromSnapshot(data);
+    }
     setStatus(recordStatus, "Registration removed.", "success");
     renderRecords();
   }
@@ -2254,6 +2291,48 @@
         return { ...data, context: snapshotContext };
       }
       return snapshot;
+    });
+  }
+
+  function syncActiveRegistrationStateFromSnapshot(snapshot) {
+    if (!state.activeSiteRecord || !snapshot) return;
+    const extras = getExtras(state.activeSiteRecord);
+    const nextClosed = Boolean(snapshot.registrationClosed) ? "1" : "";
+    syncSiteEventRegistrationClosed(
+      {
+        sourceId: extras.sourceId || extras.eventId,
+        eventDate: extras.eventDate || extras.startDate,
+      },
+      snapshot
+    );
+    state.activeSiteRecord = {
+      ...state.activeSiteRecord,
+      extras: {
+        ...extras,
+        registrationClosed: nextClosed,
+      },
+    };
+    if (recordForm && recordForm.elements.registrationClosed && !recordForm.elements.registrationClosed.disabled) {
+      recordForm.elements.registrationClosed.checked = Boolean(nextClosed);
+    }
+  }
+
+  function syncSiteEventRegistrationClosed(context, snapshot) {
+    if (!context || !snapshot) return;
+    const sourceId = normalizeSiteText(context.sourceId);
+    const eventDate = normalizeSiteText(context.eventDate);
+    const nextClosed = Boolean(snapshot.registrationClosed);
+    if (!sourceId || !eventDate) return;
+    [state.siteEvents, state.allSiteEvents].forEach((list) => {
+      if (!Array.isArray(list)) return;
+      list.forEach((item) => {
+        if (
+          normalizeSiteText(item && (item.sourceId || item.id)) === sourceId &&
+          normalizeSiteText(item && item.date) === eventDate
+        ) {
+          item.registrationClosed = nextClosed;
+        }
+      });
     });
   }
 
@@ -3524,6 +3603,11 @@
     if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
     if (registrationList) {
       registrationList.addEventListener("click", (event) => {
+        const approveButton = event.target.closest("[data-approve-event-registration]");
+        if (approveButton) {
+          approveEventRegistration(approveButton.getAttribute("data-approve-event-registration") || "");
+          return;
+        }
         const convertButton = event.target.closest("[data-convert-event-registration]");
         if (convertButton) {
           convertEventRegistrationToContact(convertButton.getAttribute("data-convert-event-registration") || "");

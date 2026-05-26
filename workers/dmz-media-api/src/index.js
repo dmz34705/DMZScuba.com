@@ -1677,14 +1677,7 @@ async function handleGetEventsV2(env) {
   });
 }
 
-async function handlePutEventsV2(request, env) {
-  const authed = await requireAuth(request, env);
-  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
-  const body = await request.json().catch(() => ({}));
-  const incoming = body && typeof body.payload === "object" ? body.payload : body;
-  const payload = normalizeEventsPayload(incoming);
-  if (!payload) return jsonResponse({ ok: false, error: "Invalid payload." }, 400);
-
+async function saveEventsPayloadV2(env, payload) {
   await ensureEventsV2Table(env);
   const now = new Date().toISOString();
   const existing = await env.DB.prepare("SELECT created_at FROM events_v2 WHERE calendar_key = ?")
@@ -1697,6 +1690,18 @@ async function handlePutEventsV2(request, env) {
   )
     .bind("primary", JSON.stringify(payload), createdAt, now)
     .run();
+  return now;
+}
+
+async function handlePutEventsV2(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+  const body = await request.json().catch(() => ({}));
+  const incoming = body && typeof body.payload === "object" ? body.payload : body;
+  const payload = normalizeEventsPayload(incoming);
+  if (!payload) return jsonResponse({ ok: false, error: "Invalid payload." }, 400);
+
+  const now = await saveEventsPayloadV2(env, payload);
   return jsonResponse({ ok: true, payload, updatedAt: now }, 200, { "Cache-Control": "no-store" });
 }
 
@@ -1844,6 +1849,29 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     managementClassId: String(templateMatch.managementClassId || "").trim().toLowerCase(),
     managementClassRoster: Array.isArray(templateMatch.managementClassRoster) ? templateMatch.managementClassRoster : [],
   };
+}
+
+async function setRegistrationClosedForPayload(env, payload, sourceId, eventDate, closed) {
+  if (!payload || !sourceId) return false;
+  const safeSourceId = String(sourceId || "").trim();
+  const safeEventDate = String(eventDate || "").trim();
+  const nextClosed = Boolean(closed);
+  const events = Array.isArray(payload.events) ? payload.events : [];
+  const templates = Array.isArray(payload.templates) ? payload.templates : [];
+  const eventMatch = events.find((item) => item && item.id === safeSourceId && item.date === safeEventDate);
+  if (eventMatch) {
+    if (Boolean(eventMatch.registrationClosed) === nextClosed) return false;
+    eventMatch.registrationClosed = nextClosed;
+    payload.updated = new Date().toISOString().slice(0, 10);
+    await saveEventsPayloadV2(env, payload);
+    return true;
+  }
+  const templateMatch = templates.find((item) => item && item.id === safeSourceId);
+  if (!templateMatch || Boolean(templateMatch.registrationClosed) === nextClosed) return false;
+  templateMatch.registrationClosed = nextClosed;
+  payload.updated = new Date().toISOString().slice(0, 10);
+  await saveEventsPayloadV2(env, payload);
+  return true;
 }
 
 function getManagementRecordExtras(row) {
@@ -2203,6 +2231,7 @@ async function handleDeleteEventRegistrationV2(request, env, sourceId, registrat
     return jsonResponse({ ok: false, error: "Registration not found." }, 404, { "Cache-Control": "no-store" });
   }
 
+  const snapshotBefore = await getRegistrationSnapshot(env, sourceId, eventDate, config);
   await env.DB.prepare(
     `DELETE FROM event_registrations_v2
      WHERE id = ? AND source_id = ? AND event_date = ?`
@@ -2210,7 +2239,17 @@ async function handleDeleteEventRegistrationV2(request, env, sourceId, registrat
     .bind(safeRegistrationId, sourceId, eventDate)
     .run();
 
-  const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  let nextConfig = config;
+  let snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, nextConfig);
+  const wasFull = snapshotBefore.registrationCapacity > 0 && snapshotBefore.remainingSpots <= 0;
+  const hasOpenSpots = snapshot.registrationCapacity > 0 && snapshot.remainingSpots > 0;
+  if (nextConfig.registrationClosed && wasFull && hasOpenSpots && !isRegistrationPast(nextConfig)) {
+    const reopened = await setRegistrationClosedForPayload(env, payload, sourceId, eventDate, false);
+    if (reopened) {
+      nextConfig = resolveRegistrationConfig(payload, sourceId, eventDate) || nextConfig;
+      snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, nextConfig);
+    }
+  }
   return jsonResponse({ ok: true, removedRegistrationId: safeRegistrationId, ...snapshot }, 200, { "Cache-Control": "no-store" });
 }
 
