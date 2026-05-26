@@ -2732,7 +2732,7 @@
       if (item.recordType === "class" && item.id) loadClassRegistrationEscrow();
     }
     updateRegistrationEmailCounters();
-    if (deleteButton) deleteButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
+    if (deleteButton) deleteButton.hidden = !state.selectedId;
     const duplicateButton = app.querySelector("[data-duplicate-record]");
     if (duplicateButton) duplicateButton.hidden = !state.selectedId || Boolean(state.activeSiteRecord);
     setStatus(recordStatus, "");
@@ -3147,6 +3147,27 @@
     return buildManagementRecordFromSiteEvent(refreshed || item);
   }
 
+  async function deleteSiteEventRecord(record) {
+    const match = findSiteEventPayloadItem(record);
+    if (!match) throw new Error("Site calendar item was not found.");
+    const extras = getExtras(record);
+    const list = Array.isArray(state.eventsPayload && state.eventsPayload[match.listName])
+      ? state.eventsPayload[match.listName]
+      : [];
+    if (match.listName === "templates" && extras.eventDate) {
+      const excluded = Array.isArray(match.item.excludedDates) ? match.item.excludedDates : [];
+      match.item.excludedDates = Array.from(new Set([...excluded, extras.eventDate])).sort();
+      await publishSiteEventPayload("Could not delete site calendar record.");
+      return;
+    }
+    state.eventsPayload[match.listName] = list.filter((entry) => {
+      if (!entry || String(entry.id || "").trim() !== String(match.item.id || "").trim()) return true;
+      if (match.listName === "templates") return false;
+      return String(entry.date || "").trim() !== String(extras.eventDate || "").trim();
+    });
+    await publishSiteEventPayload("Could not delete site calendar record.");
+  }
+
   async function openCalendarRecord(indexValue) {
     const index = Number(indexValue);
     const item = Number.isFinite(index) ? state.siteEvents[index] : null;
@@ -3189,6 +3210,22 @@
   async function deleteSelectedRecord() {
     const id = state.selectedId;
     if (!id) return;
+    const activeSiteRecord = state.activeSiteRecord && state.activeSiteRecord.id === id ? state.activeSiteRecord : null;
+    if (activeSiteRecord) {
+      const name = activeSiteRecord.title || "this calendar item";
+      if (!window.confirm(`Delete calendar record "${name}" from the site calendar?`)) return;
+      setStatus(recordStatus, "Deleting calendar record...");
+      try {
+        await deleteSiteEventRecord(activeSiteRecord);
+        fillForm();
+        closeEditorModal();
+        renderRecords();
+        setStatus(recordStatus, "Calendar record deleted.", "success");
+      } catch (error) {
+        setStatus(recordStatus, error && error.message ? error.message : "Could not delete site calendar record.", "error");
+      }
+      return;
+    }
     const record = state.records.find((item) => item.id === id);
     const name = record ? record.title : "this item";
     if (!window.confirm(`Delete "${name}"?`)) return;
@@ -3365,7 +3402,7 @@
       const saved = await saveRecordPayload(next);
       if (state.selectedId === id) {
         const duplicateButton = app.querySelector("[data-duplicate-record]");
-        if (deleteButton) deleteButton.hidden = !saved.id || Boolean(state.activeSiteRecord);
+        if (deleteButton) deleteButton.hidden = !saved.id;
         if (duplicateButton) duplicateButton.hidden = !saved.id || Boolean(state.activeSiteRecord);
       }
       renderRecords();
