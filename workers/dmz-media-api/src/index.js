@@ -583,14 +583,22 @@ function buildEventRegistrationTemplateVariables(details = {}) {
   };
 }
 
+function looksLikeFullHtmlEmail(value) {
+  const text = String(value || "").trim().toLowerCase();
+  return text.startsWith("<!doctype html") || text.startsWith("<html") || (text.includes("<html") && text.includes("<body"));
+}
+
 function buildEventRegistrationConfirmationEmail(details = {}) {
   const title = String(details.title || "your DMZ Scuba event").trim();
   const scheduleLine = String(details.scheduleLine || "").trim();
   const registrantName = String(details.registrantName || "Diver").trim();
   const customSubject = applyEventRegistrationMergeTags(details.subject || "", details).trim();
   const subject = customSubject || `You're signed up for ${title}`;
-  if (details.useFullHtml && String(details.fullHtml || "").trim()) {
-    const html = applyEventRegistrationMergeTags(details.fullHtml || "", details).trim();
+  const fullHtmlSource = String(details.fullHtml || "").trim();
+  const descriptionSource = String(details.description || "").trim();
+  const shouldUseFullHtml = (details.useFullHtml && fullHtmlSource) || looksLikeFullHtmlEmail(descriptionSource);
+  if (shouldUseFullHtml) {
+    const html = applyEventRegistrationMergeTags(fullHtmlSource || descriptionSource, details).trim();
     const fallbackText = htmlToPlainText(html);
     return {
       subject,
