@@ -283,12 +283,14 @@
     registrationDeletingId: "",
     registrationConvertingId: "",
     registrationApprovingId: "",
+    registrationResendingId: "",
     allRegistrationSnapshots: [],
     allRegistrationsLoading: false,
     allRegistrationsLoaded: false,
     allRegistrationDeletingKey: "",
     allRegistrationConvertingKey: "",
     allRegistrationApprovingKey: "",
+    allRegistrationResendingKey: "",
     classRegistrationSnapshot: null,
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
@@ -1257,6 +1259,7 @@
     state.registrationDeletingId = "";
     state.registrationConvertingId = "";
     state.registrationApprovingId = "";
+    state.registrationResendingId = "";
     renderRegistrationManager();
   }
 
@@ -1755,6 +1758,7 @@
       const deleting = actionKey && actionKey === state.allRegistrationDeletingKey;
       const converting = actionKey && actionKey === state.allRegistrationConvertingKey;
       const approving = actionKey && actionKey === state.allRegistrationApprovingKey;
+      const resending = actionKey && actionKey === state.allRegistrationResendingKey;
       const classRecord = getRegistrationContextClassRecord(context);
       const detailItems = [
         approvalStatus === "approved" ? "Approved" : "Pending approval",
@@ -1798,6 +1802,7 @@
             <button type="button" data-open-registration-target="${escapeHtml(actionKey)}">${classRecord ? "Open Roster" : "Open Event"}</button>
             <button type="button" data-approve-registration="${escapeHtml(actionKey)}" ${!registrantId || !canApprove || approving || state.allRegistrationsLoading ? "disabled" : ""}>${approvalStatus === "approved" ? "Approved" : approving ? "Approving..." : "Approve"}</button>
             <button type="button" data-add-registration-contact="${escapeHtml(actionKey)}" ${!registrantId || alreadyContact || converting || state.allRegistrationsLoading ? "disabled" : ""}>${alreadyContact ? "Added to Contacts" : converting ? "Adding..." : "Add to Contacts"}</button>
+            <button type="button" data-resend-registration-email="${escapeHtml(actionKey)}" ${!registrantId || resending || state.allRegistrationsLoading ? "disabled" : ""}>${resending ? "Sending..." : "Resend Email"}</button>
             ${unregisterButton}
           </div>
         </article>
@@ -2046,6 +2051,7 @@
         const deleting = registrantId && registrantId === state.registrationDeletingId;
         const converting = registrantId && registrantId === state.registrationConvertingId;
         const approving = registrantId && registrantId === state.registrationApprovingId;
+        const resending = registrantId && registrantId === state.registrationResendingId;
         const alreadyContact = registrantEmail && contactEmails.has(registrantEmail);
         const approvalStatus = getRegistrationApprovalStatus(registrant);
         return `
@@ -2057,6 +2063,7 @@
             <div class="management-registration-actions">
               <button type="button" data-approve-event-registration="${escapeHtml(registrantId)}" ${!registrantId || approvalStatus === "approved" || approving || state.registrationLoading ? "disabled" : ""}>${approvalStatus === "approved" ? "Approved" : approving ? "Approving..." : "Approve"}</button>
               <button type="button" data-convert-event-registration="${escapeHtml(registrantId)}" ${!registrantId || alreadyContact || converting || state.registrationLoading ? "disabled" : ""}>${alreadyContact ? "Added" : converting ? "Adding..." : "Add Contact"}</button>
+              <button type="button" data-resend-event-registration-email="${escapeHtml(registrantId)}" ${!registrantId || resending || state.registrationLoading ? "disabled" : ""}>${resending ? "Sending..." : "Resend Email"}</button>
               <button type="button" data-remove-registration="${escapeHtml(registrantId)}" ${!registrantId || deleting || state.registrationLoading ? "disabled" : ""}>${deleting ? "Removing..." : "Unregister"}</button>
             </div>
           </div>
@@ -2131,6 +2138,35 @@
     }
   }
 
+  async function resendRegistrationEmail(context, registrationId) {
+    const safeId = normalizeSiteText(registrationId);
+    if (!context || !context.sourceId || !context.eventDate || !safeId) return null;
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations/${encodeURIComponent(safeId)}/email?date=${encodeURIComponent(context.eventDate)}`;
+    const resp = await apiFetch(url, { method: "POST" }).catch(() => null);
+    const data = resp ? await resp.json().catch(() => ({})) : {};
+    if (!resp || !resp.ok || !data.ok) {
+      throw new Error(data.error || "Could not resend registration email.");
+    }
+    return data;
+  }
+
+  async function resendActiveRegistrationEmail(registrationId) {
+    const context = getActiveRegistrationContext();
+    const safeId = normalizeSiteText(registrationId);
+    if (!context || !safeId) return;
+    state.registrationResendingId = safeId;
+    renderRegistrationManager();
+    try {
+      await resendRegistrationEmail(context, safeId);
+      setStatus(recordStatus, "Registration email resent.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not resend registration email.", "error");
+    } finally {
+      state.registrationResendingId = "";
+      renderRegistrationManager();
+    }
+  }
+
   function findAllRegistrationEntry(actionKey) {
     return flattenRegistrationSnapshots().find((entry) => entry.actionKey === normalizeSiteText(actionKey)) || null;
   }
@@ -2188,6 +2224,24 @@
       setStatus(recordStatus, error && error.message ? error.message : "Could not approve this registration.", "error");
     } finally {
       state.allRegistrationApprovingKey = "";
+      renderRecords();
+    }
+  }
+
+  async function resendRegistrationCardEmail(actionKey) {
+    const entry = findAllRegistrationEntry(actionKey);
+    const context = entry && entry.context;
+    const registrantId = normalizeSiteText(entry && entry.registrant && entry.registrant.id);
+    if (!context || !registrantId) return;
+    state.allRegistrationResendingKey = normalizeSiteText(actionKey);
+    renderRecords();
+    try {
+      await resendRegistrationEmail(context, registrantId);
+      setStatus(recordStatus, "Registration email resent.", "success");
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not resend registration email.", "error");
+    } finally {
+      state.allRegistrationResendingKey = "";
       renderRecords();
     }
   }
@@ -3603,6 +3657,11 @@
     if (refreshRegistrationsButton) refreshRegistrationsButton.addEventListener("click", () => loadRegistrationSnapshot());
     if (registrationList) {
       registrationList.addEventListener("click", (event) => {
+        const resendButton = event.target.closest("[data-resend-event-registration-email]");
+        if (resendButton) {
+          resendActiveRegistrationEmail(resendButton.getAttribute("data-resend-event-registration-email") || "");
+          return;
+        }
         const approveButton = event.target.closest("[data-approve-event-registration]");
         if (approveButton) {
           approveEventRegistration(approveButton.getAttribute("data-approve-event-registration") || "");
@@ -3704,6 +3763,13 @@
           event.preventDefault();
           event.stopPropagation();
           unregisterFromRegistrationCard(unregisterButton.getAttribute("data-unregister-card") || "");
+          return;
+        }
+        const resendRegistrationButton = event.target.closest("[data-resend-registration-email]");
+        if (resendRegistrationButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          resendRegistrationCardEmail(resendRegistrationButton.getAttribute("data-resend-registration-email") || "");
           return;
         }
         const pinButton = event.target.closest("[data-pin-record]");

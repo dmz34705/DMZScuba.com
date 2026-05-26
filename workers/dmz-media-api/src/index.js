@@ -663,6 +663,58 @@ async function sendResendEmail(env, payload, logLabel = "Resend email") {
   return { ok: true };
 }
 
+async function sendEventRegistrationAttendeeEmail(env, config, details = {}, logLabel = "Event attendee confirmation email") {
+  const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
+  const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
+  const toEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
+  const attendeeDetails = {
+    title: config.title || "DMZ Scuba Event",
+    subject: config.registrationEmailSubject || "",
+    scheduleLine: details.scheduleLine || [String(config.title || "").trim(), String(details.eventDate || "").trim()].filter(Boolean).join(" | "),
+    eventDate: details.eventDate || "",
+    description: config.registrationEmailContent || "",
+    descriptionIsHtml: Boolean(config.registrationEmailIsHtml),
+    useFullHtml: Boolean(config.registrationEmailUseFullHtml),
+    fullHtml: config.registrationEmailFullHtml || "",
+    contactEmail: toEmail,
+    registrantName: details.firstName || details.registrantName || details.fullName || "Diver",
+    firstName: details.firstName || "",
+    lastName: details.lastName || "",
+    fullName: details.fullName || [details.firstName, details.lastName].filter(Boolean).join(" "),
+    email: details.email || "",
+    phone: details.phone || "",
+    certLevel: details.certLevel || "",
+    partySize: Math.max(1, Number(details.partySize) || 1),
+    remainingSpots: Math.max(0, Number(details.remainingSpots) || 0),
+  };
+  const attendeeSubject = applyEventRegistrationMergeTags(
+    config.registrationEmailSubject || `You're signed up for {{event_title}}`,
+    attendeeDetails
+  ).trim();
+  const payload = {
+    from: `${fromName} <${fromEmail}>`,
+    to: [attendeeDetails.email],
+    reply_to: [toEmail],
+    ...(config.registrationEmailTemplateId
+      ? {
+          subject: attendeeSubject,
+          template: {
+            id: String(config.registrationEmailTemplateId || "").trim(),
+            variables: buildEventRegistrationTemplateVariables(attendeeDetails),
+          },
+        }
+      : (() => {
+          const attendeeContent = buildEventRegistrationConfirmationEmail(attendeeDetails);
+          return {
+            subject: attendeeContent.subject,
+            html: attendeeContent.html,
+            text: attendeeContent.text,
+          };
+        })()),
+  };
+  return sendResendEmail(env, payload, logLabel);
+}
+
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -2130,16 +2182,9 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const notifyResult = await sendResendEmail(env, notifyPayload, "Event notify email");
   notifyEmailSent = Boolean(notifyResult.ok);
 
-  const attendeeDetails = {
-    title: config.title || "DMZ Scuba Event",
-    subject: config.registrationEmailSubject || "",
+  const attendeeResult = await sendEventRegistrationAttendeeEmail(env, config, {
     scheduleLine,
     eventDate,
-    description: config.registrationEmailContent || "",
-    descriptionIsHtml: Boolean(config.registrationEmailIsHtml),
-    useFullHtml: Boolean(config.registrationEmailUseFullHtml),
-    fullHtml: config.registrationEmailFullHtml || "",
-    contactEmail: toEmail,
     registrantName: firstName || registrantName,
     firstName,
     lastName,
@@ -2149,33 +2194,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
     certLevel,
     partySize,
     remainingSpots: snapshotAfter.remainingSpots,
-  };
-  const attendeeSubject = applyEventRegistrationMergeTags(
-    config.registrationEmailSubject || `You're signed up for {{event_title}}`,
-    attendeeDetails
-  ).trim();
-  const attendeePayload = {
-    from: `${fromName} <${fromEmail}>`,
-    to: [email],
-    reply_to: [toEmail],
-    ...(config.registrationEmailTemplateId
-      ? {
-          subject: attendeeSubject,
-          template: {
-            id: String(config.registrationEmailTemplateId || "").trim(),
-            variables: buildEventRegistrationTemplateVariables(attendeeDetails),
-          },
-        }
-      : (() => {
-          const attendeeContent = buildEventRegistrationConfirmationEmail(attendeeDetails);
-          return {
-            subject: attendeeContent.subject,
-            html: attendeeContent.html,
-            text: attendeeContent.text,
-          };
-        })()),
-  };
-  const attendeeResult = await sendResendEmail(env, attendeePayload, "Event attendee confirmation email");
+  });
   attendeeEmailSent = Boolean(attendeeResult.ok);
 
   if (!notifyResult.ok || !attendeeResult.ok) {
@@ -2290,6 +2309,61 @@ async function handleUpdateEventRegistrationApprovalV2(request, env, sourceId, r
 
   const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
   return jsonResponse({ ok: true, updatedRegistrationId: safeRegistrationId, approvalStatus: nextStatus, ...snapshot }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleResendEventRegistrationEmailV2(request, env, sourceId, registrationId) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+
+  const url = new URL(request.url);
+  const eventDate = String(url.searchParams.get("date") || "").trim();
+  const safeRegistrationId = String(registrationId || "").trim();
+  if (!sourceId || !eventDate || !safeRegistrationId) {
+    return jsonResponse({ ok: false, error: "Missing source id, registration id, or date." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, sourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+
+  await ensureEventRegistrationsV2Table(env);
+  const row = await env.DB.prepare(
+    `SELECT id, first_name, last_name, email, phone, cert_level, additional_guests, party_size
+     FROM event_registrations_v2
+     WHERE id = ? AND source_id = ? AND event_date = ?
+     LIMIT 1`
+  )
+    .bind(safeRegistrationId, sourceId, eventDate)
+    .first();
+
+  if (!row) {
+    return jsonResponse({ ok: false, error: "Registration not found." }, 404, { "Cache-Control": "no-store" });
+  }
+
+  const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  const firstName = String(row.first_name || "").trim();
+  const lastName = String(row.last_name || "").trim();
+  const fullName = buildRegistrantLabel(firstName, lastName);
+  const result = await sendEventRegistrationAttendeeEmail(env, config, {
+    eventDate,
+    firstName,
+    lastName,
+    fullName,
+    registrantName: firstName || fullName,
+    email: String(row.email || "").trim(),
+    phone: String(row.phone || "").trim(),
+    certLevel: String(row.cert_level || "").trim(),
+    partySize: Math.max(1, Number(row.party_size) || 1),
+    remainingSpots: snapshot.remainingSpots,
+  }, "Event attendee confirmation resend");
+
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: result.error || "Could not resend registration email." }, 502, { "Cache-Control": "no-store" });
+  }
+
+  return jsonResponse({ ok: true, resentRegistrationId: safeRegistrationId, attendeeEmailSent: true }, 200, { "Cache-Control": "no-store" });
 }
 
 async function handleGetHomeTicker(env) {
@@ -2863,6 +2937,11 @@ export default {
       const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
       const registrationId = decodeURIComponent(parts[7] || "").trim();
       response = await handleUpdateEventRegistrationApprovalV2(request, env, sourceId, registrationId);
+    } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/email") && request.method === "POST") {
+      const parts = pathname.split("/");
+      const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
+      const registrationId = decodeURIComponent(parts[7] || "").trim();
+      response = await handleResendEventRegistrationEmailV2(request, env, sourceId, registrationId);
     } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.includes("/registrations/") && request.method === "DELETE") {
       const parts = pathname.split("/");
       const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
