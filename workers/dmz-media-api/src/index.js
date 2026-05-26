@@ -562,14 +562,23 @@ function buildEventRegistrationConfirmationEmail(details = {}) {
   const title = String(details.title || "your DMZ Scuba event").trim();
   const scheduleLine = String(details.scheduleLine || "").trim();
   const registrantName = String(details.registrantName || "Diver").trim();
+  const customSubject = applyEventRegistrationMergeTags(details.subject || "", details).trim();
+  const subject = customSubject || `You're signed up for ${title}`;
+  if (details.useFullHtml && String(details.fullHtml || "").trim()) {
+    const html = applyEventRegistrationMergeTags(details.fullHtml || "", details).trim();
+    const fallbackText = htmlToPlainText(html);
+    return {
+      subject,
+      html,
+      text: fallbackText || `Hi ${registrantName},\n\nYou're signed up for ${title}.\n\nDMZ Scuba`,
+    };
+  }
   const description = applyEventRegistrationMergeTags(details.description || "", details).trim();
   const descriptionIsHtml = Boolean(details.descriptionIsHtml);
   const descriptionText = descriptionIsHtml ? htmlToPlainText(description) : description;
   const contactEmail = String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com";
   const partySize = Math.max(1, Number(details.partySize) || 1);
   const remainingSpots = Math.max(0, Number(details.remainingSpots) || 0);
-  const customSubject = applyEventRegistrationMergeTags(details.subject || "", details).trim();
-  const subject = customSubject || `You're signed up for ${title}`;
   const text = [
     `Hi ${registrantName},`,
     "",
@@ -1526,6 +1535,8 @@ function normalizeEventEntry(item, kind = "event") {
     registrationEmailSubject: String(next.registrationEmailSubject || "").trim(),
     registrationEmailIsHtml: Boolean(next.registrationEmailIsHtml),
     registrationEmailContent: String(next.registrationEmailContent || "").trim(),
+    registrationEmailUseFullHtml: Boolean(next.registrationEmailUseFullHtml),
+    registrationEmailFullHtml: String(next.registrationEmailFullHtml || "").trim(),
     ctaLabel: String(next.ctaLabel || "").trim(),
     ctaHref: String(next.ctaHref || "").trim(),
     managementPriority: String(next.managementPriority || "").trim(),
@@ -1766,6 +1777,8 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
       registrationEmailIsHtml: Boolean(eventMatch.registrationEmailIsHtml),
       registrationEmailContent: getRegistrationEmailContentForItem(eventMatch),
+      registrationEmailUseFullHtml: Boolean(eventMatch.registrationEmailUseFullHtml),
+      registrationEmailFullHtml: String(eventMatch.registrationEmailFullHtml || "").trim(),
       registrationEnabled: Boolean(eventMatch.registrationEnabled),
       registrationClosed: Boolean(eventMatch.registrationClosed),
       registrationCapacity: Math.max(0, Number(eventMatch.registrationCapacity) || 0),
@@ -1784,6 +1797,8 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
     registrationEmailIsHtml: Boolean(templateMatch.registrationEmailIsHtml),
     registrationEmailContent: getRegistrationEmailContentForItem(templateMatch),
+    registrationEmailUseFullHtml: Boolean(templateMatch.registrationEmailUseFullHtml),
+    registrationEmailFullHtml: String(templateMatch.registrationEmailFullHtml || "").trim(),
     registrationEnabled: Boolean(templateMatch.registrationEnabled),
     registrationClosed: Boolean(templateMatch.registrationClosed),
     registrationCapacity: Math.max(0, Number(templateMatch.registrationCapacity) || 0),
@@ -2055,6 +2070,8 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
     eventDate,
     description: config.registrationEmailContent || "",
     descriptionIsHtml: Boolean(config.registrationEmailIsHtml),
+    useFullHtml: Boolean(config.registrationEmailUseFullHtml),
+    fullHtml: config.registrationEmailFullHtml || "",
     contactEmail: toEmail,
     registrantName: firstName || registrantName,
     firstName,

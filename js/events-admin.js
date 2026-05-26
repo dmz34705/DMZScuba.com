@@ -95,6 +95,8 @@
   const fieldRegistrationEmailSubject = document.getElementById("eventsFieldRegistrationEmailSubject");
   const fieldRegistrationEmailIsHtml = document.getElementById("eventsFieldRegistrationEmailIsHtml");
   const fieldRegistrationEmailContent = document.getElementById("eventsFieldRegistrationEmailContent");
+  const fieldRegistrationEmailUseFullHtml = document.getElementById("eventsFieldRegistrationEmailUseFullHtml");
+  const fieldRegistrationEmailFullHtml = document.getElementById("eventsFieldRegistrationEmailFullHtml");
   const fieldCtaLabel = document.getElementById("eventsFieldCtaLabel");
   const fieldCtaHref = document.getElementById("eventsFieldCtaHref");
   const fieldInterval = document.getElementById("eventsFieldIntervalMonths");
@@ -1649,6 +1651,12 @@
     if (fieldRegistrationEmailContent) {
       fieldRegistrationEmailContent.value = item.registrationEmailContent || "";
     }
+    if (fieldRegistrationEmailUseFullHtml) {
+      fieldRegistrationEmailUseFullHtml.checked = Boolean(item.registrationEmailUseFullHtml);
+    }
+    if (fieldRegistrationEmailFullHtml) {
+      fieldRegistrationEmailFullHtml.value = item.registrationEmailFullHtml || "";
+    }
     const registrationContext = getEntryRegistrationContext(entry);
     if (!registrationContext) {
       resetRegistrationUiState();
@@ -1707,6 +1715,8 @@
       registrationEmailSubject: String((fieldRegistrationEmailSubject && fieldRegistrationEmailSubject.value) || "").trim(),
       registrationEmailIsHtml: Boolean(fieldRegistrationEmailIsHtml && fieldRegistrationEmailIsHtml.checked),
       registrationEmailContent: String((fieldRegistrationEmailContent && fieldRegistrationEmailContent.value) || "").trim(),
+      registrationEmailUseFullHtml: Boolean(fieldRegistrationEmailUseFullHtml && fieldRegistrationEmailUseFullHtml.checked),
+      registrationEmailFullHtml: String((fieldRegistrationEmailFullHtml && fieldRegistrationEmailFullHtml.value) || "").trim(),
       ctaLabel: String((fieldCtaLabel && fieldCtaLabel.value) || "").trim(),
       ctaHref: String((fieldCtaHref && fieldCtaHref.value) || "").trim(),
     };
@@ -2011,6 +2021,8 @@
       registrationEmailSubject: "",
       registrationEmailIsHtml: false,
       registrationEmailContent: "",
+      registrationEmailUseFullHtml: false,
+      registrationEmailFullHtml: "",
       ctaLabel: "",
       ctaHref: "",
     };
@@ -2036,6 +2048,8 @@
       registrationEmailSubject: "",
       registrationEmailIsHtml: false,
       registrationEmailContent: "",
+      registrationEmailUseFullHtml: false,
+      registrationEmailFullHtml: "",
       ctaLabel: "",
       ctaHref: "",
     };
@@ -2068,6 +2082,8 @@
       registrationEmailSubject: String((templateItem && templateItem.registrationEmailSubject) || "").trim(),
       registrationEmailIsHtml: Boolean(templateItem && templateItem.registrationEmailIsHtml),
       registrationEmailContent: String((templateItem && templateItem.registrationEmailContent) || "").trim(),
+      registrationEmailUseFullHtml: Boolean(templateItem && templateItem.registrationEmailUseFullHtml),
+      registrationEmailFullHtml: String((templateItem && templateItem.registrationEmailFullHtml) || "").trim(),
       ctaLabel: String((templateItem && templateItem.ctaLabel) || "").trim(),
       ctaHref: String((templateItem && templateItem.ctaHref) || "").trim(),
     };

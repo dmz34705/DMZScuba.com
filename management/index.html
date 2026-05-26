@@ -644,6 +644,15 @@
               <textarea name="registrationEmailContent" rows="10" maxlength="12000" placeholder="Private confirmation details sent after someone registers."></textarea>
               <span class="management-character-counter" data-character-counter-for="registrationEmailContent"></span>
             </label>
+            <label data-field="registrationEmailUseFullHtml" class="management-checkbox-field">
+              <span>Use full custom HTML email</span>
+              <input type="checkbox" name="registrationEmailUseFullHtml" value="1" />
+            </label>
+            <label data-field="registrationEmailFullHtml" class="management-notes-label">
+              Full Custom Email HTML
+              <textarea name="registrationEmailFullHtml" rows="10" maxlength="20000" placeholder="Paste a complete custom HTML email. Merge tags like {{first_name}} still work."></textarea>
+              <span class="management-character-counter" data-character-counter-for="registrationEmailFullHtml"></span>
+            </label>
             <details class="management-contact-classes" data-field="contactClasses" data-contact-classes>
               <summary class="management-class-roster-head">
                 <div>

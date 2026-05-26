@@ -208,6 +208,8 @@
         "registrationEmailSubject",
         "registrationEmailIsHtml",
         "registrationEmailContent",
+        "registrationEmailUseFullHtml",
+        "registrationEmailFullHtml",
         "classSchedule",
         "classRoster",
         "notes",
@@ -237,6 +239,8 @@
         "registrationEmailSubject",
         "registrationEmailIsHtml",
         "registrationEmailContent",
+        "registrationEmailUseFullHtml",
+        "registrationEmailFullHtml",
         "notes",
       ],
     },
@@ -587,6 +591,7 @@
   function updateRegistrationEmailCounters() {
     updateCharacterCounter("registrationEmailSubject");
     updateCharacterCounter("registrationEmailContent");
+    updateCharacterCounter("registrationEmailFullHtml");
   }
 
   function syncPriorityOptions(type) {
@@ -1408,6 +1413,8 @@
         registrationEmailSubject: normalizeSiteText(item.registrationEmailSubject),
         registrationEmailIsHtml: item.registrationEmailIsHtml ? "1" : "",
         registrationEmailContent: normalizeSiteText(item.registrationEmailContent),
+        registrationEmailUseFullHtml: item.registrationEmailUseFullHtml ? "1" : "",
+        registrationEmailFullHtml: normalizeSiteText(item.registrationEmailFullHtml),
         capacity: capacity ? String(capacity) : existingExtras.capacity || "",
         certification: existingExtras.certification || "",
         source: "Site calendar",
@@ -2610,6 +2617,11 @@
           ? (recordForm.elements.registrationEmailIsHtml.checked ? "1" : "")
           : String(existingExtras.registrationEmailIsHtml || ""),
       registrationEmailContent: textValue("registrationEmailContent", existingExtras.registrationEmailContent),
+      registrationEmailUseFullHtml:
+        recordForm.elements.registrationEmailUseFullHtml && !recordForm.elements.registrationEmailUseFullHtml.disabled
+          ? (recordForm.elements.registrationEmailUseFullHtml.checked ? "1" : "")
+          : String(existingExtras.registrationEmailUseFullHtml || ""),
+      registrationEmailFullHtml: textValue("registrationEmailFullHtml", existingExtras.registrationEmailFullHtml),
       capacity: textValue("capacity", existingExtras.capacity),
       certification: textValue("certification", existingExtras.certification),
       amountOwed: textValue("amountOwed", existingExtras.amountOwed),
@@ -2829,6 +2841,8 @@
     const registrationEmailSubject = String(extras.registrationEmailSubject || "").trim();
     const registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     const registrationEmailContent = String(extras.registrationEmailContent || "").trim();
+    const registrationEmailUseFullHtml = Boolean(extras.registrationEmailUseFullHtml);
+    const registrationEmailFullHtml = String(extras.registrationEmailFullHtml || "").trim();
     const roster = getClassRosterSnapshot({ ...record, extras: { ...extras, classId } }, classId);
     const generated = sessions.map((session, index) => {
       const primary = index === 0;
@@ -2851,6 +2865,8 @@
         registrationEmailSubject: primary ? registrationEmailSubject : "",
         registrationEmailIsHtml: primary && registrationEmailIsHtml,
         registrationEmailContent: primary ? registrationEmailContent : "",
+        registrationEmailUseFullHtml: primary && registrationEmailUseFullHtml,
+        registrationEmailFullHtml: primary ? registrationEmailFullHtml : "",
         ctaLabel: primary ? "Register For Class" : "",
         ctaHref: "",
         managementClassId: classId,
@@ -3046,6 +3062,8 @@
       registrationEmailSubject: normalizeSiteText(extras.registrationEmailSubject),
       registrationEmailIsHtml: Boolean(extras.registrationEmailIsHtml),
       registrationEmailContent: normalizeSiteText(extras.registrationEmailContent),
+      registrationEmailUseFullHtml: Boolean(extras.registrationEmailUseFullHtml),
+      registrationEmailFullHtml: normalizeSiteText(extras.registrationEmailFullHtml),
       ctaLabel: extras.registrationEnabled ? "Register For Event" : "",
       ctaHref: "",
       managementPriority: normalizeSiteText(record.priority),
@@ -3084,6 +3102,8 @@
     item.registrationEmailSubject = extras.registrationEmailSubject || "";
     item.registrationEmailIsHtml = Boolean(extras.registrationEmailIsHtml);
     item.registrationEmailContent = extras.registrationEmailContent || "";
+    item.registrationEmailUseFullHtml = Boolean(extras.registrationEmailUseFullHtml);
+    item.registrationEmailFullHtml = extras.registrationEmailFullHtml || "";
     item.managementPriority = record.priority || "";
     item.managementOwner = record.owner || "";
     item.managementContactName = record.contactName || "";
