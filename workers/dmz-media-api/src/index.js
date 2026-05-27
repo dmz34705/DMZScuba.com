@@ -791,6 +791,127 @@ async function savePublicInquiryManagementRecord(env, recordInput) {
   }
 }
 
+function splitSubscriberName(name) {
+  const parts = normalizeManagementText(name, 160).split(" ").filter(Boolean);
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.length > 1 ? parts.slice(1).join(" ") : "",
+  };
+}
+
+async function findContactByEmail(env, email) {
+  const safeEmail = normalizeManagementText(email, 180).toLowerCase();
+  if (!safeEmail) return null;
+  await ensureManagementRecordsTable(env);
+  const row = await env.DB.prepare(
+    "SELECT * FROM management_records WHERE record_type = 'contact' AND lower(contact_email) = ? ORDER BY updated_at DESC LIMIT 1"
+  )
+    .bind(safeEmail)
+    .first();
+  return row ? managementRecordFromRow(row) : null;
+}
+
+async function saveEventAlertSubscriber(env, details) {
+  const submittedAt = new Date().toISOString();
+  const email = normalizeManagementText(details && details.email, 180).toLowerCase();
+  const name = normalizeManagementText(details && details.name, 160);
+  const phone = normalizeManagementText(details && details.phone, 60);
+  const pageUrl = normalizeManagementText(details && details.pageUrl, 500);
+  const nameParts = splitSubscriberName(name);
+  const existing = await findContactByEmail(env, email);
+  const existingExtras = existing && existing.extras && typeof existing.extras === "object" ? existing.extras : {};
+  const extras = {
+    ...existingExtras,
+    firstName: existingExtras.firstName || nameParts.firstName,
+    lastName: existingExtras.lastName || nameParts.lastName,
+    source: existingExtras.source || "Public event alert signup",
+    emailAlerts: "1",
+    emailAlertsSubscribedAt: existingExtras.emailAlertsSubscribedAt || submittedAt,
+    emailAlertsUpdatedAt: submittedAt,
+    emailAlertsSource: "public_site",
+    emailAlertsPageUrl: pageUrl,
+  };
+
+  if (!existing) {
+    return createManagementRecord(env, {
+      recordType: "contact",
+      title: name || email,
+      status: "active",
+      priority: "normal",
+      contactName: name,
+      contactEmail: email,
+      contactPhone: phone,
+      notes: [
+        "Subscribed to DMZ Scuba event alert emails from the public website.",
+        `Submitted: ${submittedAt}`,
+        pageUrl ? `Page: ${pageUrl}` : "",
+      ].filter(Boolean).join("\n"),
+      extras,
+    });
+  }
+
+  const next = normalizeManagementRecord({
+    ...existing,
+    title: existing.title || name || email,
+    status: existing.status || "active",
+    priority: existing.priority || "normal",
+    contactName: existing.contactName || name,
+    contactEmail: email,
+    contactPhone: existing.contactPhone || phone,
+    notes: existing.notes || [
+      "Subscribed to DMZ Scuba event alert emails from the public website.",
+      `Submitted: ${submittedAt}`,
+      pageUrl ? `Page: ${pageUrl}` : "",
+    ].filter(Boolean).join("\n"),
+    extras,
+  }, existing);
+  const now = submittedAt;
+  await env.DB.prepare(
+    `UPDATE management_records
+     SET record_type = ?, title = ?, status = ?, priority = ?, owner = ?, contact_name = ?, contact_email = ?, contact_phone = ?, due_date = ?, related_event = ?, notes = ?, data_json = ?, updated_at = ?
+     WHERE id = ?`
+  )
+    .bind(
+      next.recordType,
+      next.title,
+      next.status,
+      next.priority,
+      next.owner,
+      next.contactName,
+      next.contactEmail,
+      next.contactPhone,
+      next.dueDate,
+      next.relatedEvent,
+      next.notes,
+      JSON.stringify({ extras: next.extras }),
+      now,
+      existing.id
+    )
+    .run();
+  return { ...next, id: existing.id, createdAt: existing.createdAt, updatedAt: now };
+}
+
+async function handleEventAlertSubscribe(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const honey = String(body.honey || body.website || body.company || "").trim();
+  if (honey) return jsonResponse({ ok: true }, 200, { "Cache-Control": "no-store" });
+
+  const fields = body.fields && typeof body.fields === "object" ? body.fields : {};
+  const name = normalizeManagementText(body.name || fields.name || fields["subscriber-name"], 160);
+  const email = normalizeManagementText(body.email || fields.email || fields["subscriber-email"], 180).toLowerCase();
+  const phone = normalizeManagementText(body.phone || fields.phone || fields["subscriber-phone"], 60);
+  const pageUrl = normalizeManagementText(body.pageUrl, 500);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Valid email is required." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const saved = await saveEventAlertSubscriber(env, { name, email, phone, pageUrl });
+  if (!saved || !saved.id) {
+    return jsonResponse({ ok: false, error: "Could not save subscriber." }, 500, { "Cache-Control": "no-store" });
+  }
+  return jsonResponse({ ok: true, contactSaved: true }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleContact(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || "").trim();
@@ -2896,6 +3017,8 @@ export default {
       response = await handleGetMedia(env);
     } else if (pathname === "/api/contact" && request.method === "POST") {
       response = await handleContact(request, env);
+    } else if (pathname === "/api/event-alert-subscribe" && request.method === "POST") {
+      response = await handleEventAlertSubscribe(request, env);
     } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
       response = await handleClientTelemetry(request);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {

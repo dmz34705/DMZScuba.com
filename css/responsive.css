@@ -11,6 +11,8 @@
 
   .contact-grid{ grid-template-columns: 1fr; }
   .form-row.two{ grid-template-columns: 1fr; }
+  .event-alert-signup-home{ grid-template-columns: 1fr; }
+  .event-alert-fields{ grid-template-columns: 1fr; }
 
   .page-hero-inner{ grid-template-columns: 1fr; }
   .media-grid{ grid-template-columns: 1fr; }

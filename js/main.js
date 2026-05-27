@@ -38,6 +38,11 @@ console.log("main.js loaded");
     return base ? `${base}/api/contact` : "/api/contact";
   }
 
+  function getEventAlertSubscribeApiUrl() {
+    const base = (document.body && document.body.dataset.contactApi) || "";
+    return base ? `${base}/api/event-alert-subscribe` : "/api/event-alert-subscribe";
+  }
+
   function getTelemetryApiUrl() {
     const base =
       (document.body &&
@@ -195,8 +200,85 @@ console.log("main.js loaded");
     }
   }
 
+  async function submitEventAlertSubscribeForm(form) {
+    if (!form || form.dataset.submitting === "true") return;
+    if (!form.hasAttribute("novalidate") && !form.reportValidity()) {
+      showToast("Add your email to subscribe.");
+      return;
+    }
+
+    const fields = collectFields(form);
+    const honey = fields.company || "";
+    if (honey) return;
+    delete fields.company;
+
+    const email = pickFieldValue(fields, (key) => key.toLowerCase().includes("email"));
+    const name = pickFieldValue(fields, (key) => key.toLowerCase().includes("name"));
+    const phone = pickFieldValue(fields, (key) => key.toLowerCase().includes("phone"));
+    if (!email) {
+      showToast("Add your email to subscribe.");
+      return;
+    }
+
+    const payload = {
+      form: form.dataset.formName || "Event Alert Subscribe",
+      fields,
+      name,
+      email,
+      phone,
+      pageUrl: window.location.href,
+      honey,
+    };
+    const submitButton = form.querySelector("button[type='submit']");
+    const statusEl = form.querySelector("[data-subscribe-status]");
+    const originalLabel = submitButton ? submitButton.textContent : "";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Subscribing...";
+    }
+    if (statusEl) statusEl.textContent = "";
+    form.dataset.submitting = "true";
+
+    try {
+      const response = await fetch(getEventAlertSubscribeApiUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || `Subscribe failed (${response.status})`);
+      }
+      showToast("You are subscribed to event alerts.");
+      if (statusEl) statusEl.textContent = "You are subscribed to DMZ Scuba event alerts.";
+      form.reset();
+      if (submitButton) {
+        submitButton.textContent = "Subscribed";
+        window.setTimeout(() => {
+          submitButton.textContent = originalLabel;
+          submitButton.disabled = false;
+        }, 1400);
+      }
+    } catch (error) {
+      sendTelemetry("event_alert_subscribe_failed", {
+        form: payload.form,
+        hasEmail: Boolean(email),
+        reason: String((error && error.message) || "unknown"),
+      });
+      showToast("Subscribe failed. Please email info@dmzscuba.com.");
+      if (statusEl) statusEl.textContent = "Subscribe failed. Please email info@dmzscuba.com.";
+      if (submitButton) {
+        submitButton.textContent = originalLabel;
+        submitButton.disabled = false;
+      }
+    } finally {
+      form.dataset.submitting = "false";
+    }
+  }
+
   window.DMZForms = {
     submit: submitDmzForm,
+    subscribeToEventAlerts: submitEventAlertSubscribeForm,
   };
   window.DMZTelemetry = {
     report: sendTelemetry,
@@ -604,6 +686,13 @@ console.log("main.js loaded");
         submitDmzForm(diveNowFormSubmit, { requireEmail: true, redirectUrl: thanksUrl });
       });
     }
+
+    document.querySelectorAll("[data-event-alert-subscribe]").forEach((subscribeForm) => {
+      subscribeForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        submitEventAlertSubscribeForm(subscribeForm);
+      });
+    });
   };
 
   if (document.readyState === "loading") {

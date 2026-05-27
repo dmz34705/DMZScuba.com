@@ -162,6 +162,32 @@
     <p class="events-preview-stamp" data-events-updated></p>
   </section>
 
+  <section class="event-alert-signup event-alert-signup-home" aria-labelledby="home-alert-title">
+    <div>
+      <p class="event-alert-eyebrow">Event Alerts</p>
+      <h2 id="home-alert-title">Know when new public classes and dive events open.</h2>
+      <p class="muted">Join the update list and we will email you when a new event or class is added with open registration.</p>
+    </div>
+    <form class="event-alert-form" method="post" data-event-alert-subscribe data-form-name="Home Event Alerts">
+      <div class="event-alert-fields">
+        <div class="field">
+          <label for="home-alert-name">Name</label>
+          <input id="home-alert-name" name="subscriber-name" type="text" autocomplete="name" placeholder="Your name" />
+        </div>
+        <div class="field">
+          <label for="home-alert-email">Email</label>
+          <input id="home-alert-email" name="subscriber-email" type="email" autocomplete="email" placeholder="you@email.com" required />
+        </div>
+      </div>
+      <div class="field dmz-honeypot" aria-hidden="true">
+        <label for="home-alert-company">Company</label>
+        <input id="home-alert-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+      <button class="btn primary" type="submit">Get Event Alerts</button>
+      <p class="muted small" data-subscribe-status aria-live="polite">Only public events with open registration will be announced.</p>
+    </form>
+  </section>
+
   <section class="dive-quiz-entry" aria-labelledby="dive-quiz-title">
     <div class="dive-quiz-entry-inner">
       <!-- Tone polish: reduce friction and keep guided-path voice -->

@@ -996,6 +996,91 @@
   font-weight: 750;
   color: rgba(234,242,255,0.92);
 }
+
+.event-alert-signup{
+  width: min(1120px, calc(100% - 32px));
+  margin: 24px auto;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(85,185,255,0.12), rgba(226,27,35,0.055) 58%, rgba(5,11,20,0.72)),
+    rgba(255,255,255,0.035);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.32);
+}
+
+.event-alert-signup-home{
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.event-alert-signup-inline{
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.event-alert-signup h2{
+  margin: 0 0 8px;
+}
+
+.event-alert-signup .muted{
+  margin: 0;
+}
+
+.event-alert-eyebrow{
+  margin: 0 0 6px;
+  color: rgba(85,185,255,0.92);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.event-alert-form{
+  display: grid;
+  gap: 12px;
+}
+
+.event-alert-fields{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.event-alert-form .field label{
+  display: inline-block;
+  margin: 0 0 6px;
+  color: rgba(234,242,255,0.9);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.event-alert-form .field input{
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.22);
+  color: var(--text);
+}
+
+.event-alert-form .field input:focus{
+  outline: none;
+  border-color: rgba(85,185,255,0.55);
+  box-shadow: 0 0 0 4px rgba(85,185,255,0.12);
+}
+
+.event-alert-form .btn{
+  justify-self: start;
+}
+
 /* ============================================================
    9) FOOTER
    ============================================================ */
