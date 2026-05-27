@@ -1523,6 +1523,28 @@
     return haystack.includes(query);
   }
 
+  function getSiteEventRegistrationSnapshot(item) {
+    const sourceId = normalizeSiteText(item && (item.sourceId || item.id));
+    const eventDate = normalizeSiteText(item && item.date);
+    if (!sourceId || !eventDate) return null;
+    return state.allRegistrationSnapshots.find((snapshot) => {
+      const context = snapshot && snapshot.context ? snapshot.context : {};
+      return normalizeSiteText(context.sourceId) === sourceId && normalizeSiteText(context.eventDate) === eventDate;
+    }) || null;
+  }
+
+  function getEventAlertEligibility(item, isPast) {
+    if (!item) return { eligible: false, reason: "No calendar record selected." };
+    if (isPast) return { eligible: false, reason: "Past events cannot be announced." };
+    if (!item.registrationEnabled) return { eligible: false, reason: "Registration is not enabled for this event." };
+    if (item.registrationClosed) return { eligible: false, reason: "Registration is closed for this event." };
+    const snapshot = getSiteEventRegistrationSnapshot(item);
+    if (snapshot && (snapshot.registrationClosed || isSnapshotRegistrationAtCapacity(snapshot))) {
+      return { eligible: false, reason: "Registration is full or closed." };
+    }
+    return { eligible: true, reason: "Ready to alert subscribers." };
+  }
+
   function renderSiteCalendarCard(item, sourceIndex, isPast) {
     const recordType = classifySiteEvent(item);
     const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
@@ -1531,6 +1553,7 @@
     const timeText = item.time ? (item.endTime ? `${item.time} - ${item.endTime}` : item.time) : "";
     const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
     const registrationClosed = Boolean(item.registrationClosed || (item.registrationEnabled && isPast));
+    const alertEligibility = getEventAlertEligibility(item, isPast);
     const registrationText = registrationClosed
       ? "Registration closed"
       : item.registrationEnabled
@@ -1562,12 +1585,14 @@
             <span class="management-badge">${escapeHtml(formatLabel(recordType))}</span>
             ${item.type ? `<span class="management-badge is-waiting">${escapeHtml(item.type)}</span>` : ""}
             ${registrationClosed ? '<span class="management-badge is-waiting">Registration Closed</span>' : item.registrationEnabled ? '<span class="management-badge is-complete">Registration</span>' : ""}
+            ${alertEligibility.eligible ? '<span class="management-badge is-alert-ready">Alert Ready</span>' : ""}
             ${isPast ? '<span class="management-badge is-waiting">Past</span>' : ""}
           </div>
           <h3>${escapeHtml(item.title || "Scheduled Event")}</h3>
           ${renderMobileCardDetails("Event details", calendarDetails)}
         </div>
         <div class="management-calendar-actions">
+          <button type="button" data-event-alert-preview="${escapeHtml(item.sourceId || item.id || "")}" ${alertEligibility.eligible ? "" : "disabled"} title="${escapeHtml(alertEligibility.reason)}">Send Alert Email</button>
           <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
         </div>
       </article>
@@ -3799,6 +3824,13 @@
           resendRegistrationCardEmail(resendRegistrationButton.getAttribute("data-resend-registration-email") || "");
           return;
         }
+        const eventAlertButton = event.target.closest("[data-event-alert-preview]");
+        if (eventAlertButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          setStatus(recordStatus, "This event is eligible for alert emails. Sending will be wired in the next step.", "success");
+          return;
+        }
         const pinButton = event.target.closest("[data-pin-record]");
         if (pinButton) {
           event.preventDefault();
@@ -3821,6 +3853,11 @@
         }
         const detailToggle = event.target.closest(".management-record-details");
         if (detailToggle) {
+          event.stopPropagation();
+          return;
+        }
+        const calendarAction = event.target.closest(".management-calendar-actions a");
+        if (calendarAction) {
           event.stopPropagation();
           return;
         }

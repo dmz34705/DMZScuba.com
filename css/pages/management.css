@@ -1020,6 +1020,7 @@
 
 .management-badge.is-urgent, .management-badge.is-high { background: rgba(226, 27, 35, 0.18); color: #ffd7d9; }
 .management-badge.is-complete { background: rgba(66, 185, 156, 0.18); color: #c5ffe9; }
+.management-badge.is-alert-ready { background: rgba(85, 185, 255, 0.18); color: #d4efff; }
 .management-badge.is-waiting { background: rgba(245, 178, 62, 0.18); color: #ffe5b3; }
 .management-badge.is-to_contact, .management-badge.is-reached_out { background: rgba(85, 185, 255, 0.16); color: #cfeeff; }
 .management-badge.is-gathering_details, .management-badge.is-planning,
@@ -1113,7 +1114,8 @@
   justify-content: flex-end;
 }
 
-.management-calendar-actions a {
+.management-calendar-actions a,
+.management-calendar-actions button {
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.055);
@@ -1126,7 +1128,13 @@
   text-decoration: none;
 }
 
-.management-calendar-actions a:hover {
+.management-calendar-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.management-calendar-actions a:hover,
+.management-calendar-actions button:hover:not(:disabled) {
   border-color: rgba(85, 185, 255, 0.52);
   background: rgba(85, 185, 255, 0.13);
 }
