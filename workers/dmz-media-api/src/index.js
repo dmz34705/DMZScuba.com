@@ -1505,6 +1505,65 @@ function managementRecordFromRow(row) {
   };
 }
 
+function isManagementContactEmailAlertSubscriber(record) {
+  if (!record || record.recordType !== "contact") return false;
+  const email = normalizeManagementText(record.contactEmail, 180).toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  const extras = record.extras && typeof record.extras === "object" && !Array.isArray(record.extras)
+    ? record.extras
+    : {};
+  const optedIn = String(extras.emailAlerts || "").trim().toLowerCase();
+  const optedOut = String(extras.emailAlertsOptOut || extras.unsubscribed || "").trim().toLowerCase();
+  if (["1", "true", "yes", "on", "subscribed"].includes(optedOut)) return false;
+  return extras.emailAlerts === true || ["1", "true", "yes", "on", "subscribed"].includes(optedIn);
+}
+
+function toEventAlertSubscriber(record) {
+  const extras = record.extras && typeof record.extras === "object" && !Array.isArray(record.extras)
+    ? record.extras
+    : {};
+  const firstName = normalizeManagementText(extras.firstName, 80);
+  const lastName = normalizeManagementText(extras.lastName, 80);
+  const fullName = normalizeManagementText(
+    record.contactName || [firstName, lastName].filter(Boolean).join(" ") || record.title,
+    160
+  );
+  return {
+    id: record.id,
+    name: fullName,
+    firstName,
+    lastName,
+    email: normalizeManagementText(record.contactEmail, 180).toLowerCase(),
+    phone: normalizeManagementText(record.contactPhone, 60),
+    source: normalizeManagementText(extras.source || extras.emailAlertsSource, 120),
+    subscribedAt: normalizeManagementText(extras.emailAlertsSubscribedAt || record.createdAt, 40),
+    updatedAt: normalizeManagementText(extras.emailAlertsUpdatedAt || record.updatedAt, 40),
+  };
+}
+
+async function handleListEventAlertSubscribers(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  await ensureManagementRecordsTable(env);
+  const rows = await env.DB.prepare(
+    "SELECT * FROM management_records WHERE record_type = 'contact' ORDER BY updated_at DESC"
+  ).all();
+  const byEmail = new Map();
+  (rows.results || [])
+    .map(managementRecordFromRow)
+    .filter(isManagementContactEmailAlertSubscriber)
+    .forEach((record) => {
+      const subscriber = toEventAlertSubscriber(record);
+      if (!subscriber.email || byEmail.has(subscriber.email)) return;
+      byEmail.set(subscriber.email, subscriber);
+    });
+  const subscribers = Array.from(byEmail.values()).sort((a, b) =>
+    String(a.name || a.email).localeCompare(String(b.name || b.email))
+  );
+  return jsonResponse({ ok: true, count: subscribers.length, subscribers }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleListManagementRecords(request, env) {
   const authed = await requireAuth(request, env);
   if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
@@ -3023,6 +3082,8 @@ export default {
       response = await handleClientTelemetry(request);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
+    } else if (pathname === "/api/admin/event-alert-subscribers" && request.method === "GET") {
+      response = await handleListEventAlertSubscribers(request, env);
     } else if (pathname === "/api/admin/management" && request.method === "GET") {
       response = await handleListManagementRecords(request, env);
     } else if (pathname === "/api/admin/management" && request.method === "POST") {
