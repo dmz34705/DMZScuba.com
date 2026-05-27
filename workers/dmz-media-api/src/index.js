@@ -715,6 +715,81 @@ async function sendEventRegistrationAttendeeEmail(env, config, details = {}, log
   return sendResendEmail(env, payload, logLabel);
 }
 
+function formatEventAlertDate(value) {
+  const text = String(value || "").trim();
+  const parts = text.split("-");
+  if (parts.length !== 3) return text;
+  return `${parts[1]}/${parts[2]}/${parts[0]}`;
+}
+
+function buildEventAlertTemplateVariables(details = {}) {
+  return {
+    first_name: String(details.firstName || "Diver").trim(),
+    name: String(details.name || details.firstName || "Diver").trim(),
+    event_title: String(details.title || "DMZ Scuba Event").trim(),
+    event_date: String(details.eventDate || "").trim(),
+    event_date_formatted: formatEventAlertDate(details.eventDate),
+    event_time: String(details.time || "").trim(),
+    event_location: String(details.location || "").trim(),
+    event_type: String(details.type || "").trim(),
+    event_summary: String(details.summary || "").trim(),
+    registration_link: String(details.registrationLink || "").trim(),
+    spots_remaining: String(Math.max(0, Number(details.remainingSpots) || 0)),
+    contact_email: String(details.contactEmail || "info@dmzscuba.com").trim(),
+  };
+}
+
+function buildEventAlertEmail(details = {}) {
+  const firstName = String(details.firstName || "Diver").trim();
+  const title = String(details.title || "DMZ Scuba Event").trim();
+  const eventDate = String(details.eventDate || "").trim();
+  const time = String(details.time || "").trim();
+  const location = String(details.location || "").trim();
+  const type = String(details.type || "").trim();
+  const summary = String(details.summary || "").trim();
+  const registrationLink = String(details.registrationLink || "").trim();
+  const remainingSpots = Math.max(0, Number(details.remainingSpots) || 0);
+  const contactEmail = String(details.contactEmail || "info@dmzscuba.com").trim() || "info@dmzscuba.com";
+  const subject = `New DMZ Scuba event open: ${title}`;
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    `A new DMZ Scuba event is open for registration: ${title}.`,
+    eventDate ? `Date: ${formatEventAlertDate(eventDate)}` : "",
+    time ? `Time: ${time}` : "",
+    location ? `Location: ${location}` : "",
+    type ? `Type: ${type}` : "",
+    remainingSpots ? `Spots remaining: ${remainingSpots}` : "",
+    summary ? `\nDetails:\n${summary}` : "",
+    registrationLink ? `\nRegister here: ${registrationLink}` : "",
+    "",
+    `Questions? Email ${contactEmail}.`,
+    "",
+    "DMZ Scuba",
+  ].filter(Boolean).join("\n");
+  const html = buildDmzEventEmailShell({
+    kicker: "New Event Alert",
+    title,
+    intro: `Hi ${firstName}, a new DMZ Scuba event is open for registration.`,
+    rows: [
+      { label: "Event", value: title },
+      { label: "Date", value: eventDate ? formatEventAlertDate(eventDate) : "" },
+      { label: "Time", value: time || "Time coming soon" },
+      { label: "Location", value: location || "Location coming soon" },
+      { label: "Type", value: type },
+      { label: "Spots Remaining", value: remainingSpots || "Open registration" },
+    ],
+    bodyHtml: summary
+      ? `<div style="margin-top:18px;padding:16px;border:1px solid #1d324d;border-radius:14px;background-color:#0b1f36;"><p style="margin:0 0 12px 0;color:#55b9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Event Details</p>${buildEmailRichText(summary)}</div>`
+      : "",
+    footerHtml: `
+      ${registrationLink ? `<p style="margin:20px 0 0 0;"><a href="${escapeHtml(registrationLink)}" style="display:inline-block;padding:12px 16px;border-radius:12px;background-color:#e21b23;color:#ffffff;font-weight:800;text-decoration:none;">View Event & Register</a></p>` : ""}
+      <p style="margin:18px 0 0 0;color:#eaf2ff;font-size:14px;line-height:1.65;">If you have questions, email <a href="mailto:${escapeHtml(contactEmail)}" style="color:#9bd3ff;text-decoration:none;">${escapeHtml(contactEmail)}</a>.</p>
+    `,
+  });
+  return { subject, html, text };
+}
+
 async function handleLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const user = String(body.user || "");
@@ -1541,10 +1616,7 @@ function toEventAlertSubscriber(record) {
   };
 }
 
-async function handleListEventAlertSubscribers(request, env) {
-  const authed = await requireAuth(request, env);
-  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
-
+async function listEventAlertSubscribers(env) {
   await ensureManagementRecordsTable(env);
   const rows = await env.DB.prepare(
     "SELECT * FROM management_records WHERE record_type = 'contact' ORDER BY updated_at DESC"
@@ -1558,9 +1630,16 @@ async function handleListEventAlertSubscribers(request, env) {
       if (!subscriber.email || byEmail.has(subscriber.email)) return;
       byEmail.set(subscriber.email, subscriber);
     });
-  const subscribers = Array.from(byEmail.values()).sort((a, b) =>
+  return Array.from(byEmail.values()).sort((a, b) =>
     String(a.name || a.email).localeCompare(String(b.name || b.email))
   );
+}
+
+async function handleListEventAlertSubscribers(request, env) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401, { "Cache-Control": "no-store" });
+
+  const subscribers = await listEventAlertSubscribers(env);
   return jsonResponse({ ok: true, count: subscribers.length, subscribers }, 200, { "Cache-Control": "no-store" });
 }
 
@@ -2045,6 +2124,10 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
       eventDate,
       endDate: getRegistrationEndDate(eventMatch, eventDate),
       title: String(eventMatch.title || "").trim(),
+      time: String(eventMatch.time || "").trim(),
+      endTime: String(eventMatch.endTime || "").trim(),
+      type: String(eventMatch.type || "").trim(),
+      location: String(eventMatch.location || "").trim(),
       description: getDescriptionForItem(eventMatch),
       registrationEmailSubject: getRegistrationEmailSubjectForItem(eventMatch),
       registrationEmailUseTemplate: Boolean(eventMatch.registrationEmailUseTemplate),
@@ -2067,6 +2150,10 @@ function resolveRegistrationConfig(payload, sourceId, eventDate) {
     eventDate,
     endDate: getRegistrationEndDate(templateMatch, eventDate),
     title: String(templateMatch.title || "").trim(),
+    time: String(templateMatch.time || "").trim(),
+    endTime: String(templateMatch.endTime || "").trim(),
+    type: String(templateMatch.type || "").trim(),
+    location: String(templateMatch.location || "").trim(),
     description: getDescriptionForItem(templateMatch),
     registrationEmailSubject: getRegistrationEmailSubjectForItem(templateMatch),
     registrationEmailUseTemplate: Boolean(templateMatch.registrationEmailUseTemplate),
@@ -2544,6 +2631,107 @@ async function handleResendEventRegistrationEmailV2(request, env, sourceId, regi
   }
 
   return jsonResponse({ ok: true, resentRegistrationId: safeRegistrationId, attendeeEmailSent: true }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleSendEventAlertEmailV2(request, env, sourceId) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+
+  const url = new URL(request.url);
+  const eventDate = String(url.searchParams.get("date") || "").trim();
+  const safeSourceId = String(sourceId || "").trim();
+  if (!safeSourceId || !eventDate) {
+    return jsonResponse({ ok: false, error: "Missing source id or date." }, 400, { "Cache-Control": "no-store" });
+  }
+
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, safeSourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+  if (!config.registrationEnabled || config.registrationCapacity <= 0) {
+    return jsonResponse({ ok: false, error: "Registration is not open for this event." }, 400, { "Cache-Control": "no-store" });
+  }
+  if (config.registrationClosed || isRegistrationPast(config)) {
+    return jsonResponse({ ok: false, error: "Registration is closed for this event." }, 409, { "Cache-Control": "no-store" });
+  }
+
+  const snapshot = await getRegistrationSnapshot(env, safeSourceId, eventDate, config);
+  if (snapshot.registrationClosed || snapshot.remainingSpots <= 0) {
+    return jsonResponse({ ok: false, error: "Registration is full or closed for this event." }, 409, { "Cache-Control": "no-store" });
+  }
+
+  const subscribers = await listEventAlertSubscribers(env);
+  if (!subscribers.length) {
+    return jsonResponse({ ok: false, error: "No event alert subscribers found." }, 409, { "Cache-Control": "no-store" });
+  }
+
+  const fromEmail = String(env.RESEND_FROM_EMAIL || "").trim() || "no-reply@dmzscuba.com";
+  const fromName = String(env.RESEND_FROM_NAME || "").trim() || "DMZ Scuba";
+  const contactEmail = String(env.RESEND_TO || "").trim() || "info@dmzscuba.com";
+  const templateId = String(env.RESEND_TEMPLATE_EVENT_ALERT || "").trim();
+  const timeText = [config.time, config.endTime].filter(Boolean).join(" - ");
+  const registrationLink = `https://www.dmzscuba.com/pages/events/?event=${encodeURIComponent(safeSourceId)}&date=${encodeURIComponent(eventDate)}`;
+  const failures = [];
+  let sentCount = 0;
+
+  for (const subscriber of subscribers) {
+    const email = String(subscriber.email || "").trim().toLowerCase();
+    if (!email) continue;
+    const firstName = String(subscriber.firstName || subscriber.name || "Diver").trim().split(/\s+/)[0] || "Diver";
+    const details = {
+      firstName,
+      name: subscriber.name || firstName,
+      title: config.title || "DMZ Scuba Event",
+      eventDate,
+      time: timeText,
+      location: config.location || "",
+      type: config.type || "",
+      summary: config.description || "",
+      registrationLink,
+      remainingSpots: snapshot.remainingSpots,
+      contactEmail,
+    };
+    const content = buildEventAlertEmail(details);
+    const emailPayload = {
+      from: `${fromName} <${fromEmail}>`,
+      to: [email],
+      reply_to: [contactEmail],
+      ...(templateId
+        ? {
+            subject: content.subject,
+            template: {
+              id: templateId,
+              variables: buildEventAlertTemplateVariables(details),
+            },
+          }
+        : {
+            subject: content.subject,
+            html: content.html,
+            text: content.text,
+          }),
+    };
+    const result = await sendResendEmail(env, emailPayload, "Event alert email");
+    if (result.ok) {
+      sentCount += 1;
+    } else {
+      failures.push({ email, error: result.error || "Send failed." });
+    }
+  }
+
+  return jsonResponse({
+    ok: failures.length === 0,
+    event: {
+      sourceId: safeSourceId,
+      eventDate,
+      title: config.title || "DMZ Scuba Event",
+      remainingSpots: snapshot.remainingSpots,
+    },
+    subscriberCount: subscribers.length,
+    sentCount,
+    failedCount: failures.length,
+    failures: failures.slice(0, 10),
+  }, failures.length ? 207 : 200, { "Cache-Control": "no-store" });
 }
 
 async function handleGetHomeTicker(env) {
@@ -3116,6 +3304,10 @@ export default {
     } else if (pathname.startsWith("/api/v2/events/") && pathname.endsWith("/registrations") && request.method === "POST") {
       const sourceId = decodeURIComponent(pathname.split("/")[4] || "").trim().toLowerCase();
       response = await handleCreateEventRegistrationV2(request, env, sourceId);
+    } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/alerts") && request.method === "POST") {
+      const parts = pathname.split("/");
+      const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
+      response = await handleSendEventAlertEmailV2(request, env, sourceId);
     } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/approval") && request.method === "PUT") {
       const parts = pathname.split("/");
       const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();
