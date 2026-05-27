@@ -292,6 +292,7 @@
     allRegistrationConvertingKey: "",
     allRegistrationApprovingKey: "",
     allRegistrationResendingKey: "",
+    eventAlertSendingKey: "",
     classRegistrationSnapshot: null,
     classRegistrationLoading: false,
     classConvertingRegistrationId: "",
@@ -1545,6 +1546,13 @@
     return { eligible: true, reason: "Ready to alert subscribers." };
   }
 
+  function getSiteEventAlertKey(item) {
+    return [
+      normalizeSiteText(item && (item.sourceId || item.id)),
+      normalizeSiteText(item && item.date),
+    ].filter(Boolean).join("|");
+  }
+
   function renderSiteCalendarCard(item, sourceIndex, isPast) {
     const recordType = classifySiteEvent(item);
     const dateText = [formatDate(item.date), item.endDate && item.endDate !== item.date ? formatDate(item.endDate) : ""]
@@ -1554,6 +1562,8 @@
     const spotsText = item.registrationCapacity ? `${item.registrationCapacity} spots` : "No cap set";
     const registrationClosed = Boolean(item.registrationClosed || (item.registrationEnabled && isPast));
     const alertEligibility = getEventAlertEligibility(item, isPast);
+    const alertKey = getSiteEventAlertKey(item);
+    const sendingAlert = alertKey && alertKey === state.eventAlertSendingKey;
     const registrationText = registrationClosed
       ? "Registration closed"
       : item.registrationEnabled
@@ -1592,7 +1602,7 @@
           ${renderMobileCardDetails("Event details", calendarDetails)}
         </div>
         <div class="management-calendar-actions">
-          <button type="button" data-event-alert-preview="${escapeHtml(item.sourceId || item.id || "")}" ${alertEligibility.eligible ? "" : "disabled"} title="${escapeHtml(alertEligibility.reason)}">Send Alert Email</button>
+          <button type="button" data-event-alert-index="${escapeHtml(sourceIndex)}" ${alertEligibility.eligible && !sendingAlert ? "" : "disabled"} title="${escapeHtml(alertEligibility.reason)}">${sendingAlert ? "Sending..." : "Send Alert Email"}</button>
           <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener">View Site Event</a>
         </div>
       </article>
@@ -2290,6 +2300,53 @@
       setStatus(recordStatus, error && error.message ? error.message : "Could not resend registration email.", "error");
     } finally {
       state.allRegistrationResendingKey = "";
+      renderRecords();
+    }
+  }
+
+  async function sendEventAlertForCalendarIndex(indexValue) {
+    const index = Number(indexValue);
+    const item = Number.isFinite(index) ? state.siteEvents[index] : null;
+    const sourceId = normalizeSiteText(item && (item.sourceId || item.id));
+    const eventDate = normalizeSiteText(item && item.date);
+    const alertKey = getSiteEventAlertKey(item);
+    const isPast = eventDate && eventDate < todayKey();
+    const eligibility = getEventAlertEligibility(item, isPast);
+    if (!item || !sourceId || !eventDate) {
+      setStatus(recordStatus, "Could not find this calendar event.", "error");
+      return;
+    }
+    if (!eligibility.eligible) {
+      setStatus(recordStatus, eligibility.reason || "This event is not eligible for alert emails.", "error");
+      return;
+    }
+    const name = normalizeSiteText(item.title) || "this event";
+    if (!window.confirm(`Send an event alert email to all opted-in subscribers for "${name}"?`)) return;
+
+    state.eventAlertSendingKey = alertKey;
+    renderRecords();
+    setStatus(recordStatus, "Sending event alert emails...");
+    try {
+      const url = `${adminEventsUrl}/${encodeURIComponent(sourceId)}/alerts?date=${encodeURIComponent(eventDate)}`;
+      const resp = await apiFetch(url, { method: "POST" }).catch(() => null);
+      const data = resp ? await resp.json().catch(() => ({})) : {};
+      if (!resp || !resp.ok || (data.ok === false && data.sentCount === undefined && data.failedCount === undefined)) {
+        throw new Error(data.error || "Could not send event alert emails.");
+      }
+      const sent = Math.max(0, Number(data.sentCount || 0) || 0);
+      const failed = Math.max(0, Number(data.failedCount || 0) || 0);
+      const total = Math.max(sent + failed, Number(data.subscriberCount || 0) || 0);
+      setStatus(
+        recordStatus,
+        failed
+          ? `Event alert sent to ${sent} of ${total} subscriber${total === 1 ? "" : "s"}. ${failed} failed.`
+          : `Event alert sent to ${sent} subscriber${sent === 1 ? "" : "s"}.`,
+        failed ? "error" : "success"
+      );
+    } catch (error) {
+      setStatus(recordStatus, error && error.message ? error.message : "Could not send event alert emails.", "error");
+    } finally {
+      state.eventAlertSendingKey = "";
       renderRecords();
     }
   }
@@ -3824,11 +3881,11 @@
           resendRegistrationCardEmail(resendRegistrationButton.getAttribute("data-resend-registration-email") || "");
           return;
         }
-        const eventAlertButton = event.target.closest("[data-event-alert-preview]");
+        const eventAlertButton = event.target.closest("[data-event-alert-index]");
         if (eventAlertButton) {
           event.preventDefault();
           event.stopPropagation();
-          setStatus(recordStatus, "This event is eligible for alert emails. Sending will be wired in the next step.", "success");
+          sendEventAlertForCalendarIndex(eventAlertButton.getAttribute("data-event-alert-index") || "");
           return;
         }
         const pinButton = event.target.closest("[data-pin-record]");
