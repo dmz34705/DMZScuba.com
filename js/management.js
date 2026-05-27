@@ -145,6 +145,7 @@
         "contactPhone",
         "source",
         "certification",
+        "emailAlerts",
         "contactClasses",
         "notes",
       ],
@@ -951,6 +952,7 @@
       ["Phone", record.contactPhone],
       ["Source", extras.source],
       ["Certification", extras.certification],
+      ["Event Alerts", extras.emailAlerts ? "Opted in" : ""],
       ["Priority", formatLabel(record.priority)],
       ["Notes", record.notes],
     ].filter((row) => normalizeSiteText(row[1]));
@@ -1907,6 +1909,7 @@
           ? [
               extras.source ? `Source: ${extras.source}` : "",
               extras.certification ? `Certification: ${extras.certification}` : "",
+              extras.emailAlerts ? "Event alerts" : "",
               contactEnrollments.length ? `${contactEnrollments.length} class${contactEnrollments.length === 1 ? "" : "es"}` : "",
             ].filter(Boolean)
           : record.recordType === "inquiry"
@@ -2788,6 +2791,10 @@
       registrationEmailFullHtml: textValue("registrationEmailFullHtml", existingExtras.registrationEmailFullHtml),
       capacity: textValue("capacity", existingExtras.capacity),
       certification: textValue("certification", existingExtras.certification),
+      emailAlerts:
+        recordForm.elements.emailAlerts && !recordForm.elements.emailAlerts.disabled
+          ? (recordForm.elements.emailAlerts.checked ? "1" : "")
+          : String(existingExtras.emailAlerts || ""),
       amountOwed: textValue("amountOwed", existingExtras.amountOwed),
       amountPaid: textValue("amountPaid", existingExtras.amountPaid),
       nextStep: textValue("nextStep", existingExtras.nextStep),
