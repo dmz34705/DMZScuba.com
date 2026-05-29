@@ -548,6 +548,7 @@ The Worker contains full branded HTML email templates for each destination inlin
 
 ```
 pages/training/index.html                    Course catalog hub
+pages/training/discover-scuba/index.html     Discover Scuba try-dive class
 pages/training/open-water/index.html         Open Water Certification — $1099 for groups of 2-4
 pages/training/specialty/index.html          Specialty course listing
   specialty/nitrox/index.html                Enriched Air / Nitrox
