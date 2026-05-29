@@ -941,6 +941,33 @@ a:focus-visible{
   color: var(--muted-2);
 }
 
+.site-footer a{
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-footer a:hover{
+  color: var(--text);
+}
+
+.footer-separator{
+  margin: 0 8px;
+  color: rgba(255,255,255,0.24);
+}
+
+.legal-page{
+  max-width: var(--max);
+}
+
+.legal-page .content-section p,
+.legal-page .content-section li{
+  line-height: 1.7;
+}
+
+.legal-page .content-section a{
+  color: var(--accent);
+}
+
 /* ============================================================
    10) MEDIA PAGE
    ============================================================ */

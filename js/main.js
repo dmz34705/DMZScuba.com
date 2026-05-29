@@ -3,6 +3,14 @@ console.log("main.js loaded");
 (() => {
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
+
+  document.querySelectorAll(".site-footer small").forEach((footerText) => {
+    if (footerText.querySelector('a[href="/pages/privacy/"]')) return;
+    footerText.insertAdjacentHTML(
+      "beforeend",
+      ' <span class="footer-separator" aria-hidden="true">|</span> <a href="/pages/privacy/">Privacy Policy</a>'
+    );
+  });
 })();
 
 

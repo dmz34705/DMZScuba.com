@@ -561,6 +561,7 @@ pages/training/course-builder/index.html     Interactive course configurator (js
 pages/training/interactive-tools/index.html  Physics education tools hub
   interactive-tools/boyles-law-demo.html     Boyle's Law pressure/volume simulation
   interactive-tools/color-loss-demo.html     Underwater color spectrum loss demo
+pages/privacy/index.html                     Privacy policy for website forms, analytics, and advertising disclosures
 ```
 
 Each specialty page follows the same structure: hero image, course overview, skills covered, who it's for, prerequisite, and a CTA that pre-fills the contact form with the relevant course interest.
