@@ -973,6 +973,7 @@ async function saveQuizLeadContact(env, details) {
   const email = normalizeManagementText(details && details.email, 180).toLowerCase();
   const phone = normalizeManagementText((details && details.phone) || getFieldValue(fields, "phone"), 60);
   const pageUrl = normalizeManagementText(details && details.pageUrl, 500);
+  const subject = normalizeManagementText(details && details.subject, 180);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
 
   const nameParts = splitSubscriberName(name);
@@ -984,8 +985,15 @@ async function saveQuizLeadContact(env, details) {
   const quizAnswers = normalizeManagementLongText(getFieldValue(fields, "quiz_answers_summary"), 1200);
   const goals = normalizeManagementLongText(getFieldValue(fields, "goals"), 1200);
   const message = normalizeManagementLongText((details && details.message) || getFieldValue(fields, "message"), 1200);
+  const subjectMatch = subject.match(/^Dive Quiz Lead:\s*(.+)$/i);
+  const messageMatch = message.match(/Recommended start:\s*([^|]+)/i);
+  const quizRecommendedStart = normalizeManagementText(
+    (subjectMatch && subjectMatch[1]) || (messageMatch && messageMatch[1]) || "",
+    180
+  );
   const noteBlock = [
     `Dive quiz submitted: ${submittedAt}`,
+    quizRecommendedStart ? `Recommended start: ${quizRecommendedStart}` : "",
     quizRoute ? `Recommended route: ${quizRoute}` : "",
     quizMode ? `Quiz mode: ${quizMode}` : "",
     quizPath ? `Quiz path: ${quizPath}` : "",
@@ -1004,6 +1012,7 @@ async function saveQuizLeadContact(env, details) {
     quizRoute,
     quizMode,
     quizPath,
+    quizRecommendedStart,
     quizAnswers,
     quizPageUrl: pageUrl,
   };
@@ -1077,8 +1086,11 @@ function getQuizRouteTitleLabel(route) {
 function buildQuizInquiryTitle(contact, fallbackTitle = "") {
   const contactName = normalizeManagementText(contact && (contact.contactName || contact.title || contact.contactEmail), 160);
   const extras = contact && contact.extras && typeof contact.extras === "object" ? contact.extras : {};
-  const quizRoute = getQuizRouteTitleLabel(extras.quizRoute);
-  const detail = ["Dive Path Quiz", quizRoute].filter(Boolean).join(": ");
+  const quizResult =
+    normalizeManagementText(extras.quizRecommendedStart, 180) ||
+    getQuizRouteTitleLabel(extras.quizRoute) ||
+    normalizeManagementText(extras.quizPath, 120);
+  const detail = ["Dive Path Quiz", quizResult].filter(Boolean).join(": ");
   return [contactName, detail].filter(Boolean).join(" - ") || fallbackTitle;
 }
 
@@ -1412,6 +1424,7 @@ async function handleContact(request, env) {
         phone: getFieldValue(fields, "phone"),
         fields,
         message: body.message,
+        subject,
         pageUrl,
         submittedAt,
       })

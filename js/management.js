@@ -771,7 +771,8 @@
       normalizeSiteText(extras.quizPath) ||
       normalizeSiteText(extras.source).toLowerCase() === "dive path quiz";
     if (isQuizLead) {
-      return [name, ["Dive Path Quiz", quizRoute].filter(Boolean).join(": ")].filter(Boolean).join(" - ");
+      const quizResult = normalizeSiteText(extras.quizRecommendedStart) || quizRoute || normalizeSiteText(extras.quizPath);
+      return [name, ["Dive Path Quiz", quizResult].filter(Boolean).join(": ")].filter(Boolean).join(" - ");
     }
     const source = formatLabel(extras.source);
     return [name, source || "Inquiry"].filter(Boolean).join(" - ");
