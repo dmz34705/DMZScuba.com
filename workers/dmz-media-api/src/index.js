@@ -966,6 +966,103 @@ async function saveEventAlertSubscriber(env, details) {
   return { ...next, id: existing.id, createdAt: existing.createdAt, updatedAt: now };
 }
 
+async function saveQuizLeadContact(env, details) {
+  const submittedAt = normalizeManagementText(details && details.submittedAt, 40) || new Date().toISOString();
+  const fields = details && details.fields && typeof details.fields === "object" ? details.fields : {};
+  const name = normalizeManagementText(details && details.name, 160);
+  const email = normalizeManagementText(details && details.email, 180).toLowerCase();
+  const phone = normalizeManagementText((details && details.phone) || getFieldValue(fields, "phone"), 60);
+  const pageUrl = normalizeManagementText(details && details.pageUrl, 500);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+
+  const nameParts = splitSubscriberName(name);
+  const existing = await findContactByEmail(env, email);
+  const existingExtras = existing && existing.extras && typeof existing.extras === "object" ? existing.extras : {};
+  const quizRoute = normalizeManagementText(getFieldValue(fields, "quiz_route"), 120);
+  const quizMode = normalizeManagementText(getFieldValue(fields, "quiz_mode"), 80);
+  const quizPath = normalizeManagementText(getFieldValue(fields, "quiz_path"), 120);
+  const quizAnswers = normalizeManagementLongText(getFieldValue(fields, "quiz_answers_summary"), 1200);
+  const goals = normalizeManagementLongText(getFieldValue(fields, "goals"), 1200);
+  const message = normalizeManagementLongText((details && details.message) || getFieldValue(fields, "message"), 1200);
+  const noteBlock = [
+    `Dive quiz submitted: ${submittedAt}`,
+    quizRoute ? `Recommended route: ${quizRoute}` : "",
+    quizMode ? `Quiz mode: ${quizMode}` : "",
+    quizPath ? `Quiz path: ${quizPath}` : "",
+    goals ? `Goals: ${goals}` : "",
+    message ? `Message: ${message}` : "",
+    quizAnswers ? `Answers: ${quizAnswers}` : "",
+    pageUrl ? `Page: ${pageUrl}` : "",
+  ].filter(Boolean).join("\n");
+  const extras = {
+    ...existingExtras,
+    firstName: existingExtras.firstName || nameParts.firstName,
+    lastName: existingExtras.lastName || nameParts.lastName,
+    source: existingExtras.source || "Dive Path Quiz",
+    quizLead: "1",
+    quizLastSubmittedAt: submittedAt,
+    quizRoute,
+    quizMode,
+    quizPath,
+    quizAnswers,
+    quizPageUrl: pageUrl,
+  };
+
+  if (!existing) {
+    return createManagementRecord(env, {
+      recordType: "contact",
+      title: name || email,
+      status: "active",
+      priority: "normal",
+      contactName: name,
+      contactEmail: email,
+      contactPhone: phone,
+      notes: noteBlock,
+      extras,
+    });
+  }
+
+  const notes = normalizeManagementLongText(
+    [noteBlock, existing.notes].filter(Boolean).join(existing.notes ? "\n\n" : ""),
+    4000
+  );
+  const next = normalizeManagementRecord({
+    ...existing,
+    title: existing.title || name || email,
+    status: existing.status || "active",
+    priority: existing.priority || "normal",
+    contactName: existing.contactName || name,
+    contactEmail: email,
+    contactPhone: existing.contactPhone || phone,
+    notes,
+    extras,
+  }, existing);
+  const now = submittedAt;
+  await env.DB.prepare(
+    `UPDATE management_records
+     SET record_type = ?, title = ?, status = ?, priority = ?, owner = ?, contact_name = ?, contact_email = ?, contact_phone = ?, due_date = ?, related_event = ?, notes = ?, data_json = ?, updated_at = ?
+     WHERE id = ?`
+  )
+    .bind(
+      next.recordType,
+      next.title,
+      next.status,
+      next.priority,
+      next.owner,
+      next.contactName,
+      next.contactEmail,
+      next.contactPhone,
+      next.dueDate,
+      next.relatedEvent,
+      next.notes,
+      JSON.stringify({ extras: next.extras }),
+      now,
+      existing.id
+    )
+    .run();
+  return { ...next, id: existing.id, createdAt: existing.createdAt, updatedAt: now };
+}
+
 async function handleEventAlertSubscribe(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || body.company || "").trim();
@@ -1240,9 +1337,9 @@ async function handleContact(request, env) {
     );
   }
 
+  const isQuizSubmission = shouldSendQuizResultsAutoReply(formName);
   let generalAutoReplySent = false;
   if (email && isValidEmail(email) && shouldSendGeneralInquiryAutoReply(formName)) {
-    const isQuizSubmission = shouldSendQuizResultsAutoReply(formName);
     const generalTemplateId = String(env.RESEND_TEMPLATE_GENERAL_INQUIRY || "").trim();
     const quizTemplateId =
       String(env.RESEND_TEMPLATE_QUIZ_RESULTS || "").trim() || QUIZ_RESULTS_TEMPLATE_ID_FALLBACK;
@@ -1289,8 +1386,33 @@ async function handleContact(request, env) {
     generalAutoReplySent = true;
   }
 
+  const savedQuizContact = isQuizSubmission
+    ? await saveQuizLeadContact(env, {
+        name,
+        email,
+        phone: getFieldValue(fields, "phone"),
+        fields,
+        message: body.message,
+        pageUrl,
+        submittedAt,
+      })
+    : null;
+  if (savedQuizContact && savedQuizContact.id) {
+    managementRecord.extras = {
+      ...(managementRecord.extras || {}),
+      inquiryContactIds: [savedQuizContact.id],
+    };
+    managementRecord.contactName = savedQuizContact.contactName || managementRecord.contactName;
+    managementRecord.contactEmail = savedQuizContact.contactEmail || managementRecord.contactEmail;
+    managementRecord.contactPhone = savedQuizContact.contactPhone || managementRecord.contactPhone;
+  }
   const savedRecord = await savePublicInquiryManagementRecord(env, managementRecord);
-  return jsonResponse({ ok: true, generalAutoReplySent, managementRecordSaved: Boolean(savedRecord) });
+  return jsonResponse({
+    ok: true,
+    generalAutoReplySent,
+    managementRecordSaved: Boolean(savedRecord),
+    contactSaved: Boolean(savedQuizContact && savedQuizContact.id),
+  });
 }
 
 function normalizeItem(row) {
