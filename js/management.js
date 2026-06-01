@@ -791,17 +791,26 @@
     };
   }
 
+  function isQuizLeadContact(contact) {
+    if (!contact) return false;
+    const extras = getExtras(contact);
+    const notes = normalizeSiteText(contact.notes).toLowerCase();
+    return Boolean(
+      normalizeSiteText(extras.quizLead) === "1" ||
+      normalizeSiteText(extras.quizRecommendedStart) ||
+      normalizeSiteText(extras.quizAnswers) ||
+      normalizeSiteText(extras.quizPath) ||
+      normalizeSiteText(extras.quizRoute) ||
+      notes.includes("dive quiz submitted") ||
+      notes.includes("dive path quiz result")
+    );
+  }
+
   function buildInquiryTitleFromContact(contact) {
     if (!contact) return "";
     const name = getContactDisplayName(contact);
-    const extras = getExtras(contact);
     const quiz = getContactQuizDetails(contact);
-    const isQuizLead =
-      normalizeSiteText(extras.quizLead) ||
-      normalizeSiteText(extras.quizRoute) ||
-      normalizeSiteText(extras.quizPath) ||
-      normalizeSiteText(extras.source).toLowerCase() === "dive path quiz";
-    if (isQuizLead) {
+    if (isQuizLeadContact(contact)) {
       const quizResult = quiz.recommendedStart || quiz.quizRouteLabel || quiz.quizPath;
       return [name, ["Dive Path Quiz", quizResult].filter(Boolean).join(": ")].filter(Boolean).join(" - ");
     }
@@ -847,6 +856,7 @@
     if (!firstContactId) return;
     const contact = getContactRecords().find((item) => item.id === firstContactId);
     if (!contact) return;
+    if (!isQuizLeadContact(contact)) return;
     const quiz = getContactQuizDetails(contact);
     setInquiryFieldIfEmpty("title", buildInquiryTitleFromContact(contact));
     setInquiryFieldIfEmpty("relatedEvent", quiz.recommendedStart || quiz.quizRouteLabel || quiz.quizPath);
