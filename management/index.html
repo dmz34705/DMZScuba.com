@@ -475,6 +475,14 @@
               <input type="date" name="dueDate" />
             </label>
           </div>
+          <details class="management-contact-classes management-inquiry-contacts" data-field="inquiryContacts" data-inquiry-contacts open>
+            <summary>Linked Contacts</summary>
+            <div class="management-class-contact-add management-inquiry-contact-add">
+              <input type="search" data-inquiry-contact-search placeholder="Search contacts by name, email, or phone" aria-label="Search contacts" />
+              <select data-inquiry-contact-select aria-label="Select inquiry contacts" multiple size="6"></select>
+            </div>
+            <div class="management-class-contact-list" data-inquiry-contact-list></div>
+          </details>
           <label data-field="relatedEvent">
             Related Class, Trip, or Event
             <input type="text" name="relatedEvent" maxlength="180" />

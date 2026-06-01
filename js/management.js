@@ -53,6 +53,10 @@
   const contactClassSelect = app.querySelector("[data-contact-class-select]");
   const contactClassStatusSelect = app.querySelector("[data-contact-class-status]");
   const contactClassList = app.querySelector("[data-contact-class-list]");
+  const inquiryContactsEl = app.querySelector("[data-inquiry-contacts]");
+  const inquiryContactSearch = app.querySelector("[data-inquiry-contact-search]");
+  const inquiryContactSelect = app.querySelector("[data-inquiry-contact-select]");
+  const inquiryContactList = app.querySelector("[data-inquiry-contact-list]");
   const classRegistrationSummary = app.querySelector("[data-class-registration-summary]");
   const classRegistrationList = app.querySelector("[data-class-registration-list]");
   const refreshClassRegistrationsButton = app.querySelector("[data-refresh-class-registrations]");
@@ -174,9 +178,7 @@
         "status",
         "priority",
         "owner",
-        "contactName",
-        "contactEmail",
-        "contactPhone",
+        "inquiryContacts",
         "dueDate",
         "relatedEvent",
         "inquiryDirection",
@@ -742,6 +744,84 @@
     return state.records.filter((record) => record.recordType === "contact");
   }
 
+  function getContactDisplayName(contact) {
+    return normalizeSiteText(contact && (contact.contactName || contact.title || contact.contactEmail)) || "Unnamed contact";
+  }
+
+  function getInquiryContactIds(record = null) {
+    const extras = getExtras(record);
+    if (Array.isArray(extras.inquiryContactIds)) {
+      return extras.inquiryContactIds.map((id) => normalizeSiteText(id)).filter(Boolean);
+    }
+    const legacyEmail = normalizeSiteText(record && record.contactEmail).toLowerCase();
+    if (!legacyEmail) return [];
+    const legacyContact = getContactRecords().find((contact) => normalizeSiteText(contact.contactEmail).toLowerCase() === legacyEmail);
+    return legacyContact && legacyContact.id ? [legacyContact.id] : [];
+  }
+
+  function getInquiryContacts(record = null) {
+    const ids = new Set(getInquiryContactIds(record));
+    return getContactRecords().filter((contact) => ids.has(contact.id));
+  }
+
+  function getSelectedInquiryContactIds() {
+    return inquiryContactSelect
+      ? Array.from(inquiryContactSelect.selectedOptions).map((option) => normalizeSiteText(option.value)).filter(Boolean)
+      : [];
+  }
+
+  function syncInquiryContactSelectedList() {
+    if (!inquiryContactList || !inquiryContactSelect) return;
+    const ids = new Set(getSelectedInquiryContactIds());
+    const contacts = getContactRecords().filter((contact) => ids.has(contact.id));
+    inquiryContactList.innerHTML = contacts.length
+      ? contacts.map((contact) => `
+          <div class="management-class-contact-item" data-inquiry-contact-id="${escapeHtml(contact.id)}">
+            <div>
+              <strong>${escapeHtml(getContactDisplayName(contact))}</strong>
+              <span>${escapeHtml([contact.contactEmail, contact.contactPhone].filter(Boolean).join(" | "))}</span>
+            </div>
+            <button type="button" data-remove-inquiry-contact="${escapeHtml(contact.id)}">Remove</button>
+          </div>
+        `).join("")
+      : '<div class="management-empty">No contacts linked to this inquiry yet.</div>';
+  }
+
+  function renderInquiryContactManager(record = null) {
+    if (!inquiryContactsEl) return;
+    const isInquiry = record && record.recordType === "inquiry";
+    const query = normalizeSiteText(inquiryContactSearch && inquiryContactSearch.value).toLowerCase();
+    const currentSelectedIds = getSelectedInquiryContactIds();
+    const selectedIds = new Set(currentSelectedIds.length ? currentSelectedIds : getInquiryContactIds(record));
+    const contacts = getContactRecords();
+    const filteredContacts = contacts.filter((contact) => {
+      if (selectedIds.has(contact.id)) return true;
+      if (!query) return true;
+      const extras = getExtras(contact);
+      return [
+        contact.contactName,
+        contact.title,
+        contact.contactEmail,
+        contact.contactPhone,
+        extras.firstName,
+        extras.lastName,
+      ].join(" ").toLowerCase().includes(query);
+    });
+
+    if (inquiryContactSelect) {
+      inquiryContactSelect.innerHTML = filteredContacts.length
+        ? filteredContacts.map((contact) => {
+          const details = [contact.contactEmail, contact.contactPhone].filter(Boolean).join(" | ");
+          const label = [getContactDisplayName(contact), details].filter(Boolean).join(" - ");
+          return `<option value="${escapeHtml(contact.id)}" ${selectedIds.has(contact.id) ? "selected" : ""}>${escapeHtml(label)}</option>`;
+        }).join("")
+        : '<option value="">No matching contacts</option>';
+      inquiryContactSelect.disabled = !isInquiry || !contacts.length;
+    }
+    if (inquiryContactSearch) inquiryContactSearch.disabled = !isInquiry || !contacts.length;
+    syncInquiryContactSelectedList();
+  }
+
   function getClassRecords() {
     return state.records.filter((record) => record.recordType === "class" && !isSiteBackedManagementRecord(record));
   }
@@ -1009,7 +1089,8 @@
     const extras = getExtras(record);
     const nextStep = normalizeSiteText(extras.nextStep);
     const dueDate = normalizeSiteText(record.dueDate);
-    const contactName = normalizeSiteText(record.contactName);
+    const linkedContacts = getInquiryContacts(record);
+    const contactName = normalizeSiteText((linkedContacts[0] && getContactDisplayName(linkedContacts[0])) || record.contactName);
     const contactEmail = normalizeSiteText(record.contactEmail);
     const balance = getBalance(record);
     let dueSoonClass = "";
@@ -1042,6 +1123,13 @@
     if (!record || record.recordType !== "inquiry") return "";
     const extras = getExtras(record);
     const balance = getBalance(record);
+    const linkedContacts = getInquiryContacts(record);
+    const contactSummary = linkedContacts.length
+      ? linkedContacts.map((contact) => {
+        const detail = [contact.contactEmail, contact.contactPhone].filter(Boolean).join(" | ");
+        return [getContactDisplayName(contact), detail].filter(Boolean).join(" - ");
+      }).join(", ")
+      : "";
     const renderCell = ([label, value]) => normalizeSiteText(value)
       ? `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`
       : "";
@@ -1058,9 +1146,10 @@
       {
         title: "Contact",
         rows: [
-          ["Primary Contact", record.contactName],
-          ["Email", record.contactEmail],
-          ["Phone", record.contactPhone],
+          ["Linked Contacts", contactSummary],
+          ["Primary Contact", linkedContacts.length ? "" : record.contactName],
+          ["Email", linkedContacts.length ? "" : record.contactEmail],
+          ["Phone", linkedContacts.length ? "" : record.contactPhone],
           ["Organization", record.relatedEvent],
           ["Source", extras.source],
           ["Owner", record.owner],
@@ -1492,6 +1581,8 @@
       extras.amountPaid,
       extras.capacity,
       extras.registrationClosed,
+      ...(Array.isArray(extras.inquiryContactIds) ? extras.inquiryContactIds : []),
+      ...getInquiryContacts(record).flatMap((contact) => [contact.contactName, contact.title, contact.contactEmail, contact.contactPhone]),
       extras.siteSource,
       extras.sourceId,
       extras.eventDate,
@@ -2882,6 +2973,11 @@
       nextStep: textValue("nextStep", existingExtras.nextStep),
     };
     const recordType = textValue("recordType", existing && existing.recordType) || "inquiry";
+    if (recordType === "inquiry") {
+      extras.inquiryContactIds = getSelectedInquiryContactIds();
+    } else if (Array.isArray(existingExtras.inquiryContactIds)) {
+      extras.inquiryContactIds = existingExtras.inquiryContactIds;
+    }
     const contactFullName = [extras.firstName, extras.lastName].filter(Boolean).join(" ").trim();
     const title = recordType === "contact" ? contactFullName : textValue("title", existing && existing.title);
     if (recordType === "class" && !extras.classId) {
@@ -2893,8 +2989,11 @@
           .sort()[0] || "";
       extras.classId = slugify(`${title || "class"} ${firstSessionDate}`, "class");
     }
+    const primaryInquiryContact = recordType === "inquiry" && extras.inquiryContactIds.length
+      ? getContactRecords().find((contact) => contact.id === extras.inquiryContactIds[0])
+      : null;
     const contactName =
-      recordType === "contact" ? contactFullName : textValue("contactName", existing && existing.contactName);
+      recordType === "contact" ? contactFullName : primaryInquiryContact ? getContactDisplayName(primaryInquiryContact) : textValue("contactName", existing && existing.contactName);
     const rawPriority = textValue("priority", existing && existing.priority) || "normal";
     const priority = recordType === "contact" && rawPriority !== "high" ? "normal" : rawPriority;
     return {
@@ -2910,8 +3009,8 @@
       priority,
       owner: textValue("owner", existing && existing.owner),
       contactName,
-      contactEmail: textValue("contactEmail", existing && existing.contactEmail),
-      contactPhone: textValue("contactPhone", existing && existing.contactPhone),
+      contactEmail: primaryInquiryContact ? normalizeSiteText(primaryInquiryContact.contactEmail) : textValue("contactEmail", existing && existing.contactEmail),
+      contactPhone: primaryInquiryContact ? normalizeSiteText(primaryInquiryContact.contactPhone) : textValue("contactPhone", existing && existing.contactPhone),
       dueDate: textValue("dueDate", existing && existing.dueDate),
       relatedEvent: textValue("relatedEvent", existing && existing.relatedEvent),
       notes: textValue("notes", existing && existing.notes),
@@ -2957,6 +3056,8 @@
     renderClassSchedule(getExtras(item).classSessions || {});
     renderClassRoster(item);
     renderContactClassManager(item);
+    if (inquiryContactSearch) inquiryContactSearch.value = "";
+    renderInquiryContactManager(item);
     if (item.recordType === "contact") {
       const extras = getExtras(item);
       const nameParts = String(item.contactName || item.title || "").trim().split(/\s+/);
@@ -3160,6 +3261,10 @@
         record.recordType === "contact" ? "First name or last name is required." : "Title is required.",
         "error"
       );
+      return;
+    }
+    if (record.recordType === "inquiry" && !getInquiryContactIds(record).length) {
+      setStatus(recordStatus, "Choose at least one contact for this inquiry.", "error");
       return;
     }
     if (isSiteBackedManagementRecord(record)) {
@@ -3668,6 +3773,7 @@
       recordForm.elements.recordType.addEventListener("change", () => {
         applyTypeConfig(recordForm.elements.recordType.value || "contact", Boolean(state.selectedId));
         if (recordForm.elements.recordType.value === "class" && classScheduleEl) renderClassSchedule(readClassSessions());
+        renderInquiryContactManager({ recordType: recordForm.elements.recordType.value || "contact", extras: { inquiryContactIds: getSelectedInquiryContactIds() } });
         updateRegistrationEmailCounters();
       });
     }
@@ -3717,6 +3823,23 @@
         const classRecord = getActiveClassRecord();
         await removeContactEnrollmentFromClass(removeId);
         await syncClassCalendarAfterRosterChange(classRecord, "Contact removed from this class.");
+      });
+    }
+    if (inquiryContactSearch) {
+      inquiryContactSearch.addEventListener("input", () => {
+        renderInquiryContactManager({ recordType: "inquiry", extras: { inquiryContactIds: getSelectedInquiryContactIds() } });
+      });
+    }
+    if (inquiryContactSelect) inquiryContactSelect.addEventListener("change", syncInquiryContactSelectedList);
+    if (inquiryContactList) {
+      inquiryContactList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-remove-inquiry-contact]");
+        if (!button || !inquiryContactSelect) return;
+        const removeId = button.getAttribute("data-remove-inquiry-contact") || "";
+        Array.from(inquiryContactSelect.options).forEach((option) => {
+          if (option.value === removeId) option.selected = false;
+        });
+        syncInquiryContactSelectedList();
       });
     }
     if (classRegistrationList) {

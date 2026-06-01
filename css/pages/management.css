@@ -1436,7 +1436,11 @@
 
 .management-contact-classes .management-class-contact-add { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
 .management-contact-classes .management-class-contact-add select[multiple] { grid-column: 1 / -1; width: 100%; }
+.management-inquiry-contact-add { grid-template-columns: minmax(0, 1fr); }
+.management-inquiry-contact-add input[type="search"],
+.management-inquiry-contact-add select[multiple] { width: 100%; }
 
+.management-inquiry-contact-add input[type="search"],
 .management-class-contact-add select,
 .management-class-contact-add button,
 .management-class-contact-item button,
