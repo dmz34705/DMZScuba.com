@@ -749,6 +749,46 @@
     return normalizeSiteText(contact && (contact.contactName || contact.title || contact.contactEmail)) || "Unnamed contact";
   }
 
+  function getQuizRouteLabel(route) {
+    const labels = {
+      cert: "Open Water Certification",
+      refresh: "Skill Refresh",
+      travel: "Trip-Ready Coaching",
+      contact: "Discovery Consult",
+    };
+    const key = normalizeSiteText(route);
+    return labels[key] || formatLabel(key);
+  }
+
+  function buildInquiryTitleFromContact(contact) {
+    if (!contact) return "";
+    const name = getContactDisplayName(contact);
+    const extras = getExtras(contact);
+    const quizRoute = getQuizRouteLabel(extras.quizRoute);
+    const isQuizLead =
+      normalizeSiteText(extras.quizLead) ||
+      normalizeSiteText(extras.quizRoute) ||
+      normalizeSiteText(extras.quizPath) ||
+      normalizeSiteText(extras.source).toLowerCase() === "dive path quiz";
+    if (isQuizLead) {
+      return [name, ["Dive Path Quiz", quizRoute].filter(Boolean).join(": ")].filter(Boolean).join(" - ");
+    }
+    const source = formatLabel(extras.source);
+    return [name, source || "Inquiry"].filter(Boolean).join(" - ");
+  }
+
+  function fillInquiryTitleFromSelectedContact() {
+    if (!recordForm || !recordForm.elements.title) return;
+    const type = recordForm.elements.recordType ? normalizeSiteText(recordForm.elements.recordType.value) : "";
+    if (type !== "inquiry") return;
+    if (normalizeSiteText(recordForm.elements.title.value)) return;
+    const firstContactId = getSelectedInquiryContactIds()[0] || "";
+    if (!firstContactId) return;
+    const contact = getContactRecords().find((item) => item.id === firstContactId);
+    const title = buildInquiryTitleFromContact(contact);
+    if (title) recordForm.elements.title.value = title;
+  }
+
   function getInquiryContactIds(record = null) {
     const extras = getExtras(record);
     if (Array.isArray(extras.inquiryContactIds)) {
@@ -775,6 +815,7 @@
     if (!inquiryContactList || !inquiryContactSelect) return;
     const ids = new Set(getSelectedInquiryContactIds());
     const contacts = getContactRecords().filter((contact) => ids.has(contact.id));
+    fillInquiryTitleFromSelectedContact();
     if (inquiryContactCount) {
       inquiryContactCount.textContent = `${contacts.length} selected`;
     }

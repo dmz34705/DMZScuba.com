@@ -1063,6 +1063,25 @@ async function saveQuizLeadContact(env, details) {
   return { ...next, id: existing.id, createdAt: existing.createdAt, updatedAt: now };
 }
 
+function getQuizRouteTitleLabel(route) {
+  const key = normalizeManagementText(route, 80);
+  const labels = {
+    cert: "Open Water Certification",
+    refresh: "Skill Refresh",
+    travel: "Trip-Ready Coaching",
+    contact: "Discovery Consult",
+  };
+  return labels[key] || key;
+}
+
+function buildQuizInquiryTitle(contact, fallbackTitle = "") {
+  const contactName = normalizeManagementText(contact && (contact.contactName || contact.title || contact.contactEmail), 160);
+  const extras = contact && contact.extras && typeof contact.extras === "object" ? contact.extras : {};
+  const quizRoute = getQuizRouteTitleLabel(extras.quizRoute);
+  const detail = ["Dive Path Quiz", quizRoute].filter(Boolean).join(": ");
+  return [contactName, detail].filter(Boolean).join(" - ") || fallbackTitle;
+}
+
 async function handleEventAlertSubscribe(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || body.company || "").trim();
@@ -1402,6 +1421,7 @@ async function handleContact(request, env) {
       ...(managementRecord.extras || {}),
       inquiryContactIds: [savedQuizContact.id],
     };
+    managementRecord.title = buildQuizInquiryTitle(savedQuizContact, managementRecord.title);
     managementRecord.contactName = savedQuizContact.contactName || managementRecord.contactName;
     managementRecord.contactEmail = savedQuizContact.contactEmail || managementRecord.contactEmail;
     managementRecord.contactPhone = savedQuizContact.contactPhone || managementRecord.contactPhone;
