@@ -904,8 +904,7 @@
     if (!inquiryContactsEl) return;
     const isInquiry = record && record.recordType === "inquiry";
     const query = normalizeSiteText(inquiryContactSearch && inquiryContactSearch.value).toLowerCase();
-    const currentSelectedIds = getSelectedInquiryContactIds();
-    const selectedIds = new Set(currentSelectedIds.length ? currentSelectedIds : getInquiryContactIds(record));
+    const selectedIds = new Set(getInquiryContactIds(record));
     const contacts = getContactRecords();
     const filteredContacts = contacts.filter((contact) => {
       if (selectedIds.has(contact.id)) return true;
