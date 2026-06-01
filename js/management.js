@@ -760,34 +760,101 @@
     return labels[key] || formatLabel(key);
   }
 
+  function getQuizDetailFromNotes(contact, label) {
+    const noteText = normalizeSiteText(contact && contact.notes);
+    if (!noteText || !label) return "";
+    const escapedLabel = String(label).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = noteText.match(new RegExp(`${escapedLabel}:\\s*([^\\n]+)`, "i"));
+    return normalizeSiteText(match && match[1]);
+  }
+
+  function getContactQuizDetails(contact) {
+    const extras = getExtras(contact);
+    const recommendedStart =
+      normalizeSiteText(extras.quizRecommendedStart) ||
+      getQuizDetailFromNotes(contact, "Recommended start");
+    const quizRoute = normalizeSiteText(extras.quizRoute) || getQuizDetailFromNotes(contact, "Recommended route");
+    const quizMode = normalizeSiteText(extras.quizMode) || getQuizDetailFromNotes(contact, "Quiz mode");
+    const quizPath = normalizeSiteText(extras.quizPath) || getQuizDetailFromNotes(contact, "Quiz path");
+    const goals = getQuizDetailFromNotes(contact, "Goals");
+    const message = getQuizDetailFromNotes(contact, "Message");
+    const answers = normalizeSiteText(extras.quizAnswers) || getQuizDetailFromNotes(contact, "Answers");
+    return {
+      recommendedStart,
+      quizRoute,
+      quizRouteLabel: getQuizRouteLabel(quizRoute),
+      quizMode,
+      quizPath,
+      goals,
+      message,
+      answers,
+    };
+  }
+
   function buildInquiryTitleFromContact(contact) {
     if (!contact) return "";
     const name = getContactDisplayName(contact);
     const extras = getExtras(contact);
-    const quizRoute = getQuizRouteLabel(extras.quizRoute);
+    const quiz = getContactQuizDetails(contact);
     const isQuizLead =
       normalizeSiteText(extras.quizLead) ||
       normalizeSiteText(extras.quizRoute) ||
       normalizeSiteText(extras.quizPath) ||
       normalizeSiteText(extras.source).toLowerCase() === "dive path quiz";
     if (isQuizLead) {
-      const quizResult = normalizeSiteText(extras.quizRecommendedStart) || quizRoute || normalizeSiteText(extras.quizPath);
+      const quizResult = quiz.recommendedStart || quiz.quizRouteLabel || quiz.quizPath;
       return [name, ["Dive Path Quiz", quizResult].filter(Boolean).join(": ")].filter(Boolean).join(" - ");
     }
     const source = formatLabel(extras.source);
     return [name, source || "Inquiry"].filter(Boolean).join(" - ");
   }
 
-  function fillInquiryTitleFromSelectedContact() {
-    if (!recordForm || !recordForm.elements.title) return;
+  function setInquiryFieldIfEmpty(name, value) {
+    const field = recordForm && recordForm.elements[name];
+    const nextValue = normalizeSiteText(value);
+    if (!field || field.disabled || !nextValue || normalizeSiteText(field.value)) return;
+    field.value = nextValue;
+  }
+
+  function buildQuizInquiryNotes(contact) {
+    const quiz = getContactQuizDetails(contact);
+    const lines = [
+      "Dive Path Quiz Result",
+      "",
+      `Contact: ${getContactDisplayName(contact)}`,
+      contact.contactEmail ? `Email: ${contact.contactEmail}` : "",
+      contact.contactPhone ? `Phone: ${contact.contactPhone}` : "",
+      "",
+      quiz.recommendedStart ? `Recommended start: ${quiz.recommendedStart}` : "",
+      quiz.quizRoute ? `Recommended route: ${quiz.quizRoute}` : "",
+      quiz.quizMode ? `Quiz mode: ${quiz.quizMode}` : "",
+      quiz.quizPath ? `Quiz path: ${quiz.quizPath}` : "",
+      quiz.goals ? `Goals: ${quiz.goals}` : "",
+      quiz.message ? `Message: ${quiz.message}` : "",
+      quiz.answers ? `Answers: ${quiz.answers}` : "",
+      "",
+      "Original contact notes:",
+      normalizeSiteText(contact.notes),
+    ].filter((line) => line !== "");
+    return lines.join("\n");
+  }
+
+  function fillInquiryFromSelectedContact() {
+    if (!recordForm) return;
     const type = recordForm.elements.recordType ? normalizeSiteText(recordForm.elements.recordType.value) : "";
     if (type !== "inquiry") return;
-    if (normalizeSiteText(recordForm.elements.title.value)) return;
     const firstContactId = getSelectedInquiryContactIds()[0] || "";
     if (!firstContactId) return;
     const contact = getContactRecords().find((item) => item.id === firstContactId);
-    const title = buildInquiryTitleFromContact(contact);
-    if (title) recordForm.elements.title.value = title;
+    if (!contact) return;
+    const quiz = getContactQuizDetails(contact);
+    setInquiryFieldIfEmpty("title", buildInquiryTitleFromContact(contact));
+    setInquiryFieldIfEmpty("relatedEvent", quiz.recommendedStart || quiz.quizRouteLabel || quiz.quizPath);
+    setInquiryFieldIfEmpty("source", "Dive Path Quiz");
+    setInquiryFieldIfEmpty("inquiryDirection", "incoming");
+    setInquiryFieldIfEmpty("inquiryCategory", "customer");
+    setInquiryFieldIfEmpty("nextStep", "Follow up with a personalized dive plan.");
+    setInquiryFieldIfEmpty("notes", buildQuizInquiryNotes(contact));
   }
 
   function getInquiryContactIds(record = null) {
@@ -816,7 +883,7 @@
     if (!inquiryContactList || !inquiryContactSelect) return;
     const ids = new Set(getSelectedInquiryContactIds());
     const contacts = getContactRecords().filter((contact) => ids.has(contact.id));
-    fillInquiryTitleFromSelectedContact();
+    fillInquiryFromSelectedContact();
     if (inquiryContactCount) {
       inquiryContactCount.textContent = `${contacts.length} selected`;
     }

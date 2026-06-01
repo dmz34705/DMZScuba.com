@@ -1094,6 +1094,34 @@ function buildQuizInquiryTitle(contact, fallbackTitle = "") {
   return [contactName, detail].filter(Boolean).join(" - ") || fallbackTitle;
 }
 
+function buildQuizInquiryNotes(contact, fallbackNotes = "") {
+  const contactName = normalizeManagementText(contact && (contact.contactName || contact.title || contact.contactEmail), 160);
+  const extras = contact && contact.extras && typeof contact.extras === "object" ? contact.extras : {};
+  const quizRoute = normalizeManagementText(extras.quizRoute, 120);
+  const quizRecommendedStart = normalizeManagementText(extras.quizRecommendedStart, 180);
+  const quizMode = normalizeManagementText(extras.quizMode, 80);
+  const quizPath = normalizeManagementText(extras.quizPath, 120);
+  const quizAnswers = normalizeManagementLongText(extras.quizAnswers, 1200);
+  const contactNotes = normalizeManagementLongText(contact && contact.notes, 2400);
+  const lines = [
+    "Dive Path Quiz Result",
+    "",
+    contactName ? `Contact: ${contactName}` : "",
+    contact && contact.contactEmail ? `Email: ${contact.contactEmail}` : "",
+    contact && contact.contactPhone ? `Phone: ${contact.contactPhone}` : "",
+    "",
+    quizRecommendedStart ? `Recommended start: ${quizRecommendedStart}` : "",
+    quizRoute ? `Recommended route: ${quizRoute}` : "",
+    quizMode ? `Quiz mode: ${quizMode}` : "",
+    quizPath ? `Quiz path: ${quizPath}` : "",
+    quizAnswers ? `Answers: ${quizAnswers}` : "",
+    "",
+    "Original contact notes:",
+    contactNotes || normalizeManagementLongText(fallbackNotes, 1200),
+  ].filter((line) => line !== "");
+  return normalizeManagementLongText(lines.join("\n"), 4000);
+}
+
 async function handleEventAlertSubscribe(request, env) {
   const body = await request.json().catch(() => ({}));
   const honey = String(body.honey || body.website || body.company || "").trim();
@@ -1430,11 +1458,28 @@ async function handleContact(request, env) {
       })
     : null;
   if (savedQuizContact && savedQuizContact.id) {
+    const savedQuizExtras = savedQuizContact.extras && typeof savedQuizContact.extras === "object"
+      ? savedQuizContact.extras
+      : {};
     managementRecord.extras = {
       ...(managementRecord.extras || {}),
+      source: "Dive Path Quiz",
+      inquiryDirection: "incoming",
+      inquiryCategory: "customer",
+      quizRoute: savedQuizExtras.quizRoute || "",
+      quizMode: savedQuizExtras.quizMode || "",
+      quizPath: savedQuizExtras.quizPath || "",
+      quizRecommendedStart: savedQuizExtras.quizRecommendedStart || "",
+      quizAnswers: savedQuizExtras.quizAnswers || "",
       inquiryContactIds: [savedQuizContact.id],
     };
     managementRecord.title = buildQuizInquiryTitle(savedQuizContact, managementRecord.title);
+    managementRecord.relatedEvent =
+      savedQuizExtras.quizRecommendedStart ||
+      getQuizRouteTitleLabel(savedQuizExtras.quizRoute) ||
+      savedQuizExtras.quizPath ||
+      managementRecord.relatedEvent;
+    managementRecord.notes = buildQuizInquiryNotes(savedQuizContact, managementRecord.notes);
     managementRecord.contactName = savedQuizContact.contactName || managementRecord.contactName;
     managementRecord.contactEmail = savedQuizContact.contactEmail || managementRecord.contactEmail;
     managementRecord.contactPhone = savedQuizContact.contactPhone || managementRecord.contactPhone;
