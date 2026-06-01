@@ -776,6 +776,8 @@
     const quizRoute = normalizeSiteText(extras.quizRoute) || getQuizDetailFromNotes(contact, "Recommended route");
     const quizMode = normalizeSiteText(extras.quizMode) || getQuizDetailFromNotes(contact, "Quiz mode");
     const quizPath = normalizeSiteText(extras.quizPath) || getQuizDetailFromNotes(contact, "Quiz path");
+    const timeline = getQuizDetailFromNotes(contact, "Timeline");
+    const executionPlan = getQuizDetailFromNotes(contact, "Execution plan");
     const goals = getQuizDetailFromNotes(contact, "Goals");
     const message = getQuizDetailFromNotes(contact, "Message");
     const answers = normalizeSiteText(extras.quizAnswers) || getQuizDetailFromNotes(contact, "Answers");
@@ -785,6 +787,8 @@
       quizRouteLabel: getQuizRouteLabel(quizRoute),
       quizMode,
       quizPath,
+      timeline,
+      executionPlan,
       goals,
       message,
       answers,
@@ -795,14 +799,24 @@
     if (!contact) return false;
     const extras = getExtras(contact);
     const notes = normalizeSiteText(contact.notes).toLowerCase();
-    return Boolean(
-      normalizeSiteText(extras.quizLead) === "1" ||
+    const source = normalizeSiteText(extras.source).toLowerCase();
+    const hasQuizField =
       normalizeSiteText(extras.quizRecommendedStart) ||
       normalizeSiteText(extras.quizAnswers) ||
       normalizeSiteText(extras.quizPath) ||
-      normalizeSiteText(extras.quizRoute) ||
+      normalizeSiteText(extras.quizRoute);
+    const hasQuizNote =
       notes.includes("dive quiz submitted") ||
-      notes.includes("dive path quiz result")
+      notes.includes("dive path quiz result") ||
+      notes.includes("dive quiz contact") ||
+      notes.includes("dive quiz lead") ||
+      (notes.includes("recommended start:") && notes.includes("recommended route:")) ||
+      (notes.includes("recommended start:") && notes.includes("execution plan:"));
+    return Boolean(
+      normalizeSiteText(extras.quizLead) === "1" ||
+      hasQuizField ||
+      hasQuizNote ||
+      (source === "dive path quiz" && (hasQuizField || hasQuizNote))
     );
   }
 
@@ -836,6 +850,8 @@
       "",
       quiz.recommendedStart ? `Recommended start: ${quiz.recommendedStart}` : "",
       quiz.quizRoute ? `Recommended route: ${quiz.quizRoute}` : "",
+      quiz.timeline ? `Timeline: ${quiz.timeline}` : "",
+      quiz.executionPlan ? `Execution plan: ${quiz.executionPlan}` : "",
       quiz.quizMode ? `Quiz mode: ${quiz.quizMode}` : "",
       quiz.quizPath ? `Quiz path: ${quiz.quizPath}` : "",
       quiz.goals ? `Goals: ${quiz.goals}` : "",
