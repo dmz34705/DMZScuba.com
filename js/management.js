@@ -57,6 +57,7 @@
   const inquiryContactSearch = app.querySelector("[data-inquiry-contact-search]");
   const inquiryContactSelect = app.querySelector("[data-inquiry-contact-select]");
   const inquiryContactList = app.querySelector("[data-inquiry-contact-list]");
+  const inquiryContactCount = app.querySelector("[data-inquiry-contact-count]");
   const classRegistrationSummary = app.querySelector("[data-class-registration-summary]");
   const classRegistrationList = app.querySelector("[data-class-registration-list]");
   const refreshClassRegistrationsButton = app.querySelector("[data-refresh-class-registrations]");
@@ -774,9 +775,12 @@
     if (!inquiryContactList || !inquiryContactSelect) return;
     const ids = new Set(getSelectedInquiryContactIds());
     const contacts = getContactRecords().filter((contact) => ids.has(contact.id));
+    if (inquiryContactCount) {
+      inquiryContactCount.textContent = `${contacts.length} selected`;
+    }
     inquiryContactList.innerHTML = contacts.length
       ? contacts.map((contact) => `
-          <div class="management-class-contact-item" data-inquiry-contact-id="${escapeHtml(contact.id)}">
+          <div class="management-class-contact-item management-inquiry-contact-item" data-inquiry-contact-id="${escapeHtml(contact.id)}">
             <div>
               <strong>${escapeHtml(getContactDisplayName(contact))}</strong>
               <span>${escapeHtml([contact.contactEmail, contact.contactPhone].filter(Boolean).join(" | "))}</span>

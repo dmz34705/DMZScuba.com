@@ -1436,7 +1436,56 @@
 
 .management-contact-classes .management-class-contact-add { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
 .management-contact-classes .management-class-contact-add select[multiple] { grid-column: 1 / -1; width: 100%; }
-.management-inquiry-contact-add { grid-template-columns: minmax(0, 1fr); }
+.management-inquiry-contacts {
+  display: grid;
+  gap: 12px;
+  border-color: rgba(85, 185, 255, 0.18);
+  background:
+    linear-gradient(135deg, rgba(85, 185, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(5, 11, 20, 0.18);
+}
+
+.management-inquiry-contacts > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: default;
+  list-style: none;
+}
+
+.management-inquiry-contacts > summary::-webkit-details-marker { display: none; }
+
+.management-inquiry-contacts > summary span {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.management-inquiry-contacts > summary strong {
+  flex: 0 0 auto;
+  border: 1px solid rgba(85, 185, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(85, 185, 255, 0.1);
+  color: #cfeeff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 6px 9px;
+}
+
+.management-inquiry-contacts > p {
+  margin: -4px 0 0;
+  color: rgba(234, 242, 255, 0.58);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.management-inquiry-contact-add {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
 .management-inquiry-contact-add input[type="search"],
 .management-inquiry-contact-add select[multiple] { width: 100%; }
 
@@ -1456,6 +1505,16 @@
 }
 
 .management-class-contact-add select[multiple] { min-height: 104px; }
+.management-inquiry-contact-add select[multiple] {
+  min-height: 132px;
+  padding: 6px;
+}
+
+.management-inquiry-contact-add select[multiple] option {
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+
 .management-contact-classes .management-class-contact-add select:not([multiple]),
 .management-contact-classes .management-class-contact-add button { min-height: 42px; align-self: start; }
 
@@ -1478,6 +1537,21 @@
 .management-class-contact-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .management-class-contact-item strong, .management-class-registration-item strong { display: block; color: var(--text); font-size: 13px; }
 .management-class-contact-item span,   .management-class-registration-item span   { display: block; margin-top: 3px; color: rgba(234, 242, 255, 0.62); font-size: 12px; }
+
+.management-inquiry-contact-item {
+  border-color: rgba(85, 185, 255, 0.14);
+  background: rgba(85, 185, 255, 0.055);
+}
+
+.management-inquiry-contact-item button {
+  justify-self: end;
+  min-height: 34px;
+}
+
+.management-inquiry-contact-item button:hover:not(:disabled) {
+  border-color: rgba(226, 27, 35, 0.5);
+  background: rgba(226, 27, 35, 0.13);
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
    RECORD DETAIL SECTIONS
