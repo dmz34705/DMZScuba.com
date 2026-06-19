@@ -21,7 +21,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 34%;
+  object-position: center 24%;
   filter: saturate(0.88) contrast(1.05) brightness(0.6);
 }
 
