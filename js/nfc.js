@@ -111,7 +111,13 @@
         if (occurrence < monthStart) continue;
         if (occurrence < today) continue;
         if (excluded.includes(dateKey(occurrence))) continue;
-        const eventItem = normalizeEvent(template, occurrence);
+        const eventItem = normalizeEvent(
+          {
+            ...template,
+            id: `${template.id}-${dateKey(occurrence)}`,
+          },
+          occurrence
+        );
         if (eventItem) events.push(eventItem);
       }
     });
@@ -147,13 +153,17 @@
             ? "training"
             : "";
         const meta = [dayFormatter.format(eventItem.dateObj), eventItem.time].filter(Boolean).join(" | ");
-        const summary = eventItem.summary || eventItem.location || "Reach out for details and availability.";
+        const detailUrl = new URL("/pages/events/index.html", window.location.origin);
+        detailUrl.searchParams.set("event", eventItem.id);
+        detailUrl.searchParams.set("date", dateKey(eventItem.dateObj));
+        const context = [eventItem.type, eventItem.location].filter(Boolean).join(" | ") || "DMZ Scuba opportunity";
         return `
-          <article class="nfc-event-item ${typeClass}">
+          <a class="nfc-event-item ${typeClass}" href="${escapeHtml(detailUrl.pathname + detailUrl.search)}" aria-label="Read more about ${escapeHtml(eventItem.title)}">
             <div class="nfc-event-date">${escapeHtml(meta)}</div>
             <h3>${escapeHtml(eventItem.title)}</h3>
-            <p>${escapeHtml(summary)}</p>
-          </article>
+            <p>${escapeHtml(context)}</p>
+            <span class="nfc-event-cta">Tap for details</span>
+          </a>
         `;
       })
       .join("");
