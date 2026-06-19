@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>DMZ Scuba NFC | Contacts, Social, and Upcoming Dives</title>
+
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/pages/nfc.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+
+  <meta name="description" content="Save DMZ Scuba to your phone, connect on social, and see upcoming scuba classes, local dives, and travel opportunities." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://www.dmzscuba.com/nfc/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DMZ Scuba" />
+  <meta property="og:title" content="DMZ Scuba NFC | Upcoming Dive Opportunities" />
+  <meta property="og:description" content="Save DMZ Scuba to your phone, connect on social, and see upcoming scuba opportunities." />
+  <meta property="og:url" content="https://www.dmzscuba.com/nfc/" />
+  <meta property="og:image" content="https://www.dmzscuba.com/assets/images/logos/dmz-scuba-logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <header class="site-header" data-site-nav></header>
+
+  <main class="nfc-page">
+    <section class="nfc-hero" aria-labelledby="nfc-title">
+      <img class="nfc-hero-bg" src="/assets/images/hero/hero-placeholder.JPEG" alt="" />
+      <div class="nfc-hero-overlay"></div>
+      <div class="nfc-hero-inner">
+        <img class="nfc-brand-mark" src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba" />
+        <div class="nfc-hero-copy">
+          <p class="nfc-eyebrow">DMZ Scuba NFC</p>
+          <h1 id="nfc-title">Save the card. Find the next dive.</h1>
+          <p class="nfc-hero-sub">Contact info, social channels, and upcoming classes, local dives, and travel opportunities in one place.</p>
+          <div class="nfc-hero-actions">
+            <a class="btn primary" href="/assets/contact/dmz-scuba.vcf" download>Add to Contacts</a>
+            <a class="btn secondary" href="#upcoming">Upcoming Opportunities</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="nfc-shell" aria-label="DMZ Scuba quick actions">
+      <div class="nfc-action-card nfc-contact-card">
+        <div>
+          <p class="nfc-section-kicker">Save DMZ Scuba</p>
+          <h2>Keep the contact ready.</h2>
+          <p>One tap stores DMZ Scuba on iPhone or Android using a standard contact card.</p>
+        </div>
+        <div class="nfc-contact-actions" aria-label="Add DMZ Scuba contact card">
+          <a class="btn primary" href="/assets/contact/dmz-scuba.vcf" download>Add on iPhone</a>
+          <a class="btn secondary" href="/assets/contact/dmz-scuba.vcf" download>Add on Android</a>
+        </div>
+        <div class="nfc-contact-details">
+          <a href="tel:+16306604536">630-660-4536</a>
+          <a href="mailto:info@dmzscuba.com">info@dmzscuba.com</a>
+          <a href="https://www.dmzscuba.com/">dmzscuba.com</a>
+        </div>
+      </div>
+
+      <div class="nfc-action-card nfc-social-card">
+        <p class="nfc-section-kicker">Follow the waterline</p>
+        <h2>Training, travel, and real dive media.</h2>
+        <div class="nfc-social-list" aria-label="DMZ Scuba social links">
+          <a href="https://www.instagram.com/dmzscuba/" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.facebook.com/dmzscuba/" target="_blank" rel="noopener">Facebook</a>
+          <a href="https://www.youtube.com/@divemasterzach34705" target="_blank" rel="noopener">YouTube</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="nfc-opportunities" id="upcoming" aria-labelledby="nfc-opportunities-title">
+      <div class="nfc-opportunities-head">
+        <div>
+          <p class="nfc-section-kicker">Upcoming Opportunities</p>
+          <h2 id="nfc-opportunities-title">This month at DMZ Scuba.</h2>
+          <p>Classes, local dive days, travel briefings, and openings that are currently on the calendar.</p>
+        </div>
+        <a class="btn secondary" href="/pages/events/">Full Calendar</a>
+      </div>
+
+      <div class="nfc-calendar-panel" data-nfc-events data-events-src="/api/v2/events" data-events-fallback-src="/assets/data/events.json">
+        <div class="nfc-calendar-header">
+          <span data-nfc-events-month>Loading month</span>
+          <span data-nfc-events-count></span>
+        </div>
+        <div class="nfc-event-list" data-nfc-events-list aria-live="polite"></div>
+        <p class="nfc-event-empty" data-nfc-events-empty hidden>No public events are posted for this month yet. Reach out and we will help build the right next step.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; DMZ Scuba &middot; Est. 2026 &middot; Always Dive</p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/nfc.js"></script>
+</body>
+</html>

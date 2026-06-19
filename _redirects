@@ -4,3 +4,5 @@ http://dmzscuba.com/* https://www.dmzscuba.com/:splat 301
 /management /management/index.html 200
 /management/ /management/index.html 200
 /training /pages/training/index.html 200
+/nfc /pages/nfc/index.html 200
+/nfc/ /pages/nfc/index.html 200
