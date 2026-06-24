@@ -920,6 +920,26 @@
   color: var(--muted);
 }
 
+.hero-proof-list{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-proof-list li{
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.26);
+  color: rgba(234,242,255,0.88);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.25;
+  padding: 8px 10px;
+}
+
 .schedule-note{
   margin: 6px 0 0;
   display: inline-flex;
@@ -974,6 +994,100 @@
   height: auto;
   max-height: 220px;
   object-fit: contain;
+}
+
+.conversion-panel{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin: 0 0 28px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(226,27,35,0.18) 0%, rgba(85,185,255,0.10) 52%, rgba(255,255,255,0.04) 100%),
+    rgba(0,0,0,0.22);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.38);
+}
+
+.conversion-panel h2{
+  margin: 0 0 8px;
+  font-size: clamp(21px, 2.4vw, 30px);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.conversion-panel p{
+  margin: 0;
+  max-width: 70ch;
+  color: rgba(234,242,255,0.78);
+}
+
+.conversion-eyebrow{
+  margin: 0 0 6px;
+  color: rgba(85,185,255,0.95);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.conversion-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.conversion-metrics{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.conversion-metrics span{
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  color: rgba(234,242,255,0.86);
+  padding: 9px 10px;
+}
+
+.conversion-metrics strong{
+  color: #fff;
+}
+
+.section-head-compact{
+  margin-bottom: 14px;
+}
+
+.section-head-compact h2{
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(21px, 2.4vw, 30px);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+@media (max-width: 780px){
+  .hero-proof-list{
+    display: grid;
+  }
+
+  .conversion-panel{
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .conversion-actions{
+    justify-content: stretch;
+  }
+
+  .conversion-actions .btn{
+    width: 100%;
+  }
 }
 
 .stat-grid{ display: grid; gap: 12px; }
