@@ -5,7 +5,7 @@ Use this checklist for every dev and live promotion cycle.
 ## 1) Dev Change and Validate (`dmzscuba-com`)
 
 1. Confirm workspace and branch:
-   - `H:/dmz-scuba site`
+   - `Y:/980 Evo/dmz-scuba site`
    - `git status --short --branch` should show `main`
 2. Implement scoped change.
 3. Run targeted checks:
@@ -26,13 +26,13 @@ Use this checklist for every dev and live promotion cycle.
 
 1. Confirm user explicitly approved promotion to live.
 2. Identify approved commit(s) in dev repo:
-   - `git -C "H:/dmz-scuba site" log --oneline --max-count=10`
+   - `git -C "Y:/980 Evo/dmz-scuba site" log --oneline --max-count=10`
 3. Confirm live workspace clean:
-   - `git -C "H:/dmz-scuba-live" status --short --branch`
+   - `git -C "Y:/980 Evo/dmz-scuba-live" status --short --branch`
 4. Cherry-pick approved commit(s) into live repo only.
 5. Verify changed file(s) in live workspace.
 6. Push live repo `main`:
-   - `git -C "H:/dmz-scuba-live" push origin main`
+   - `git -C "Y:/980 Evo/dmz-scuba-live" push origin main`
 7. Confirm Cloudflare `dmzscuba-live` deploy is green (Production).
 8. Run smoke checks against deployed live project:
    - `Smoke Check.bat https://dmzscuba-live.pages.dev`

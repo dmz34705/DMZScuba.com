@@ -578,8 +578,8 @@ Each specialty page follows the same structure: hero image, course overview, ski
 
 | Repo | Local path | GitHub | Cloudflare Pages |
 |---|---|---|---|
-| Dev | `H:\dmz-scuba site` | `dmz34705/DMZScuba.com` | `dmzscuba-com` (`dmzscuba-com.pages.dev`) |
-| Live | `H:\dmz-scuba-live` | `dmz34705/DMZScuba-live` | `dmzscuba-live` → `www.dmzscuba.com` |
+| Dev | `Y:\980 Evo\dmz-scuba site` | `dmz34705/DMZScuba.com` | `dmzscuba-com` (`dmzscuba-com.pages.dev`) |
+| Live | `Y:\980 Evo\dmz-scuba-live` | `dmz34705/DMZScuba-live` | `dmzscuba-live` → `www.dmzscuba.com` |
 
 **Always work in dev.** Live is only touched when Zach explicitly approves promotion of specific commits.
 
@@ -621,8 +621,8 @@ Only when Worker source changed:
 ### Live Promotion
 
 1. Confirm Zach explicitly approved the specific commit(s) for live promotion.
-2. `git -C "H:/dmz-scuba-live" cherry-pick <commit-hash>`
-3. `git -C "H:/dmz-scuba-live" push origin main`
+2. `git -C "Y:/980 Evo/dmz-scuba-live" cherry-pick <commit-hash>`
+3. `git -C "Y:/980 Evo/dmz-scuba-live" push origin main`
 4. Verify Cloudflare `dmzscuba-live` deploy is green.
 5. Run `.\Smoke Check.bat https://dmzscuba-live.pages.dev`
 
@@ -658,7 +658,7 @@ The `/api/*` proxy (200 status) is backed by the Pages Function at `functions/ap
 ## Repo and Deployment Structure
 
 ```
-H:\dmz-scuba site\
+Y:\980 Evo\dmz-scuba site\
 ├── index.html                         Home page
 ├── management\index.html              Admin console (noindex)
 ├── quiz\index.html                    Quiz standalone page
@@ -707,7 +707,7 @@ H:\dmz-scuba site\
 
 ### Hard Rules
 
-- **Default to dev.** `H:\dmz-scuba site` only. Never touch `H:\dmz-scuba-live` without explicit instruction.
+- **Default to dev.** `Y:\980 Evo\dmz-scuba site` only. Never touch `Y:\980 Evo\dmz-scuba-live` without explicit instruction.
 - **Preserve local changes.** Never `git reset --hard`, `git checkout --`, or `git restore` without explicit instruction.
 - **Validate JS before committing.** `node --check js\<file>` on any changed `.js` file.
 - **Run `git diff --check`.** Trailing whitespace errors will block a clean commit history.
