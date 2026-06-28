@@ -1071,6 +1071,55 @@
   text-transform: uppercase;
 }
 
+.ad-decision{
+  margin-top: 0;
+}
+
+.ad-decision-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.ad-decision-card{
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.025) 100%),
+    rgba(0,0,0,0.16);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.34);
+}
+
+.ad-decision-card h3{
+  margin: 0 0 8px;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
+.ad-decision-card p{
+  margin: 0;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+
+.ad-decision-card .btn{
+  margin-top: auto;
+  transform: translateY(12px);
+}
+
+.ad-decision-note{
+  margin: 14px 0 0;
+}
+
+.training-mobile-sticky-cta{
+  display: none;
+}
+
 @media (max-width: 780px){
   .hero-proof-list{
     display: grid;
@@ -1087,6 +1136,104 @@
 
   .conversion-actions .btn{
     width: 100%;
+  }
+
+  .ad-decision-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .ad-decision-card{
+    min-height: 0;
+  }
+
+  .ad-decision-card .btn{
+    width: 100%;
+  }
+
+  .training-mobile-sticky-cta{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 60;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    background: rgba(5,11,20,0.92);
+    box-shadow: 0 16px 34px rgba(0,0,0,0.55);
+  }
+
+  .training-mobile-sticky-cta.is-hidden{
+    display: none;
+  }
+
+  .training-mobile-sticky-cta .mobile-sticky-cta-link{
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .training-mobile-sticky-cta .mobile-sticky-close{
+    min-height: 46px;
+    padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    color: rgba(234,242,255,0.88);
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 560px){
+  .training-landing-page{
+    overflow-x: hidden;
+    padding-bottom: 84px;
+  }
+
+  .training-landing-page .nav-container{
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .training-landing-page .logo img{
+    width: 56px;
+    height: 56px;
+  }
+
+  .training-landing-page .main-nav{
+    max-width: calc(100% - 82px);
+    gap: 4px 6px;
+  }
+
+  .training-landing-page .main-nav a{
+    padding: 7px 8px;
+    font-size: 13px;
+  }
+
+  .training-landing-page .main-nav .nav-cta{
+    display: none;
+  }
+
+  .training-landing-page .conversion-panel h2,
+  .training-landing-page .section-head-compact h2,
+  .training-landing-page .page-hero-copy h1{
+    overflow-wrap: anywhere;
+  }
+
+  .training-landing-page .page-hero-actions .btn,
+  .training-landing-page .ad-decision-card .btn{
+    justify-content: center;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .training-landing-page .page-hero-card.training-hero-logo{
+    justify-self: center;
+    max-width: 220px;
   }
 }
 

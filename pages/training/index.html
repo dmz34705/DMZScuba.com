@@ -17,7 +17,7 @@
 
 </head>
 
-<body>
+<body class="training-landing-page">
   <div class="page">
   <header class="site-header" data-site-nav></header>
 
@@ -31,6 +31,7 @@
       <ul class="hero-proof-list" aria-label="Training highlights">
         <li>Open Water starts at $1099 per diver</li>
         <li>Flexible payment plans available</li>
+        <li>No payment collected on class requests</li>
         <li>Private and small-group options</li>
         <li>House-call instruction available</li>
         <li>SDI certification accepted worldwide</li>
@@ -52,13 +53,38 @@
   <section class="conversion-panel" aria-labelledby="training-start-title">
     <div>
       <p class="conversion-eyebrow">Start here</p>
-      <h2 id="training-start-title">Tell us what you want to do. We will map the class, dates, and next step.</h2>
-        <p>Most students do not need to guess which form, agency, schedule, or payment path to choose. Pick the closest course below or send the class request and we will recommend the right path.</p>
+      <h2 id="training-start-title">Not sure what to book yet? Start with a class request.</h2>
+        <p>Most students do not need to guess which course, schedule, gear path, or payment option fits. Send the basics and we will map the class, dates, and next step before anything is final.</p>
     </div>
     <div class="conversion-actions">
       <a class="btn primary" href="./course-builder/index.html">Start Class Request</a>
       <a class="btn secondary" href="../events/index.html">See Scheduled Classes</a>
     </div>
+  </section>
+
+  <section class="ad-decision content-section" aria-labelledby="ad-decision-title">
+    <div class="section-head section-head-compact">
+      <p class="conversion-eyebrow">For ad visitors</p>
+      <h2 id="ad-decision-title">Choose the path that matches why you clicked.</h2>
+    </div>
+    <div class="ad-decision-grid">
+      <article class="ad-decision-card">
+        <h3>I want to get certified</h3>
+        <p>Start with Open Water if you are new, planning travel, or need the certification most dive operators ask for.</p>
+        <a class="btn primary" href="./course-builder/index.html?course=sdi-open-water">Request Open Water Dates</a>
+      </article>
+      <article class="ad-decision-card">
+        <h3>I am interested but unsure</h3>
+        <p>Tell us your schedule, budget concerns, comfort level, and goals. We will recommend the right first step.</p>
+        <a class="btn secondary" href="./course-builder/index.html">Help Me Choose</a>
+      </article>
+      <article class="ad-decision-card">
+        <h3>I am already certified</h3>
+        <p>Refresh before a trip, move into advanced training, or add specialties like Nitrox, dry suit, wreck, or full face mask.</p>
+        <a class="btn secondary" href="./course-builder/index.html?course=sdi-refresher">Plan Continuing Training</a>
+      </article>
+    </div>
+    <p class="muted small ad-decision-note">The request form is not a checkout. It helps us confirm dates, format, price details, deposit options, and logistics before you commit.</p>
   </section>
 
   <section class="sdi-section is-main">
@@ -232,6 +258,10 @@
 
 </main>
 
+  <div class="mobile-sticky-cta training-mobile-sticky-cta" id="mobile-sticky-cta" aria-label="Training quick action" data-dismiss-storage-key="dmz-training-sticky-cta-dismissed">
+    <a href="./course-builder/index.html" class="btn primary mobile-sticky-cta-link">Request Class Dates</a>
+    <button type="button" class="mobile-sticky-close" aria-label="Dismiss training quick action" data-dismiss-target="#mobile-sticky-cta">Close</button>
+  </div>
 
   <footer class="site-footer">
     <small>© <span id="year"></span> DMZ Scuba. All rights reserved.</small>

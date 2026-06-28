@@ -632,9 +632,10 @@ console.log("main.js loaded");
 
     const stickyCta = document.getElementById("mobile-sticky-cta");
     if (stickyCta) {
+      const stickyDismissKey = stickyCta.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
       const dismissed = (() => {
         try {
-          return window.localStorage.getItem("dmz-mobile-sticky-cta-dismissed") === "1";
+          return window.localStorage.getItem(stickyDismissKey) === "1";
         } catch (error) {
           return false;
         }
@@ -653,7 +654,8 @@ console.log("main.js loaded");
       if (!target) return;
       target.classList.add("is-hidden");
       try {
-        window.localStorage.setItem("dmz-mobile-sticky-cta-dismissed", "1");
+        const dismissKey = target.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
+        window.localStorage.setItem(dismissKey, "1");
       } catch (error) {
         // Ignore storage failures and keep dismiss behavior for current view.
       }
