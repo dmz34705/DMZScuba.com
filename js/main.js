@@ -335,7 +335,7 @@ console.log("main.js loaded");
 
     const navLinks = [
       { href: "/", label: "Home" },
-      { href: "/pages/training/", label: "Training" },
+      { href: "/pages/training/", label: "Classes" },
       { href: "/pages/travel/", label: "Travel" },
       { href: "/pages/media/", label: "Media" },
       { href: "/pages/events/", label: "Events" },
