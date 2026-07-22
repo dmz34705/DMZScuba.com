@@ -2455,3 +2455,21 @@ body.events-admin-date-mode #eventsAdminPageDetails {
     padding: 16px;
   }
 }
+.training-landing-page .hero-ready-link {
+  margin: 2px 0 0;
+  color: rgba(234, 242, 255, 0.78);
+  font-size: 14px;
+}
+
+.training-landing-page .hero-ready-link a {
+  color: rgba(234, 242, 255, 0.96);
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.training-landing-page .hero-ready-link a:hover,
+.training-landing-page .hero-ready-link a:focus-visible {
+  color: #fff;
+}
