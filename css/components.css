@@ -1121,6 +1121,10 @@
 }
 
 @media (max-width: 780px){
+  body.has-training-sticky-cta{
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
   .hero-proof-list{
     display: grid;
   }

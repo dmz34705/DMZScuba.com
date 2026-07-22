@@ -178,6 +178,15 @@ console.log("main.js loaded");
       if (!response.ok) {
         throw new Error(`Send failed (${response.status})`);
       }
+      if (form.id === "courseBuilderForm") {
+        form.dataset.telemetryCompleted = "true";
+        sendTelemetry("training_inquiry_completed", {
+          course: String(fields.course || "unspecified"),
+          experience: String(fields.experience || "unspecified"),
+          group: String(fields.group || "unspecified"),
+          sourcePage: new URLSearchParams(window.location.search).get("source_page") || document.referrer || "direct",
+        });
+      }
       showToast("Message sent. We will reply soon.");
       if (submitButton) {
         submitButton.textContent = "Sent!";
@@ -369,6 +378,83 @@ console.log("main.js loaded");
     initSharedNav();
     const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
+    let trainingPath = window.location.pathname.replace(/\/index\.html$/, "/");
+    if (trainingPath.startsWith("/pages/training/") && !trainingPath.endsWith("/") && !/\.[a-z0-9]+$/i.test(trainingPath)) {
+      trainingPath += "/";
+    }
+    const trainingCourseMap = {
+      "/pages/training/": "training-landing",
+      "/pages/training/open-water/": "open-water",
+      "/pages/training/open-water-referral/": "open-water-referral",
+      "/pages/training/discover-scuba/": "scuba-discovery",
+      "/pages/training/advanced-specialty/": "advanced-adventure",
+      "/pages/training/skill-refresh/": "skill-refresh",
+      "/pages/training/specialty/": "specialty-hub",
+      "/pages/training/specialty/nitrox/": "nitrox",
+      "/pages/training/specialty/drysuit/": "dry-suit",
+      "/pages/training/specialty/wreck/": "wreck",
+      "/pages/training/specialty/full-face-mask/": "full-face-mask",
+      "/pages/training/course-builder/": "course-builder",
+    };
+    const trainingCourse = trainingCourseMap[trainingPath] || "";
+    if (trainingCourse) {
+      sendTelemetry("training_course_view", {
+        course: trainingCourse,
+        device: window.matchMedia("(max-width: 780px)").matches ? "mobile" : "desktop",
+        source: params.get("utm_source") || "direct-or-referral",
+        campaign: params.get("utm_campaign") || "",
+      });
+
+      const campaignKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"];
+      document.querySelectorAll('a[href*="/training/"], a[href^="../"], a[href^="./"]').forEach((link) => {
+        let destination;
+        try {
+          destination = new URL(link.href, window.location.href);
+        } catch (error) {
+          return;
+        }
+        if (!destination.pathname.startsWith("/pages/training/")) return;
+        campaignKeys.forEach((key) => {
+          if (params.has(key) && !destination.searchParams.has(key)) {
+            destination.searchParams.set(key, params.get(key));
+          }
+        });
+        if (!destination.searchParams.has("source_page")) {
+          destination.searchParams.set("source_page", trainingPath);
+        }
+        link.href = `${destination.pathname}${destination.search}${destination.hash}`;
+      });
+
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest("a");
+        if (!link) return;
+        const isButton = link.classList.contains("btn");
+        let destination;
+        try {
+          destination = new URL(link.href, window.location.href);
+        } catch (error) {
+          return;
+        }
+        if (!isButton && destination.pathname.startsWith("/pages/training/") && destination.pathname !== trainingPath) {
+          sendTelemetry("training_internal_progression_click", {
+            course: trainingCourse,
+            label: String(link.textContent || "").trim(),
+            destination: destination.pathname,
+          });
+          return;
+        }
+        if (!isButton) return;
+        const isSticky = link.classList.contains("mobile-sticky-cta-link");
+        const section = link.closest("section");
+        sendTelemetry(isSticky ? "training_sticky_cta_click" : "training_cta_click", {
+          course: trainingCourse,
+          label: String(link.textContent || "").trim(),
+          destination: link.getAttribute("href") || "",
+          ctaType: link.classList.contains("primary") ? "primary" : "secondary",
+          placement: section ? section.id || section.className || "section" : "global",
+        });
+      });
+    }
     const hasPrefill = params.has("interest") || params.has("location") || params.has("course");
     if (params.size) {
       const setField = (id, value) => {
@@ -493,6 +579,7 @@ console.log("main.js loaded");
 
     const courseBuilderForm = document.getElementById("courseBuilderForm");
     if (courseBuilderForm) {
+      let trainingFormStarted = false;
       const requiredFields = courseBuilderForm.querySelectorAll("input[required], select[required], textarea[required]");
 
       const updateFieldState = (field) => {
@@ -509,6 +596,13 @@ console.log("main.js loaded");
       requiredFields.forEach((field) => updateFieldState(field));
 
       courseBuilderForm.addEventListener("input", (e) => {
+        if (!trainingFormStarted) {
+          trainingFormStarted = true;
+          sendTelemetry("training_inquiry_form_start", {
+            course: String((document.getElementById("cb-course") || {}).value || "unspecified"),
+            sourcePage: params.get("source_page") || document.referrer || "direct",
+          });
+        }
         const field = e.target;
         if (field && field.matches("input[required], select[required], textarea[required]")) {
           updateFieldState(field);
@@ -520,6 +614,14 @@ console.log("main.js loaded");
         if (field && field.matches("input[required], select[required], textarea[required]")) {
           updateFieldState(field);
         }
+      });
+
+      window.addEventListener("pagehide", () => {
+        if (!trainingFormStarted || courseBuilderForm.dataset.telemetryCompleted === "true") return;
+        sendTelemetry("training_inquiry_form_abandoned", {
+          course: String((document.getElementById("cb-course") || {}).value || "unspecified"),
+          sourcePage: params.get("source_page") || document.referrer || "direct",
+        });
       });
     }
 
@@ -632,6 +734,7 @@ console.log("main.js loaded");
 
     const stickyCta = document.getElementById("mobile-sticky-cta");
     if (stickyCta) {
+      document.body.classList.add("has-training-sticky-cta");
       const stickyDismissKey = stickyCta.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
       const dismissed = (() => {
         try {
@@ -653,6 +756,11 @@ console.log("main.js loaded");
       const target = document.querySelector(targetSelector);
       if (!target) return;
       target.classList.add("is-hidden");
+      if (target.classList.contains("mobile-sticky-cta")) {
+        sendTelemetry("training_sticky_cta_dismiss", {
+          course: trainingCourse || "training",
+        });
+      }
       try {
         const dismissKey = target.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
         window.localStorage.setItem(dismissKey, "1");

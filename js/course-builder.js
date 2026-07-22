@@ -33,6 +33,12 @@
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (window.DMZTelemetry && typeof window.DMZTelemetry.report === "function") {
+      window.DMZTelemetry.report("training_inquiry_submit_attempt", {
+        course: String((courseInput && courseInput.value) || "unspecified"),
+        sourcePage: new URLSearchParams(window.location.search).get("source_page") || document.referrer || "direct",
+      });
+    }
     if (window.DMZForms && typeof window.DMZForms.submit === "function") {
       const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
       window.DMZForms.submit(form, { requireEmail: true, redirectUrl: thanksUrl });
