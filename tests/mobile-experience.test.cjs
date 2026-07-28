@@ -9,6 +9,8 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 test("shared navigation includes the accessible mobile drawer controls", () => {
   const source = read("js/main.js");
   assert.match(source, /class="nav-menu-toggle"/);
+  assert.match(source, /class="site-brand"/);
+  assert.match(source, /class="site-name">DMZ Scuba/);
   assert.match(source, /aria-controls="mobile-navigation"/);
   assert.match(source, /class="nav-menu-close"/);
   assert.match(source, /class="nav-backdrop"/);
@@ -28,6 +30,7 @@ test("mobile CSS keeps the header compact and form controls touch friendly", () 
   const source = read("css/responsive.css");
   const components = read("css/components.css");
   assert.match(source, /\.site-header[\s\S]*min-height:\s*64px/);
+  assert.match(components, /@media \(max-width: 780px\)[\s\S]*\.site-name\{[\s\S]*display:\s*block/);
   assert.match(source, /\.nav-drawer-links[\s\S]*visibility:\s*visible/);
   assert.match(components, /\.mobile-nav-layer\{[\s\S]*position:\s*fixed[\s\S]*min-height:\s*100dvh/);
   assert.match(components, /\.mobile-nav-drawer\{[\s\S]*position:\s*absolute[\s\S]*max-height:\s*100dvh/);

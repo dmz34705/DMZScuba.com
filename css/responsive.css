@@ -67,6 +67,10 @@
 @media (max-width: 560px){
   .nav-container{ padding: 6px 12px; }
 
+  .mobile-nav-quick-cta{
+    display: none;
+  }
+
   .page-hero.page-hero-open-water{
     background-size: cover;
     background-position: 28% 22%;
@@ -965,8 +969,8 @@
 }
 
 @media (max-width: 420px){
-  .mobile-nav-quick-cta{
-    display: none;
+  .site-name{
+    font-size: 16px;
   }
 
   .page-hero{

@@ -362,9 +362,10 @@ console.log("main.js loaded");
 
     const navHtml =
       `<div class="nav-container">` +
-      `<a class="logo" href="/" aria-label="DMZ Scuba Home">` +
-      `<img src="/assets/images/logos/dmz-scuba-logo-mobile.webp" alt="DMZ Scuba logo" width="56" height="56" /></a>` +
-      `<div class="site-name">DMZ Scuba</div>` +
+      `<a class="site-brand" href="/" aria-label="DMZ Scuba Home">` +
+      `<span class="logo" aria-hidden="true">` +
+      `<img src="/assets/images/logos/dmz-scuba-logo-mobile.webp" alt="" width="56" height="56" /></span>` +
+      `<span class="site-name">DMZ Scuba</span></a>` +
       `<div class="mobile-nav-actions">` +
       `<a class="mobile-nav-quick-cta" href="/pages/contact/?interest=training#dive-now">Dive Now</a>` +
       `<button class="nav-menu-toggle" type="button" aria-controls="mobile-navigation" aria-expanded="false" aria-label="Open menu">` +
