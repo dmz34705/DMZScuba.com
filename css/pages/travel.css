@@ -14,10 +14,6 @@ body.travel-page .page {
 }
 
 
-body.travel-page .site-header {
-  z-index: 60;
-}
-
 body.travel-page .dest-publish-banner {
   z-index: 55;
 }

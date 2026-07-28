@@ -968,6 +968,112 @@
   }
 }
 
+/* One mobile header contract for every public site shell.
+   Keep this after all page-level mobile rules. */
+@media (max-width: 780px){
+  html{
+    --mobile-site-header-height: 64px;
+  }
+
+  .site-header[data-site-nav]{
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 70 !important;
+    width: 100% !important;
+    min-height: var(--mobile-site-header-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    background: rgba(5,11,20,0.88) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+
+  .site-header[data-site-nav] > .nav-container{
+    width: 100% !important;
+    max-width: var(--max) !important;
+    min-height: var(--mobile-site-header-height) !important;
+    height: var(--mobile-site-header-height) !important;
+    margin: 0 auto !important;
+    padding: 6px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 9px !important;
+  }
+
+  .site-header[data-site-nav] .site-brand{
+    min-width: 0 !important;
+    max-width: calc(100% - 58px);
+    display: inline-flex !important;
+    flex: 0 1 auto !important;
+    align-items: center !important;
+    gap: 9px !important;
+  }
+
+  .site-header[data-site-nav] .logo{
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 3px 6px !important;
+  }
+
+  .site-header[data-site-nav] .logo img{
+    display: block !important;
+    width: 48px !important;
+    height: 48px !important;
+    max-width: 48px !important;
+    margin: 0 !important;
+    object-fit: contain !important;
+  }
+
+  .site-header[data-site-nav] .site-name{
+    display: block !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: rgba(234,242,255,0.94) !important;
+    font-size: clamp(16px, 4.1vw, 19px) !important;
+    line-height: 1 !important;
+    letter-spacing: 0.045em !important;
+    white-space: nowrap !important;
+  }
+
+  .site-header[data-site-nav] .desktop-primary-nav{
+    display: none !important;
+  }
+
+  .site-header[data-site-nav] .mobile-nav-actions{
+    display: flex !important;
+    min-width: 46px !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    margin: 0 0 0 auto !important;
+  }
+
+  .site-header[data-site-nav] .nav-menu-toggle{
+    display: inline-grid !important;
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .media-page .media-controls,
+  .toc{
+    top: var(--mobile-site-header-height);
+  }
+}
+
 @media (max-width: 420px){
   .site-name{
     font-size: 16px;

@@ -391,7 +391,20 @@ console.log("main.js loaded");
       `</div>`;
 
     headers.forEach((header) => {
+      header.className = "site-header";
+      header.removeAttribute("style");
+      header.dataset.siteHeader = "unified";
       header.innerHTML = navHtml;
+
+      if (header.parentElement !== document.body) {
+        let pageRoot = header.parentElement;
+        while (pageRoot?.parentElement && pageRoot.parentElement !== document.body) {
+          pageRoot = pageRoot.parentElement;
+        }
+        if (pageRoot?.parentElement === document.body) {
+          document.body.insertBefore(header, pageRoot);
+        }
+      }
     });
 
     document.getElementById("mobile-nav-layer")?.remove();

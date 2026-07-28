@@ -48,6 +48,61 @@ test("mobile sticky actions stay inside narrow viewports", () => {
   assert.match(source, /overflow:\s*hidden/);
 });
 
+test("public pages use one isolated mobile header contract", () => {
+  const main = read("js/main.js");
+  const responsive = read("css/responsive.css");
+  const legacy = read("css/main.css");
+  const media = read("css/pages/media.css");
+  const travel = read("css/pages/travel.css");
+
+  assert.match(main, /header\.dataset\.siteHeader = "unified"/);
+  assert.match(main, /document\.body\.insertBefore\(header, pageRoot\)/);
+  assert.match(responsive, /One mobile header contract for every public site shell/);
+  assert.match(responsive, /\.site-header\[data-site-nav\][\s\S]*position:\s*sticky !important/);
+  assert.match(responsive, /--mobile-site-header-height:\s*64px/);
+  assert.doesNotMatch(legacy, /\.site-header\s*\{/);
+  assert.doesNotMatch(legacy, /\.main-nav\s*\{/);
+  assert.doesNotMatch(media, /media-page \.site-header/);
+  assert.doesNotMatch(travel, /travel-page \.site-header/);
+});
+
+test("every public shell page loads the unified navigation assets", () => {
+  const shellPages = [
+    "index.html",
+    "pages/about/index.html",
+    "pages/contact/index.html",
+    "pages/events/event.html",
+    "pages/events/index.html",
+    "pages/media/index.html",
+    "pages/nfc/index.html",
+    "pages/privacy/index.html",
+    "pages/thanks/index.html",
+    "pages/training/advanced-specialty/index.html",
+    "pages/training/course-builder/index.html",
+    "pages/training/discover-scuba/index.html",
+    "pages/training/index.html",
+    "pages/training/interactive-tools/index.html",
+    "pages/training/open-water-referral/index.html",
+    "pages/training/open-water/index.html",
+    "pages/training/skill-refresh/index.html",
+    "pages/training/specialty/drysuit/index.html",
+    "pages/training/specialty/full-face-mask/index.html",
+    "pages/training/specialty/index.html",
+    "pages/training/specialty/nitrox/index.html",
+    "pages/training/specialty/wreck/index.html",
+    "pages/travel/destination.html",
+    "pages/travel/index.html",
+  ];
+
+  shellPages.forEach((relativePath) => {
+    const source = read(relativePath);
+    assert.match(source, /<header class="site-header" data-site-nav>/, `${relativePath} needs the shared header`);
+    assert.match(source, /css\/components\.css/, `${relativePath} needs shared components`);
+    assert.match(source, /css\/responsive\.css/, `${relativePath} needs the mobile contract`);
+    assert.match(source, /js\/main\.js/, `${relativePath} needs shared navigation behavior`);
+  });
+});
+
 test("key mobile journeys include contextual sticky actions", () => {
   const pages = [
     "index.html",
@@ -87,8 +142,11 @@ test("optimized mobile hero and logo assets referenced by the site exist", () =>
 test("edited stylesheets have balanced blocks", () => {
   const stylesheets = [
     "css/components.css",
+    "css/main.css",
     "css/pages/contact.css",
     "css/pages/home.css",
+    "css/pages/media.css",
+    "css/pages/travel.css",
     "css/responsive.css",
   ];
   stylesheets.forEach((relativePath) => {
