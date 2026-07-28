@@ -1346,19 +1346,24 @@ body.quiz-open{
 
   .mobile-sticky-cta{
     position: fixed;
-    left: 12px;
-    right: 12px;
+    left: 50%;
+    right: auto;
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     z-index: 60;
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
+    width: calc(100% - 32px);
+    max-width: 460px;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 6px;
     align-items: center;
-    padding: 8px;
-    border-radius: 14px;
+    padding: 6px;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.14);
     background: rgba(5,11,20,0.92);
     box-shadow: 0 16px 34px rgba(0,0,0,0.55);
+    transform: translateX(-50%);
   }
 
   .mobile-sticky-cta.is-hidden,
@@ -1367,13 +1372,17 @@ body.quiz-open{
   }
 
   .mobile-sticky-cta-link{
-    width: 100%;
-    min-height: 46px;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
   }
 
   .mobile-sticky-close{
-    min-height: 46px;
-    padding: 0 12px;
+    width: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.16);
     background: rgba(255,255,255,0.04);

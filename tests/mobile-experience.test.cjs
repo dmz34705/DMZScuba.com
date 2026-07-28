@@ -12,16 +12,30 @@ test("shared navigation includes the accessible mobile drawer controls", () => {
   assert.match(source, /aria-controls="primary-navigation"/);
   assert.match(source, /class="nav-menu-close"/);
   assert.match(source, /class="nav-backdrop"/);
+  assert.match(source, /class="nav-links nav-drawer-links"/);
+  ["Home", "Classes", "Travel", "Media", "Events", "Contact", "About"].forEach((label) => {
+    assert.match(source, new RegExp(`label: "${label}"`));
+  });
   assert.match(source, /body\.classList\.toggle\("mobile-nav-open"/);
+  assert.match(source, /drawer\.inert = true/);
   assert.match(source, /event\.key === "Escape"/);
 });
 
 test("mobile CSS keeps the header compact and form controls touch friendly", () => {
   const source = read("css/responsive.css");
   assert.match(source, /\.site-header[\s\S]*min-height:\s*64px/);
+  assert.match(source, /\.nav-drawer-links[\s\S]*visibility:\s*visible/);
   assert.match(source, /input:not\([\s\S]*font-size:\s*16px !important/);
-  assert.match(source, /\.page-hero[\s\S]*padding:\s*26px 14px 20px/);
+  assert.match(source, /\.page-hero[\s\S]*padding:\s*28px 18px 24px/);
   assert.match(source, /prefers-reduced-motion:\s*reduce/);
+});
+
+test("mobile sticky actions stay inside narrow viewports", () => {
+  const source = read("css/responsive.css");
+  assert.match(source, /width:\s*calc\(100% - 32px\)/);
+  assert.match(source, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*42px/);
+  assert.match(source, /transform:\s*translateX\(-50%\)/);
+  assert.match(source, /overflow:\s*hidden/);
 });
 
 test("key mobile journeys include contextual sticky actions", () => {

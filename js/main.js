@@ -373,7 +373,7 @@ console.log("main.js loaded");
       `<nav class="main-nav" id="primary-navigation" aria-label="Primary">` +
       `<div class="nav-drawer-head"><span>Explore DMZ Scuba</span>` +
       `<button class="nav-menu-close" type="button" aria-label="Close menu"><span aria-hidden="true">&times;</span></button></div>` +
-      `<div class="nav-links">${linksHtml}</div>` +
+      `<div class="nav-links nav-drawer-links">${linksHtml}</div>` +
       `<div class="nav-drawer-actions">` +
       `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
       `<a href="tel:+16306604536">Call 630-660-4536</a>` +
@@ -401,14 +401,19 @@ console.log("main.js loaded");
       document.body.classList.toggle("mobile-nav-open", isOpen);
       toggle.setAttribute("aria-expanded", String(isOpen));
       toggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
-      drawer.setAttribute("aria-hidden", String(!isOpen));
 
       if (isOpen) {
+        drawer.removeAttribute("aria-hidden");
+        drawer.inert = false;
         restoreFocus = document.activeElement;
         window.requestAnimationFrame(() => closeButton.focus());
-      } else if (restoreFocus && typeof restoreFocus.focus === "function") {
-        restoreFocus.focus();
-        restoreFocus = null;
+      } else {
+        drawer.setAttribute("aria-hidden", "true");
+        drawer.inert = true;
+        if (restoreFocus && typeof restoreFocus.focus === "function") {
+          restoreFocus.focus();
+          restoreFocus = null;
+        }
       }
     };
 
@@ -460,8 +465,13 @@ console.log("main.js loaded");
         document.body.classList.remove("mobile-nav-open");
         toggle.setAttribute("aria-expanded", "false");
         drawer.removeAttribute("aria-hidden");
+        drawer.inert = false;
       } else if (!header.classList.contains("nav-is-open")) {
         drawer.setAttribute("aria-hidden", "true");
+        drawer.inert = true;
+      } else {
+        drawer.removeAttribute("aria-hidden");
+        drawer.inert = false;
       }
     };
     mobileQuery.addEventListener?.("change", syncMode);
