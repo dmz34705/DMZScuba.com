@@ -10,13 +10,13 @@
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://www.dmzscuba.com/pages/events/" />
   <link rel="stylesheet" href="/css/base.css" />
-  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260728m" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260728m" />
 </head>
 
-<body>
+<body class="events-page">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
@@ -33,7 +33,7 @@
           </div>
         </div>
         <div class="page-hero-card training-hero-logo">
-          <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
+          <img src="../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512" />
         </div>
       </div>
     </section>
@@ -435,6 +435,11 @@
           <a class="btn secondary" href="../training/index.html">See Training Paths</a>
         </div>
       </section>
+
+      <div class="mobile-sticky-cta site-mobile-sticky-cta" id="mobile-sticky-cta" aria-label="Event planning quick action" data-dismiss-storage-key="dmz-events-sticky-dismissed">
+        <a href="../contact/index.html#dive-now" class="btn primary mobile-sticky-cta-link">Ask About a Date</a>
+        <button type="button" class="mobile-sticky-close" aria-label="Dismiss event planning action" data-dismiss-target="#mobile-sticky-cta">Close</button>
+      </div>
     </main>
 
     <footer class="site-footer events-footer">
@@ -443,7 +448,7 @@
     </footer>
   </div>
 
-  <script src="/js/main.js?v=20260406a"></script>
+  <script src="/js/main.js?v=20260728m"></script>
   <script src="/js/events.js?v=20260508b"></script>
   <script src="/js/events-admin.js?v=20260406a"></script>
 </body>

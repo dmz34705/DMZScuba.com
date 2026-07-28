@@ -12,10 +12,10 @@
   <link rel="canonical" href="https://www.dmzscuba.com/pages/media/" />
   <!-- Site-wide CSS -->
   <link rel="stylesheet" href="/css/base.css" />
-  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260728m" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/pages/media.css?v=1.0" />
-  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/responsive.css?v=20260728m">
 </head>
 
 <body id="top" class="media-page">
@@ -41,7 +41,7 @@
         </div>
 
         <div class="page-hero-card media-hero-card media-hero-logo">
-          <img src="../../assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo">
+          <img src="../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
         </div>
       </div>
 
@@ -209,6 +209,11 @@
       ↑
     </button>
 
+    <div class="mobile-sticky-cta site-mobile-sticky-cta" id="mobile-sticky-cta" aria-label="Start diving quick action" data-dismiss-storage-key="dmz-media-sticky-dismissed">
+      <a href="../contact/index.html?interest=training#dive-now" class="btn primary mobile-sticky-cta-link">Start Diving</a>
+      <button type="button" class="mobile-sticky-close" aria-label="Dismiss start diving action" data-dismiss-target="#mobile-sticky-cta">Close</button>
+    </div>
+
     <footer class="site-footer media-footer">
       <span>&copy; 2026 DMZ Scuba. All rights reserved.</span>
       <button class="media-login-button" type="button" style="display:none">Re-auth</button>
@@ -216,10 +221,9 @@
   </main>
 
   <!-- Site-wide JS -->
-  <script src="../../js/main.js?v=1.1" defer></script>
+  <script src="../../js/main.js?v=20260728m" defer></script>
   <script src="../../js/media.js?v=1.7" defer></script>
-  <script src="https://unpkg.com/tus-js-client@latest/dist/tus.js" defer></script>
-  <script src="../../js/media-edit.js?v=1.1" defer></script>
+  <script src="../../js/media-edit.js?v=20260728m" defer></script>
   <script>
     (() => {
       const backToTop = document.querySelector(".back-to-top");

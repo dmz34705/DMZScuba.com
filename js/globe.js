@@ -1919,6 +1919,24 @@
   initDestinations().then(() => {
     initSearchWiring();
     initHomeButton();
-    animate();
+    const globeWrap = document.getElementById("globeWrap");
+    let globeStarted = false;
+    const startGlobe = () => {
+      if (globeStarted) return;
+      globeStarted = true;
+      animate();
+    };
+
+    if (!globeWrap || !("IntersectionObserver" in window)) {
+      startGlobe();
+      return;
+    }
+
+    const globeObserver = new IntersectionObserver((entries, observer) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect();
+      startGlobe();
+    }, { rootMargin: "320px 0px" });
+    globeObserver.observe(globeWrap);
   });
 })();

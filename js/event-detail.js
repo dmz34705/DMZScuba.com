@@ -19,7 +19,7 @@
   const metaTimeEl = document.getElementById("eventDetailMetaTime");
   const metaLocationEl = document.getElementById("eventDetailMetaLocation");
   const summaryEl = document.getElementById("eventDetailSummary");
-  const primaryLinkEl = document.getElementById("eventDetailPrimaryLink");
+  const primaryLinkEls = document.querySelectorAll("[data-event-primary-link]");
   const backLinks = document.querySelectorAll("[data-event-back-link]");
   const errorEl = document.getElementById("eventDetailError");
 
@@ -342,17 +342,21 @@
     setList(whatToExpectEl, (definition && definition.whatToExpect) || extra.whatToExpect);
     setList(includedEl, (definition && definition.included) || extra.included);
 
-    if (primaryLinkEl) {
-      primaryLinkEl.textContent =
+    if (primaryLinkEls.length) {
+      const primaryLabel =
         (definition && definition.primaryCtaLabel) ||
         extra.primaryCtaLabel ||
         (instance && instance.ctaLabel) ||
         "Contact DMZ";
-      primaryLinkEl.href =
+      const primaryHref =
         (definition && definition.primaryCtaHref) ||
         extra.primaryCtaHref ||
         (instance && instance.ctaHref) ||
         "/pages/contact/index.html#dive-now";
+      primaryLinkEls.forEach((link) => {
+        link.textContent = primaryLabel;
+        link.href = primaryHref;
+      });
     }
 
     backLinks.forEach((link) => {

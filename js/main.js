@@ -363,10 +363,21 @@ console.log("main.js loaded");
     const navHtml =
       `<div class="nav-container">` +
       `<a class="logo" href="/" aria-label="DMZ Scuba Home">` +
-      `<img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" /></a>` +
+      `<img src="/assets/images/logos/dmz-scuba-logo-mobile.webp" alt="DMZ Scuba logo" width="56" height="56" /></a>` +
       `<div class="site-name">DMZ Scuba</div>` +
-      `<nav class="main-nav" aria-label="Primary">${linksHtml}` +
-      `<a class="nav-cta" href="/pages/contact/#dive-now">Dive Now</a></nav>` +
+      `<div class="mobile-nav-actions">` +
+      `<a class="mobile-nav-quick-cta" href="/pages/contact/?interest=training#dive-now">Dive Now</a>` +
+      `<button class="nav-menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu">` +
+      `<span></span><span></span><span></span></button></div>` +
+      `<button class="nav-backdrop" type="button" tabindex="-1" aria-hidden="true" aria-label="Close menu"></button>` +
+      `<nav class="main-nav" id="primary-navigation" aria-label="Primary">` +
+      `<div class="nav-drawer-head"><span>Explore DMZ Scuba</span>` +
+      `<button class="nav-menu-close" type="button" aria-label="Close menu"><span aria-hidden="true">&times;</span></button></div>` +
+      `<div class="nav-links">${linksHtml}</div>` +
+      `<div class="nav-drawer-actions">` +
+      `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
+      `<a href="tel:+16306604536">Call 630-660-4536</a>` +
+      `<a href="sms:+16306604536">Text DMZ Scuba</a></div></nav>` +
       `</div>`;
 
     headers.forEach((header) => {
@@ -374,8 +385,206 @@ console.log("main.js loaded");
     });
   }
 
+  function initMobileNav() {
+    const header = document.querySelector(".site-header");
+    const drawer = document.getElementById("primary-navigation");
+    const toggle = document.querySelector(".nav-menu-toggle");
+    const closeButton = document.querySelector(".nav-menu-close");
+    const backdrop = document.querySelector(".nav-backdrop");
+    if (!header || !drawer || !toggle || !closeButton || !backdrop) return;
+
+    const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    let restoreFocus = null;
+
+    const setOpen = (isOpen) => {
+      header.classList.toggle("nav-is-open", isOpen);
+      document.body.classList.toggle("mobile-nav-open", isOpen);
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
+      drawer.setAttribute("aria-hidden", String(!isOpen));
+
+      if (isOpen) {
+        restoreFocus = document.activeElement;
+        window.requestAnimationFrame(() => closeButton.focus());
+      } else if (restoreFocus && typeof restoreFocus.focus === "function") {
+        restoreFocus.focus();
+        restoreFocus = null;
+      }
+    };
+
+    toggle.addEventListener("click", () => {
+      setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+    closeButton.addEventListener("click", () => setOpen(false));
+    backdrop.addEventListener("click", () => setOpen(false));
+    drawer.addEventListener("click", (event) => {
+      if (event.target.closest("a")) setOpen(false);
+    });
+
+    let drawerTouchStartX = null;
+    drawer.addEventListener("touchstart", (event) => {
+      drawerTouchStartX = event.touches[0]?.clientX ?? null;
+    }, { passive: true });
+    drawer.addEventListener("touchend", (event) => {
+      if (drawerTouchStartX == null) return;
+      const endX = event.changedTouches[0]?.clientX ?? drawerTouchStartX;
+      if (endX - drawerTouchStartX > 64) setOpen(false);
+      drawerTouchStartX = null;
+    }, { passive: true });
+
+    document.addEventListener("keydown", (event) => {
+      if (!header.classList.contains("nav-is-open")) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = [...drawer.querySelectorAll(focusableSelector)].filter((element) => !element.hidden);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    const mobileQuery = window.matchMedia("(max-width: 780px)");
+    const syncMode = () => {
+      if (!mobileQuery.matches) {
+        header.classList.remove("nav-is-open");
+        document.body.classList.remove("mobile-nav-open");
+        toggle.setAttribute("aria-expanded", "false");
+        drawer.removeAttribute("aria-hidden");
+      } else if (!header.classList.contains("nav-is-open")) {
+        drawer.setAttribute("aria-hidden", "true");
+      }
+    };
+    mobileQuery.addEventListener?.("change", syncMode);
+    syncMode();
+  }
+
+  function buildMobileSectionToggle(label, controlsId, expanded) {
+    const toggle = document.createElement("button");
+    toggle.className = "mobile-section-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.setAttribute("aria-controls", controlsId);
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = label;
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "mobile-section-toggle-icon";
+    iconSpan.setAttribute("aria-hidden", "true");
+    toggle.appendChild(labelSpan);
+    toggle.appendChild(iconSpan);
+    return toggle;
+  }
+
+  function initMobileTrainingStructure(trainingCourse) {
+    if (!trainingCourse) return;
+    const hero = document.querySelector(".page-hero-copy");
+    const firstMetrics = document.querySelector(".page-main .conversion-metrics");
+    const heroActions = hero?.querySelector(".page-hero-actions");
+    if (hero && firstMetrics && heroActions && !hero.querySelector(".mobile-hero-metrics")) {
+      const mobileMetrics = firstMetrics.cloneNode(true);
+      mobileMetrics.classList.add("mobile-hero-metrics");
+      mobileMetrics.setAttribute("aria-label", "Course essentials");
+      const proofList = hero.querySelector(".hero-proof-list");
+      if (proofList) proofList.before(mobileMetrics);
+      else heroActions.before(mobileMetrics);
+    }
+
+    const isCoursePage = trainingCourse !== "training-landing" && trainingCourse !== "course-builder";
+    const candidates = [...document.querySelectorAll(".page-main > .content-section")].filter((section) => {
+      if (!section.querySelector(":scope > h2")) return false;
+      if (section.id === "request-dates" || section.classList.contains("ad-decision")) return false;
+      return true;
+    });
+
+    candidates.forEach((section, index) => {
+      const keepOpen = index === 0 && !isCoursePage;
+      const heading = section.querySelector(":scope > h2");
+      if (!heading || heading.querySelector(".mobile-section-toggle")) return;
+
+      const content = document.createElement("div");
+      content.className = "mobile-collapse-content";
+      content.id = `${section.id || `mobile-section-${index + 1}`}-content`;
+      while (heading.nextSibling) content.appendChild(heading.nextSibling);
+
+      const label = heading.textContent.trim();
+      const toggle = buildMobileSectionToggle(label, content.id, keepOpen);
+      heading.textContent = "";
+      heading.appendChild(toggle);
+      heading.after(content);
+      section.classList.add("mobile-collapsible");
+      section.classList.toggle("is-collapsed", !keepOpen);
+
+      toggle.addEventListener("click", () => {
+        const expanded = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        section.classList.toggle("is-collapsed", expanded);
+      });
+    });
+
+    const openHashTarget = (hash) => {
+      if (!hash || hash === "#") return;
+      let target;
+      try {
+        target = document.querySelector(hash);
+      } catch (error) {
+        return;
+      }
+      const section = target?.closest(".mobile-collapsible");
+      const toggle = section?.querySelector(".mobile-section-toggle");
+      if (!section || !toggle) return;
+      section.classList.remove("is-collapsed");
+      toggle.setAttribute("aria-expanded", "true");
+    };
+
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest('a[href^="#"]');
+      if (link) openHashTarget(link.getAttribute("href"));
+    });
+    openHashTarget(window.location.hash);
+  }
+
+  function initMobileDestinationStructure() {
+    if (!document.body.classList.contains("destination-page")) return;
+    const sections = [...document.querySelectorAll(".destination-page .page-main > .content-section")].filter((section) => {
+      return !section.classList.contains("destination-error") &&
+        !section.classList.contains("destination-overview");
+    });
+
+    sections.forEach((section, index) => {
+      if (section.classList.contains("mobile-collapsible")) return;
+      const heading = section.querySelector("h2, h3");
+      if (!heading) return;
+      const content = document.createElement("div");
+      content.className = "mobile-collapse-content";
+      content.id = `${section.id || `destination-section-${index + 1}`}-content`;
+      while (section.firstChild) content.appendChild(section.firstChild);
+
+      const toggle = buildMobileSectionToggle(heading.textContent.trim(), content.id, false);
+      section.appendChild(toggle);
+      section.appendChild(content);
+      section.classList.add("mobile-collapsible", "is-collapsed");
+
+      toggle.addEventListener("click", () => {
+        const expanded = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        section.classList.toggle("is-collapsed", expanded);
+      });
+    });
+  }
+
   const init = () => {
     initSharedNav();
+    initMobileNav();
+    initMobileDestinationStructure();
     const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
     let trainingPath = window.location.pathname.replace(/\/index\.html$/, "/");
@@ -397,6 +606,7 @@ console.log("main.js loaded");
       "/pages/training/course-builder/": "course-builder",
     };
     const trainingCourse = trainingCourseMap[trainingPath] || "";
+    initMobileTrainingStructure(trainingCourse);
     if (trainingCourse) {
       sendTelemetry("training_course_view", {
         course: trainingCourse,
@@ -638,6 +848,7 @@ console.log("main.js loaded");
       let lastDirection = 0;
       let ticking = false;
       const shouldKeepHeaderVisible = () => {
+        if (header.classList.contains("nav-is-open")) return true;
         if (!document.body || !document.body.classList.contains("media-page")) return false;
         if (document.body.classList.contains("media-admin-open")) return true;
         if (document.body.classList.contains("media-edit-mode")) return true;
@@ -738,13 +949,46 @@ console.log("main.js loaded");
       const stickyDismissKey = stickyCta.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
       const dismissed = (() => {
         try {
-          return window.localStorage.getItem(stickyDismissKey) === "1";
+          return window.sessionStorage.getItem(stickyDismissKey) === "1";
         } catch (error) {
           return false;
         }
       })();
       if (dismissed) {
         stickyCta.classList.add("is-hidden");
+      }
+
+      const stickyLink = stickyCta.querySelector(".mobile-sticky-cta-link");
+      if (stickyLink && "IntersectionObserver" in window) {
+        let stickyDestination;
+        try {
+          stickyDestination = new URL(stickyLink.href, window.location.href);
+        } catch (error) {
+          stickyDestination = null;
+        }
+        if (stickyDestination) {
+          const matchingActions = [...document.querySelectorAll("a.btn[href]")].filter((link) => {
+            if (link === stickyLink || link.closest("#mobile-sticky-cta")) return false;
+            try {
+              const destination = new URL(link.href, window.location.href);
+              return destination.pathname === stickyDestination.pathname &&
+                destination.search === stickyDestination.search;
+            } catch (error) {
+              return false;
+            }
+          });
+          if (matchingActions.length) {
+            const visibleActions = new Set();
+            const stickyObserver = new IntersectionObserver((entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) visibleActions.add(entry.target);
+                else visibleActions.delete(entry.target);
+              });
+              stickyCta.classList.toggle("is-suppressed", visibleActions.size > 0);
+            }, { threshold: 0.5 });
+            matchingActions.forEach((action) => stickyObserver.observe(action));
+          }
+        }
       }
     }
 
@@ -763,7 +1007,7 @@ console.log("main.js loaded");
       }
       try {
         const dismissKey = target.dataset.dismissStorageKey || "dmz-mobile-sticky-cta-dismissed";
-        window.localStorage.setItem(dismissKey, "1");
+        window.sessionStorage.setItem(dismissKey, "1");
       } catch (error) {
         // Ignore storage failures and keep dismiss behavior for current view.
       }

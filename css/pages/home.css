@@ -551,7 +551,7 @@
   border: 1px solid rgba(255,255,255,0.10);
   background:
     linear-gradient(180deg, rgba(5,11,20,0.50) 0%, rgba(5,11,20,0.76) 100%),
-    url("../../assets/images/hero/hero-quiz.png");
+    url("../../assets/images/hero/hero-quiz-mobile.webp");
   background-size: cover;
   background-position: center 42%;
   box-shadow: 0 16px 38px rgba(0,0,0,0.45);
@@ -1139,7 +1139,7 @@ body.quiz-open{
 }
 
 .feature-card-training{
-  background-image: url("../../assets/images/hero/hero-skillsrefresh.png");
+  background-image: url("../../assets/images/hero/hero-skillsrefresh-mobile.webp");
   background-size: cover;
   background-position: center 35%;
   border-color: rgba(255,255,255,0.16);
@@ -1150,7 +1150,7 @@ body.quiz-open{
 }
 
 .feature-card-travel{
-  background-image: url("../../assets/images/hero/hero-tr.png");
+  background-image: url("../../assets/images/hero/hero-tr-mobile.webp");
   background-size: cover;
   background-position: center;
   border-color: rgba(255,255,255,0.16);
@@ -1161,7 +1161,7 @@ body.quiz-open{
 }
 
 .feature-card-media{
-  background-image: url("../../assets/images/hero/hero-fullface.png");
+  background-image: url("../../assets/images/hero/hero-fullface-mobile.webp");
   background-size: cover;
   background-position: center;
   border-color: rgba(255,255,255,0.16);
@@ -1361,7 +1361,8 @@ body.quiz-open{
     box-shadow: 0 16px 34px rgba(0,0,0,0.55);
   }
 
-  .mobile-sticky-cta.is-hidden{
+  .mobile-sticky-cta.is-hidden,
+  .mobile-sticky-cta.is-suppressed{
     display: none;
   }
 
@@ -1581,5 +1582,143 @@ body.home-editor-open{
 
   .home-admin-button{
     width: 100%;
+  }
+}
+
+/* Mobile homepage: prioritize the decision and next action above decoration. */
+@media (max-width: 780px){
+  .hero{
+    min-height: 0;
+    place-items: stretch;
+  }
+
+  .hero::before{
+    background:
+      linear-gradient(180deg, rgba(5,15,25,0.42) 0%, rgba(5,15,25,0.78) 52%, rgba(5,15,25,0.96) 100%),
+      linear-gradient(90deg, rgba(5,15,25,0.74) 0%, rgba(5,15,25,0.32) 100%);
+  }
+
+  .hero-bg{
+    object-position: 57% 25%;
+  }
+
+  .hero-content{
+    display: block;
+    padding: 28px 14px 24px;
+  }
+
+  .hero-logo{
+    display: none;
+  }
+
+  .hero h1{
+    max-width: 8ch;
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .hero-sub{
+    margin: 10px 0 12px;
+    font-size: 16px;
+  }
+
+  .hero-local-line{
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .hero-address-line,
+  .hero-phone-line{
+    margin: 0 0 8px;
+    padding: 9px 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    background: rgba(5,11,20,0.48);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .hero-buttons{
+    margin-top: 12px;
+  }
+
+  .hero-trust-line{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 9px;
+  }
+
+  .hero-trust-line span{
+    min-height: 40px;
+    justify-content: center;
+    padding: 6px;
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 10px;
+    background: rgba(5,11,20,0.42);
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .hero-trust-line span + span::before{
+    content: none;
+  }
+
+  .hero-news-ticker{
+    margin-top: 9px;
+    padding: 9px 10px;
+  }
+
+  .hero-news-ticker-viewport{
+    min-height: auto;
+  }
+
+  .home-intro{
+    padding-top: 20px;
+  }
+
+  .home-intro h2{
+    font-size: 23px;
+  }
+
+  .features{
+    padding-top: 14px;
+  }
+
+  .feature-card{
+    min-height: 148px;
+  }
+
+  .events-preview-grid{
+    display: flex;
+    gap: 10px;
+    padding-bottom: 6px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    scroll-snap-type: inline mandatory;
+  }
+
+  .events-preview-grid::-webkit-scrollbar{
+    display: none;
+  }
+
+  .events-preview-grid > *{
+    flex: 0 0 min(82vw, 320px);
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 390px){
+  .hero h1{
+    font-size: 41px;
+  }
+
+  .hero-trust-line{
+    grid-template-columns: 1fr;
+  }
+
+  .hero-trust-line span{
+    min-height: 34px;
   }
 }

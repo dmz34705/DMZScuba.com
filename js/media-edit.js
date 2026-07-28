@@ -245,6 +245,24 @@
     scheduleUploadCardStatusRender();
   }
 
+  let tusClientPromise = null;
+
+  function ensureTusClient() {
+    if (window.tus && typeof window.tus.Upload === "function") {
+      return Promise.resolve(window.tus);
+    }
+    if (tusClientPromise) return tusClientPromise;
+    tusClientPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/tus-js-client@latest/dist/tus.js";
+      script.async = true;
+      script.onload = () => resolve(window.tus || null);
+      script.onerror = () => reject(new Error("Unable to load resumable upload support"));
+      document.head.appendChild(script);
+    });
+    return tusClientPromise;
+  }
+
   async function uploadFileToStream(file, callbacks = {}) {
     const onStatus = typeof callbacks.onStatus === "function" ? callbacks.onStatus : () => {};
     const onProgress =
@@ -252,6 +270,7 @@
     onStatus("starting");
     onProgress(0);
 
+    await ensureTusClient().catch(() => null);
     let uploadedUid = "";
     const useTus = Boolean(window.tus && typeof window.tus.Upload === "function");
     let tusCompleted = false;

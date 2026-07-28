@@ -10,10 +10,10 @@
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://www.dmzscuba.com/pages/events/event.html" />
   <link rel="stylesheet" href="/css/base.css" />
-  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260728m" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/pages/event-detail.css?v=1.0" />
-  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260728m" />
 </head>
 <body class="event-detail-page">
   <div class="page">
@@ -31,7 +31,7 @@
               <span class="event-detail-chip" id="eventDetailTypeChip">Type loading</span>
             </div>
             <div class="event-detail-actions">
-              <a class="btn primary" id="eventDetailPrimaryLink" href="/pages/contact/index.html#dive-now">Contact DMZ</a>
+              <a class="btn primary" id="eventDetailPrimaryLink" data-event-primary-link href="/pages/contact/index.html#dive-now">Contact DMZ</a>
               <a class="btn secondary" data-event-back-link href="/pages/events/index.html">Back to Events</a>
             </div>
           </div>
@@ -95,6 +95,11 @@
             </div>
           </div>
         </section>
+
+        <div class="mobile-sticky-cta site-mobile-sticky-cta" id="mobile-sticky-cta" aria-label="Event action" data-dismiss-storage-key="dmz-event-detail-sticky-dismissed">
+          <a class="btn primary mobile-sticky-cta-link" data-event-primary-link href="/pages/contact/index.html#dive-now">Contact DMZ</a>
+          <button type="button" class="mobile-sticky-close" aria-label="Dismiss event action" data-dismiss-target="#mobile-sticky-cta">Close</button>
+        </div>
       </div>
     </main>
 
@@ -105,7 +110,7 @@
     </footer>
   </div>
 
-  <script src="/js/main.js"></script>
-  <script src="/js/event-detail.js"></script>
+  <script src="/js/main.js?v=20260728m"></script>
+  <script src="/js/event-detail.js?v=20260728m"></script>
 </body>
 </html>

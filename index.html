@@ -9,11 +9,10 @@
 
   <!-- Main stylesheet -->
 <link rel="stylesheet" href="/css/base.css" />
-<link rel="stylesheet" href="/css/components.css" />
-<link rel="stylesheet" href="/css/main.css" />
+<link rel="stylesheet" href="/css/components.css?v=20260728m" />
 <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-<link rel="stylesheet" href="/css/pages/home.css" />
-<link rel="stylesheet" href="/css/responsive.css" />
+<link rel="stylesheet" href="/css/pages/home.css?v=20260728m" />
+<link rel="stylesheet" href="/css/responsive.css?v=20260728m" />
 
   <!-- SEO basics -->
   <meta name="description" content="Professional scuba training, dive travel, and underwater exploration in the Chicago area." />
@@ -69,8 +68,13 @@
     <!-- Replace hero-image.jpg later with your chosen diver image -->
     <img
       src="assets/images/hero/hero-placeholder.JPEG"
+      srcset="assets/images/hero/hero-placeholder-mobile.webp 960w, assets/images/hero/hero-placeholder.JPEG 1536w"
+      sizes="100vw"
       alt="Underwater wreck diving with DMZ Scuba"
       class="hero-bg"
+      width="2048"
+      height="1365"
+      fetchpriority="high"
     />
 
     <div class="hero-content">
@@ -108,7 +112,7 @@
       </div>
 
       <div class="hero-logo" aria-hidden="true">
-        <img src="assets/images/logos/dmz-scuba-logo.png" alt="">
+        <img src="assets/images/logos/dmz-scuba-logo-display.webp" alt="" width="512" height="512">
       </div>
     </div>
   </section>
@@ -269,7 +273,7 @@
   </footer>
 
   <!-- Main JS -->
-  <script src="js/main.js"></script>
+  <script src="js/main.js?v=20260728m"></script>
   <script src="js/events.js?v=20260508b"></script>
   <script src="js/quiz.js"></script>
   <script src="js/home.js"></script>
