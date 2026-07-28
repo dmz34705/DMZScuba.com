@@ -9,10 +9,13 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 test("shared navigation includes the accessible mobile drawer controls", () => {
   const source = read("js/main.js");
   assert.match(source, /class="nav-menu-toggle"/);
-  assert.match(source, /aria-controls="primary-navigation"/);
+  assert.match(source, /aria-controls="mobile-navigation"/);
   assert.match(source, /class="nav-menu-close"/);
   assert.match(source, /class="nav-backdrop"/);
-  assert.match(source, /class="nav-links nav-drawer-links"/);
+  assert.match(source, /class="mobile-nav-layer"/);
+  assert.match(source, /class="mobile-nav-drawer"/);
+  assert.match(source, /class="nav-drawer-links"/);
+  assert.match(source, /document\.body\.insertAdjacentHTML\("beforeend", mobileLayerHtml\)/);
   ["Home", "Classes", "Travel", "Media", "Events", "Contact", "About"].forEach((label) => {
     assert.match(source, new RegExp(`label: "${label}"`));
   });
@@ -23,8 +26,12 @@ test("shared navigation includes the accessible mobile drawer controls", () => {
 
 test("mobile CSS keeps the header compact and form controls touch friendly", () => {
   const source = read("css/responsive.css");
+  const components = read("css/components.css");
   assert.match(source, /\.site-header[\s\S]*min-height:\s*64px/);
   assert.match(source, /\.nav-drawer-links[\s\S]*visibility:\s*visible/);
+  assert.match(components, /\.mobile-nav-layer\{[\s\S]*position:\s*fixed[\s\S]*min-height:\s*100dvh/);
+  assert.match(components, /\.mobile-nav-drawer\{[\s\S]*position:\s*absolute[\s\S]*max-height:\s*100dvh/);
+  assert.match(components, /\.mobile-nav-layer\.is-open \.mobile-nav-drawer/);
   assert.match(source, /input:not\([\s\S]*font-size:\s*16px !important/);
   assert.match(source, /\.page-hero[\s\S]*padding:\s*28px 18px 24px/);
   assert.match(source, /prefers-reduced-motion:\s*reduce/);

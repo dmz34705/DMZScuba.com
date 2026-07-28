@@ -121,8 +121,8 @@
     height: 48px;
   }
 
-  .site-header .main-nav{
-    position: fixed;
+  .mobile-nav-drawer{
+    position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
@@ -132,7 +132,7 @@
     padding: max(18px, env(safe-area-inset-top, 0px)) 18px calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
-  .site-header .nav-drawer-links{
+  .mobile-nav-drawer .nav-drawer-links{
     display: grid;
     gap: 7px;
     max-width: none;
@@ -140,7 +140,7 @@
     visibility: visible;
   }
 
-  .site-header .nav-drawer-links a{
+  .mobile-nav-drawer .nav-drawer-links a{
     display: flex;
     min-height: 52px;
     padding: 12px 14px;

@@ -367,13 +367,22 @@ console.log("main.js loaded");
       `<div class="site-name">DMZ Scuba</div>` +
       `<div class="mobile-nav-actions">` +
       `<a class="mobile-nav-quick-cta" href="/pages/contact/?interest=training#dive-now">Dive Now</a>` +
-      `<button class="nav-menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open menu">` +
+      `<button class="nav-menu-toggle" type="button" aria-controls="mobile-navigation" aria-expanded="false" aria-label="Open menu">` +
       `<span></span><span></span><span></span></button></div>` +
+      `<nav class="main-nav desktop-primary-nav" id="desktop-primary-navigation" aria-label="Primary">` +
+      `<div class="nav-links">${linksHtml}</div>` +
+      `<div class="nav-drawer-actions">` +
+      `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
+      `</div></nav>` +
+      `</div>`;
+
+    const mobileLayerHtml =
+      `<div class="mobile-nav-layer" id="mobile-nav-layer">` +
       `<button class="nav-backdrop" type="button" tabindex="-1" aria-hidden="true" aria-label="Close menu"></button>` +
-      `<nav class="main-nav" id="primary-navigation" aria-label="Primary">` +
+      `<nav class="mobile-nav-drawer" id="mobile-navigation" aria-label="Mobile primary navigation" aria-hidden="true" inert>` +
       `<div class="nav-drawer-head"><span>Explore DMZ Scuba</span>` +
       `<button class="nav-menu-close" type="button" aria-label="Close menu"><span aria-hidden="true">&times;</span></button></div>` +
-      `<div class="nav-links nav-drawer-links">${linksHtml}</div>` +
+      `<div class="nav-drawer-links">${linksHtml}</div>` +
       `<div class="nav-drawer-actions">` +
       `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
       `<a href="tel:+16306604536">Call 630-660-4536</a>` +
@@ -383,21 +392,26 @@ console.log("main.js loaded");
     headers.forEach((header) => {
       header.innerHTML = navHtml;
     });
+
+    document.getElementById("mobile-nav-layer")?.remove();
+    document.body.insertAdjacentHTML("beforeend", mobileLayerHtml);
   }
 
   function initMobileNav() {
     const header = document.querySelector(".site-header");
-    const drawer = document.getElementById("primary-navigation");
+    const layer = document.getElementById("mobile-nav-layer");
+    const drawer = document.getElementById("mobile-navigation");
     const toggle = document.querySelector(".nav-menu-toggle");
     const closeButton = document.querySelector(".nav-menu-close");
     const backdrop = document.querySelector(".nav-backdrop");
-    if (!header || !drawer || !toggle || !closeButton || !backdrop) return;
+    if (!header || !layer || !drawer || !toggle || !closeButton || !backdrop) return;
 
     const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
     let restoreFocus = null;
 
     const setOpen = (isOpen) => {
       header.classList.toggle("nav-is-open", isOpen);
+      layer.classList.toggle("is-open", isOpen);
       document.body.classList.toggle("mobile-nav-open", isOpen);
       toggle.setAttribute("aria-expanded", String(isOpen));
       toggle.setAttribute("aria-label", isOpen ? "Close menu" : "Open menu");
@@ -462,10 +476,11 @@ console.log("main.js loaded");
     const syncMode = () => {
       if (!mobileQuery.matches) {
         header.classList.remove("nav-is-open");
+        layer.classList.remove("is-open");
         document.body.classList.remove("mobile-nav-open");
         toggle.setAttribute("aria-expanded", "false");
-        drawer.removeAttribute("aria-hidden");
-        drawer.inert = false;
+        drawer.setAttribute("aria-hidden", "true");
+        drawer.inert = true;
       } else if (!header.classList.contains("nav-is-open")) {
         drawer.setAttribute("aria-hidden", "true");
         drawer.inert = true;
