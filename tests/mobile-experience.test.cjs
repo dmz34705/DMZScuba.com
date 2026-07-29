@@ -122,17 +122,15 @@ test("key mobile journeys include contextual sticky actions", () => {
   });
 });
 
-test("Open Water format rail includes visual scroll dots", () => {
-  const page = read("pages/training/open-water/index.html");
+test("training feature-card rails receive visual scroll dots when they overflow", () => {
   const javascript = read("js/main.js");
   const responsive = read("css/responsive.css");
-  assert.match(page, /data-scroll-dots-track="open-water-formats"/);
-  assert.match(page, /data-scroll-dots="open-water-formats"/);
-  assert.equal((page.match(/open-water-format-scroll-dots/g) || []).length, 1);
-  assert.equal((page.match(/<span(?: class="is-active")?><\/span>/g) || []).length >= 5, true);
-  assert.match(javascript, /function initScrollDots\(\)/);
+  assert.match(javascript, /function initTrainingScrollDots\(\)/);
+  assert.match(javascript, /training-landing-page:not\(\.training-home-page\)/);
+  assert.match(javascript, /dots\.hidden = !canScroll/);
+  assert.match(javascript, /track\.insertAdjacentElement\("afterend", dots\)/);
   assert.match(javascript, /track\.addEventListener\("scroll", scheduleUpdate/);
-  assert.match(responsive, /\.open-water-format-scroll-dots span\.is-active/);
+  assert.match(responsive, /\.training-scroll-dots span\.is-active/);
 });
 
 test("optimized mobile hero and logo assets referenced by the site exist", () => {

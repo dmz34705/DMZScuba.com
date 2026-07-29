@@ -620,14 +620,27 @@ console.log("main.js loaded");
     });
   }
 
-  function initScrollDots() {
-    document.querySelectorAll("[data-scroll-dots]").forEach((dots) => {
-      const trackName = dots.dataset.scrollDots;
-      if (!trackName) return;
-      const track = document.querySelector(`[data-scroll-dots-track="${trackName}"]`);
-      const cards = track ? [...track.children] : [];
+  function initTrainingScrollDots() {
+    const tracks = document.querySelectorAll(
+      "body.training-landing-page:not(.training-home-page) .content-section .feature-grid"
+    );
+    tracks.forEach((track) => {
+      const cards = [...track.children];
+      if (cards.length < 2) return;
+
+      let dots = track.nextElementSibling;
+      if (!dots || !dots.classList.contains("training-scroll-dots")) {
+        dots = document.createElement("div");
+        dots.className = "training-scroll-dots";
+        dots.setAttribute("aria-hidden", "true");
+        track.insertAdjacentElement("afterend", dots);
+      }
+      dots.replaceChildren(...cards.map((card, index) => {
+        const dot = document.createElement("span");
+        dot.classList.toggle("is-active", index === 0);
+        return dot;
+      }));
       const dotItems = [...dots.children];
-      if (!track || !cards.length || cards.length !== dotItems.length) return;
 
       let animationFrame;
       const updateActiveDot = () => {
@@ -652,9 +665,18 @@ console.log("main.js loaded");
         });
       };
 
+      const syncDots = () => {
+        const canScroll = track.scrollWidth > track.clientWidth + 1;
+        dots.hidden = !canScroll;
+        if (canScroll) updateActiveDot();
+      };
+
       track.addEventListener("scroll", scheduleUpdate, { passive: true });
-      window.addEventListener("resize", scheduleUpdate);
-      updateActiveDot();
+      window.addEventListener("resize", syncDots);
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(syncDots).observe(track);
+      }
+      syncDots();
     });
   }
 
@@ -662,7 +684,7 @@ console.log("main.js loaded");
     initSharedNav();
     initMobileNav();
     initMobileDestinationStructure();
-    initScrollDots();
+    initTrainingScrollDots();
     const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
     let trainingPath = window.location.pathname.replace(/\/index\.html$/, "/");

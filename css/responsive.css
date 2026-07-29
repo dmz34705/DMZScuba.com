@@ -2,7 +2,7 @@
    12) RESPONSIVE
    ============================================================ */
 
-.open-water-format-scroll-dots{
+.training-scroll-dots{
   display: none;
 }
 
@@ -753,14 +753,14 @@
     scroll-snap-align: start;
   }
 
-  .open-water-format-scroll-dots{
+  .training-scroll-dots{
     display: flex;
     justify-content: center;
     gap: 6px;
     margin-top: 10px;
   }
 
-  .open-water-format-scroll-dots span{
+  .training-scroll-dots span{
     width: 6px;
     height: 6px;
     border-radius: 999px;
@@ -768,7 +768,7 @@
     transition: width 160ms ease, background 160ms ease;
   }
 
-  .open-water-format-scroll-dots span.is-active{
+  .training-scroll-dots span.is-active{
     width: 18px;
     background: var(--blue);
   }
