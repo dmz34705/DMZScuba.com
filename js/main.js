@@ -620,10 +620,49 @@ console.log("main.js loaded");
     });
   }
 
+  function initScrollDots() {
+    document.querySelectorAll("[data-scroll-dots]").forEach((dots) => {
+      const trackName = dots.dataset.scrollDots;
+      if (!trackName) return;
+      const track = document.querySelector(`[data-scroll-dots-track="${trackName}"]`);
+      const cards = track ? [...track.children] : [];
+      const dotItems = [...dots.children];
+      if (!track || !cards.length || cards.length !== dotItems.length) return;
+
+      let animationFrame;
+      const updateActiveDot = () => {
+        const scrollPosition = track.scrollLeft;
+        let activeIndex = 0;
+        let closestDistance = Number.POSITIVE_INFINITY;
+        cards.forEach((card, index) => {
+          const distance = Math.abs(card.offsetLeft - scrollPosition);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            activeIndex = index;
+          }
+        });
+        dotItems.forEach((dot, index) => dot.classList.toggle("is-active", index === activeIndex));
+      };
+
+      const scheduleUpdate = () => {
+        if (animationFrame) return;
+        animationFrame = window.requestAnimationFrame(() => {
+          animationFrame = undefined;
+          updateActiveDot();
+        });
+      };
+
+      track.addEventListener("scroll", scheduleUpdate, { passive: true });
+      window.addEventListener("resize", scheduleUpdate);
+      updateActiveDot();
+    });
+  }
+
   const init = () => {
     initSharedNav();
     initMobileNav();
     initMobileDestinationStructure();
+    initScrollDots();
     const thanksUrl = `${window.location.origin}/pages/thanks/index.html`;
     const params = new URLSearchParams(window.location.search);
     let trainingPath = window.location.pathname.replace(/\/index\.html$/, "/");
