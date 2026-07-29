@@ -40,6 +40,15 @@ test("mobile CSS keeps the header compact and form controls touch friendly", () 
   assert.match(source, /prefers-reduced-motion:\s*reduce/);
 });
 
+test("training table of contents follows the hidden mobile header", () => {
+  const javascript = read("js/main.js");
+  const responsive = read("css/responsive.css");
+  assert.match(javascript, /const setHeaderHidden = \(hidden\) =>/);
+  assert.match(javascript, /document\.body\?\.classList\.toggle\("site-header-is-hidden", hidden\)/);
+  assert.match(responsive, /body\.training-landing-page \.toc\{[\s\S]*transition:\s*top 220ms ease/);
+  assert.match(responsive, /body\.training-landing-page\.site-header-is-hidden \.toc\{[\s\S]*top:\s*0/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

@@ -937,8 +937,12 @@ console.log("main.js loaded");
 
     const header = document.querySelector(".site-header");
     if (header) {
+      const setHeaderHidden = (hidden) => {
+        header.classList.toggle("is-hidden", hidden);
+        document.body?.classList.toggle("site-header-is-hidden", hidden);
+      };
       if (document.body && document.body.classList.contains("media-page")) {
-        header.classList.remove("is-hidden");
+        setHeaderHidden(false);
         return;
       }
       const mobileQuery = window.matchMedia("(max-width: 780px)");
@@ -961,7 +965,7 @@ console.log("main.js loaded");
 
       const updateHeaderVisibility = () => {
         if (!mobileQuery.matches) {
-          header.classList.remove("is-hidden");
+          setHeaderHidden(false);
           lastScrollY = window.scrollY;
           scrollAccum = 0;
           lastDirection = 0;
@@ -977,7 +981,7 @@ console.log("main.js loaded");
         const minAfterStaticHide = 80;
 
         if (shouldKeepHeaderVisible()) {
-          header.classList.remove("is-hidden");
+          setHeaderHidden(false);
           lastScrollY = currentY;
           maxScrollY = Math.max(maxScrollY, currentY);
           scrollAccum = 0;
@@ -986,7 +990,7 @@ console.log("main.js loaded");
         }
 
         if (currentY <= 8) {
-          header.classList.remove("is-hidden");
+          setHeaderHidden(false);
           lastScrollY = currentY;
           scrollAccum = 0;
           lastDirection = 0;
@@ -994,7 +998,7 @@ console.log("main.js loaded");
         }
 
         if (currentY < staticUntilY) {
-          header.classList.remove("is-hidden");
+          setHeaderHidden(false);
           lastScrollY = currentY;
           scrollAccum = 0;
           lastDirection = 0;
@@ -1018,12 +1022,12 @@ console.log("main.js loaded");
 
         if (direction > 0) {
           if (currentY >= staticUntilY + minAfterStaticHide && scrollAccum >= hideThreshold) {
-            header.classList.add("is-hidden");
+            setHeaderHidden(true);
           }
         } else {
           const distanceFromPeak = maxScrollY - currentY;
           if (distanceFromPeak >= revealThreshold) {
-            header.classList.remove("is-hidden");
+            setHeaderHidden(false);
           }
         }
 

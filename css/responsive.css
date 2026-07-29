@@ -1096,6 +1096,15 @@
   .toc{
     top: var(--mobile-site-header-height);
   }
+
+  body.training-landing-page .toc{
+    transition: top 220ms ease;
+    will-change: top;
+  }
+
+  body.training-landing-page.site-header-is-hidden .toc{
+    top: 0;
+  }
 }
 
 @media (max-width: 420px){
