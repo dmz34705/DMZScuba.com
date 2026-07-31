@@ -62,6 +62,8 @@ test("events calendar has a focused mobile planning flow", () => {
   assert.match(page, /id="calendar"/);
   assert.match(page, /id="planning"/);
   assert.match(page, /class="events-native-calendar"/);
+  assert.match(page, /class="events-finder"/);
+  assert.match(page, /data-events-filter="training"/);
   assert.match(page, /data-events-calendar/);
   assert.match(page, /class="events-admin-embed"/);
   assert.match(responsive, /body\.events-page\.site-header-is-hidden \.events-mobile-nav\{[\s\S]*top:\s*0/);
@@ -70,6 +72,8 @@ test("events calendar has a focused mobile planning flow", () => {
   assert.match(responsive, /\.events-page \.events-embed-shell-card\{[\s\S]*margin-right:\s*-18px/);
   assert.match(responsive, /\.events-page \.page-hero-events \.page-hero-card\{[\s\S]*display:\s*none/);
   assert.match(embed, /responsive\.css\?v=20260730e1/);
+  assert.match(read("js/events.js"), /activeTypeFilter/);
+  assert.match(read("js/events.js"), /canRegister \? "Reserve Spot" : "View Details"/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {

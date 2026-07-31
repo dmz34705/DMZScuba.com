@@ -133,6 +133,79 @@
   max-width: 760px;
 }
 
+.events-finder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(85,185,255,0.18);
+  background:
+    radial-gradient(320px 180px at 0% 0%, rgba(85,185,255,0.12), rgba(85,185,255,0)),
+    rgba(7,19,37,0.58);
+}
+
+.events-finder-copy {
+  min-width: 0;
+}
+
+.events-finder-kicker {
+  margin: 0 0 5px;
+  color: rgba(85,185,255,0.92);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.events-finder h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.events-finder-status {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.events-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.events-filter-pills button {
+  min-height: 38px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(234,242,255,0.84);
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.events-filter-pills button:hover,
+.events-filter-pills button:focus-visible,
+.events-filter-pills button.is-active {
+  border-color: rgba(85,185,255,0.46);
+  background: rgba(85,185,255,0.16);
+  color: rgba(220,248,255,0.98);
+}
+
+.events-filter-pills button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
 .events-embed-frame-wrap {
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);

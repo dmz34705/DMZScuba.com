@@ -60,6 +60,8 @@
     activeEventShareUrl: "",
     adminCanEditDate: false,
     openDateModalRequestKey: "",
+    calendarEvents: [],
+    activeTypeFilter: "all",
     calendarView: {
       activeMonthKey: "",
       selectedDateKey: "",
@@ -1071,7 +1073,12 @@
 
     const actions = document.createElement("div");
     actions.className = "event-card-actions";
-    actions.appendChild(createDetailTrigger(eventItem, "View", "secondary"));
+    const canRegister = isRegistrationEnabled(eventItem);
+    actions.appendChild(
+      createDetailTrigger(eventItem, canRegister ? "Reserve Spot" : "View Details", canRegister ? "primary" : "secondary", {
+        autoOpenRegistration: canRegister,
+      })
+    );
 
     article.append(content, actions);
     return article;
@@ -1117,12 +1124,47 @@
     const total = pageRoot.querySelector("[data-events-total]");
     if (!monthHost || !listHost || !empty) return;
 
+    state.calendarEvents = Array.isArray(events) ? events : [];
+    const finder = pageRoot.querySelector(".events-finder");
+    const filterButtons = finder ? finder.querySelectorAll("[data-events-filter]") : [];
+    const filterStatus = finder ? finder.querySelector("[data-events-filter-status]") : null;
+    const activeFilter = String(state.activeTypeFilter || "all").toLowerCase();
+    const visibleEvents = activeFilter === "all"
+      ? state.calendarEvents
+      : state.calendarEvents.filter((eventItem) => String(eventItem.type || "").toLowerCase() === activeFilter);
+
+    filterButtons.forEach((button) => {
+      const value = String(button.getAttribute("data-events-filter") || "all").toLowerCase();
+      const count = value === "all"
+        ? state.calendarEvents.length
+        : state.calendarEvents.filter((eventItem) => String(eventItem.type || "").toLowerCase() === value).length;
+      const isActive = value === activeFilter;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      button.disabled = !isActive && count === 0;
+      if (button.dataset.eventsFilterBound !== "true") {
+        button.dataset.eventsFilterBound = "true";
+        button.addEventListener("click", () => {
+          state.activeTypeFilter = String(button.getAttribute("data-events-filter") || "all").toLowerCase();
+          renderCalendar(state.calendarEvents, state.payload);
+        });
+      }
+    });
+
+    if (filterStatus) {
+      const filterLabel = activeFilter === "all" ? "all event types" : `${activeFilter} events`;
+      filterStatus.textContent = `${visibleEvents.length} upcoming ${filterLabel} available.`;
+    }
+
     monthHost.innerHTML = "";
     listHost.innerHTML = "";
 
     const horizonMonths = Math.max(1, Number(payload && payload.horizonMonths) || 30);
-    const monthGroups = buildMonthGroups(events, horizonMonths);
+    const monthGroups = buildMonthGroups(visibleEvents, horizonMonths);
     if (!monthGroups.length) {
+      empty.textContent = activeFilter === "all"
+        ? "No events are posted yet. Use the contact page and we will help you plan the right next step."
+        : `No upcoming ${activeFilter} events are scheduled right now. Try another event type or contact us to plan your next step.`;
       empty.hidden = false;
       monthHost.hidden = true;
       listHost.hidden = true;
@@ -1667,7 +1709,7 @@
         stamp.textContent = `Auto-updating rolling calendar. Showing ${monthFormatter.format(group.monthDate)} with coverage through ${monthFormatter.format(monthGroups[monthGroups.length - 1].monthDate)}.`;
       }
       if (total) {
-        total.textContent = String(events.length);
+        total.textContent = String(visibleEvents.length);
       }
 
       if (shouldNotifyParentSelection) {

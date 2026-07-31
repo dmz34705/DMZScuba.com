@@ -12,8 +12,8 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/responsive.css?v=20260730e2" />
+  <link rel="stylesheet" href="/css/pages/events.css?v=20260730e3" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260730e3" />
 </head>
 
 <body class="events-page">
@@ -83,6 +83,21 @@
           </div>
           <a class="btn secondary" href="../contact/index.html#dive-now">Ask About a Date</a>
         </div>
+        <section class="events-finder" aria-labelledby="events-finder-title">
+          <div class="events-finder-copy">
+            <p class="events-finder-kicker">Find your next dive</p>
+            <h3 id="events-finder-title">Choose the kind of event you want.</h3>
+            <p class="events-finder-status" data-events-filter-status aria-live="polite">Loading upcoming events.</p>
+          </div>
+          <div class="events-filter-pills" role="group" aria-label="Filter events by type">
+            <button type="button" class="is-active" data-events-filter="all" aria-pressed="true">All events</button>
+            <button type="button" data-events-filter="training" aria-pressed="false">Training</button>
+            <button type="button" data-events-filter="travel" aria-pressed="false">Travel</button>
+            <button type="button" data-events-filter="local dive" aria-pressed="false">Local dives</button>
+            <button type="button" data-events-filter="workshop" aria-pressed="false">Workshops</button>
+            <button type="button" data-events-filter="community" aria-pressed="false">Community</button>
+          </div>
+        </section>
         <section class="events-admin-bar" id="eventsAdminBar" hidden aria-label="Calendar editing controls">
           <div class="events-admin-bar-copy">
             <div class="events-admin-bar-title-row">
@@ -475,7 +490,7 @@
   </div>
 
   <script src="/js/main.js?v=20260728p4"></script>
-  <script src="/js/events.js?v=20260508b"></script>
+  <script src="/js/events.js?v=20260730e3"></script>
   <script src="/js/events-admin.js?v=20260406a"></script>
 </body>
 </html>

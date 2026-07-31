@@ -613,6 +613,37 @@
     display: none;
   }
 
+  .events-page .events-finder{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .events-page .events-finder h3{
+    font-size: 16px;
+  }
+
+  .events-page .events-filter-pills{
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin: 0 -2px;
+    padding: 1px 2px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: inline proximity;
+  }
+
+  .events-page .events-filter-pills::-webkit-scrollbar{
+    display: none;
+  }
+
+  .events-page .events-filter-pills button{
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
   .events-page .events-embed-frame-wrap{
     border-radius: 14px;
   }
