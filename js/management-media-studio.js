@@ -556,8 +556,6 @@
       const type = isPhoto ? 'photo' : 'video';
       const typeSelect = R.uploadForm.querySelector('[name=type]');
       if (typeSelect) typeSelect.value = type;
-      const title = R.uploadForm.querySelector('[name=title]');
-      if (title && !title.value.trim()) title.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
       if (R.uploadFile) {
         const size = file.size ? ` · ${(file.size / (1024 * 1024)).toFixed(1)} MB` : '';
         R.uploadFile.textContent = `${file.name}${size} · ${isPhoto ? 'Photo' : 'Video'} ready to upload`;

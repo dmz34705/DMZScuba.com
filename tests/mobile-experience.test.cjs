@@ -111,6 +111,7 @@ test("management media studio shares the live library and secure upload flow", (
   assert.match(studio, /Choose a post to edit/);
   assert.match(page, /data-ms-preview-toggle/);
   assert.match(page, /Publish Media/);
+  assert.doesNotMatch(studio, /title\.value = file\.name/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {
