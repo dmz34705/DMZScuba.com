@@ -308,6 +308,8 @@
     loading: false,
   };
 
+  let editorDirty = false;
+
   function getToken() {
     return window.localStorage.getItem(tokenStorageKey) || "";
   }
@@ -349,14 +351,28 @@
     if (authed) openSiteStudioPanel("operations");
   }
 
+  function syncFloatingSave() {
+    if (!floatingSaveButton) return;
+    floatingSaveButton.hidden = !app.classList.contains("is-editor-open") || !editorDirty;
+  }
+
+  function markEditorDirty() {
+    if (!app.classList.contains("is-editor-open")) return;
+    editorDirty = true;
+    syncFloatingSave();
+  }
+
   function openEditorModal() {
     app.classList.add("is-editor-open");
     document.body.classList.add("management-editor-open");
+    syncFloatingSave();
   }
 
   function closeEditorModal() {
     app.classList.remove("is-editor-open");
     document.body.classList.remove("management-editor-open");
+    editorDirty = false;
+    syncFloatingSave();
     setStatus(recordStatus, "");
   }
 
@@ -368,6 +384,7 @@
   }
 
   function openEditor(record = null, defaultType = "") {
+    editorDirty = false;
     fillForm(record, defaultType);
     openEditorModal();
   }
@@ -3902,11 +3919,13 @@
     if (recordForm) recordForm.addEventListener("submit", saveRecord);
     if (recordForm) {
       recordForm.addEventListener("input", (event) => {
+        markEditorDirty();
         const name = event.target && event.target.name;
         if (name === "registrationEmailSubject" || name === "registrationEmailContent") {
           updateCharacterCounter(name);
         }
       });
+      recordForm.addEventListener("change", markEditorDirty);
     }
     if (recordForm && recordForm.elements.recordType) {
       recordForm.elements.recordType.addEventListener("change", () => {
@@ -3921,12 +3940,16 @@
         const addButton = event.target.closest("[data-add-class-session]");
         if (addButton) {
           addClassSession(addButton.getAttribute("data-add-class-session") || "");
+          markEditorDirty();
           return;
         }
         const removeButton = event.target.closest("[data-remove-class-session]");
         if (removeButton) {
           const row = removeButton.closest("[data-class-session]");
-          if (row) row.remove();
+          if (row) {
+            row.remove();
+            markEditorDirty();
+          }
           classSessionTypes.forEach((type) => {
             const list = classScheduleEl.querySelector(`[data-class-session-list="${type}"]`);
             if (list && !list.querySelector("[data-class-session]")) {

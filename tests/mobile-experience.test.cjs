@@ -146,9 +146,11 @@ test("management record editor provides a floating save action", () => {
   const page = read("management/index.html");
   const management = read("js/management.js");
   const styles = read("css/pages/management.css");
-  assert.match(page, /data-floating-save/);
+  assert.match(page, /data-floating-save[^>]* hidden/);
   assert.match(management, /recordForm\?\.requestSubmit\(\)/);
-  assert.match(styles, /\.management-floating-save\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(management, /function markEditorDirty\(\)/);
+  assert.match(management, /floatingSaveButton\.hidden = !app\.classList\.contains/);
+  assert.match(styles, /\.management-floating-save\s*\{[\s\S]*position:\s*fixed/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {
