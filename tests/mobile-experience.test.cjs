@@ -154,9 +154,13 @@ test("Travel page prioritizes globe exploration and destination browsing", () =>
   assert.doesNotMatch(page, /class="micro-note/);
   assert.match(globe, /destination-item-image/);
   assert.match(globe, /item\.append\(imageWrap, body\)/);
+  assert.match(globe, /wrap\.getBoundingClientRect\(\)\.width/);
+  assert.match(globe, /new ResizeObserver\(fitCanvas\)\.observe\(canvas\.parentElement\)/);
   assert.match(travel, /\.globe-filter-pills\s*\{[\s\S]*flex-wrap:\s*nowrap/);
   assert.match(travel, /\.destination-item\s*\{[\s\S]*grid-template-columns:\s*112px/);
   assert.match(travel, /body:not\(\.dest-authenticated\) \.dest-admin-fab/);
+  assert.match(travel, /body\.travel-page \{[\s\S]*overflow-x:\s*clip/);
+  assert.match(travel, /body\.travel-page #globeCanvas[\s\S]*max-width:\s*100% !important/);
 });
 
 test("optimized mobile hero and logo assets referenced by the site exist", () => {

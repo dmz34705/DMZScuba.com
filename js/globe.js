@@ -10,14 +10,16 @@
 
   function fitCanvas() {
     const wrap = canvas.parentElement;
-    const maxW = wrap ? wrap.clientWidth : 920;
-    const targetW = maxW;
+    const wrapWidth = wrap ? Math.floor(wrap.getBoundingClientRect().width) : 920;
+    const targetW = Math.max(0, wrapWidth);
+    if (!targetW) return;
 
     const isMobile = window.innerWidth <= 768;
     const targetH = wrap && !isMobile ? wrap.clientHeight : (isMobile ? targetW : Math.round(targetW * 0.56));
 
     canvas.style.width = targetW + "px";
     canvas.style.height = targetH + "px";
+    canvas.style.maxWidth = "100%";
 
     canvas.width = targetW * DPR;
     canvas.height = targetH * DPR;
@@ -27,6 +29,9 @@
 
   fitCanvas();
   window.addEventListener("resize", fitCanvas);
+  if ("ResizeObserver" in window && canvas.parentElement) {
+    new ResizeObserver(fitCanvas).observe(canvas.parentElement);
+  }
 
   // -------------------------
   // Destination data (JSON)

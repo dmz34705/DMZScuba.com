@@ -2230,6 +2230,51 @@ body:not(.dest-authenticated) .travel-inline-add {
   }
 }
 
+/* Keep the canvas and every surrounding travel control inside the mobile viewport. */
+@media (max-width: 768px) {
+  body.travel-page {
+    overflow-x: clip;
+  }
+
+  body.travel-page .page,
+  body.travel-page .travel-explorer,
+  body.travel-page .globe-filter-bar,
+  body.travel-page .globe-shell,
+  body.travel-page .globe-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body.travel-page .globe-shell {
+    margin-inline: 0;
+    overflow: hidden;
+  }
+
+  body.travel-page .globe-wrap {
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+  }
+
+  body.travel-page .globe-wrap canvas,
+  body.travel-page #globeCanvas {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    aspect-ratio: 1 / 1;
+  }
+
+  body.travel-page .globe-filter-pills,
+  body.travel-page .travel-explorer-guide,
+  body.travel-page .destination-item,
+  body.travel-page .destination-item-body {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 
 
 
