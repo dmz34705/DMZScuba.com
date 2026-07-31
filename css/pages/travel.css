@@ -2275,6 +2275,48 @@ body:not(.dest-authenticated) .travel-inline-add {
   }
 }
 
+@media (max-width: 768px) {
+  body.travel-page main.page > *,
+  body.travel-page .page-hero-inner,
+  body.travel-page .page-hero-copy,
+  body.travel-page .section-head,
+  body.travel-page .destination-shell,
+  body.travel-page .destination-grid,
+  body.travel-page .destination-card,
+  body.travel-page .events-preview-head,
+  body.travel-page .events-preview-grid,
+  body.travel-page .event-card,
+  body.travel-page .destination-list {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.travel-page .destination-list {
+    width: 100%;
+  }
+
+  body.travel-page .destination-item {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(88px, 30%) minmax(0, 1fr);
+  }
+
+  body.travel-page .destination-item-image,
+  body.travel-page .destination-item-body,
+  body.travel-page .destination-item-title,
+  body.travel-page .destination-item-sub {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  body.travel-page img,
+  body.travel-page video,
+  body.travel-page iframe,
+  body.travel-page canvas {
+    max-width: 100%;
+  }
+}
+
 
 
 

@@ -1389,3 +1389,62 @@ body.dest-page-authenticated .dest-page-admin-fab {
     right: 12px;
   }
 }
+
+/* Mobile containment for every destination detail section. */
+@media (max-width: 780px) {
+  body.destination-page {
+    overflow-x: clip;
+  }
+
+  body.destination-page .page,
+  body.destination-page .page-main,
+  body.destination-page .page-hero-inner,
+  body.destination-page .page-hero-copy,
+  body.destination-page .content-section,
+  body.destination-page .two-col-grid,
+  body.destination-page .destination-overview-grid,
+  body.destination-page .vibe-grid,
+  body.destination-page .ops-grid,
+  body.destination-page .site-highlight-grid,
+  body.destination-page .destination-card,
+  body.destination-page .overview-card,
+  body.destination-page .vibe-card,
+  body.destination-page .ops-card,
+  body.destination-page .media-panel-card,
+  body.destination-page .destination-cta,
+  body.destination-page .page-hero-actions,
+  body.destination-page .cta-actions,
+  body.destination-page .media-actions {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.destination-page img,
+  body.destination-page video,
+  body.destination-page iframe,
+  body.destination-page canvas {
+    max-width: 100%;
+  }
+
+  body.destination-page .destination-media-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overscroll-behavior-inline: contain;
+  }
+
+  body.destination-page .destination-media-grid .media-card,
+  body.destination-page .destination-media-grid .media-stack {
+    min-width: 0;
+    max-width: 80%;
+  }
+
+  body.destination-page .hero-badges,
+  body.destination-page .dest-tags-row,
+  body.destination-page .content-steps,
+  body.destination-page .destination-actions {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}

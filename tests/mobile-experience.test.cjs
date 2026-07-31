@@ -161,6 +161,9 @@ test("Travel page prioritizes globe exploration and destination browsing", () =>
   assert.match(travel, /body:not\(\.dest-authenticated\) \.dest-admin-fab/);
   assert.match(travel, /body\.travel-page \{[\s\S]*overflow-x:\s*clip/);
   assert.match(travel, /body\.travel-page #globeCanvas[\s\S]*max-width:\s*100% !important/);
+  assert.match(travel, /\.destination-item\s*\{[\s\S]*grid-template-columns:\s*minmax\(88px, 30%\) minmax\(0, 1fr\)/);
+  assert.match(read("css/pages/destination.css"), /Mobile containment for every destination detail section/);
+  assert.match(read("css/pages/destination.css"), /body\.destination-page \{[\s\S]*overflow-x:\s*clip/);
 });
 
 test("optimized mobile hero and logo assets referenced by the site exist", () => {
