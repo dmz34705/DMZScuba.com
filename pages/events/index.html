@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/responsive.css?v=20260730e1" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260730e2" />
 </head>
 
 <body class="events-page">
@@ -44,12 +44,12 @@
       <a href="../contact/index.html#dive-now">Ask about a date</a>
     </nav>
 
-    <main class="page-main" data-events-embed-shell data-events-admin-page data-events-fallback="/assets/data/events.json">
+    <main class="page-main" data-events-page data-events-embed-shell data-events-admin-page data-events-src="/api/v2/events" data-events-fallback-src="/assets/data/events.json">
       <section class="events-summary-strip" id="planning" aria-label="Event calendar summary">
         <div class="events-summary-card">
-          <h2>Embedded planning calendar</h2>
+          <h2>Plan your next dive</h2>
           <p>
-            This page uses a single embedded calendar window so visitors can stay in one place, move month to month, and compare training, travel, and community events without jumping between separate pages.
+            Browse upcoming training, travel, workshops, and community dives in one place. Move month to month and compare the options that fit your next step.
           </p>
           <div class="events-meta-row">
             <div class="events-metric">
@@ -61,12 +61,12 @@
               <span>current day highlighted automatically</span>
             </div>
           </div>
-          <p class="muted small">The embedded view pulls from a rolling DMZ event feed, updates as the date changes, and can still be swapped to an external provider later without rebuilding this page.</p>
+          <p class="muted small">The calendar uses a rolling DMZ event feed and updates automatically as the date changes.</p>
         </div>
 
         <aside class="events-helper-card">
           <h2>How to use this calendar</h2>
-          <p>Scroll the embedded calendar for the current schedule, then use the contact form to lock in details or claim a spot.</p>
+          <p>Browse the calendar for the current schedule, then use the contact form to lock in details or claim a spot.</p>
           <ul>
             <li>Training and workshop nights can still be tailored around demand.</li>
             <li>Travel briefings help you line up certification before trip dates.</li>
@@ -78,8 +78,8 @@
       <section class="events-embed-shell-card" id="calendar" aria-labelledby="events-embed-title">
         <div class="events-embed-head">
           <div>
-            <h2 id="events-embed-title">Interactive DMZ Calendar</h2>
-            <p class="muted">Scroll inside the calendar to move through the current event window. The agenda below stays focused on the next available dates for quick scanning.</p>
+            <h2 id="events-embed-title">DMZ Event Calendar</h2>
+            <p class="muted">Browse the current event window, then compare the next available dates in the agenda below.</p>
           </div>
           <a class="btn secondary" href="../contact/index.html#dive-now">Ask About a Date</a>
         </div>
@@ -103,15 +103,35 @@
             <button class="btn secondary events-admin-logout" type="button">Logout</button>
           </div>
         </section>
-        <div class="events-embed-frame-wrap">
-          <iframe
-            class="events-embed-frame"
-            src="./embed.html"
-            title="DMZ Scuba events calendar"
-            loading="lazy"
-            scrolling="no"
-            data-events-embed-frame
-          ></iframe>
+        <div class="events-native-calendar">
+          <section class="events-page-layout events-page-layout-embed events-page-layout-stacked">
+            <div class="events-month-stack" data-events-calendar aria-live="polite"></div>
+
+            <div class="events-list-block">
+              <div class="events-list-intro">
+                <h2>Upcoming Agenda</h2>
+                <p class="muted">The next available dates, ordered from soonest to latest, so the best options are easy to compare.</p>
+              </div>
+              <div class="events-list-stack" data-events-list aria-live="polite"></div>
+            </div>
+          </section>
+
+          <div class="events-empty-state" data-events-empty hidden>
+            No events are posted yet. Use the contact page and we will help you plan the right next step.
+          </div>
+        </div>
+
+        <div class="events-admin-embed" aria-hidden="true">
+          <div class="events-embed-frame-wrap">
+            <iframe
+              class="events-embed-frame"
+              src="./embed.html"
+              title="DMZ Scuba events calendar editor preview"
+              loading="lazy"
+              scrolling="no"
+              data-events-embed-frame
+            ></iframe>
+          </div>
         </div>
         <p class="events-embed-note">If the calendar does not load, use the contact page and we will walk you through current openings.</p>
       </section>

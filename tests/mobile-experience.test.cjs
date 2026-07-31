@@ -61,7 +61,12 @@ test("events calendar has a focused mobile planning flow", () => {
   assert.match(page, /href="#calendar"/);
   assert.match(page, /id="calendar"/);
   assert.match(page, /id="planning"/);
+  assert.match(page, /class="events-native-calendar"/);
+  assert.match(page, /data-events-calendar/);
+  assert.match(page, /class="events-admin-embed"/);
   assert.match(responsive, /body\.events-page\.site-header-is-hidden \.events-mobile-nav\{[\s\S]*top:\s*0/);
+  assert.match(responsive, /\.events-page \.events-page-layout-embed \.events-list-block\{[\s\S]*order:\s*1/);
+  assert.match(responsive, /body\.events-authenticated \.events-page \.events-native-calendar\{[\s\S]*display:\s*none/);
   assert.match(responsive, /\.events-page \.events-embed-shell-card\{[\s\S]*margin-right:\s*-18px/);
   assert.match(responsive, /\.events-page \.page-hero-events \.page-hero-card\{[\s\S]*display:\s*none/);
   assert.match(embed, /responsive\.css\?v=20260730e1/);

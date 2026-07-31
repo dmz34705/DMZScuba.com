@@ -617,6 +617,41 @@
     border-radius: 14px;
   }
 
+  .events-page .events-native-calendar{
+    min-width: 0;
+  }
+
+  .events-page .events-admin-embed{
+    display: none;
+  }
+
+  body.events-authenticated .events-page .events-native-calendar{
+    display: none;
+  }
+
+  body.events-authenticated .events-page .events-admin-embed{
+    display: block;
+  }
+
+  .events-page .events-page-layout-embed{
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .events-page .events-page-layout-embed .events-list-block{
+    order: 1;
+  }
+
+  .events-page .events-page-layout-embed .events-month-stack{
+    order: 2;
+    margin-top: 14px;
+  }
+
+  .events-page .events-list-block{
+    border-radius: 16px;
+  }
+
   .events-page .events-summary-strip{
     gap: 12px;
   }
