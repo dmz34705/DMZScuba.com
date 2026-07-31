@@ -125,6 +125,13 @@ test("Agenda bulk actions can complete, archive, delete, and reschedule selected
   assert.match(bulk, /priority: bulkPrioritySelect\.value/);
 });
 
+test("Classes has one completed-items control without a redundant past-items toggle", () => {
+  const page = read("management/index.html");
+  assert.doesNotMatch(page, /data-show-past-calendar/);
+  assert.doesNotMatch(page, /management-cal-toggle\.js/);
+  assert.match(read("js/management-hide-complete.js"), /Show Done/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);
