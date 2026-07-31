@@ -2835,6 +2835,17 @@ kbd {
   cursor: pointer;
 }
 
+.mgmt-bulk-status-wrap input[type="date"] {
+  min-height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 8px;
+}
+
 .mgmt-bulk-apply {
   border: 1px solid rgba(85, 185, 255, 0.40);
   border-radius: 7px;

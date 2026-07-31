@@ -114,6 +114,17 @@ test("management media studio shares the live library and secure upload flow", (
   assert.doesNotMatch(studio, /title\.value = file\.name/);
 });
 
+test("Agenda bulk actions can complete, archive, delete, and reschedule selected records", () => {
+  const bulk = read("js/management-bulk.js");
+  assert.match(bulk, /Mark as complete/);
+  assert.match(bulk, /Set follow-up date/);
+  assert.match(bulk, /Archive/);
+  assert.match(bulk, /Delete permanently/);
+  assert.match(bulk, /method: "DELETE"/);
+  assert.match(bulk, /dueDate: followUpDate/);
+  assert.match(bulk, /priority: bulkPrioritySelect\.value/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

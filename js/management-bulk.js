@@ -17,7 +17,8 @@
 
   // ── Injected UI refs ───────────────────────────────────────────────────────
 
-  let selectBtn, bulkBar, bulkCount, bulkStatusSelect, bulkApplyBtn, bulkCancelBtn, selectAllBtn;
+  let selectBtn, bulkBar, bulkCount, bulkActionSelect, bulkStatusSelect, bulkFollowUpInput,
+    bulkPrioritySelect, bulkApplyBtn, bulkCancelBtn, selectAllBtn;
 
   function buildUI() {
     // "Select" button — inserted into the operations topbar before "+ New"
@@ -45,6 +46,17 @@
       </div>
       <div class="mgmt-bulk-bar-right">
         <label class="mgmt-bulk-status-wrap">
+          <span>Action:</span>
+          <select data-bulk-action>
+            <option value="complete">Mark as complete</option>
+            <option value="follow-up">Set follow-up date</option>
+            <option value="status">Change status</option>
+            <option value="priority">Change priority</option>
+            <option value="archive">Archive</option>
+            <option value="delete">Delete permanently</option>
+          </select>
+        </label>
+        <label class="mgmt-bulk-status-wrap" data-bulk-status-wrap hidden>
           <span>Status:</span>
           <select data-bulk-status>
             <option value="new">New</option>
@@ -55,6 +67,19 @@
             <option value="archived">Archived</option>
           </select>
         </label>
+        <label class="mgmt-bulk-status-wrap" data-bulk-follow-up-wrap hidden>
+          <span>Follow-up:</span>
+          <input type="date" data-bulk-follow-up aria-label="New follow-up date" />
+        </label>
+        <label class="mgmt-bulk-status-wrap" data-bulk-priority-wrap hidden>
+          <span>Priority:</span>
+          <select data-bulk-priority>
+            <option value="urgent">Urgent</option>
+            <option value="high">High</option>
+            <option value="normal" selected>Normal</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
         <button class="mgmt-bulk-apply" type="button" data-bulk-apply disabled>Apply</button>
         <button class="mgmt-bulk-cancel" type="button" data-bulk-cancel>✕</button>
       </div>
@@ -63,7 +88,10 @@
     opsPanel.querySelector(".mgmt-topbar")?.insertAdjacentElement("afterend", bulkBar);
 
     bulkCount        = bulkBar.querySelector("[data-bulk-count]");
+    bulkActionSelect  = bulkBar.querySelector("[data-bulk-action]");
     bulkStatusSelect = bulkBar.querySelector("[data-bulk-status]");
+    bulkFollowUpInput = bulkBar.querySelector("[data-bulk-follow-up]");
+    bulkPrioritySelect = bulkBar.querySelector("[data-bulk-priority]");
     bulkApplyBtn     = bulkBar.querySelector("[data-bulk-apply]");
     bulkCancelBtn    = bulkBar.querySelector("[data-bulk-cancel]");
     selectAllBtn     = bulkBar.querySelector("[data-bulk-select-all]");
@@ -71,6 +99,23 @@
     bulkCancelBtn.addEventListener("click", exitBulkMode);
     bulkApplyBtn.addEventListener("click", applyBulk);
     selectAllBtn.addEventListener("click", toggleSelectAll);
+    bulkActionSelect.addEventListener("change", updateActionControls);
+    updateActionControls();
+  }
+
+  function updateActionControls() {
+    const action = bulkActionSelect?.value || "complete";
+    bulkBar.querySelector("[data-bulk-status-wrap]").hidden = action !== "status";
+    bulkBar.querySelector("[data-bulk-follow-up-wrap]").hidden = action !== "follow-up";
+    bulkBar.querySelector("[data-bulk-priority-wrap]").hidden = action !== "priority";
+    if (bulkApplyBtn) {
+      const labels = {
+        complete: "Complete", "follow-up": "Set Date", status: "Update Status",
+        priority: "Update Priority", archive: "Archive", delete: "Delete",
+      };
+      bulkApplyBtn.dataset.actionLabel = labels[action] || "Apply";
+      updateCount();
+    }
   }
 
   // ── Enter / exit bulk mode ─────────────────────────────────────────────────
@@ -171,7 +216,8 @@
     const n = selected.size;
     bulkCount.textContent = n === 1 ? "1 selected" : `${n} selected`;
     bulkApplyBtn.disabled = n === 0;
-    bulkApplyBtn.textContent = n > 0 ? `Apply to ${n}` : "Apply";
+    const actionLabel = bulkApplyBtn.dataset.actionLabel || "Apply";
+    bulkApplyBtn.textContent = n > 0 ? `${actionLabel} ${n}` : actionLabel;
 
     const cards = [...recordList.querySelectorAll("[data-record-id]")];
     const allSel = cards.length > 0 && cards.every(c => selected.has(c.getAttribute("data-record-id")));
@@ -182,8 +228,17 @@
 
   async function applyBulk() {
     if (selected.size === 0) return;
-    const newStatus = bulkStatusSelect.value;
+    const action = bulkActionSelect.value;
     const ids = [...selected];
+    const followUpDate = bulkFollowUpInput.value;
+
+    if (action === "follow-up" && !followUpDate) {
+      bulkFollowUpInput.focus();
+      return;
+    }
+    if (action === "delete" && !confirm(`Delete ${ids.length} selected record${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) {
+      return;
+    }
 
     bulkApplyBtn.disabled  = true;
     bulkApplyBtn.textContent = "Saving…";
@@ -209,10 +264,25 @@
       const record = allRecords.find(x => x.id === id);
       if (!record) return;
       try {
+        if (action === "delete") {
+          await fetch(`${managementUrl}/${encodeURIComponent(id)}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          });
+          return;
+        }
+        const patch = (() => {
+          if (action === "complete") return { status: "complete", dueDate: "" };
+          if (action === "archive") return { status: "archived", dueDate: "" };
+          if (action === "follow-up") return { dueDate: followUpDate };
+          if (action === "priority") return { priority: bulkPrioritySelect.value };
+          return { status: bulkStatusSelect.value };
+        })();
         await fetch(`${managementUrl}/${encodeURIComponent(id)}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ record: { ...record, status: newStatus } }),
+          body: JSON.stringify({ record: { ...record, ...patch } }),
           cache: "no-store",
         });
       } catch { /* individual failures don't abort the batch */ }
@@ -225,7 +295,8 @@
   function resetBar() {
     const n = selected.size;
     bulkApplyBtn.disabled    = n === 0;
-    bulkApplyBtn.textContent = n > 0 ? `Apply to ${n}` : "Apply";
+    const actionLabel = bulkApplyBtn.dataset.actionLabel || "Apply";
+    bulkApplyBtn.textContent = n > 0 ? `${actionLabel} ${n}` : actionLabel;
     bulkCancelBtn.disabled   = false;
   }
 
