@@ -142,6 +142,15 @@ test("Agenda treats closed records as done and hides every terminal status by de
   });
 });
 
+test("management record editor provides a floating save action", () => {
+  const page = read("management/index.html");
+  const management = read("js/management.js");
+  const styles = read("css/pages/management.css");
+  assert.match(page, /data-floating-save/);
+  assert.match(management, /recordForm\?\.requestSubmit\(\)/);
+  assert.match(styles, /\.management-floating-save\s*\{[\s\S]*position:\s*absolute/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

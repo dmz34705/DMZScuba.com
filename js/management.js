@@ -22,6 +22,7 @@
   const dashboard = app.querySelector("[data-management-dashboard]");
   const loginForm = app.querySelector("[data-login-form]");
   const recordForm = app.querySelector("[data-record-form]");
+  const floatingSaveButton = app.querySelector("[data-floating-save]");
   const recordList = app.querySelector("[data-record-list]");
   const searchInput = app.querySelector("[data-search-records]");
   const sortSelect = app.querySelector("[data-sort-records]");
@@ -4051,6 +4052,9 @@
       button.addEventListener("click", () => openEditor(null, getDefaultNewRecordType()));
     });
     if (cancelEditButton) cancelEditButton.addEventListener("click", closeEditorModal);
+    if (floatingSaveButton) {
+      floatingSaveButton.addEventListener("click", () => recordForm?.requestSubmit());
+    }
     const refreshButton = app.querySelector("[data-refresh-records]");
     if (refreshButton) refreshButton.addEventListener("click", () => loadRecords());
     const logoutButton = app.querySelector("[data-logout]");

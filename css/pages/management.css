@@ -571,6 +571,29 @@
   color: var(--text);
 }
 
+.management-floating-save {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  z-index: 5;
+  min-width: 94px;
+  min-height: 46px;
+  border: 1px solid rgba(85, 185, 255, 0.62);
+  border-radius: 999px;
+  background: rgba(31, 119, 180, 0.96);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+  color: #effaff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.management-floating-save:hover {
+  background: rgba(45, 143, 208, 1);
+  border-color: rgba(150, 221, 255, 0.9);
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    LOGIN
    ────────────────────────────────────────────────────────────────────────── */
@@ -2231,6 +2254,14 @@ kbd {
 
   .management-panel {
     width: min(480px, calc(100vw - 180px));
+  }
+
+  .management-floating-save {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    min-width: 104px;
+    min-height: 50px;
+    font-size: 14px;
   }
 
   .mgmt-search-input {
