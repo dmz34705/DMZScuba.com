@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/media.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/responsive.css?v=20260728p4">
+  <link rel="stylesheet" href="/css/responsive.css?v=20260730m1">
 </head>
 
 <body id="top" class="media-page">
@@ -221,7 +221,7 @@
   </main>
 
   <!-- Site-wide JS -->
-  <script src="../../js/main.js?v=20260728p4" defer></script>
+  <script src="../../js/main.js?v=20260730m1" defer></script>
   <script src="../../js/media.js?v=1.7" defer></script>
   <script src="../../js/media-edit.js?v=20260728m" defer></script>
   <script>
@@ -249,6 +249,7 @@
         const header = document.querySelector(".site-header");
         if (header && next) {
           header.classList.remove("is-hidden");
+          document.body.classList.remove("site-header-is-hidden");
         }
       };
 

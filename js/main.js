@@ -941,10 +941,6 @@ console.log("main.js loaded");
         header.classList.toggle("is-hidden", hidden);
         document.body?.classList.toggle("site-header-is-hidden", hidden);
       };
-      if (document.body && document.body.classList.contains("media-page")) {
-        setHeaderHidden(false);
-        return;
-      }
       const mobileQuery = window.matchMedia("(max-width: 780px)");
       let lastScrollY = window.scrollY;
       let maxScrollY = window.scrollY;

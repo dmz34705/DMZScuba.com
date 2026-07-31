@@ -293,6 +293,10 @@
     z-index: 37;
     margin: 0 -18px 18px;
     padding: 12px 18px;
+    box-sizing: border-box;
+    width: calc(100% + 36px);
+    max-width: none;
+    min-width: 0;
     border-radius: 0;
     border-right: 0;
     border-left: 0;
@@ -306,11 +310,17 @@
   }
 
   .media-page .media-controls .section-head{
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    min-width: 0;
+  }
+
+  .media-page .media-controls .section-title,
+  .media-page .media-controls .filterbar{
+    min-width: 0;
   }
 
   .media-page .media-controls .section-title h2{
@@ -319,7 +329,8 @@
 
   .media-page .filterbar-meta{
     width: auto;
-    flex-wrap: nowrap;
+    min-width: 0;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
 
@@ -1105,9 +1116,29 @@
   body.training-landing-page.site-header-is-hidden .toc{
     top: 0;
   }
+
+  body.media-page .media-controls{
+    transition: top 220ms ease;
+    will-change: top;
+  }
+
+  body.media-page.site-header-is-hidden .media-controls{
+    top: 0;
+  }
 }
 
 @media (max-width: 420px){
+  .media-page .media-controls .section-head{
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .media-page .filterbar-meta{
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
   .site-name{
     font-size: 16px;
   }

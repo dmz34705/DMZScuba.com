@@ -47,6 +47,10 @@ test("training table of contents follows the hidden mobile header", () => {
   assert.match(javascript, /document\.body\?\.classList\.toggle\("site-header-is-hidden", hidden\)/);
   assert.match(responsive, /body\.training-landing-page \.toc\{[\s\S]*transition:\s*top 220ms ease/);
   assert.match(responsive, /body\.training-landing-page\.site-header-is-hidden \.toc\{[\s\S]*top:\s*0/);
+  assert.match(responsive, /body\.media-page \.media-controls\{[\s\S]*transition:\s*top 220ms ease/);
+  assert.match(responsive, /body\.media-page\.site-header-is-hidden \.media-controls\{[\s\S]*top:\s*0/);
+  assert.match(responsive, /\.media-page \.media-controls\{[\s\S]*width:\s*calc\(100% \+ 36px\)[\s\S]*max-width:\s*none/);
+  assert.doesNotMatch(javascript, /contains\("media-page"\)\) \{\s*setHeaderHidden\(false\);\s*return;/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {
