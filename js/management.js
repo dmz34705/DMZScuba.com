@@ -104,7 +104,7 @@
     not_a_fit: "Not a Good Fit",
     completed: "Completed / Won",
   };
-  const closedStatuses = new Set(["complete", "completed", "archived", "cancelled", "dead_end", "not_fit"]);
+  const closedStatuses = new Set(["complete", "completed", "closed", "archived", "cancelled", "dead_end", "not_fit"]);
   const inquiryPipelineStages = [
     { keys: new Set(["new", "to_contact"]), label: "Lead" },
     { keys: new Set(["reached_out"]), label: "Contacted" },
@@ -537,18 +537,18 @@
   }
 
   function isOverdue(record) {
-    if (!record.dueDate || closedStatuses.has(record.status)) return false;
+    if (!record.dueDate || closedStatuses.has(normalizeSiteText(record.status))) return false;
     return record.dueDate < todayKey();
   }
 
   function isOpenRecord(record) {
-    return record && !closedStatuses.has(record.status);
+    return record && !closedStatuses.has(normalizeSiteText(record.status));
   }
 
   function getEffectiveClassStatus(record) {
     if (!record || record.recordType !== "class") return normalizeSiteText(record && record.status) || "scheduled";
     const currentStatus = normalizeSiteText(record.status) || "scheduled";
-    if (currentStatus === "archived" || currentStatus === "complete") return currentStatus;
+    if (closedStatuses.has(currentStatus)) return currentStatus;
     const sessions = getOrderedClassSessions(record);
     const dates = sessions.map((session) => session.date).filter(Boolean).sort();
     if (!dates.length) return currentStatus;
@@ -2222,7 +2222,7 @@
         const overdueFlag = isOverdue(record) ? `<span class="management-badge is-overdue">Overdue</span>` : "";
         const pinnedFlag = record.pinned ? " is-pinned" : "";
         return `
-          <article class="management-record is-${escapeHtml(record.recordType)}${pinnedFlag} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}">
+          <article class="management-record is-${escapeHtml(record.recordType)}${pinnedFlag} ${record.id === state.selectedId ? "is-selected" : ""}" data-record-id="${escapeHtml(record.id)}" data-record-status="${escapeHtml(displayStatus)}">
             <div>
               <div class="management-record-badges">
                 <span class="management-badge is-${escapeHtml(record.recordType)}">${escapeHtml(formatLabel(record.recordType))}</span>

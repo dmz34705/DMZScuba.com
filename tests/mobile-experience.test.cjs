@@ -132,6 +132,16 @@ test("Classes has one completed-items control without a redundant past-items tog
   assert.match(read("js/management-hide-complete.js"), /Show Done/);
 });
 
+test("Agenda treats closed records as done and hides every terminal status by default", () => {
+  const management = read("js/management.js");
+  const styles = read("css/pages/management.css");
+  assert.match(management, /"closed"/);
+  assert.match(management, /data-record-status/);
+  ["complete", "completed", "closed", "archived", "cancelled", "dead_end", "not_fit"].forEach((status) => {
+    assert.match(styles, new RegExp(`data-record-status="${status}"`));
+  });
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

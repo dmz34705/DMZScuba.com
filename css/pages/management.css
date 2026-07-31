@@ -2900,12 +2900,14 @@ kbd {
 
 /* ── Hide complete / archived cards ───────────────────────────────────────── */
 
-/* Non-contact cards: detected via inline status select */
-.is-hiding-complete .management-record:has(option[value="complete"]:checked),
-.is-hiding-complete .management-record:has(option[value="archived"]:checked),
-/* Contact cards (no inline select): detected via status badge class */
-.is-hiding-complete .management-record:has(.management-badge.is-complete),
-.is-hiding-complete .management-record:has(.management-badge.is-archived) {
+/* Every terminal Agenda status uses the same card-level state. */
+.is-hiding-complete .management-record[data-record-status="complete"],
+.is-hiding-complete .management-record[data-record-status="completed"],
+.is-hiding-complete .management-record[data-record-status="closed"],
+.is-hiding-complete .management-record[data-record-status="archived"],
+.is-hiding-complete .management-record[data-record-status="cancelled"],
+.is-hiding-complete .management-record[data-record-status="dead_end"],
+.is-hiding-complete .management-record[data-record-status="not_fit"] {
   display: none;
 }
 
