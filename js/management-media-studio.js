@@ -244,15 +244,16 @@
           placeholder="Brief description for the gallery card…">${esc(item.description || '')}</textarea>
       </label>
 
-      <label class="mstudio-label"><span>Media URL</span>
-        <input class="mstudio-input" name="url" value="${esc(item.url || '')}" placeholder="/assets/media/video.mp4 or https://…" />
-      </label>
-
-      <label class="mstudio-label"><span>Thumbnail URL</span>
-        <input class="mstudio-input" name="thumbUrl" value="${esc(item.thumbUrl || '')}" placeholder="/assets/media/thumbnails/thumb.jpg" />
-      </label>
-
-      ${item.streamId ? `<div class="mstudio-meta-row"><span>Stream ID</span><code class="mstudio-code">${esc(item.streamId)}</code></div>` : ''}
+      <details class="mstudio-upload-advanced">
+        <summary>Advanced hosting options</summary>
+        <p class="mstudio-advanced-help">Your media file is already connected. Only use these fields when replacing an existing external media link.</p>
+        <label class="mstudio-label"><span>Media link</span>
+          <input class="mstudio-input" name="url" value="${esc(item.url || '')}" placeholder="https://…" />
+        </label>
+        <label class="mstudio-label"><span>Preview image link</span>
+          <input class="mstudio-input" name="thumbUrl" value="${esc(item.thumbUrl || '')}" placeholder="https://…" />
+        </label>
+      </details>
 
       <div class="mstudio-form-actions">
         <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-save>Save Changes</button>
@@ -305,16 +306,7 @@
   }
 
   function addItem() {
-    const id = genId();
-    st.items.unshift({
-      id, type: 'video', title: 'New Item', description: '',
-      tags: ['video'], location: '', url: '', thumbUrl: '', streamId: '',
-      createdAt: new Date().toISOString(), sortOrder: 0,
-    });
-    st.edits[id] = {};
-    syncDirtyBadge();
-    select(id);
-    setStatus('New item added. Fill in details and publish.');
+    openUpload();
   }
 
   function deleteItem() {

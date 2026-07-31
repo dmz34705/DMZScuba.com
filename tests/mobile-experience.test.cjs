@@ -104,6 +104,8 @@ test("management media studio shares the live library and secure upload flow", (
   assert.match(studio, /\/api\/admin\/stream-direct-upload/);
   assert.match(studio, /\/api\/admin\/media-bulk/);
   assert.match(studio, /Upload added to your draft/);
+  assert.match(studio, /function addItem\(\) \{\s*openUpload\(\);/);
+  assert.match(studio, /Advanced hosting options/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {

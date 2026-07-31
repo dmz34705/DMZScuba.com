@@ -3363,6 +3363,13 @@ kbd {
   font-weight: 700;
 }
 
+.mstudio-advanced-help {
+  margin: 0;
+  color: rgba(234, 242, 255, 0.5);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .mstudio-workspace {
