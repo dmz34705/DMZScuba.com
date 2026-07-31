@@ -3648,6 +3648,10 @@ kbd {
     font-size: 13px;
   }
 
+  [data-site-studio-panel='media'] .mstudio-toolbar [data-ms-publish] {
+    display: none;
+  }
+
   .mstudio-status-text {
     grid-column: 1 / -1;
     grid-row: 3;

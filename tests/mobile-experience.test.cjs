@@ -103,13 +103,14 @@ test("management media studio shares the live library and secure upload flow", (
   assert.match(studio, /\/api\/admin\/images-direct-upload/);
   assert.match(studio, /\/api\/admin\/stream-direct-upload/);
   assert.match(studio, /\/api\/admin\/media-bulk/);
-  assert.match(studio, /Upload added to your draft/);
+  assert.match(studio, /Media published to the site/);
   assert.match(studio, /function addItem\(\) \{\s*openUpload\(\);/);
   assert.match(studio, /Advanced hosting options/);
   assert.match(studio, /function setPreviewVisible\(visible\)/);
   assert.match(studio, /scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
   assert.match(studio, /Choose a post to edit/);
   assert.match(page, /data-ms-preview-toggle/);
+  assert.match(page, /Publish Media/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {

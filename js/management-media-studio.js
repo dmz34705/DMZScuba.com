@@ -259,7 +259,8 @@
       </details>
 
       <div class="mstudio-form-actions">
-        <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-save>Save Changes</button>
+        <button class="mstudio-btn" type="button" data-ms-save>Save Draft</button>
+        <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-save-publish>Publish Changes</button>
         <button class="mstudio-btn" type="button" data-ms-discard>Discard</button>
       </div>`;
   }
@@ -329,7 +330,7 @@
   }
 
   async function publish() {
-    if (!getToken()) { setStatus('Not authenticated — log in first.', 'error'); return; }
+    if (!getToken()) { setStatus('Not authenticated — log in first.', 'error'); return false; }
     const deleteIds = [...st.deleting];
     const deleteStreamIds = st.items
       .filter(i => st.deleting.has(i.id) && i.streamId)
@@ -352,9 +353,16 @@
       renderForm();
       setStatus('Published to site!', 'success');
       refreshPreview();
+      return true;
     } catch (err) {
       setStatus(`Publish failed: ${err.message}`, 'error');
+      return false;
     }
+  }
+
+  async function saveAndPublish() {
+    saveEdit();
+    return publish();
   }
 
   function refreshPreview() {
@@ -409,7 +417,10 @@
     if (R.uploadProgressLabel) R.uploadProgressLabel.textContent = 'Preparing secure upload…';
     if (R.uploadProgressFill) R.uploadProgressFill.style.width = '0%';
     const submitButton = R.uploadForm?.querySelector('[data-ms-upload-submit]');
-    if (submitButton) submitButton.disabled = false;
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Publish Media';
+    }
   }
 
   function openUpload() {
@@ -437,7 +448,10 @@
       if (R.uploadProgressLabel) R.uploadProgressLabel.textContent = label;
       if (R.uploadProgressFill && percent !== null) R.uploadProgressFill.style.width = `${percent}%`;
     };
-    if (submitButton) submitButton.disabled = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Publishing…';
+    }
     let upload = { type, url: f.querySelector('[name=url]')?.value.trim() || '', thumbUrl: f.querySelector('[name=thumbUrl]')?.value.trim() || '', streamId: '' };
     try {
       if (file) {
@@ -449,7 +463,10 @@
       }
     } catch (err) {
       updateProgress(`Upload failed: ${err.message}`, 0);
-      if (submitButton) submitButton.disabled = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Publish Media';
+      }
       return;
     }
     const id = genId();
@@ -470,9 +487,18 @@
     st.items.unshift(newItem);
     st.edits[id] = {};
     syncDirtyBadge();
+    updateProgress('Publishing your media to the site…', 100);
+    const published = await publish();
+    if (!published) {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Try Publishing Again';
+      }
+      return;
+    }
     closeUpload();
     select(id);
-    setStatus('Upload added to your draft. Review details, then publish to the Media page.', 'success');
+    setStatus('Media published to the site.', 'success');
   }
 
   // ── Events ────────────────────────────────────────────────────────────────
@@ -492,6 +518,7 @@
     // Form delegation (parent is edit-pane)
     R.editPane?.addEventListener('click', e => {
       if (e.target.closest('[data-ms-save]')) { saveEdit(); return; }
+      if (e.target.closest('[data-ms-save-publish]')) { saveAndPublish(); return; }
       if (e.target.closest('[data-ms-discard]')) { discardEdit(); return; }
       if (e.target.closest('[data-ms-del]')) { deleteItem(); return; }
     });
