@@ -142,6 +142,23 @@ test("training feature-card rails receive visual scroll dots when they overflow"
   assert.match(responsive, /\.training-scroll-dots span\.is-active/);
 });
 
+test("Travel page prioritizes globe exploration and destination browsing", () => {
+  const page = read("pages/travel/index.html");
+  const globe = read("js/globe.js");
+  const travel = read("css/pages/travel.css");
+  assert.match(page, /class="section travel-explorer" id="globe"/);
+  assert.match(page, /class="travel-explorer-guide"/);
+  assert.match(page, /class="section travel-browse-section" id="destination-list"/);
+  assert.ok(page.indexOf('id="destination-list"') < page.indexOf('id="travel-upcoming-title"'));
+  assert.match(page, /class="section destination-preview" id="destination"/);
+  assert.doesNotMatch(page, /class="micro-note/);
+  assert.match(globe, /destination-item-image/);
+  assert.match(globe, /item\.append\(imageWrap, body\)/);
+  assert.match(travel, /\.globe-filter-pills\s*\{[\s\S]*flex-wrap:\s*nowrap/);
+  assert.match(travel, /\.destination-item\s*\{[\s\S]*grid-template-columns:\s*112px/);
+  assert.match(travel, /body:not\(\.dest-authenticated\) \.dest-admin-fab/);
+});
+
 test("optimized mobile hero and logo assets referenced by the site exist", () => {
   const assetPaths = [
     "assets/images/logos/dmz-scuba-logo-mobile.webp",

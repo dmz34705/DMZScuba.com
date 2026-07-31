@@ -406,6 +406,19 @@
       item.href = `./destination.html?id=${encodeURIComponent(dest.id)}`;
       item.setAttribute("aria-label", `View details for ${formatDestinationName(dest.name)}`);
 
+      const imageWrap = document.createElement("div");
+      imageWrap.className = "destination-item-image";
+      if (dest.heroImage) {
+        const image = document.createElement("img");
+        image.src = dest.heroImage;
+        image.alt = "";
+        image.loading = "lazy";
+        imageWrap.appendChild(image);
+      }
+
+      const body = document.createElement("div");
+      body.className = "destination-item-body";
+
       const title = document.createElement("div");
       title.className = "destination-item-title";
       title.textContent = formatDestinationName(dest.name);
@@ -423,9 +436,8 @@
         tags.appendChild(chip);
       });
 
-      item.appendChild(title);
-      item.appendChild(sub);
-      item.appendChild(tags);
+      body.append(title, sub, tags);
+      item.append(imageWrap, body);
       listEl.appendChild(item);
     });
 

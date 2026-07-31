@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=1.0" />
-  <link rel="stylesheet" href="/css/pages/travel.css?v=20260728p4" />
+  <link rel="stylesheet" href="/css/pages/travel.css?v=20260730t1" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 
 </head>
@@ -45,10 +45,17 @@
     </section>
 
     <!-- Globe -->
-    <section class="section" id="globe">
+    <section class="section travel-explorer" id="globe">
       <div class="section-head">
-        <h2>Interactive Globe</h2>
-        <p class="section-sub">Drag to rotate. Pinch to zoom. Tap a pin to visit a destination!</p>
+        <p class="travel-section-kicker">Explore destinations</p>
+        <h2>Find Your Next Dive Trip</h2>
+        <p class="section-sub">Rotate the globe, tap a pin, or browse every destination below.</p>
+      </div>
+
+      <div class="travel-explorer-guide" aria-label="How to explore destinations">
+        <span><strong>1</strong> Rotate the globe</span>
+        <span><strong>2</strong> Tap a destination pin</span>
+        <a href="#destination-list">Browse all destinations <span aria-hidden="true">↓</span></a>
       </div>
 
       <button class="dest-admin-fab" type="button" aria-expanded="false" aria-controls="destAdminPanel">
@@ -344,7 +351,7 @@
     </section>
 
     <!-- Destination spotlight (the zoom-in target) -->
-    <section class="section" id="destination" hidden>
+    <section class="section destination-preview" id="destination" hidden aria-live="polite">
       <div class="destination-shell">
 
         <!-- 2.0: Hero image strip hidden until a destination is selected -->
@@ -354,12 +361,12 @@
         </div>
 
         <div class="destination-head">
+          <p class="destination-selection-kicker">Selected destination</p>
           <div class="destination-title-row">
             <h2 id="destTitle">Choose a destination</h2>
             <div class="destination-title-meta">
               <!-- 2.0: Status badge lives here so it shows with or without a hero image -->
               <span class="dest-status-badge" id="destStatusBadge"></span>
-              <a class="btn primary" href="../contact/index.html#dive-now">Dive Now</a>
             </div>
           </div>
           <p id="destSub" class="section-sub">Click a globe pin to load details here.</p>
@@ -380,10 +387,6 @@
               </div>
             </a>
           </div>
-
-          <p class="micro-note micro-note--mobile">
-            Click the resort image to view more details about this location.
-          </p>
 
           <div class="destination-card">
             <h3>Trip Snapshot</h3>
@@ -407,10 +410,17 @@
           </div>
         </div>
 
-        <p class="micro-note">
-          Click the resort image to view more details about this location.
-        </p>
       </div>
+    </section>
+
+    <section class="section travel-browse-section" id="destination-list">
+      <div class="section-head">
+        <p class="travel-section-kicker">Browse at your pace</p>
+        <h2>Destination List</h2>
+        <p class="section-sub">Choose a destination to view diving highlights, trip details, and next steps.</p>
+      </div>
+      <div class="destination-list" id="destinationList"></div>
+      <p class="dest-list-empty muted" id="destinationListEmpty" hidden>No destinations match your current filter. <button class="dest-list-empty-clear" type="button" onclick="document.getElementById('globeFilterPills')?.querySelector('.globe-filter-clear')?.click()">Clear filters</button></p>
     </section>
 
     <section class="events-preview travel-upcoming-events section" aria-labelledby="travel-upcoming-title" data-events-preview data-events-src="/api/v2/events" data-events-fallback-src="/assets/data/events.json" data-events-preview-type="Travel">
@@ -430,15 +440,6 @@
       <p class="events-preview-stamp" data-events-updated></p>
     </section>
 
-    <section class="section" id="destination-list">
-      <div class="section-head">
-        <h2>Destination List</h2>
-        <p class="section-sub">Prefer to browse? Pick a destination to view details.</p>
-      </div>
-      <div class="destination-list" id="destinationList"></div>
-      <p class="dest-list-empty muted" id="destinationListEmpty" hidden>No destinations match your current filter. <button class="dest-list-empty-clear" type="button" onclick="document.getElementById('globeFilterPills')?.querySelector('.globe-filter-clear')?.click()">Clear filters</button></p>
-    </section>
-
     <div class="mobile-sticky-cta site-mobile-sticky-cta" id="mobile-sticky-cta" aria-label="Travel planning quick action" data-dismiss-storage-key="dmz-travel-sticky-dismissed">
       <a href="../contact/index.html?interest=travel#dive-now" class="btn primary mobile-sticky-cta-link">Plan a Dive Trip</a>
       <button type="button" class="mobile-sticky-close" aria-label="Dismiss travel planning action" data-dismiss-target="#mobile-sticky-cta">Close</button>
@@ -455,7 +456,7 @@
   <script src="../../js/events.js?v=20260508b" defer></script>
   <script src="../../js/travel-admin.js?v=1.10" defer></script>
   <!-- Globe POC (pure JS, no libraries) -->
-  <script src="../../js/globe.js?v=20260728m" defer></script>
+  <script src="../../js/globe.js?v=20260730t1" defer></script>
 
 
 </body>
