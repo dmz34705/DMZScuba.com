@@ -153,6 +153,14 @@ test("management record editor provides a floating save action", () => {
   assert.match(styles, /\.management-floating-save\s*\{[\s\S]*position:\s*fixed/);
 });
 
+test("mobile management more menu includes site exit actions", () => {
+  const page = read("management/index.html");
+  const management = read("js/management.js");
+  assert.match(page, /class="mgmt-nav-more-item" href="\/"/);
+  assert.match(page, /mgmt-nav-more-item-danger[^>]*data-logout/);
+  assert.match(management, /querySelectorAll\("\[data-logout\]"\)/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

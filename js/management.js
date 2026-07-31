@@ -4080,9 +4080,9 @@
     }
     const refreshButton = app.querySelector("[data-refresh-records]");
     if (refreshButton) refreshButton.addEventListener("click", () => loadRecords());
-    const logoutButton = app.querySelector("[data-logout]");
-    if (logoutButton) {
-      logoutButton.addEventListener("click", () => {
+    const logoutButtons = Array.from(app.querySelectorAll("[data-logout]"));
+    if (logoutButtons.length) {
+      const logout = () => {
         setToken("");
         state.records = [];
         state.allSiteEvents = [];
@@ -4091,7 +4091,8 @@
         closeEditorModal();
         renderRecords();
         showAuthed(false);
-      });
+      };
+      logoutButtons.forEach((button) => button.addEventListener("click", logout));
     }
     if (searchInput) {
       searchInput.addEventListener("input", () => {
