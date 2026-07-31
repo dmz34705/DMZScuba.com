@@ -204,10 +204,13 @@
     if (!R.form || !R.hint) return;
     const item = getSelected();
     if (!item) {
+      R.hint.innerHTML = `<strong>Choose a post to edit</strong><span>Tap a media item above, or start a new upload.</span><button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-add>Upload a photo or video</button>`;
+      R.hint.classList.add('mstudio-empty-editor');
       R.hint.hidden = false;
       R.form.hidden = true;
       return;
     }
+    R.hint.classList.remove('mstudio-empty-editor');
     R.hint.hidden = true;
     R.form.hidden = false;
 

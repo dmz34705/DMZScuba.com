@@ -3686,30 +3686,34 @@ kbd {
   }
 
   [data-site-studio-panel='media'] .mstudio-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-height: 34dvh;
+    display: block;
+    max-height: 38dvh;
     overflow-y: auto;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   [data-site-studio-panel='media'] .mstudio-list-item {
-    grid-template-columns: 1fr;
-    align-content: start;
-    gap: 7px;
-    min-height: 142px;
-    padding: 9px;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    grid-template-columns: 92px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-height: 84px;
+    padding: 10px 12px;
+    border-right: none;
   }
 
   [data-site-studio-panel='media'] .mstudio-list-thumb {
-    width: 100%;
-    height: 78px;
+    width: 92px;
+    height: 64px;
     border-radius: 7px;
   }
 
   [data-site-studio-panel='media'] .mstudio-list-title {
     font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   [data-site-studio-panel='media'] .mstudio-edit-pane {
@@ -3717,6 +3721,31 @@ kbd {
     overflow: visible;
     padding: 14px 12px calc(22px + env(safe-area-inset-bottom, 0px));
     border-top: none;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-empty-editor {
+    display: grid;
+    justify-items: center;
+    gap: 9px;
+    min-height: 190px;
+    padding: 30px 18px;
+    border: 1px dashed rgba(85, 185, 255, 0.24);
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(85, 185, 255, 0.09), rgba(5, 11, 20, 0.16));
+    color: rgba(234, 242, 255, 0.62);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-empty-editor strong {
+    color: rgba(234, 242, 255, 0.94);
+    font-size: 16px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-empty-editor .mstudio-btn {
+    min-height: 44px;
+    margin-top: 6px;
+    justify-content: center;
   }
 
   [data-site-studio-panel='media'] .mstudio-label {

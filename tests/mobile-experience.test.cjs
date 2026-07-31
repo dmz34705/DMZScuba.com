@@ -108,6 +108,7 @@ test("management media studio shares the live library and secure upload flow", (
   assert.match(studio, /Advanced hosting options/);
   assert.match(studio, /function setPreviewVisible\(visible\)/);
   assert.match(studio, /scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
+  assert.match(studio, /Choose a post to edit/);
   assert.match(page, /data-ms-preview-toggle/);
 });
 
