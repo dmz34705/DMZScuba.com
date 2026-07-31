@@ -953,6 +953,10 @@ body.events-public-modal-open {
   background: rgba(5,11,20,0.72);
 }
 
+.events-mobile-nav {
+  display: none;
+}
+
 .events-public-modal[aria-hidden="true"] {
   display: none;
 }

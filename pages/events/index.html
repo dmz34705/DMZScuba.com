@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260730e1" />
 </head>
 
 <body class="events-page">
@@ -38,8 +38,14 @@
       </div>
     </section>
 
+    <nav class="events-mobile-nav" aria-label="Event page sections">
+      <a href="#calendar">Calendar</a>
+      <a href="#planning">Planning tips</a>
+      <a href="../contact/index.html#dive-now">Ask about a date</a>
+    </nav>
+
     <main class="page-main" data-events-embed-shell data-events-admin-page data-events-fallback="/assets/data/events.json">
-      <section class="events-summary-strip" aria-label="Event calendar summary">
+      <section class="events-summary-strip" id="planning" aria-label="Event calendar summary">
         <div class="events-summary-card">
           <h2>Embedded planning calendar</h2>
           <p>
@@ -69,7 +75,7 @@
         </aside>
       </section>
 
-      <section class="events-embed-shell-card" aria-labelledby="events-embed-title">
+      <section class="events-embed-shell-card" id="calendar" aria-labelledby="events-embed-title">
         <div class="events-embed-head">
           <div>
             <h2 id="events-embed-title">Interactive DMZ Calendar</h2>

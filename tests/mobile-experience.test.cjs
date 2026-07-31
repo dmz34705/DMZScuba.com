@@ -53,6 +53,20 @@ test("training table of contents follows the hidden mobile header", () => {
   assert.doesNotMatch(javascript, /contains\("media-page"\)\) \{\s*setHeaderHidden\(false\);\s*return;/);
 });
 
+test("events calendar has a focused mobile planning flow", () => {
+  const page = read("pages/events/index.html");
+  const responsive = read("css/responsive.css");
+  const embed = read("pages/events/embed.html");
+  assert.match(page, /class="events-mobile-nav"/);
+  assert.match(page, /href="#calendar"/);
+  assert.match(page, /id="calendar"/);
+  assert.match(page, /id="planning"/);
+  assert.match(responsive, /body\.events-page\.site-header-is-hidden \.events-mobile-nav\{[\s\S]*top:\s*0/);
+  assert.match(responsive, /\.events-page \.events-embed-shell-card\{[\s\S]*margin-right:\s*-18px/);
+  assert.match(responsive, /\.events-page \.page-hero-events \.page-hero-card\{[\s\S]*display:\s*none/);
+  assert.match(embed, /responsive\.css\?v=20260730e1/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);
