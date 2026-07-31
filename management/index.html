@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260509w" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260730m1" />
 </head>
 
 <body class="management-page">
@@ -208,7 +208,7 @@
             <div class="mstudio-toolbar">
               <div class="mstudio-toolbar-left">
                 <button class="mstudio-btn" type="button" data-ms-add>+ Add Item</button>
-                <button class="mstudio-btn" type="button" data-ms-upload>↑ Upload</button>
+                <button class="mstudio-btn mstudio-btn-primary" type="button" data-ms-upload>Upload Media</button>
                 <button class="mstudio-btn" type="button" data-ms-sync>↻ Sync Stream</button>
                 <button class="mstudio-btn" type="button" data-ms-export>⤓ Export JSON</button>
               </div>
@@ -249,11 +249,19 @@
             <div class="mstudio-overlay" data-ms-upload-overlay hidden>
               <div class="mstudio-modal">
                 <div class="mstudio-modal-head">
-                  <h3>Add Media Item</h3>
+                  <h3>Upload Media</h3>
                   <button class="mstudio-btn mstudio-btn-sm" type="button" data-ms-upload-close>✕ Close</button>
                 </div>
-                <p class="mstudio-hint mstudio-hint-sm">For large Cloudflare Stream uploads use the Full Editor. For URL-based items, fill in the fields below.</p>
+                <p class="mstudio-hint mstudio-hint-sm">Choose a photo or video. It uploads securely to Cloudflare, then appears in your draft library for review and publishing.</p>
                 <form class="mstudio-modal-form" data-ms-upload-form>
+                  <label class="mstudio-label"><span>Choose photo or video</span>
+                    <input class="mstudio-input" type="file" name="file" accept="image/*,video/*" />
+                  </label>
+                  <div class="mstudio-upload-file" data-ms-upload-file hidden></div>
+                  <div class="mstudio-upload-progress" data-ms-upload-progress hidden>
+                    <span data-ms-upload-progress-label>Preparing upload…</span>
+                    <span class="mstudio-upload-progress-track"><span data-ms-upload-progress-fill></span></span>
+                  </div>
                   <label class="mstudio-label"><span>Title</span>
                     <input class="mstudio-input" type="text" name="title" required maxlength="120" placeholder="Wreck dive at Thunder Bay" />
                   </label>
@@ -268,14 +276,23 @@
                       <input class="mstudio-input" type="text" name="location" maxlength="100" placeholder="Great Lakes, IL" />
                     </label>
                   </div>
+                  <label class="mstudio-label"><span>Description</span>
+                    <textarea class="mstudio-input mstudio-textarea" name="description" rows="3" maxlength="500" placeholder="A short description for the media card"></textarea>
+                  </label>
+                  <label class="mstudio-label"><span>Tags <em>(comma-separated)</em></span>
+                    <input class="mstudio-input" type="text" name="tags" placeholder="wreck, great-lakes, training" />
+                  </label>
+                  <details class="mstudio-upload-advanced">
+                    <summary>Advanced: use an existing media URL</summary>
                   <label class="mstudio-label"><span>Media URL</span>
                     <input class="mstudio-input" type="url" name="url" placeholder="/assets/media/video.mp4 or https://…" />
                   </label>
                   <label class="mstudio-label"><span>Thumbnail URL</span>
                     <input class="mstudio-input" type="url" name="thumbUrl" placeholder="/assets/media/thumbnails/thumb.jpg" />
                   </label>
+                  </details>
                   <div class="mstudio-form-actions">
-                    <button class="mstudio-btn mstudio-btn-primary" type="submit">Add Item</button>
+                    <button class="mstudio-btn mstudio-btn-primary" type="submit" data-ms-upload-submit>Upload to Draft</button>
                     <button class="mstudio-btn" type="button" data-ms-upload-close>Cancel</button>
                   </div>
                 </form>
@@ -816,7 +833,7 @@
   </main>
 
   <script src="/js/management.js?v=20260508t" defer></script>
-  <script src="/js/management-media-studio.js?v=20260507a" defer></script>
+  <script src="/js/management-media-studio.js?v=20260730m1" defer></script>
   <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
   <script src="/js/management-dashboard.js?v=20260508t" defer></script>
   <script src="/js/management-quick-advance.js?v=20260508e" defer></script>

@@ -91,6 +91,21 @@ test("media admin supports a file-first secure upload flow", () => {
   assert.match(worker, /handleImagesDirectUpload/);
 });
 
+test("management media studio shares the live library and secure upload flow", () => {
+  const page = read("management/index.html");
+  const studio = read("js/management-media-studio.js");
+  assert.match(page, /data-ms-list/);
+  assert.match(page, /name="file" accept="image\/\*,video\/\*"/);
+  assert.match(page, /data-ms-form/);
+  assert.match(page, /data-ms-upload-progress/);
+  assert.match(studio, /raw\?\.mediaItems/);
+  assert.match(studio, /raw\?\.photoItems/);
+  assert.match(studio, /\/api\/admin\/images-direct-upload/);
+  assert.match(studio, /\/api\/admin\/stream-direct-upload/);
+  assert.match(studio, /\/api\/admin\/media-bulk/);
+  assert.match(studio, /Upload added to your draft/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

@@ -3312,6 +3312,57 @@ kbd {
 .mstudio-modal-head h3 { margin: 0; font-size: 17px; letter-spacing: 0; }
 .mstudio-modal-form { display: flex; flex-direction: column; gap: 10px; }
 
+.mstudio-upload-file {
+  padding: 9px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(85, 185, 255, 0.22);
+  background: rgba(85, 185, 255, 0.08);
+  color: rgba(220, 245, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mstudio-upload-progress {
+  display: grid;
+  gap: 6px;
+  color: rgba(234, 242, 255, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mstudio-upload-progress-track {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.09);
+}
+
+.mstudio-upload-progress-track > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(85,185,255,0.8), rgba(127,230,255,1));
+  transition: width 120ms linear;
+}
+
+.mstudio-upload-advanced {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.12);
+}
+
+.mstudio-upload-advanced summary {
+  cursor: pointer;
+  color: rgba(234,242,255,0.64);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .mstudio-workspace {

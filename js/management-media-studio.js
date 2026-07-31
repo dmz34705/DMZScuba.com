@@ -27,6 +27,52 @@
     return res.json();
   }
 
+  async function requestUploadUrl(path) {
+    return apiFetch(path, { method: 'POST', body: '{}' });
+  }
+
+  function uploadFileToUrl(uploadUrl, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', uploadUrl, true);
+      xhr.upload.addEventListener('progress', event => {
+        if (!event.lengthComputable) return;
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      });
+      xhr.onerror = () => reject(new Error('Upload connection failed.'));
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed (${xhr.status}).`));
+      };
+      const data = new FormData();
+      data.append('file', file, file.name || 'media');
+      xhr.send(data);
+    });
+  }
+
+  async function uploadSelectedFile(file, onProgress) {
+    const isPhoto = file && file.type && file.type.startsWith('image/');
+    if (!isPhoto && (!file || !file.type || !file.type.startsWith('video/'))) {
+      throw new Error('Please choose an image or video file.');
+    }
+    if (isPhoto) {
+      const data = await requestUploadUrl('/api/admin/images-direct-upload');
+      if (!data.uploadURL || !data.deliveryUrl) throw new Error('Image upload could not be prepared.');
+      await uploadFileToUrl(data.uploadURL, file, onProgress);
+      return { type: 'photo', url: data.deliveryUrl, thumbUrl: data.deliveryUrl, streamId: '' };
+    }
+    const data = await requestUploadUrl('/api/admin/stream-direct-upload');
+    const result = data && data.result ? data.result : data;
+    if (!result.uploadURL || !result.uid) throw new Error('Video upload could not be prepared.');
+    await uploadFileToUrl(result.uploadURL, file, onProgress);
+    return {
+      type: 'video',
+      url: '',
+      thumbUrl: `https://videodelivery.net/${result.uid}/thumbnails/thumbnail.jpg?time=1s`,
+      streamId: result.uid,
+    };
+  }
+
   function genId() {
     return typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -76,7 +122,20 @@
     setStatus('Loading…');
     try {
       const raw = await apiFetch('/api/media');
-      const arr = Array.isArray(raw) ? raw : (raw?.items ?? []);
+      const sourceItems = Array.isArray(raw)
+        ? raw
+        : [
+            ...(Array.isArray(raw?.items) ? raw.items : []),
+            ...(Array.isArray(raw?.mediaItems) ? raw.mediaItems : []),
+            ...(Array.isArray(raw?.photoItems) ? raw.photoItems : []),
+          ];
+      const seen = new Set();
+      const arr = sourceItems.filter(item => {
+        const key = String(item?.id || '');
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       st.items = arr.map((item, i) => ({ sortOrder: i, ...item }));
       st.edits = {};
       st.deleting.clear();
@@ -332,28 +391,71 @@
   }
 
   // Upload modal
-  function openUpload() { if (R.uploadOverlay) R.uploadOverlay.hidden = false; }
+  function resetUploadUi() {
+    R.uploadForm?.reset();
+    if (R.uploadFile) {
+      R.uploadFile.textContent = '';
+      R.uploadFile.hidden = true;
+    }
+    if (R.uploadProgress) R.uploadProgress.hidden = true;
+    if (R.uploadProgressLabel) R.uploadProgressLabel.textContent = 'Preparing secure upload…';
+    if (R.uploadProgressFill) R.uploadProgressFill.style.width = '0%';
+    const submitButton = R.uploadForm?.querySelector('[data-ms-upload-submit]');
+    if (submitButton) submitButton.disabled = false;
+  }
+
+  function openUpload() {
+    if (!R.uploadOverlay) return;
+    resetUploadUi();
+    R.uploadOverlay.hidden = false;
+    requestAnimationFrame(() => R.uploadForm?.querySelector('[name=file]')?.focus());
+  }
+
   function closeUpload() {
     if (!R.uploadOverlay) return;
     R.uploadOverlay.hidden = true;
-    R.uploadForm?.reset();
+    resetUploadUi();
   }
 
-  function submitUpload(e) {
+  async function submitUpload(e) {
     e.preventDefault();
     const f = R.uploadForm;
     if (!f) return;
+    const file = f.querySelector('[name=file]')?.files?.[0] || null;
+    const submitButton = f.querySelector('[data-ms-upload-submit]');
     const type = f.querySelector('[name=type]')?.value || 'video';
+    const updateProgress = (label, percent = null) => {
+      if (R.uploadProgress) R.uploadProgress.hidden = false;
+      if (R.uploadProgressLabel) R.uploadProgressLabel.textContent = label;
+      if (R.uploadProgressFill && percent !== null) R.uploadProgressFill.style.width = `${percent}%`;
+    };
+    if (submitButton) submitButton.disabled = true;
+    let upload = { type, url: f.querySelector('[name=url]')?.value.trim() || '', thumbUrl: f.querySelector('[name=thumbUrl]')?.value.trim() || '', streamId: '' };
+    try {
+      if (file) {
+        updateProgress('Preparing secure upload…', 2);
+        upload = await uploadSelectedFile(file, percent => updateProgress(`Uploading ${percent}%`, percent));
+        updateProgress('Upload complete. Creating your draft…', 100);
+      } else if (!upload.url) {
+        throw new Error('Choose a photo or video, or open Advanced to use an existing URL.');
+      }
+    } catch (err) {
+      updateProgress(`Upload failed: ${err.message}`, 0);
+      if (submitButton) submitButton.disabled = false;
+      return;
+    }
     const id = genId();
+    const extraTags = (f.querySelector('[name=tags]')?.value || '')
+      .split(',').map(value => value.trim()).filter(Boolean);
     const newItem = {
-      id, type,
+      id, type: upload.type || type,
       title: f.querySelector('[name=title]')?.value.trim() || 'New Item',
       location: f.querySelector('[name=location]')?.value.trim() || '',
-      url: f.querySelector('[name=url]')?.value.trim() || '',
-      thumbUrl: f.querySelector('[name=thumbUrl]')?.value.trim() || '',
-      description: '',
-      tags: [type],
-      streamId: '',
+      url: upload.url,
+      thumbUrl: upload.thumbUrl,
+      description: f.querySelector('[name=description]')?.value.trim() || '',
+      tags: [upload.type || type, ...extraTags],
+      streamId: upload.streamId,
       createdAt: new Date().toISOString(),
       sortOrder: 0,
     };
@@ -362,7 +464,7 @@
     syncDirtyBadge();
     closeUpload();
     select(id);
-    setStatus('Item added. Fill in details and publish.');
+    setStatus('Upload added to your draft. Review details, then publish to the Media page.', 'success');
   }
 
   // ── Events ────────────────────────────────────────────────────────────────
@@ -405,6 +507,24 @@
 
     // Upload form & overlay
     R.uploadForm?.addEventListener('submit', submitUpload);
+    R.uploadForm?.querySelector('[name=file]')?.addEventListener('change', event => {
+      const file = event.currentTarget.files?.[0];
+      if (!file) {
+        if (R.uploadFile) R.uploadFile.hidden = true;
+        return;
+      }
+      const isPhoto = file.type.startsWith('image/');
+      const type = isPhoto ? 'photo' : 'video';
+      const typeSelect = R.uploadForm.querySelector('[name=type]');
+      if (typeSelect) typeSelect.value = type;
+      const title = R.uploadForm.querySelector('[name=title]');
+      if (title && !title.value.trim()) title.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+      if (R.uploadFile) {
+        const size = file.size ? ` · ${(file.size / (1024 * 1024)).toFixed(1)} MB` : '';
+        R.uploadFile.textContent = `${file.name}${size} · ${isPhoto ? 'Photo' : 'Video'} ready to upload`;
+        R.uploadFile.hidden = false;
+      }
+    });
     R.uploadOverlay?.addEventListener('click', e => {
       if (e.target === R.uploadOverlay) closeUpload();
     });
@@ -424,6 +544,10 @@
     R.preview = panelEl.querySelector('[data-ms-preview]');
     R.uploadOverlay = panelEl.querySelector('[data-ms-upload-overlay]');
     R.uploadForm = panelEl.querySelector('[data-ms-upload-form]');
+    R.uploadFile = panelEl.querySelector('[data-ms-upload-file]');
+    R.uploadProgress = panelEl.querySelector('[data-ms-upload-progress]');
+    R.uploadProgressLabel = panelEl.querySelector('[data-ms-upload-progress-label]');
+    R.uploadProgressFill = panelEl.querySelector('[data-ms-upload-progress-fill]');
 
     if (R.preview) {
       R.preview.dataset.previewSrc = PREVIEW_SRC;
