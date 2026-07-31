@@ -266,6 +266,9 @@
     st.selected = id;
     renderList();
     renderForm();
+    if (window.matchMedia?.('(max-width: 680px)').matches && R.editPane) {
+      requestAnimationFrame(() => R.editPane.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
   }
 
   function readFormFields() {
@@ -356,6 +359,16 @@
     const src = R.preview.dataset.previewSrc || PREVIEW_SRC;
     R.preview.src = '';
     requestAnimationFrame(() => { R.preview.src = src; });
+  }
+
+  function setPreviewVisible(visible) {
+    if (!R.panel) return;
+    R.panel.classList.toggle('mstudio-show-preview', visible);
+    if (R.previewToggle) {
+      R.previewToggle.setAttribute('aria-pressed', String(visible));
+      R.previewToggle.textContent = visible ? 'Edit Media' : 'Preview';
+    }
+    if (visible) refreshPreview();
   }
 
   function exportJSON() {
@@ -488,6 +501,10 @@
       if (e.target.closest('[data-ms-export]')) { exportJSON(); return; }
       if (e.target.closest('[data-ms-publish]')) { publish(); return; }
       if (e.target.closest('[data-ms-refresh]')) { refreshPreview(); return; }
+      if (e.target.closest('[data-ms-preview-toggle]')) {
+        setPreviewVisible(!R.panel.classList.contains('mstudio-show-preview'));
+        return;
+      }
       if (e.target.closest('[data-ms-upload-close]')) { closeUpload(); return; }
     });
 
@@ -534,6 +551,7 @@
     R.status = panelEl.querySelector('[data-ms-status]');
     R.search = panelEl.querySelector('[data-ms-search]');
     R.preview = panelEl.querySelector('[data-ms-preview]');
+    R.previewToggle = panelEl.querySelector('[data-ms-preview-toggle]');
     R.uploadOverlay = panelEl.querySelector('[data-ms-upload-overlay]');
     R.uploadForm = panelEl.querySelector('[data-ms-upload-form]');
     R.uploadFile = panelEl.querySelector('[data-ms-upload-file]');

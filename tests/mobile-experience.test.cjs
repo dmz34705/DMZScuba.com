@@ -106,6 +106,9 @@ test("management media studio shares the live library and secure upload flow", (
   assert.match(studio, /Upload added to your draft/);
   assert.match(studio, /function addItem\(\) \{\s*openUpload\(\);/);
   assert.match(studio, /Advanced hosting options/);
+  assert.match(studio, /function setPreviewVisible\(visible\)/);
+  assert.match(studio, /scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
+  assert.match(page, /data-ms-preview-toggle/);
 });
 
 test("mobile sticky actions stay inside narrow viewports", () => {
@@ -250,6 +253,7 @@ test("edited stylesheets have balanced blocks", () => {
     "css/pages/home.css",
     "css/pages/media.css",
     "css/pages/travel.css",
+    "css/pages/management.css",
     "css/responsive.css",
   ];
   stylesheets.forEach((relativePath) => {

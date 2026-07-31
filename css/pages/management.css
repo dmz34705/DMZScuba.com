@@ -3370,6 +3370,8 @@ kbd {
   line-height: 1.45;
 }
 
+.mstudio-mobile-preview-toggle { display: none; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .mstudio-workspace {
@@ -3577,6 +3579,227 @@ kbd {
     height: min(92svh, 92%);
     max-height: 92svh;
     width: 100%;
+  }
+
+  /* Shared mobile console controls: every editor reads as a focused touch workspace. */
+  .mgmt-home-body {
+    padding: 14px 12px 24px;
+  }
+
+  .mgmt-dashboard .mgmt-dash-section,
+  .mgmt-dashboard .mgmt-dash-stat {
+    border-radius: 12px;
+  }
+
+  .management-panel input,
+  .management-panel select,
+  .management-panel textarea {
+    font-size: 16px;
+  }
+
+  .management-panel button,
+  .management-panel a {
+    min-height: 42px;
+  }
+
+  /* Mobile media studio: manage content first, inspect the public page on demand. */
+  .mstudio-toolbar {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .mstudio-toolbar-left,
+  .mstudio-toolbar-right {
+    display: contents;
+  }
+
+  .mstudio-toolbar-left [data-ms-add] {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 44px;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .mstudio-toolbar [data-ms-sync],
+  .mstudio-toolbar [data-ms-export],
+  .mstudio-toolbar-right > a {
+    display: none;
+  }
+
+  .mstudio-mobile-preview-toggle {
+    display: inline-flex;
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mstudio-toolbar [data-ms-publish] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 44px;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  .mstudio-status-text {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-height: 0;
+    line-height: 1.35;
+  }
+
+  .mstudio-dirty-badge {
+    display: none;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-workspace {
+    display: block;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-sidebar {
+    display: block;
+    max-height: none;
+    overflow: visible;
+    border: none;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-search-row {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 10px 12px;
+    background: rgba(5, 11, 20, 0.98);
+  }
+
+  [data-site-studio-panel='media'] .mstudio-search {
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 34dvh;
+    overflow-y: auto;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  [data-site-studio-panel='media'] .mstudio-list-item {
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 7px;
+    min-height: 142px;
+    padding: 9px;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  [data-site-studio-panel='media'] .mstudio-list-thumb {
+    width: 100%;
+    height: 78px;
+    border-radius: 7px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-list-title {
+    font-size: 13px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-edit-pane {
+    max-height: none;
+    overflow: visible;
+    padding: 14px 12px calc(22px + env(safe-area-inset-bottom, 0px));
+    border-top: none;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-label {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-input {
+    min-height: 44px;
+    padding: 10px 11px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-textarea {
+    min-height: 110px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-row-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    padding: 12px 0 4px;
+    background: linear-gradient(180deg, rgba(5, 11, 20, 0), rgba(5, 11, 20, 0.98) 26%);
+  }
+
+  [data-site-studio-panel='media'] .mstudio-form-actions .mstudio-btn {
+    flex: 1;
+    min-height: 46px;
+    justify-content: center;
+    font-size: 13px;
+  }
+
+  [data-site-studio-panel='media'] .mstudio-preview-col {
+    display: none;
+    height: 100%;
+    min-height: 0;
+  }
+
+  [data-site-studio-panel='media'].mstudio-show-preview .mstudio-sidebar {
+    display: none;
+  }
+
+  [data-site-studio-panel='media'].mstudio-show-preview .mstudio-preview-col {
+    display: flex;
+    height: 100%;
+  }
+
+  [data-site-studio-panel='media'].mstudio-show-preview .mstudio-preview-frame {
+    min-height: 100%;
+  }
+
+  .mstudio-overlay {
+    position: fixed;
+    align-items: end;
+    padding: 0;
+  }
+
+  .mstudio-modal {
+    width: 100%;
+    max-height: min(92dvh, 780px);
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 18px 18px 0 0;
+  }
+
+  .mstudio-modal .mstudio-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .mstudio-modal .mstudio-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .mstudio-modal .mstudio-form-actions .mstudio-btn {
+    flex: 1;
+    min-height: 46px;
+    justify-content: center;
   }
 }
 
