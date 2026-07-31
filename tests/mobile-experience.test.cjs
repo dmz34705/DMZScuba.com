@@ -76,6 +76,21 @@ test("events calendar has a focused mobile planning flow", () => {
   assert.match(read("js/events.js"), /canRegister \? "Reserve Spot" : "View Details"/);
 });
 
+test("media admin supports a file-first secure upload flow", () => {
+  const page = read("pages/media/index.html");
+  const editor = read("js/media-edit.js");
+  const mediaStyles = read("css/pages/media.css");
+  const worker = read("workers/dmz-media-api/src/index.js");
+  assert.match(page, /class="media-upload-new"/);
+  assert.match(editor, /async function uploadFileToImages/);
+  assert.match(editor, /\/api\/admin\/images-direct-upload/);
+  assert.match(editor, /function updateFilePreview/);
+  assert.match(editor, /Save Draft & Upload/);
+  assert.match(editor, /applyImageUploadToMediaItem/);
+  assert.match(mediaStyles, /\.media-upload-preview\.is-visible/);
+  assert.match(worker, /handleImagesDirectUpload/);
+});
+
 test("mobile sticky actions stay inside narrow viewports", () => {
   const source = read("css/responsive.css");
   assert.match(source, /width:\s*calc\(100% - 32px\)/);

@@ -174,6 +174,24 @@
     markDirty();
   }
 
+  function applyImageUploadToMediaItem(itemId, deliveryUrl = "") {
+    if (!itemId || !deliveryUrl || !window.DMZMedia) return;
+    const index = findMediaIndexById(itemId);
+    if (index === -1) return;
+    const items = window.DMZMedia.getMediaItems() || [];
+    const current = items[index] || {};
+    window.DMZMedia.updateMediaItem(index, {
+      ...current,
+      type: "photo",
+      url: deliveryUrl,
+      thumbUrl: deliveryUrl,
+    });
+    if (typeof window.DMZMedia.setMediaItems === "function") {
+      window.DMZMedia.setMediaItems(window.DMZMedia.getMediaItems());
+    }
+    markDirty();
+  }
+
   function getUploadCardStatusLabel(status) {
     const state = status && status.state ? status.state : "";
     const progress = typeof status?.progress === "number" ? Math.max(0, Math.min(100, status.progress)) : 0;
@@ -361,6 +379,41 @@
       streamId: uploadedUid,
       thumbUrl: buildStreamThumbUrl(uploadedUid),
     };
+  }
+
+  async function uploadFileToImages(file, callbacks = {}) {
+    const onStatus = typeof callbacks.onStatus === "function" ? callbacks.onStatus : () => {};
+    const onProgress = typeof callbacks.onProgress === "function" ? callbacks.onProgress : () => {};
+    const resp = await apiFetch("/api/admin/images-direct-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json().catch(() => ({}));
+    const uploadUrl = data?.uploadURL;
+    if (!resp.ok || !uploadUrl) {
+      throw new Error(data?.error || "Unable to prepare image upload.");
+    }
+    onStatus("uploading");
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", uploadUrl, true);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!event.lengthComputable) return;
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Image upload failed (${xhr.status}).`));
+      };
+      xhr.onerror = () => reject(new Error("Image upload failed."));
+      const formData = new FormData();
+      formData.append("file", file, file.name || "image");
+      xhr.send(formData);
+    });
+    onProgress(100);
+    onStatus("complete");
+    return { imageId: data?.id || "", deliveryUrl: data?.deliveryUrl || "" };
   }
 
   function runUploadQueue() {
@@ -739,12 +792,12 @@
     card.className = "media-edit-modal-card";
 
     const heading = document.createElement("h3");
-    heading.textContent = item ? "Edit Media" : "Add Media";
+    heading.textContent = item ? "Edit Media" : "Upload Media";
 
     const hint = document.createElement("p");
     hint.className = "media-edit-modal-hint";
     hint.textContent =
-      "You can paste a Stream ID, a URL, or upload to Stream from here. Local assets still work.";
+      "Start with a photo or video. We will create a draft, upload it securely, then you can publish when it looks right.";
 
     const form = document.createElement("form");
     form.className = "media-edit-form";
@@ -820,19 +873,33 @@
     progressWrap.appendChild(progressLabel);
 
     const mediaFileLabel = document.createElement("label");
-    mediaFileLabel.textContent = "Pick media file";
+    mediaFileLabel.textContent = "Choose a photo or video";
     const mediaFileInput = document.createElement("input");
     mediaFileInput.type = "file";
     mediaFileInput.accept = "video/*,image/*";
 
     const uploadStatus = document.createElement("p");
     uploadStatus.className = "media-upload-note";
-    uploadStatus.textContent = "Recommended for video. Uploads directly to Cloudflare Stream.";
+    uploadStatus.textContent = "Choose a file first. Photos and videos upload securely from this page.";
+
+    let previewObjectUrl = "";
+    const uploadPreview = document.createElement("div");
+    uploadPreview.className = "media-upload-preview";
+    const uploadPreviewThumb = document.createElement("div");
+    uploadPreviewThumb.className = "media-upload-preview-thumb";
+    const uploadPreviewCopy = document.createElement("div");
+    uploadPreviewCopy.className = "media-upload-preview-copy";
+    const uploadPreviewName = document.createElement("span");
+    uploadPreviewName.className = "media-upload-preview-name";
+    const uploadPreviewMeta = document.createElement("span");
+    uploadPreviewMeta.className = "media-upload-preview-meta";
+    uploadPreviewCopy.append(uploadPreviewName, uploadPreviewMeta);
+    uploadPreview.append(uploadPreviewThumb, uploadPreviewCopy);
 
     const urlToggle = document.createElement("button");
     urlToggle.type = "button";
     urlToggle.className = "media-edit-cancel";
-    urlToggle.textContent = "Use direct URL instead";
+    urlToggle.textContent = "Advanced: use a direct URL instead";
 
     const mediaUrlLabel = document.createElement("label");
     mediaUrlLabel.textContent = "Media URL";
@@ -858,12 +925,13 @@
     uploadHead.className = "media-upload-head";
     const uploadTitle = document.createElement("div");
     uploadTitle.className = "media-upload-title";
-    uploadTitle.textContent = "Stream upload";
+    uploadTitle.textContent = "1. Choose media";
     uploadHead.appendChild(uploadTitle);
     uploadBlock.appendChild(uploadHead);
     uploadBlock.appendChild(uploadStatus);
     uploadBlock.appendChild(mediaFileLabel);
     uploadBlock.appendChild(mediaFileInput);
+    uploadBlock.appendChild(uploadPreview);
     uploadBlock.appendChild(streamUploadBtn);
     uploadBlock.appendChild(progressWrap);
     uploadBlock.appendChild(streamIdLabel);
@@ -897,11 +965,12 @@
     const saveBtn = document.createElement("button");
     saveBtn.type = "submit";
     saveBtn.className = "media-edit-save";
-    saveBtn.textContent = item ? "Save" : "Add";
+    saveBtn.textContent = item ? "Save Changes" : "Save Draft & Upload";
 
     actions.appendChild(cancelBtn);
     actions.appendChild(saveBtn);
 
+    form.appendChild(uploadBlock);
     form.appendChild(typeLabel);
     form.appendChild(typeSelect);
     form.appendChild(titleLabel);
@@ -913,7 +982,6 @@
     form.appendChild(locationLabel);
     form.appendChild(locationInput);
     form.appendChild(dateWrap);
-    form.appendChild(uploadBlock);
     form.appendChild(urlToggle);
     form.appendChild(urlBlock);
 
@@ -926,6 +994,7 @@
     lockModalScroll();
 
     function closeModal() {
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
       overlay.remove();
       unlockModalScroll();
     }
@@ -963,6 +1032,8 @@
       if (!file) return;
       if (file.type && file.type.startsWith("image/")) {
         typeSelect.value = "photo";
+        mediaUrlInput.value = "";
+        return;
       } else if (file.type && file.type.startsWith("video/")) {
         typeSelect.value = "video";
       }
@@ -973,7 +1044,7 @@
     function updateUploadState(file) {
       if (!file) {
         streamUploadBtn.disabled = true;
-        streamUploadBtn.textContent = "Queue Stream Upload";
+        streamUploadBtn.textContent = "Choose a video first";
         uploadStatus.textContent = "Pick a file to upload to Stream.";
         uploadQueued = false;
         uploadInFlight = false;
@@ -982,8 +1053,8 @@
       }
       if (file.type && file.type.startsWith("image/")) {
         streamUploadBtn.disabled = true;
-        streamUploadBtn.textContent = "Queue Stream Upload";
-        uploadStatus.textContent = "Images use direct URLs or local assets (no Stream upload).";
+        streamUploadBtn.textContent = "Photo uploads when draft is saved";
+        uploadStatus.textContent = "Your photo will upload securely when you save this draft.";
         uploadQueued = false;
         uploadInFlight = false;
         uploadComplete = false;
@@ -1008,19 +1079,40 @@
         return;
       }
       streamUploadBtn.disabled = false;
-      streamUploadBtn.textContent = "Queue Stream Upload";
-      uploadStatus.textContent = "Ready to queue video upload to Stream.";
+      streamUploadBtn.textContent = "Upload video now";
+      uploadStatus.textContent = "Your video will upload securely to Stream. You can save the draft now or upload first.";
+    }
+
+    function updateFilePreview(file) {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = "";
+      }
+      uploadPreviewThumb.replaceChildren();
+      if (!file) {
+        uploadPreview.classList.remove("is-visible");
+        return;
+      }
+      previewObjectUrl = URL.createObjectURL(file);
+      const isImage = file.type && file.type.startsWith("image/");
+      const preview = document.createElement(isImage ? "img" : "video");
+      preview.src = previewObjectUrl;
+      if (!isImage) preview.muted = true;
+      uploadPreviewThumb.appendChild(preview);
+      uploadPreviewName.textContent = file.name || "Selected media";
+      uploadPreviewMeta.textContent = `${isImage ? "Photo" : "Video"} · ${Math.max(1, Math.round(file.size / 1024 / 1024))} MB`;
+      uploadPreview.classList.add("is-visible");
     }
 
     mediaFileInput.addEventListener("change", () => {
       const file = mediaFileInput.files && mediaFileInput.files[0];
       uploadComplete = false;
       syncMediaUrlFromFile(file);
-      updateUploadState(file);
-      if (file && file.type && file.type.startsWith("image/")) {
-        urlBlock.hidden = false;
-        urlToggle.textContent = "Hide direct URL fields";
+      if (!titleInput.value.trim() && file && file.name) {
+        titleInput.value = file.name.replace(/\.[^/.]+$/, "").replace(/[._-]+/g, " ").trim();
       }
+      updateFilePreview(file);
+      updateUploadState(file);
     });
 
     typeSelect.addEventListener("change", () => {
@@ -1038,7 +1130,7 @@
 
     urlToggle.addEventListener("click", () => {
       urlBlock.hidden = !urlBlock.hidden;
-      urlToggle.textContent = urlBlock.hidden ? "Use direct URL instead" : "Hide direct URL fields";
+      urlToggle.textContent = urlBlock.hidden ? "Advanced: use a direct URL instead" : "Hide direct URL fields";
     });
 
     streamIdInput.addEventListener("input", () => {
@@ -1146,6 +1238,38 @@
       return queuedTaskId;
     }
 
+    function uploadImageForTarget(file, targetId) {
+      if (!file || !targetId) return;
+      progressWrap.hidden = false;
+      progressBar.style.width = "0%";
+      progressLabel.textContent = "Starting photo upload...";
+      setUploadCardStatus(targetId, { state: "uploading", progress: 0, label: "Uploading photo" });
+      uploadFileToImages(file, {
+        onProgress(percent) {
+          progressBar.style.width = `${percent}%`;
+          progressLabel.textContent = `${percent}%`;
+          setUploadCardStatus(targetId, { state: "uploading", progress: percent, label: "" });
+        },
+      })
+        .then((result) => {
+          if (!result.deliveryUrl) throw new Error("Image delivery URL was not returned.");
+          applyImageUploadToMediaItem(targetId, result.deliveryUrl);
+          setUploadCardStatus(targetId, { state: "complete", progress: 100, label: "Photo uploaded" });
+          showPublishBanner("Photo uploaded to your draft. Publish when you are ready.", "warning");
+          setTimeout(() => clearUploadCardStatus(targetId), 2200);
+          setTimeout(() => { progressWrap.hidden = true; }, 1000);
+        })
+        .catch((error) => {
+          console.error("Image upload failed", error);
+          setUploadCardStatus(targetId, { state: "failed", label: "Photo upload failed" });
+          showPublishBanner("Photo upload failed. Open the draft and try again.", "warning");
+          reportTelemetry("media_image_upload_failed", {
+            itemId: targetId,
+            fileName: file && file.name ? file.name : "",
+          });
+        });
+    }
+
     streamUploadBtn.addEventListener("click", () => {
       const file = mediaFileInput.files && mediaFileInput.files[0];
       if (!file) {
@@ -1199,6 +1323,12 @@
           !(selectedFile.type && selectedFile.type.startsWith("image/")) &&
           !streamIdInput.value.trim()
       );
+      const shouldUploadImage = Boolean(
+        selectedFile &&
+          selectedFile.type &&
+          selectedFile.type.startsWith("image/") &&
+          !mediaUrlInput.value.trim()
+      );
       let persistedId = nextItem.id || "";
       if (item && typeof index === "number") {
         window.DMZMedia.updateMediaItem(index, nextItem);
@@ -1223,6 +1353,9 @@
       }
       if (shouldQueueStreamUpload && persistedId && !queuedTaskId) {
         queueUploadForTarget(selectedFile, persistedId);
+      }
+      if (shouldUploadImage && persistedId) {
+        uploadImageForTarget(selectedFile, persistedId);
       }
       markDirty();
       closeModal();
@@ -1343,6 +1476,7 @@
   function setupEditToggle() {
     const mediaGrid = document.getElementById("mediaGrid");
     const toggle = document.querySelector(".media-edit-toggle");
+    const uploadNewButton = document.querySelector(".media-upload-new");
     const loginButton = document.querySelector(".media-login-button");
     const exportButton = document.querySelector(".media-edit-export");
     const publishButton = document.querySelector(".media-edit-publish");
@@ -1406,6 +1540,19 @@
         buildLoginModal(() => {
           updateAuthState();
         });
+      });
+    }
+
+    if (uploadNewButton) {
+      uploadNewButton.addEventListener("click", () => {
+        if (!getToken()) {
+          buildLoginModal(() => {
+            updateAuthState();
+            uploadNewButton.click();
+          });
+          return;
+        }
+        buildAddModal();
       });
     }
 
