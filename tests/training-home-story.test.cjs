@@ -32,7 +32,7 @@ test("course catalog pairs learning with real-world access", () => {
 
 test("course stages use responsive editorial imagery without changing the catalog", () => {
   assert.equal((page.match(/class="training-stage-visual"/g) || []).length, 4);
-  ["hero-rtr", "hero-advance-ready", "hero-fullface", "rwadvanced-hero"].forEach((asset) => {
+  ["openwater-hero-lower", "rwadvanced-hero", "hero-specialtymain", "hero-training"].forEach((asset) => {
     assert.match(page, new RegExp(`${asset}\\.png`));
     assert.match(page, new RegExp(`${asset}-mobile\\.webp`));
   });
