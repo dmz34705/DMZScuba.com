@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/pages/home.css?v=20260821a" />
+  <link rel="stylesheet" href="/css/pages/home.css?v=20260821b" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 
   <meta name="description" content="Scuba certification and personalized scuba classes near Chicago, with flexible training, local dives, community events, and dive travel after class." />
@@ -66,7 +66,11 @@
       <div class="hero-content">
         <div class="hero-copy">
           <p class="home-eyebrow">Scuba training near Chicago. A world beyond it.</p>
-          <h1 id="home-hero-title">Your next great story starts underwater.</h1>
+          <h1 id="home-hero-title">
+            <span>Your next great</span>
+            <span>story starts</span>
+            <span>underwater.</span>
+          </h1>
           <p class="hero-sub">Learn to dive with the confidence to join reef trips, explore shipwrecks, build weekends around the water, and see places most people never will.</p>
           <div class="hero-buttons">
             <a href="#start" class="btn primary">See How to Start</a>
@@ -88,9 +92,12 @@
           <img src="/assets/images/logos/dmz-scuba-logo-display.webp" alt="" width="512" height="512" />
         </div>
       </div>
+      <div class="hero-scroll-cue" aria-hidden="true">
+        <span>Enter the water</span>
+        <i></i>
+      </div>
     </section>
 
-    <div class="stack-frame stack-frame-1">
     <section class="home-section possibility" aria-labelledby="possibility-title">
       <div class="section-heading section-heading-wide" data-reveal>
         <p class="home-eyebrow">This could actually be you</p>
@@ -115,62 +122,115 @@
         </article>
       </div>
     </section>
-    </div>
 
-    <div class="stack-frame stack-frame-2">
-    <section class="home-section unlocks" aria-labelledby="unlocks-title">
-      <div class="section-heading" data-reveal>
-        <p class="home-eyebrow">What scuba unlocks</p>
-        <h2 id="unlocks-title">Certification changes what is possible when you travel, explore, and spend a weekend.</h2>
-        <p>There is no single way to be a diver. Chase warm-water reefs, explore Great Lakes history, bring a camera, keep it casual on vacation, or keep building skills for the adventures that interest you.</p>
-      </div>
-      <div class="unlock-grid" data-reveal-group>
-        <a class="unlock-card unlock-card-featured" href="/pages/travel/index.html" data-reveal style="--i:0">
-          <picture>
-            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-travel-mobile.webp" />
-            <img src="/assets/images/hero/hero-travel.JPEG" alt="Diver exploring a tropical reef wall" width="2048" height="1365" loading="lazy" />
-          </picture>
-          <span class="unlock-copy"><strong>Tropical dive travel</strong><small>Warm reefs, clear water, and days built around the next dive.</small></span>
-        </a>
-        <a class="unlock-card" href="/pages/travel/index.html#destination-list" data-reveal style="--i:1">
-          <picture>
-            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-placeholder-mobile.webp" />
-            <img src="/assets/images/hero/hero-placeholder.JPEG" alt="Diver exploring a historic shipwreck" width="2048" height="1365" loading="lazy" />
-          </picture>
-          <span class="unlock-copy"><strong>Wrecks and local weekends</strong><small>History and adventure are waiting in the Great Lakes and beyond.</small></span>
-        </a>
-        <a class="unlock-card" href="/pages/media/index.html" data-reveal style="--i:2">
-          <picture>
-            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-media-mobile.webp" />
-            <img src="/assets/images/hero/hero-media.png" alt="A group of divers moving through a reef" width="1536" height="1024" loading="lazy" />
-          </picture>
-          <span class="unlock-copy"><strong>Stories worth bringing home</strong><small>Wildlife, photography, new friends, and places that feel entirely different underwater.</small></span>
-        </a>
-      </div>
-    </section>
-    </div>
+    <section class="unlock-story" aria-labelledby="unlocks-title" data-scroll-story="unlocks">
+      <div class="unlock-story-sticky">
+        <div class="unlock-story-media" aria-hidden="true">
+          <figure class="unlock-story-visual is-active" data-unlock-visual="0">
+            <picture>
+              <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-travel-mobile.webp" />
+              <img src="/assets/images/hero/hero-travel.JPEG" alt="" width="2048" height="1365" loading="lazy" />
+            </picture>
+          </figure>
+          <figure class="unlock-story-visual" data-unlock-visual="1">
+            <picture>
+              <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-placeholder-mobile.webp" />
+              <img src="/assets/images/hero/hero-placeholder.JPEG" alt="" width="2048" height="1365" loading="lazy" />
+            </picture>
+          </figure>
+          <figure class="unlock-story-visual" data-unlock-visual="2">
+            <picture>
+              <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-media-mobile.webp" />
+              <img src="/assets/images/hero/hero-media.png" alt="" width="1536" height="1024" loading="lazy" />
+            </picture>
+          </figure>
+          <figure class="unlock-story-visual" data-unlock-visual="3">
+            <picture>
+              <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-advance-ready-mobile.webp" />
+              <img src="/assets/images/hero/hero-advance-ready.png" alt="" width="1536" height="1024" loading="lazy" />
+            </picture>
+          </figure>
+          <div class="unlock-story-shade"></div>
+          <div class="unlock-story-light"></div>
+        </div>
 
-    <div class="stack-frame stack-frame-3">
-    <section class="why-dmz" aria-labelledby="why-title">
-      <div class="why-dmz-media">
-        <picture>
-          <source media="(max-width: 780px)" srcset="/assets/images/hero/openwater-hero-mobile.webp" />
-          <img src="/assets/images/hero/openwater-hero.png" alt="A DMZ Scuba diver building confidence in open water" width="1536" height="1024" loading="lazy" />
-        </picture>
-      </div>
-      <div class="why-dmz-copy" data-reveal>
-        <p class="home-eyebrow">Why start with DMZ Scuba</p>
-        <h2 id="why-title">Training should make you want the next dive.</h2>
-        <p class="why-lead">A certification card matters. Feeling calm, capable, and excited to use it matters more.</p>
-        <div class="why-outcomes" data-reveal-group>
-          <article data-reveal style="--i:0"><h3>Learn at your pace</h3><p>Private and small-group instruction means you are not rushed by the pace of a large class.</p></article>
-          <article data-reveal style="--i:1"><h3>Fit training into your life</h3><p>Flexible scheduling and house-call instruction make it easier to begin without reorganizing everything else.</p></article>
-          <article data-reveal style="--i:2"><h3>Understand what you are doing</h3><p>Modern instruction emphasizes real understanding, repeated practice, and confidence instead of memorization alone.</p></article>
-          <article data-reveal style="--i:3"><h3>Finish ready for more</h3><p>Open-water training is planned to produce capable divers—and an experience you will want to repeat.</p></article>
+        <div class="unlock-story-shell">
+          <div class="unlock-story-heading">
+            <p class="home-eyebrow">What scuba unlocks</p>
+            <h2 id="unlocks-title">One certification. A much bigger world.</h2>
+          </div>
+
+          <ol class="unlock-story-scenes">
+            <li class="is-active" data-unlock-scene="0">
+              <span class="unlock-story-index">01 / 04</span>
+              <h3>Tropical dive travel</h3>
+              <p>Warm reefs, clear water, and days built around the next dive. The destination changes when you can explore below the surface.</p>
+              <a href="/pages/travel/index.html">Explore dive travel <span aria-hidden="true">→</span></a>
+            </li>
+            <li data-unlock-scene="1">
+              <span class="unlock-story-index">02 / 04</span>
+              <h3>Wrecks and local weekends</h3>
+              <p>Great Lakes history and Midwest dive sites turn an ordinary weekend into something few people ever get to experience.</p>
+              <a href="/pages/travel/index.html#destination-list">Browse destinations <span aria-hidden="true">→</span></a>
+            </li>
+            <li data-unlock-scene="2">
+              <span class="unlock-story-index">03 / 04</span>
+              <h3>Stories worth bringing home</h3>
+              <p>Wildlife, photography, new friends, and that post-dive feeling become part of how you remember a place.</p>
+              <a href="/pages/media/index.html">See real dive media <span aria-hidden="true">→</span></a>
+            </li>
+            <li data-unlock-scene="3">
+              <span class="unlock-story-index">04 / 04</span>
+              <h3>Skills that widen the map</h3>
+              <p>Keep it casual or keep progressing. Better buoyancy, advanced training, rescue, wreck, and specialty paths are there when you want more.</p>
+              <a href="/pages/training/index.html">Explore training paths <span aria-hidden="true">→</span></a>
+            </li>
+          </ol>
+
+          <div class="unlock-story-progress" aria-hidden="true">
+            <span>01</span>
+            <div><i data-unlock-progress></i></div>
+            <span>04</span>
+          </div>
         </div>
       </div>
     </section>
-    </div>
+
+    <section class="why-story" aria-labelledby="why-title" data-scroll-story="why">
+      <div class="why-dmz">
+        <div class="why-dmz-media" aria-hidden="true">
+          <picture class="why-visual is-active" data-why-visual="0">
+            <source media="(max-width: 780px)" srcset="/assets/images/hero/openwater-hero-mobile.webp" />
+            <img src="/assets/images/hero/openwater-hero.png" alt="" width="1536" height="1024" loading="lazy" />
+          </picture>
+          <picture class="why-visual" data-why-visual="1">
+            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-training-mobile.webp" />
+            <img src="/assets/images/hero/hero-training.png" alt="" width="1536" height="1024" loading="lazy" />
+          </picture>
+          <picture class="why-visual" data-why-visual="2">
+            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-interact-mobile.webp" />
+            <img src="/assets/images/hero/hero-interact.png" alt="" width="1024" height="1024" loading="lazy" />
+          </picture>
+          <picture class="why-visual" data-why-visual="3">
+            <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-advance-ready-mobile.webp" />
+            <img src="/assets/images/hero/hero-advance-ready.png" alt="" width="1536" height="1024" loading="lazy" />
+          </picture>
+          <div class="why-dmz-media-shade"></div>
+          <div class="why-depth-line"><i data-why-progress></i></div>
+        </div>
+        <div class="why-dmz-copy">
+          <p class="home-eyebrow">Why start with DMZ Scuba</p>
+          <h2 id="why-title">Training should make you want the next dive.</h2>
+          <p class="why-lead">A certification card matters. Feeling calm, capable, and excited to use it matters more.</p>
+          <div class="why-outcomes">
+            <article class="is-active" data-why-step="0"><span>01</span><h3>Learn at your pace</h3><p>Private and small-group instruction means you are not rushed by the pace of a large class.</p></article>
+            <article data-why-step="1"><span>02</span><h3>Fit training into your life</h3><p>Flexible scheduling and house-call instruction make it easier to begin without reorganizing everything else.</p></article>
+            <article data-why-step="2"><span>03</span><h3>Understand what you are doing</h3><p>Modern instruction emphasizes real understanding, repeated practice, and confidence instead of memorization alone.</p></article>
+            <article data-why-step="3"><span>04</span><h3>Finish ready for more</h3><p>Open-water training is planned to produce capable divers—and an experience you will want to repeat.</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="community-proof" aria-labelledby="events-preview-title">
       <div class="proof-intro" data-reveal>
@@ -234,7 +294,6 @@
       </aside>
     </section>
 
-    <div class="stack-frame stack-frame-4">
     <section class="home-section after-cert" aria-labelledby="after-title">
       <div class="section-heading section-heading-wide" data-reveal>
         <p class="home-eyebrow">After certification</p>
@@ -252,7 +311,6 @@
         <a class="btn secondary" href="/pages/training/index.html">See Training Paths</a>
       </div>
     </section>
-    </div>
 
     <section class="dive-quiz-entry" aria-labelledby="dive-quiz-title">
       <div class="dive-quiz-entry-inner" data-reveal>
@@ -302,7 +360,7 @@
   <script src="/js/events.js?v=20260508b"></script>
   <script src="/js/quiz.js?v=20260821a"></script>
   <script src="/js/home.js?v=20260821a"></script>
-  <script src="/js/home-motion.js?v=20260821a"></script>
+  <script src="/js/home-motion.js?v=20260821b"></script>
   <script>
     (function mapLinkChooser() {
       const links = document.querySelectorAll(".js-map-link");

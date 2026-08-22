@@ -11,8 +11,8 @@ test("homepage follows the lifestyle-to-start storytelling sequence", () => {
   const markers = [
     'class="hero"',
     'class="home-section possibility"',
-    'class="home-section unlocks"',
-    'class="why-dmz"',
+    'class="unlock-story"',
+    'class="why-story"',
     'class="community-proof"',
     'class="home-section start-panel"',
     'class="home-section after-cert"',
@@ -62,7 +62,25 @@ test("homepage mobile layer uses intentional stacks, crops, and full-width actio
   assert.match(styles, /@media \(max-width: 780px\)/);
   assert.match(styles, /\.hero\{[\s\S]*min-height: min\(760px, calc\(100svh - 64px\)\)/);
   assert.match(styles, /\.hero-bg\{[\s\S]*object-position: 58% center/);
-  assert.match(styles, /\.unlock-grid\{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(styles, /\.unlock-story-scenes\{[\s\S]*grid-template-columns: 1fr/);
   assert.match(styles, /\.diver-path\{[\s\S]*grid-template-columns: 1fr/);
   assert.match(styles, /\.mobile-sticky-cta\{[\s\S]*width: calc\(100% - 32px\)/);
+});
+
+test("homepage uses deliberate scroll stories instead of generic section stacking", () => {
+  const page = read("index.html");
+  const styles = read("css/pages/home.css");
+  const motion = read("js/home-motion.js");
+
+  assert.match(page, /data-scroll-story="unlocks"/);
+  assert.equal((page.match(/data-unlock-scene=/g) || []).length, 4);
+  assert.match(page, /data-scroll-story="why"/);
+  assert.equal((page.match(/data-why-step=/g) || []).length, 4);
+  assert.doesNotMatch(page, /stack-frame/);
+  assert.match(styles, /\.motion-ready \.unlock-story\{\s*height: 480svh/);
+  assert.match(styles, /\.motion-ready \.why-story\{\s*height: 380svh/);
+  assert.match(motion, /requestAnimationFrame/);
+  assert.match(motion, /--scene-opacity/);
+  assert.match(motion, /--story-progress/);
+  assert.doesNotMatch(motion, /setTimeout/);
 });
