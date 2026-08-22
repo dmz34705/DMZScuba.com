@@ -41,6 +41,8 @@ test("course stages use responsive editorial imagery without changing the catalo
   assert.match(css, /\.training-stage-visual/);
   assert.match(css, /\.training-after-bg/);
   assert.match(css, /@media \(min-width: 781px\)[\s\S]*?\.training-home-page \.training-stage\s*\{[\s\S]*?width:\s*100vw/);
+  assert.match(css, /\.training-stage \+ \.training-stage\s*\{\s*--stage-top-opacity:\s*0\.98/);
+  assert.match(css, /\.training-gateway-media picture,[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/);
 });
 
 test("training landing page preserves SEO, pricing, and conversion routes", () => {
