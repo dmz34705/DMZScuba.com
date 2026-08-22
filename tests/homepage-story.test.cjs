@@ -89,9 +89,26 @@ test("scroll stories settle to a complete scene without trapping user input", ()
   const motion = read("js/home-motion.js");
 
   assert.match(motion, /snapNearestStoryScene/);
-  assert.match(motion, /Math\.round\(currentProgress \* \(story\.sceneCount - 1\)\)/);
+  assert.match(motion, /Math\.round\(metrics\.progress \* \(story\.sceneCount - 1\)\)/);
   assert.match(motion, /sceneSettleDelay = 160/);
   assert.match(motion, /addEventListener\("wheel", interruptSceneSnap/);
   assert.match(motion, /addEventListener\("touchstart", interruptSceneSnap/);
   assert.match(motion, /addEventListener\("keydown"/);
+});
+
+test("hero turns the enter-the-water cue into a scroll-driven dive", () => {
+  const page = read("index.html");
+  const styles = read("css/pages/home.css");
+  const motion = read("js/home-motion.js");
+
+  assert.match(page, /data-dive-entry/);
+  assert.match(page, /class="hero-dive-stage"/);
+  assert.match(page, /class="hero-dive-fx"/);
+  assert.equal((page.match(/--bubble-x:/g) || []).length, 7);
+  assert.match(styles, /\.motion-ready \.hero\{\s*height: 165svh/);
+  assert.match(styles, /@keyframes waterline-shimmer/);
+  assert.match(styles, /@keyframes bubble-ascent/);
+  assert.match(motion, /--waterline/);
+  assert.match(motion, /sceneCount: 2/);
+  assert.match(motion, /snapMetrics: \(\) => stickySnapMetrics\(hero, heroStage\)/);
 });

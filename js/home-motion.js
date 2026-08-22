@@ -39,6 +39,19 @@
     return clamp(-rect.top / travel);
   }
 
+  function stickySnapMetrics(root, stickyElement) {
+    const rect = root.getBoundingClientRect();
+    const stickyRect = stickyElement.getBoundingClientRect();
+    const stickyTop = Number.parseFloat(window.getComputedStyle(stickyElement).top) || 0;
+    const travel = Math.max(rect.height - stickyRect.height, 1);
+    const startY = window.scrollY + rect.top - stickyTop;
+    return {
+      progress: clamp((window.scrollY - startY) / travel),
+      startY,
+      travel,
+    };
+  }
+
   function sceneWeight(position, index, falloff = 1.55) {
     return clamp(1 - Math.abs(position - index) * falloff);
   }
@@ -68,6 +81,7 @@
     return {
       root,
       sceneCount: scenes.length,
+      snapMetrics: () => stickySnapMetrics(root, root.querySelector(".unlock-story-sticky")),
       update() {
         const progress = storyProgress(root);
         const position = progress * (scenes.length - 1);
@@ -102,6 +116,7 @@
     return {
       root,
       sceneCount: steps.length,
+      snapMetrics: () => stickySnapMetrics(root, root.querySelector(".why-dmz")),
       update() {
         const progress = storyProgress(root);
         const position = progress * (steps.length - 1);
@@ -128,20 +143,50 @@
   function createParallaxTargets() {
     const targets = [];
     const hero = document.querySelector(".hero");
+    const heroStage = hero?.querySelector(".hero-dive-stage");
     const heroBg = hero?.querySelector(".hero-bg");
     const heroCopy = hero?.querySelector(".hero-copy");
+    const heroMark = hero?.querySelector(".hero-mark");
+    const heroCue = hero?.querySelector(".hero-scroll-cue");
+    const heroDiveFx = hero?.querySelector(".hero-dive-fx");
 
-    if (hero && heroBg) {
+    if (hero && heroStage && heroBg) {
       targets.push({
         root: hero,
+        sceneCount: 2,
+        snapMetrics: () => stickySnapMetrics(hero, heroStage),
         update() {
-          const rect = hero.getBoundingClientRect();
-          const progress = clamp(-rect.top / Math.max(rect.height, 1));
-          heroBg.style.setProperty("--px", `${(progress * 52).toFixed(2)}px`);
-          setNumber(heroBg, "--s", 1.015 + progress * 0.055);
+          const progress = stickySnapMetrics(hero, heroStage).progress;
+          const copyFade = clamp(1 - clamp((progress - 0.1) / 0.52));
+          const surfaceWeight = clamp(1 - Math.abs(progress - 0.48) * 2.35);
+          hero.classList.toggle("is-diving", progress > 0.03 && progress < 0.995);
+
+          heroBg.style.setProperty("--px", `${(progress * 64).toFixed(2)}px`);
+          setNumber(heroBg, "--s", 1.015 + progress * 0.16);
+          setNumber(heroBg, "--dive-saturation", 1.04 + progress * 0.18);
+          setNumber(heroBg, "--dive-brightness", 1 - progress * 0.2);
+          heroBg.style.setProperty("--dive-blur", `${(progress * 1.25).toFixed(2)}px`);
+
           if (heroCopy) {
-            heroCopy.style.setProperty("--px", `${(progress * -34).toFixed(2)}px`);
-            setNumber(heroCopy, "--fade", clamp(1 - progress * 1.35));
+            heroCopy.style.setProperty("--px", `${(progress * -92).toFixed(2)}px`);
+            setNumber(heroCopy, "--fade", copyFade);
+          }
+          if (heroMark) {
+            heroMark.style.setProperty("--mark-y", `${(progress * -58).toFixed(2)}px`);
+            setNumber(heroMark, "--mark-scale", 1 - progress * 0.1);
+            setNumber(heroMark, "--mark-fade", clamp(1 - progress * 1.65));
+          }
+          if (heroCue) {
+            heroCue.style.setProperty("--cue-y", `${(progress * 24).toFixed(2)}px`);
+            setNumber(heroCue, "--cue-opacity", clamp(1 - progress * 6));
+          }
+          if (heroDiveFx) {
+            heroDiveFx.style.setProperty("--waterline", `${(112 - progress * 132).toFixed(2)}%`);
+            setNumber(heroDiveFx, "--depth-opacity", clamp(progress * 1.35));
+            setNumber(heroDiveFx, "--surface-opacity", surfaceWeight * 0.95);
+            setNumber(heroDiveFx, "--caustic-opacity", clamp((progress - 0.16) / 0.46) * 0.62);
+            setNumber(heroDiveFx, "--bubble-opacity", clamp((progress - 0.2) / 0.28) * 0.9);
+            setNumber(heroDiveFx, "--vignette-opacity", clamp((progress - 0.42) / 0.58) * 0.88);
           }
         },
       });
@@ -207,12 +252,12 @@
     };
 
     const nearestActiveStory = () => {
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      return targets.find((target) => {
-        if (!target.sceneCount || target.sceneCount < 2) return false;
-        const rect = target.root.getBoundingClientRect();
-        return rect.top < -8 && rect.bottom > viewportHeight + 8;
-      });
+      for (const target of targets) {
+        if (!target.sceneCount || target.sceneCount < 2 || !target.snapMetrics) continue;
+        const metrics = target.snapMetrics();
+        if (metrics.progress > 0.008 && metrics.progress < 0.992) return { target, metrics };
+      }
+      return null;
     };
 
     const animateSceneSnap = (targetY, distance) => {
@@ -241,15 +286,12 @@
 
     const snapNearestStoryScene = () => {
       if (snapFrame || document.visibilityState !== "visible") return;
-      const story = nearestActiveStory();
-      if (!story) return;
+      const activeStory = nearestActiveStory();
+      if (!activeStory) return;
 
-      const rect = story.root.getBoundingClientRect();
-      const travel = Math.max(rect.height - window.innerHeight, 1);
-      const currentProgress = clamp(-rect.top / travel);
-      const targetProgress = Math.round(currentProgress * (story.sceneCount - 1)) / (story.sceneCount - 1);
-      const storyTop = window.scrollY + rect.top;
-      const targetY = storyTop + targetProgress * travel;
+      const { target: story, metrics } = activeStory;
+      const targetProgress = Math.round(metrics.progress * (story.sceneCount - 1)) / (story.sceneCount - 1);
+      const targetY = metrics.startY + targetProgress * metrics.travel;
       const distance = Math.abs(targetY - window.scrollY);
       if (distance < 4) return;
 

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=20260406a" />
-  <link rel="stylesheet" href="/css/pages/home.css?v=20260821b" />
+  <link rel="stylesheet" href="/css/pages/home.css?v=20260821c" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 
   <meta name="description" content="Scuba certification and personalized scuba classes near Chicago, with flexible training, local dives, community events, and dive travel after class." />
@@ -57,44 +57,63 @@
   <header class="site-header" data-site-nav></header>
 
   <main>
-    <section class="hero" aria-labelledby="home-hero-title">
-      <picture>
-        <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-media-mobile.webp" />
-        <img src="/assets/images/hero/hero-media.png" alt="Divers exploring a reef together" class="hero-bg" width="1536" height="1024" fetchpriority="high" />
-      </picture>
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <div class="hero-copy">
-          <p class="home-eyebrow">Scuba training near Chicago. A world beyond it.</p>
-          <h1 id="home-hero-title">
-            <span>Your next great</span>
-            <span>story starts</span>
-            <span>underwater.</span>
-          </h1>
-          <p class="hero-sub">Learn to dive with the confidence to join reef trips, explore shipwrecks, build weekends around the water, and see places most people never will.</p>
-          <div class="hero-buttons">
-            <a href="#start" class="btn primary">See How to Start</a>
-            <a href="/pages/travel/index.html" class="btn secondary">Explore Dive Travel</a>
-          </div>
-          <ul class="hero-trust-line" aria-label="New diver highlights">
-            <li>No experience required</li>
-            <li>Flexible Chicago-area training</li>
-            <li>You can start on your own</li>
-          </ul>
-          <section class="hero-news-ticker" data-home-ticker aria-label="DMZ Scuba updates" hidden>
-            <div class="hero-news-ticker-label">Coming Up</div>
-            <div class="hero-news-ticker-viewport" aria-live="polite">
-              <p class="hero-news-ticker-line" data-home-ticker-line></p>
+    <section class="hero" aria-labelledby="home-hero-title" data-dive-entry>
+      <div class="hero-dive-stage">
+        <picture>
+          <source media="(max-width: 780px)" srcset="/assets/images/hero/hero-media-mobile.webp" />
+          <img src="/assets/images/hero/hero-media.png" alt="Divers exploring a reef together" class="hero-bg" width="1536" height="1024" fetchpriority="high" />
+        </picture>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-copy">
+            <p class="home-eyebrow">Scuba training near Chicago. A world beyond it.</p>
+            <h1 id="home-hero-title">
+              <span>Your next great</span>
+              <span>story starts</span>
+              <span>underwater.</span>
+            </h1>
+            <p class="hero-sub">Learn to dive with the confidence to join reef trips, explore shipwrecks, build weekends around the water, and see places most people never will.</p>
+            <div class="hero-buttons">
+              <a href="#start" class="btn primary">See How to Start</a>
+              <a href="/pages/travel/index.html" class="btn secondary">Explore Dive Travel</a>
             </div>
-          </section>
+            <ul class="hero-trust-line" aria-label="New diver highlights">
+              <li>No experience required</li>
+              <li>Flexible Chicago-area training</li>
+              <li>You can start on your own</li>
+            </ul>
+            <section class="hero-news-ticker" data-home-ticker aria-label="DMZ Scuba updates" hidden>
+              <div class="hero-news-ticker-label">Coming Up</div>
+              <div class="hero-news-ticker-viewport" aria-live="polite">
+                <p class="hero-news-ticker-line" data-home-ticker-line></p>
+              </div>
+            </section>
+          </div>
+          <div class="hero-mark" aria-hidden="true">
+            <img src="/assets/images/logos/dmz-scuba-logo-display.webp" alt="" width="512" height="512" />
+          </div>
         </div>
-        <div class="hero-mark" aria-hidden="true">
-          <img src="/assets/images/logos/dmz-scuba-logo-display.webp" alt="" width="512" height="512" />
+
+        <div class="hero-dive-fx" aria-hidden="true">
+          <div class="hero-depth-wash"></div>
+          <div class="hero-caustics"></div>
+          <div class="hero-bubbles">
+            <i style="--bubble-x:8%;--bubble-size:7px;--bubble-delay:-1.2s;--bubble-duration:4.8s;--bubble-drift:22px"></i>
+            <i style="--bubble-x:21%;--bubble-size:13px;--bubble-delay:-3.4s;--bubble-duration:5.9s;--bubble-drift:-18px"></i>
+            <i style="--bubble-x:36%;--bubble-size:5px;--bubble-delay:-0.8s;--bubble-duration:4.3s;--bubble-drift:15px"></i>
+            <i style="--bubble-x:53%;--bubble-size:9px;--bubble-delay:-2.7s;--bubble-duration:5.2s;--bubble-drift:-24px"></i>
+            <i style="--bubble-x:67%;--bubble-size:16px;--bubble-delay:-4.1s;--bubble-duration:6.4s;--bubble-drift:28px"></i>
+            <i style="--bubble-x:81%;--bubble-size:6px;--bubble-delay:-1.9s;--bubble-duration:4.6s;--bubble-drift:-12px"></i>
+            <i style="--bubble-x:92%;--bubble-size:11px;--bubble-delay:-3.1s;--bubble-duration:5.6s;--bubble-drift:18px"></i>
+          </div>
+          <div class="hero-waterline"></div>
+          <div class="hero-dive-vignette"></div>
         </div>
-      </div>
-      <div class="hero-scroll-cue" aria-hidden="true">
-        <span>Enter the water</span>
-        <i></i>
+
+        <div class="hero-scroll-cue" aria-hidden="true">
+          <span>Enter the water</span>
+          <i></i>
+        </div>
       </div>
     </section>
 
@@ -360,7 +379,7 @@
   <script src="/js/events.js?v=20260508b"></script>
   <script src="/js/quiz.js?v=20260821a"></script>
   <script src="/js/home.js?v=20260821a"></script>
-  <script src="/js/home-motion.js?v=20260821c"></script>
+  <script src="/js/home-motion.js?v=20260821d"></script>
   <script>
     (function mapLinkChooser() {
       const links = document.querySelectorAll(".js-map-link");
