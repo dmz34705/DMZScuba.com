@@ -1143,6 +1143,114 @@
   }
 }
 
+/* Desktop catalog scenes break out of the content column. */
+@media (min-width: 781px){
+  .training-home-page .training-catalog::before{
+    display: none;
+  }
+
+  .training-home-page .training-stage{
+    position: relative;
+    width: 100vw;
+    min-height: 820px;
+    margin: clamp(34px, 5vw, 72px) 0 0 calc(50% - 50vw);
+    padding: clamp(88px, 9vw, 132px) max(var(--training-gutter), calc((100vw - var(--training-shell)) / 2)) clamp(76px, 8vw, 112px);
+    overflow: hidden;
+    border-block: 1px solid rgba(var(--stage-accent), 0.2);
+    isolation: isolate;
+  }
+
+  .training-home-page .training-stage::after{
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(2, 8, 16, 0.28) 0%, rgba(2, 8, 16, 0.16) 30%, rgba(2, 8, 16, 0.68) 58%, rgba(2, 8, 16, 0.98) 100%),
+      linear-gradient(90deg, rgba(2, 8, 16, 0.82) 0%, rgba(2, 8, 16, 0.34) 48%, rgba(2, 8, 16, 0.08) 100%);
+    content: "";
+    pointer-events: none;
+  }
+
+  .training-home-page .training-stage-head,
+  .training-home-page .training-course-grid,
+  .training-home-page .training-stage-note{
+    position: relative;
+    z-index: 3;
+    width: min(var(--training-shell), 100%);
+    margin-inline: auto;
+  }
+
+  .training-home-page .training-stage-head{
+    margin-bottom: 0;
+  }
+
+  .training-home-page .training-stage-head h3{
+    max-width: 720px;
+    font-size: clamp(34px, 4vw, 58px);
+    line-height: 1.02;
+    text-shadow: 0 16px 42px rgba(0, 0, 0, 0.72);
+  }
+
+  .training-home-page .training-stage-visual{
+    position: absolute;
+    z-index: auto;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .training-home-page .training-stage-visual::before{
+    background: radial-gradient(760px 420px at 72% 24%, rgba(var(--stage-accent), 0.13), transparent 72%);
+  }
+
+  .training-home-page .training-stage-visual::after{
+    display: none;
+  }
+
+  .training-home-page .training-stage-visual figcaption{
+    top: clamp(245px, 28vw, 350px);
+    right: max(var(--training-gutter), calc((100vw - var(--training-shell)) / 2));
+    bottom: auto;
+    left: auto;
+    width: min(520px, 44vw);
+    max-width: none;
+    text-align: right;
+  }
+
+  .training-home-page .training-stage-visual figcaption strong{
+    font-size: clamp(27px, 3vw, 43px);
+  }
+
+  .training-home-page .training-course-grid{
+    margin-top: clamp(270px, 31vw, 390px);
+  }
+
+  .training-home-page .training-course-card{
+    border-color: rgba(var(--stage-accent), 0.3);
+    background:
+      radial-gradient(500px 220px at 10% 0%, rgba(var(--stage-accent), 0.16), transparent 60%),
+      rgba(5, 15, 27, 0.9);
+    box-shadow: 0 28px 72px rgba(0, 0, 0, 0.5);
+  }
+
+  .training-home-page .training-stage-note{
+    margin-top: 20px;
+  }
+
+  .training-home-page #stage-start .training-stage-visual img{ object-position: 50% 40%; }
+  .training-home-page #stage-explore .training-stage-visual img{ object-position: 50% 38%; }
+  .training-home-page #stage-specialize .training-stage-visual img{ object-position: 50% 44%; }
+  .training-home-page #stage-lead .training-stage-visual img{ object-position: 50% 38%; }
+
+  .training-home-page .training-choice-help{
+    margin-top: clamp(70px, 8vw, 112px);
+  }
+}
+
 @media (max-width: 1020px){
   .training-home-page .training-course-grid-four{
     grid-template-columns: repeat(2, minmax(0, 1fr));

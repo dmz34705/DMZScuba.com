@@ -40,6 +40,7 @@ test("course stages use responsive editorial imagery without changing the catalo
   assert.match(page, /hero-travel-mobile\.webp/);
   assert.match(css, /\.training-stage-visual/);
   assert.match(css, /\.training-after-bg/);
+  assert.match(css, /@media \(min-width: 781px\)[\s\S]*?\.training-home-page \.training-stage\s*\{[\s\S]*?width:\s*100vw/);
 });
 
 test("training landing page preserves SEO, pricing, and conversion routes", () => {
