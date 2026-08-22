@@ -84,3 +84,14 @@ test("homepage uses deliberate scroll stories instead of generic section stackin
   assert.match(motion, /--story-progress/);
   assert.doesNotMatch(motion, /setTimeout/);
 });
+
+test("scroll stories settle to a complete scene without trapping user input", () => {
+  const motion = read("js/home-motion.js");
+
+  assert.match(motion, /snapNearestStoryScene/);
+  assert.match(motion, /Math\.round\(currentProgress \* \(story\.sceneCount - 1\)\)/);
+  assert.match(motion, /sceneSettleDelay = 160/);
+  assert.match(motion, /addEventListener\("wheel", interruptSceneSnap/);
+  assert.match(motion, /addEventListener\("touchstart", interruptSceneSnap/);
+  assert.match(motion, /addEventListener\("keydown"/);
+});

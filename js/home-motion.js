@@ -67,6 +67,7 @@
 
     return {
       root,
+      sceneCount: scenes.length,
       update() {
         const progress = storyProgress(root);
         const position = progress * (scenes.length - 1);
@@ -100,6 +101,7 @@
 
     return {
       root,
+      sceneCount: steps.length,
       update() {
         const progress = storyProgress(root);
         const position = progress * (steps.length - 1);
@@ -180,6 +182,10 @@
     document.body.classList.add("motion-ready");
     let targets = [createUnlockStory(), createWhyStory(), ...createParallaxTargets()].filter(Boolean);
     let frameRequested = false;
+    let settleFrame = 0;
+    let snapFrame = 0;
+    let lastScrollAt = 0;
+    const sceneSettleDelay = 160;
 
     const update = () => {
       frameRequested = false;
@@ -192,14 +198,110 @@
       window.requestAnimationFrame(update);
     };
 
+    const cancelSceneSnap = () => {
+      if (settleFrame) window.cancelAnimationFrame(settleFrame);
+      if (snapFrame) window.cancelAnimationFrame(snapFrame);
+      settleFrame = 0;
+      snapFrame = 0;
+      document.documentElement.classList.remove("story-is-snapping");
+    };
+
+    const nearestActiveStory = () => {
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      return targets.find((target) => {
+        if (!target.sceneCount || target.sceneCount < 2) return false;
+        const rect = target.root.getBoundingClientRect();
+        return rect.top < -8 && rect.bottom > viewportHeight + 8;
+      });
+    };
+
+    const animateSceneSnap = (targetY, distance) => {
+      const startY = window.scrollY;
+      const duration = clamp(260 + distance * 0.24, 280, 560);
+      const startAt = performance.now();
+      document.documentElement.classList.add("story-is-snapping");
+
+      const animate = (now) => {
+        const progress = clamp((now - startAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        window.scrollTo(0, startY + (targetY - startY) * eased);
+        scheduleUpdate();
+
+        if (progress < 1) {
+          snapFrame = window.requestAnimationFrame(animate);
+          return;
+        }
+
+        snapFrame = 0;
+        document.documentElement.classList.remove("story-is-snapping");
+      };
+
+      snapFrame = window.requestAnimationFrame(animate);
+    };
+
+    const snapNearestStoryScene = () => {
+      if (snapFrame || document.visibilityState !== "visible") return;
+      const story = nearestActiveStory();
+      if (!story) return;
+
+      const rect = story.root.getBoundingClientRect();
+      const travel = Math.max(rect.height - window.innerHeight, 1);
+      const currentProgress = clamp(-rect.top / travel);
+      const targetProgress = Math.round(currentProgress * (story.sceneCount - 1)) / (story.sceneCount - 1);
+      const storyTop = window.scrollY + rect.top;
+      const targetY = storyTop + targetProgress * travel;
+      const distance = Math.abs(targetY - window.scrollY);
+      if (distance < 4) return;
+
+      animateSceneSnap(targetY, distance);
+    };
+
+    const watchForScrollSettle = (now) => {
+      if (snapFrame) {
+        settleFrame = 0;
+        return;
+      }
+      if (now - lastScrollAt < sceneSettleDelay) {
+        settleFrame = window.requestAnimationFrame(watchForScrollSettle);
+        return;
+      }
+      settleFrame = 0;
+      snapNearestStoryScene();
+    };
+
+    const scheduleSceneSnap = () => {
+      if (snapFrame) return;
+      lastScrollAt = performance.now();
+      if (!settleFrame) settleFrame = window.requestAnimationFrame(watchForScrollSettle);
+    };
+
+    const handleScroll = () => {
+      scheduleUpdate();
+      scheduleSceneSnap();
+    };
+
+    const interruptSceneSnap = () => {
+      cancelSceneSnap();
+      lastScrollAt = performance.now();
+    };
+
     const rebuildStories = () => {
+      cancelSceneSnap();
       resetStoryAccessibility();
       targets = [createUnlockStory(), createWhyStory(), ...createParallaxTargets()].filter(Boolean);
       scheduleUpdate();
     };
 
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("wheel", interruptSceneSnap, { passive: true });
+    window.addEventListener("touchstart", interruptSceneSnap, { passive: true });
+    window.addEventListener("pointerdown", interruptSceneSnap, { passive: true });
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) {
+        interruptSceneSnap();
+      }
+    });
+    window.addEventListener("resize", rebuildStories, { passive: true });
     desktopStory.addEventListener?.("change", rebuildStories);
     reducedMotion.addEventListener?.("change", () => window.location.reload());
     scheduleUpdate();
