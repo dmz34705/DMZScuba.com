@@ -746,8 +746,12 @@
 }
 
 @media (min-width: 981px){
+  .motion-ready .unlock-story{
+    height: 400svh;
+  }
+
   .motion-ready .why-story{
-    height: 380svh;
+    height: 320svh;
     padding: 0;
   }
 

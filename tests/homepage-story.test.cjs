@@ -78,7 +78,9 @@ test("homepage uses deliberate scroll stories instead of generic section stackin
   assert.equal((page.match(/data-why-step=/g) || []).length, 4);
   assert.doesNotMatch(page, /stack-frame/);
   assert.match(styles, /\.motion-ready \.unlock-story\{\s*height: 480svh/);
-  assert.match(styles, /\.motion-ready \.why-story\{\s*height: 380svh/);
+  assert.match(styles, /@media \(min-width: 981px\)\{[\s\S]*\.motion-ready \.unlock-story\{\s*height: 400svh/);
+  assert.match(styles, /\.motion-ready \.why-story\{\s*height: 320svh/);
+  assert.match(styles, /@media \(max-width: 780px\)\{[\s\S]*\.motion-ready \.unlock-story\{\s*height: 430svh/);
   assert.match(motion, /requestAnimationFrame/);
   assert.match(motion, /--scene-opacity/);
   assert.match(motion, /--story-progress/);
