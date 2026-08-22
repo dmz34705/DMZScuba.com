@@ -38,8 +38,13 @@ test("course stages use responsive editorial imagery without changing the catalo
   });
   assert.match(page, /class="training-after-bg"/);
   assert.match(page, /hero-travel-mobile\.webp/);
+  assert.equal((page.match(/class="training-after-card-media"/g) || []).length, 4);
+  ["lddhero.PNG", "lmddhero.png", "hero-travel.JPEG", "hero-level-up.png"].forEach((asset) => {
+    assert.match(page, new RegExp(asset.replace(".", "\\.")));
+  });
   assert.match(css, /\.training-stage-visual/);
   assert.match(css, /\.training-after-bg/);
+  assert.match(css, /\.training-after-card-media img/);
   assert.match(css, /@media \(min-width: 781px\)[\s\S]*?\.training-home-page \.training-stage\s*\{[\s\S]*?width:\s*100vw/);
   assert.match(css, /\.training-stage \+ \.training-stage\s*\{\s*--stage-top-opacity:\s*0\.98/);
   assert.match(css, /\.training-gateway-media picture,[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;/);
