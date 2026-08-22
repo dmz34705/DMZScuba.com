@@ -405,6 +405,10 @@
   object-fit: cover;
 }
 
+.unlock-story-visual[data-unlock-visual="1"] img{
+  object-position: center 30%;
+}
+
 .unlock-story-shade,
 .unlock-story-light{
   position: absolute;
@@ -1785,6 +1789,11 @@ body.quiz-open{
     min-height: 66vw;
     max-height: 430px;
     border-radius: 18px;
+  }
+
+  .unlock-story-visual[data-unlock-visual="1"] img{
+    height: 112%;
+    object-position: center top;
   }
 
   .unlock-story-shade{

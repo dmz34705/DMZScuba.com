@@ -83,6 +83,7 @@ test("homepage uses deliberate scroll stories instead of generic section stackin
   assert.match(motion, /--scene-opacity/);
   assert.match(motion, /--story-progress/);
   assert.doesNotMatch(motion, /setTimeout/);
+  assert.match(styles, /data-unlock-visual="1"\] img\{\s*object-position: center 30%/);
 });
 
 test("scroll stories settle to a complete scene without trapping user input", () => {
