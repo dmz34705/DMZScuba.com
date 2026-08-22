@@ -13,27 +13,26 @@
   <link rel="stylesheet" href="../../../css/base.css" />
   <link rel="stylesheet" href="../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-specialty-hub">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-advanced">
+    <section class="page-hero page-hero-advanced course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">Focused training for certified divers</p>
-          <h1>Scuba Specialty Classes Near Chicago</h1>
+          <p class="conversion-eyebrow">Scuba specialty classes near Chicago</p>
+          <h1><span>Build the skill your next dive needs.</span><span class="course-title-context">Focused training for certified divers</span></h1>
           <p class="page-hero-sub">
             Focused courses that unlock new environments, sharpen specific skills, and build confidence.
           </p>
           <p class="schedule-note">No set start dates &mdash; we schedule around your calendar.</p>
           <ul class="hero-proof-list" aria-label="Specialty training highlights">
-            <li>$399 total price per specialty</li>
             <li>Nitrox, dry suit, wreck, and full face mask</li>
             <li>Flexible scheduling available</li>
             <li>Course materials and certification fees included</li>
-            <li>Pick the specialty that fits your next dives</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -41,23 +40,31 @@
             <a class="btn secondary" href="#specialties">Choose a Specialty</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Specialty training at a glance">
+          <p class="conversion-eyebrow">Training at a glance</p>
+          <p class="course-summary-price"><span>Specialty tuition</span><strong>$399</strong><small>per current specialty course</small></p>
+          <ul class="course-summary-list">
+            <li><span>Courses</span><strong>4 focused options</strong></li>
+            <li><span>For</span><strong>Certified divers</strong></li>
+            <li><span>Included</span><strong>Materials, training, and certification fees</strong></li>
+            <li><span>Schedule</span><strong>Weeknights, weekends, or custom blocks</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>Specialty Diver Classes</h2>
+        <h2>Specialty Training</h2>
         <p>Pick a focus, build capability, and expand the dives you can do safely.</p>
         <div class="toc-buttons">
-          <a class="btn secondary" href="#specialties">Specialty Courses</a>
+          <a class="btn secondary" href="#unlocks">Why Specialize</a>
+          <a class="btn secondary" href="#specialties">Compare Courses</a>
           <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="specialty-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="specialty-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Focused skill training</p>
           <h2 id="specialty-start-title">Tell us where you want to dive next. We will match the specialty to the goal.</h2>
@@ -73,7 +80,27 @@
           <a class="btn secondary" href="../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="specialty-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../assets/images/hero/hero-specialtymain-mobile.webp" />
+            <img src="../../../assets/images/hero/hero-specialtymain.png" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">Why divers specialize</p>
+          <h2 id="specialty-unlocks-title">Choose training because a dive calls for it.</h2>
+          <p>Specialties are most useful when they solve a real problem: a colder environment, an enriched-air plan, a wreck goal, or a different equipment configuration.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Enter a different environment</strong>Build the control needed for colder water or structure-focused diving.</li>
+            <li><strong>Make a better plan</strong>Learn the analysis and limits behind enriched-air use on appropriate profiles.</li>
+            <li><strong>Use specialized equipment responsibly</strong>Practice the setup and emergency procedures before relying on a new configuration underwater.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -90,11 +117,11 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us which specialty interests you, where you want to dive next, and when you are available. We will reply with the right course, date options, included items, gear needs, and the next step.</p>
-      </section>
-      <section class="sdi-section">
+      </aside>
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Choose the Skill That Serves the Next Dive</h2>
           <p>We match specialty training to the environment, equipment, or planning problem you actually want to solve. Your pace, current experience, and next dive goal shape the training plan.</p>
@@ -102,7 +129,7 @@
         <img class="sdi-logo" src="../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section">
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>Targeted instruction for the environments and decisions that require more than basic Open Water skills.</p>
         <div class="feature-grid">
@@ -123,7 +150,7 @@
         </div>
       </section>
 
-      <section class="content-section" id="specialties">
+      <section class="content-section" id="specialties" data-course-reveal>
         <h2>Specialty Courses Offered</h2>
         <p>
           Each course develops a specific capability for the diving you want to pursue next. Open a course to compare the outcome, prerequisite, format, inclusions, and price.
@@ -151,8 +178,8 @@
 
             <a class="feature-card specialty-card specialty-card-fullface" href="./full-face-mask/index.html">
               <h3>Full Face Mask Diver</h3>
-              <p>Stay warm, breathe naturally, and improve comfort in colder conditions for $399.</p>
-              <span class="muted small">Ideal for long dives and extra stability.</span>
+              <p>Learn fit, setup, breathing, clearing, and emergency procedures for a specialized mask configuration for $399.</p>
+              <span class="muted small">Build comfort without skipping practiced procedures.</span>
             </a>
           </div>
         </section>
@@ -184,7 +211,7 @@
         </ol>
       </section>
 
-      <section class="cta cta-inline cta-inline-level-up" id="request-dates">
+      <section class="cta cta-inline cta-inline-level-up" id="request-dates" data-course-reveal>
         <h2>Not Sure Which Specialty Fits?</h2>
         <p>Tell us where you dive now and what you want to do next. We will recommend the most relevant course before you commit.</p>
         <div class="page-hero-actions">
@@ -203,7 +230,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../js/main.js?v=20260822a"></script>
+    <script src="../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

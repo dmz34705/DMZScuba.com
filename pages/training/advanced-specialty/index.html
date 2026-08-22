@@ -13,17 +13,18 @@
   <link rel="stylesheet" href="../../../css/base.css" />
   <link rel="stylesheet" href="../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-advanced">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-advanced">
+    <section class="page-hero page-hero-advanced course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">The next step after Open Water</p>
-          <h1>SDI Advanced Adventure Training</h1>
+          <p class="conversion-eyebrow">Advanced scuba training near Chicago</p>
+          <h1><span>Say yes to more dives.</span><span class="course-title-context">SDI Advanced Adventure training</span></h1>
           <p class="page-hero-sub">
             Build stronger navigation, depth awareness, buoyancy, and decision-making through five coached dives shaped around where you want to dive next.
           </p>
@@ -32,8 +33,6 @@
             <li>Five training dives included</li>
             <li>Deep and navigation foundation</li>
             <li>Three goal-based elective dives</li>
-            <li>Patient coaching and flexible scheduling</li>
-            <li>Open Water certification required</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -41,27 +40,35 @@
             <a class="btn secondary" href="#how-it-works">See the Five-Dive Path</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Advanced Adventure course at a glance">
+          <p class="conversion-eyebrow">Course at a glance</p>
+          <p class="course-summary-price"><span>Advanced Adventure</span><strong>$599</strong><small>total course price</small></p>
+          <ul class="course-summary-list">
+            <li><span>Prerequisite</span><strong>Open Water or equivalent</strong></li>
+            <li><span>Dives</span><strong>5 coached training dives</strong></li>
+            <li><span>Core</span><strong>Deep and navigation foundations</strong></li>
+            <li><span>Electives</span><strong>3 chosen around your goals</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>Advanced Adventure Diver Training</h2>
+        <h2>Advanced Adventure</h2>
         <p>See what the five dives develop, how electives are chosen, and what the $599 course includes.</p>
         <div class="toc-buttons">
-          <a class="btn secondary" href="#how-it-works">How It Works</a>
+          <a class="btn secondary" href="#unlocks">What It Unlocks</a>
+          <a class="btn secondary" href="#how-it-works">Five-Dive Path</a>
           <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="advanced-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="advanced-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Next step after Open Water</p>
-          <h2 id="advanced-start-title">Move beyond the basics with five coached training dives.</h2>
-          <p>Build confidence beyond Open Water with coached dives chosen around your goals. We will help choose the right electives, confirm dates, and map the next step before anything is final.</p>
+          <h2 id="advanced-start-title">Expand your range with five coached dives that have a purpose.</h2>
+          <p>Advanced Adventure introduces deeper conditions, stronger navigation, and three elective experiences chosen around your goals. The value is not five boxes checked. It is better planning, more control, and more comfort when a new opportunity appears.</p>
           <div class="conversion-metrics" aria-label="Advanced Adventure summary">
             <span><strong>$599</strong> course price</span>
             <span><strong>5</strong> training dives</span>
@@ -73,7 +80,27 @@
           <a class="btn secondary" href="../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="advanced-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../assets/images/hero/rwadvanced-hero-mobile.webp" />
+            <img src="../../../assets/images/hero/rwadvanced-hero.png" alt="" width="1024" height="1024" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">What changes after this course</p>
+          <h2 id="advanced-unlocks-title">More range. More confidence. Better reasons to say yes.</h2>
+          <p>Advanced Adventure is a bridge between entry-level skills and the broader environments you will encounter locally and while traveling.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Experience more varied sites</strong>Practice planning and control for dives beyond the most basic Open Water conditions.</li>
+            <li><strong>Build navigation and depth awareness</strong>Work through two foundations that influence a wide range of future dives.</li>
+            <li><strong>Test the paths that interest you</strong>Use three electives to explore wreck, night, buoyancy, dry suit, or other available goals before choosing a specialty.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -90,11 +117,11 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us when you are available, your current certification level, and which dive skills you want to build. We will reply with recommended electives, date options, payment timing, gear needs, and the next step before anything is final.</p>
-      </section>
-      <section class="sdi-section">
+      </aside>
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Advanced Training Built Around the Diver</h2>
           <p>You complete SDI eLearning first, then we use instructor-led dives to focus on the skills that move you forward. Electives are chosen around your experience, goals, and the environments you want to explore.</p>
@@ -103,7 +130,7 @@
         <img class="sdi-logo" src="../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section">
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>More range, stronger control, and better decisions &mdash; without rushed training.</p>
         <div class="feature-grid">
@@ -150,7 +177,7 @@
         </div>
       </section>
 
-      <section class="content-section content-section-spaced" id="how-it-works">
+      <section class="content-section content-section-spaced" id="how-it-works" data-course-reveal>
         <h2>How It Works</h2>
         <ol class="content-steps">
           <li><strong>Plan.</strong> We align on your goals, choose electives, and set your schedule.</li>
@@ -333,14 +360,14 @@
         </div>
       </div>
 
-      <section class="hero-band hero-band-advanced" aria-label="Advanced training in action">
+      <section class="hero-band hero-band-advanced" aria-label="Advanced training in action" data-course-reveal>
         <div class="hero-band-inner">
           <h2>Real-World Advanced Training</h2>
           <p>Deeper and more complex dives feel more manageable when planning and fundamentals are established.</p>
         </div>
       </section>
 
-      <section class="cta">
+      <section class="cta" data-course-reveal>
         <h2>What Do You Want to Do More Confidently?</h2>
         <p>Tell us where you dive now and what you want to work toward. We will help choose the electives, locations, and schedule before you commit.</p>
         <a class="btn primary" href="../course-builder/index.html?course=sdi-advanced-adventure" id="request-dates">Plan Advanced Training</a>
@@ -356,7 +383,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../js/main.js?v=20260822a"></script>
+    <script src="../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

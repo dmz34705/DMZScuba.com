@@ -13,27 +13,26 @@
   <link rel="stylesheet" href="../../../../css/base.css" />
   <link rel="stylesheet" href="../../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-wreck">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-wreck">
+    <section class="page-hero page-hero-wreck course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">Control and planning around structure</p>
-          <h1>Wreck Diver Training Near Chicago</h1>
+          <p class="conversion-eyebrow">Wreck Diver training near Chicago</p>
+          <h1><span>Explore the stories below the surface.</span><span class="course-title-context">SDI Wreck Diver training</span></h1>
           <p class="page-hero-sub">
             Explore historic sites with safe approach, line work, and navigation skills that keep you in control.
           </p>
           <p class="schedule-note">No set start dates &mdash; we schedule around your calendar.</p>
           <ul class="hero-proof-list" aria-label="Wreck Diver highlights">
-            <li>$399 total course price</li>
             <li>Safe approach and planning</li>
             <li>Line work and navigation basics</li>
             <li>Low-impact wreck technique</li>
-            <li>Advanced Open Water recommended</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -41,23 +40,31 @@
             <a class="btn secondary" href="#pricing">See Pricing</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Wreck Diver course at a glance">
+          <p class="conversion-eyebrow">Course at a glance</p>
+          <p class="course-summary-price"><span>Wreck Diver specialty</span><strong>$399</strong><small>total course price</small></p>
+          <ul class="course-summary-list">
+            <li><span>Experience</span><strong>Advanced Adventure recommended</strong></li>
+            <li><span>Learn</span><strong>Approach, hazards, line basics, and navigation</strong></li>
+            <li><span>Practice</span><strong>Control and low-impact movement</strong></li>
+            <li><span>Format</span><strong>Private or small group</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>Wreck Diver Certification</h2>
+        <h2>Wreck Diver</h2>
         <p>Precision, awareness, and confident navigation around complex structures.</p>
         <div class="toc-buttons">
+          <a class="btn secondary" href="#unlocks">What It Unlocks</a>
           <a class="btn secondary" href="#how-it-works">How It Works</a>
           <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="wreck-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="wreck-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Precision around structure</p>
           <h2 id="wreck-start-title">Build wreck skills before your next structure or travel dive.</h2>
@@ -73,7 +80,27 @@
           <a class="btn secondary" href="../../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="wreck-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../../assets/images/hero/openwater-hero-mid-mobile.webp" />
+            <img src="../../../../assets/images/hero/openwater-hero-mid.png" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">Where this skill can take you</p>
+          <h2 id="wreck-unlocks-title">Historic sites deserve more than an ordinary approach.</h2>
+          <p>Wreck training develops the planning, awareness, positioning, navigation, and line fundamentals used around underwater structures. It supports responsible exploration without implying that every wreck or penetration is appropriate for every diver.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Prepare for Great Lakes history</strong>Build skills relevant to structure-focused local and regional diving when conditions permit.</li>
+            <li><strong>Approach travel wrecks deliberately</strong>Recognize hazards, plan the dive, and maintain awareness around unfamiliar structure.</li>
+            <li><strong>Protect the site and the dive</strong>Use low-impact movement and controlled positioning to avoid contact and preserve visibility.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -90,11 +117,11 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us your current certification level, when you are available, and what kind of wreck diving you want to work toward. We will reply with the recommended training format, site options, gear needs, and the next step.</p>
-      </section>
-      <section class="sdi-section">
+      </aside>
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Wreck Skills Built Around the Dive</h2>
           <p>SDI lets us tailor wreck training to each diver. We are not locked into rigid progression, so we can match your pace, goals, and schedule.</p>
@@ -102,7 +129,7 @@
         <img class="sdi-logo" src="../../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section" id="overview">
+      <section class="content-section summary-section" id="overview" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>Wreck training emphasizes safe approach, awareness, and responsible exploration.</p>
         <div class="feature-grid">
@@ -147,7 +174,7 @@
         </div>
       </section>
 
-      <section class="content-section content-section-spaced" id="how-it-works">
+      <section class="content-section content-section-spaced" id="how-it-works" data-course-reveal>
         <h2>How It Works</h2>
         <ol class="content-steps">
           <li><strong>Plan.</strong> We align on the wreck type, conditions, and dive goals.</li>
@@ -290,14 +317,14 @@
         </div>
       </div>
 
-      <section class="hero-band hero-band-wreck" aria-label="Wreck training in action">
+      <section class="hero-band hero-band-wreck" aria-label="Wreck training in action" data-course-reveal>
         <div class="hero-band-inner">
           <h2>Precision Around Structure</h2>
           <p>Calm planning and clean technique make wrecks safer and more fun.</p>
         </div>
       </section>
 
-      <section class="cta">
+      <section class="cta" data-course-reveal>
         <h2>Planning Great Lakes or Travel Wreck Dives?</h2>
         <p>Tell us about your certification, experience, and the sites you want to explore. We will confirm whether this is the right next step before you commit.</p>
         <a class="btn primary" href="../../course-builder/index.html?course=sdi-wreck-diver" id="request-dates">Plan Wreck Training</a>
@@ -313,7 +340,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../../js/main.js?v=20260822a"></script>
+    <script src="../../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

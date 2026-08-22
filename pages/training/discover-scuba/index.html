@@ -13,28 +13,26 @@
   <link rel="stylesheet" href="../../../css/base.css" />
   <link rel="stylesheet" href="../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-discovery">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-training">
+    <section class="page-hero page-hero-training course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">A supervised first scuba experience</p>
-          <h1>Try Scuba Diving Near Chicago</h1>
+          <p class="conversion-eyebrow">A supervised first scuba experience near Chicago</p>
+          <h1><span>Take your first breath underwater.</span><span class="course-title-context">SDI Scuba Discovery near Chicago</span></h1>
           <p class="page-hero-sub">
             Experience your first breaths underwater in a controlled setting before deciding whether full certification is right for you.
           </p>
           <p class="schedule-note">Complete the required eLearning first, then choose dates around your calendar.</p>
           <ul class="hero-proof-list" aria-label="Discover Scuba highlights">
-            <li>Introductory experience &mdash; not a full certification</li>
+            <li>Complete beginners welcome</li>
             <li>Direct instructor supervision</li>
-            <li>Adults, teens, and families welcome</li>
-            <li>Pool or open water options</li>
-            <li>$299 per person</li>
-            <li>Full $299 applies toward Open Water within 60 days</li>
+            <li>Pool or condition-dependent open water options</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -42,26 +40,35 @@
             <a class="btn secondary" href="#how-it-works">How It Works</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Scuba Discovery at a glance">
+          <p class="conversion-eyebrow">Experience at a glance</p>
+          <p class="course-summary-price"><span>Scuba Discovery</span><strong>$299</strong><small>per person</small></p>
+          <ul class="course-summary-list">
+            <li><span>Experience</span><strong>Complete beginner</strong></li>
+            <li><span>Water time</span><strong>Up to 2 hours on scuba</strong></li>
+            <li><span>Status</span><strong>Introductory experience, not certification</strong></li>
+            <li><span>Continue</span><strong>Full $299 credit within 60 days</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>SDI Scuba Discovery</h2>
+        <h2>Scuba Discovery</h2>
         <p>Start small. Dive first. Find out whether scuba is right for you.</p>
         <div class="toc-buttons">
+          <a class="btn secondary" href="#unlocks">What It Unlocks</a>
           <a class="btn secondary" href="#what-you-try">What You Try</a>
           <a class="btn secondary" href="#how-it-works">How It Works</a>
+          <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="discover-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="discover-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Try scuba first</p>
-          <h2 id="discover-start-title">Find out how scuba feels before making a bigger commitment.</h2>
+          <h2 id="discover-start-title">You do not have to commit to certification to find out how scuba feels.</h2>
           <p>We introduce the equipment, breathing, communication, and basic movement at a pace built around your comfort. You can ask questions, try the experience, and decide what comes next afterward.</p>
           <div class="conversion-metrics" aria-label="Discover Scuba summary">
             <span><strong>$299</strong> per person</span>
@@ -75,7 +82,23 @@
         </div>
       </section>
 
-      <section class="content-section summary-section">
+      <section class="course-outcome" id="unlocks" aria-labelledby="discovery-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture><img src="../../../assets/images/hero/hero-refresh.png" alt="" width="1024" height="1024" loading="lazy" decoding="async" /></picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">What this experience unlocks</p>
+          <h2 id="discovery-unlocks-title">A real answer to the question: could I actually do this?</h2>
+          <p>Discovery replaces guesswork with a supervised underwater experience. You learn enough to understand how scuba feels, what the equipment does, and whether becoming a certified diver is a path you want to continue.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Experience breathing underwater</strong>Try scuba equipment with an instructor close by in a controlled setting.</li>
+            <li><strong>Learn what comfort feels like</strong>Practice basic movement, communication, and equipment skills at your pace.</li>
+            <li><strong>Choose the next step afterward</strong>Stop after the experience or apply the full $299 toward Open Water within 60 days.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -93,12 +116,12 @@
         </div>
       </section>
 
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us how many people want to try scuba, your preferred date window, and whether you are leaning toward a pool session or an open water option. We will reply with the best format, any location fees, gear needs, and the next step.</p>
-      </section>
+      </aside>
 
-      <section class="sdi-section">
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>We Teach the Person, Not Just the Program</h2>
           <p>Your first underwater experience should feel calm, clear, and personal. After the required SDI online learning, we introduce equipment and skills at a pace that respects your comfort instead of rushing toward the next step.</p>
@@ -106,7 +129,7 @@
         <img class="sdi-logo" src="../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section" id="overview">
+      <section class="content-section summary-section" id="overview" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>A practical first scuba experience with direct instructor supervision and no full-course commitment.</p>
         <div class="feature-grid">
@@ -127,7 +150,7 @@
         </div>
       </section>
 
-      <section class="content-section" id="what-you-try">
+      <section class="content-section" id="what-you-try" data-course-reveal>
         <h2>What You Try</h2>
         <p>
           This is not a certification class. It is a guided first scuba experience that introduces the core pieces
@@ -233,7 +256,7 @@
         </div>
       </section>
 
-      <section class="cta cta-inline cta-inline-skill-refresh" id="request-dates">
+      <section class="cta cta-inline cta-inline-skill-refresh" id="request-dates" data-course-reveal>
         <h2>Curious Enough to Try Your First Dive?</h2>
         <p>Tell us who wants to participate and when you are available. We will confirm the right setting, any location fees, what to bring, and what happens next before you commit.</p>
         <div class="page-hero-actions">
@@ -252,7 +275,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../js/main.js?v=20260822a"></script>
+    <script src="../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

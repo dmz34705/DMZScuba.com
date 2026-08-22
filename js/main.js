@@ -528,7 +528,8 @@ console.log("main.js loaded");
     const hero = document.querySelector(".page-hero-copy");
     const firstMetrics = document.querySelector(".page-main .conversion-metrics");
     const heroActions = hero?.querySelector(".page-hero-actions");
-    if (hero && firstMetrics && heroActions && !hero.querySelector(".mobile-hero-metrics")) {
+    const hasCourseHeroSummary = Boolean(document.querySelector(".course-hero-summary"));
+    if (hero && firstMetrics && heroActions && !hasCourseHeroSummary && !hero.querySelector(".mobile-hero-metrics")) {
       const mobileMetrics = firstMetrics.cloneNode(true);
       mobileMetrics.classList.add("mobile-hero-metrics");
       mobileMetrics.setAttribute("aria-label", "Course essentials");

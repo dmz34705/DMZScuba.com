@@ -13,27 +13,26 @@
   <link rel="stylesheet" href="../../../css/base.css" />
   <link rel="stylesheet" href="../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-refresh">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-training">
+    <section class="page-hero page-hero-training course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">For certified divers returning to the water</p>
-          <h1>Scuba Skill Refresh Near Chicago</h1>
+          <p class="conversion-eyebrow">Scuba skill refresh near Chicago</p>
+          <h1><span>Feel like a diver again.</span><span class="course-title-context">Skill Refresh for certified divers</span></h1>
           <p class="page-hero-sub">
             Get current again with focused practice, feedback, and a plan for your next dives.
           </p>
           <p class="schedule-note">No set start dates &mdash; we schedule around your calendar.</p>
           <ul class="hero-proof-list" aria-label="Skill Refresh highlights">
-            <li>$399 total session price</li>
             <li>Focused coaching before travel</li>
             <li>Pool, confined water, or open water options</li>
             <li>Custom skill focus</li>
-            <li>Flexible scheduling available</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -41,23 +40,31 @@
             <a class="btn secondary" href="#pricing">See Pricing</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Skill Refresh at a glance">
+          <p class="conversion-eyebrow">Session at a glance</p>
+          <p class="course-summary-price"><span>Skill Refresh</span><strong>$399</strong><small>total session price</small></p>
+          <ul class="course-summary-list">
+            <li><span>For</span><strong>Certified divers</strong></li>
+            <li><span>Focus</span><strong>Built around what feels rusty</strong></li>
+            <li><span>Format</span><strong>Pool, confined water, or open water</strong></li>
+            <li><span>Schedule</span><strong>Planned around your next dives</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>Skill Refresh Class</h2>
+        <h2>Skill Refresh</h2>
         <p>Short, focused training that rebuilds comfort and confidence before your next dives.</p>
         <div class="toc-buttons">
+          <a class="btn secondary" href="#unlocks">What It Changes</a>
           <a class="btn secondary" href="#skills">Skills Covered</a>
           <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="refresh-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="refresh-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Before your next trip</p>
           <h2 id="refresh-start-title">Tell us what feels rusty. We will build the refresh around that.</h2>
@@ -73,7 +80,27 @@
           <a class="btn secondary" href="../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="refresh-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../assets/images/hero/hero-rtr-mobile.webp" />
+            <img src="../../../assets/images/hero/hero-rtr.png" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">What changes after a refresh</p>
+          <h2 id="refresh-unlocks-title">You do not have to pretend you remember everything.</h2>
+          <p>A refresh gives you a controlled place to rebuild the skills that matter before your next trip or local dive. The session follows your experience, equipment, concerns, and actual dive plan.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Return without the pressure</strong>Revisit fundamentals with an instructor before they matter on a real dive.</li>
+            <li><strong>Focus on your weak spots</strong>Spend time on buoyancy, mask skills, navigation, emergency procedures, or equipment familiarity as needed.</li>
+            <li><strong>Arrive ready for the next dive</strong>Replace uncertainty with recent practice and a clear plan for getting back in the water.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -90,11 +117,11 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us when you last dove, what trip or dive goal is coming up, and which skills you want to revisit. We will reply with the best session format, date options, gear needs, and the next step.</p>
-      </section>
-      <section class="sdi-section">
+      </aside>
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Refresh the Skills You Actually Need</h2>
           <p>This is not a generic checklist. We build the session around how long you have been away, what feels uncertain, the equipment you will use, and the diving you plan to do next.</p>
@@ -102,7 +129,7 @@
         <img class="sdi-logo" src="../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section">
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>A refresh that feels calm, structured, and practical with real coaching in the water.</p>
         <div class="feature-grid">
@@ -145,7 +172,7 @@
         </div>
       </section>
 
-      <section class="content-section" id="skills">
+      <section class="content-section" id="skills" data-course-reveal>
         <h2>Skills Covered</h2>
         <div class="feature-grid">
           <article class="feature-card">
@@ -256,7 +283,7 @@
         </div>
       </section>
 
-      <section class="cta cta-inline cta-inline-skill-refresh" id="request-dates">
+      <section class="cta cta-inline cta-inline-skill-refresh" id="request-dates" data-course-reveal>
         <h2>Want to Feel Comfortable Before Your Next Dive?</h2>
         <p>Tell us when you last dove, what feels rusty, and what trip or local dive is coming next. We will build the refresh around that.</p>
         <div class="page-hero-actions">
@@ -275,7 +302,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../js/main.js?v=20260822a"></script>
+    <script src="../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

@@ -12,17 +12,18 @@
   <link rel="stylesheet" href="../../../css/base.css" />
   <link rel="stylesheet" href="../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-referral">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-open-water">
+    <section class="page-hero page-hero-open-water course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">Local preparation for destination checkout dives</p>
-          <h1>Open Water Referral Program</h1>
+          <p class="conversion-eyebrow">Open Water referral training near Chicago</p>
+          <h1><span>Train here. Finish there.</span><span class="course-title-context">Open Water Referral Program</span></h1>
           <p class="page-hero-sub">
             Complete SDI eLearning, classroom review, and pool training with DMZ Scuba before your trip, then finish the open water checkout dives with a destination dive operator.
           </p>
@@ -31,8 +32,6 @@
             <li>Complete academics and pool training locally</li>
             <li>Travel with referral paperwork ready</li>
             <li>Finish certification dives at your destination</li>
-            <li>Flexible scheduling before your trip</li>
-            <li>$649 per person for the local referral portion</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -40,14 +39,32 @@
             <a class="btn secondary" href="../open-water/index.html">Full Open Water Option</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Open Water Referral at a glance">
+          <p class="conversion-eyebrow">Program at a glance</p>
+          <p class="course-summary-price"><span>DMZ local portion</span><strong>$649</strong><small>per person</small></p>
+          <ul class="course-summary-list">
+            <li><span>With DMZ</span><strong>eLearning, review, and pool training</strong></li>
+            <li><span>Destination</span><strong>Open-water checkout dives</strong></li>
+            <li><span>Timing</span><strong>Planned around your departure</strong></li>
+            <li><span>Separate</span><strong>Destination fees, gear, and travel</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="referral-start-title">
+      <section class="toc">
+        <h2>Open Water Referral</h2>
+        <p>Understand the local training, destination handoff, pricing, and planning responsibilities.</p>
+        <div class="toc-buttons">
+          <a class="btn secondary" href="#unlocks">Why Referral</a>
+          <a class="btn secondary" href="#how-it-works">How It Works</a>
+          <a class="btn secondary" href="#pricing">Pricing</a>
+          <a class="btn secondary" href="#request-dates">Request Dates</a>
+        </div>
+      </section>
+
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="referral-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Travel-ready training</p>
           <h2 id="referral-start-title">Do the classroom and pool work here. Finish the certification dives there.</h2>
@@ -64,7 +81,27 @@
           <a class="btn secondary" href="../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="referral-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../assets/images/hero/hero-travel-mobile.webp" />
+            <img src="../../../assets/images/hero/hero-travel.JPEG" alt="" width="2048" height="1365" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">Why divers choose the referral path</p>
+          <h2 id="referral-unlocks-title">Arrive with the classroom and pool work behind you.</h2>
+          <p>A referral separates the training into two clear parts: build the knowledge and confined-water skills with DMZ Scuba, then complete the required checkout dives with an accepting operator at your destination.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Prepare close to home</strong>Learn the equipment and core skills before the trip begins.</li>
+            <li><strong>Use vacation time differently</strong>Let the destination portion focus on the required open-water dives rather than beginning in a classroom.</li>
+            <li><strong>Keep the handoff clear</strong>Travel with referral documentation and confirm the destination operator's schedule, fees, and requirements in advance.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -81,10 +118,10 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us where you are headed, when you leave, who is taking class, and when you are available before the trip. We will confirm whether the referral timeline works, what your destination dive operator needs, and the next step before anything is final.</p>
-      </section>
+      </aside>
 
       <section class="content-section summary-section">
         <h2>Who This Is For</h2>
@@ -105,7 +142,7 @@
         </div>
       </section>
 
-      <section class="content-section content-section-spaced">
+      <section class="content-section content-section-spaced" id="how-it-works" data-course-reveal>
         <h2>How the Referral Path Works</h2>
         <ol class="content-steps">
           <li><strong>Complete SDI eLearning.</strong> Start the academic portion before your pool sessions.</li>
@@ -115,7 +152,7 @@
         </ol>
       </section>
 
-      <section class="content-section summary-section">
+      <section class="content-section summary-section" data-course-reveal>
         <h2>What's Included Locally</h2>
         <p>The local referral portion is $649 per person and is focused on academic readiness, water comfort, and pool skills before your trip.</p>
         <div class="feature-grid">
@@ -151,7 +188,7 @@
         <p>The destination dive operator completes the required open water checkout dives and any destination-specific fees, rental gear, site logistics, and certification processing steps they control.</p>
       </section>
 
-      <section class="content-section summary-section">
+      <section class="content-section summary-section" id="pricing" data-course-reveal>
         <h2>Referral Pricing</h2>
         <p><strong>$649 per person</strong> for the DMZ Scuba referral portion: SDI eLearning support, classroom review, pool training, referral paperwork, and local scheduling support.</p>
         <p class="muted small">Destination checkout dives, destination operator fees, travel costs, site fees, rental gear, and destination-controlled certification steps are separate.</p>
@@ -167,7 +204,7 @@
         </ul>
       </section>
 
-      <section class="sdi-section">
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Why Use a Referral</h2>
           <p>A referral path lets you arrive at your destination with the academic and pool work already handled. That can make the trip feel less rushed and let the destination portion focus on open water checkout dives.</p>
@@ -176,7 +213,7 @@
         <img class="sdi-logo" src="../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="cta">
+      <section class="cta" id="request-dates" data-course-reveal>
         <h2>Planning a Trip and Need a Referral?</h2>
         <p>Tell us where you are headed, when you leave, who is taking class, and when you are available before the trip. We will confirm whether the referral timeline works and what your next step should be.</p>
         <div class="page-hero-actions">
@@ -195,7 +232,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../js/main.js?v=20260822a"></script>
+    <script src="../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>

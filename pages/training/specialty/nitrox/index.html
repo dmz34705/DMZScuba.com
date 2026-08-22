@@ -13,17 +13,18 @@
   <link rel="stylesheet" href="../../../../css/base.css" />
   <link rel="stylesheet" href="../../../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../../../css/responsive.css?v=20260728p7" />
+  <link rel="stylesheet" href="../../../../css/pages/course-page.css?v=20260822a" />
 </head>
 
-<body class="training-landing-page">
+<body class="training-landing-page course-page course-page-nitrox">
   <div class="page">
     <header class="site-header" data-site-nav></header>
 
-    <section class="page-hero page-hero-nitrox">
+    <section class="page-hero page-hero-nitrox course-page-hero">
       <div class="page-hero-inner">
         <div class="page-hero-copy">
-          <p class="conversion-eyebrow">Practical enriched-air planning</p>
-          <h1>Nitrox Certification Near Chicago</h1>
+          <p class="conversion-eyebrow">Nitrox certification near Chicago</p>
+          <h1><span>Know when Nitrox belongs in the plan.</span><span class="course-title-context">SDI Computer Nitrox certification</span></h1>
           <p class="page-hero-sub">
             Learn when enriched air can provide longer no-decompression limits, how to analyze your cylinder, and how to manage oxygen exposure responsibly.
           </p>
@@ -32,9 +33,6 @@
             <li>Enriched-air dive planning</li>
             <li>Cylinder analysis and labeling practice</li>
             <li>Maximum operating depth and oxygen exposure</li>
-            <li>Travel-ready certification</li>
-            <li>$399 total course price</li>
-            <li>Open Water certification required</li>
           </ul>
 
           <div class="page-hero-actions">
@@ -42,23 +40,31 @@
             <a class="btn secondary" href="#how-it-works">See How It Works</a>
           </div>
         </div>
-        <div class="page-hero-card training-hero-logo">
-          <img src="../../../../assets/images/logos/dmz-scuba-logo-display.webp" alt="DMZ Scuba logo" width="512" height="512">
-        </div>
+        <aside class="course-hero-summary" aria-label="Nitrox course at a glance">
+          <p class="conversion-eyebrow">Course at a glance</p>
+          <p class="course-summary-price"><span>Nitrox certification</span><strong>$399</strong><small>total course price</small></p>
+          <ul class="course-summary-list">
+            <li><span>Prerequisite</span><strong>Open Water or equivalent</strong></li>
+            <li><span>Learn</span><strong>Analysis, MOD, and oxygen exposure</strong></li>
+            <li><span>Practice</span><strong>Cylinder labeling and dive planning</strong></li>
+            <li><span>Schedule</span><strong>Private, group, or bundle format</strong></li>
+          </ul>
+        </aside>
       </div>
     </section>
 
     <main class="page-main">
       <section class="toc">
-        <h2>Nitrox Certification</h2>
+        <h2>Computer Nitrox</h2>
         <p>Gain the tools to plan Nitrox dives with confidence and clarity.</p>
         <div class="toc-buttons">
+          <a class="btn secondary" href="#unlocks">Where It Fits</a>
           <a class="btn secondary" href="#how-it-works">How It Works</a>
           <a class="btn secondary" href="#pricing">Pricing</a>
           <a class="btn secondary" href="#request-dates">Request Dates</a>
         </div>
       </section>
-      <section class="conversion-panel conversion-panel-course" aria-labelledby="nitrox-start-title">
+      <section class="conversion-panel conversion-panel-course" aria-labelledby="nitrox-start-title" data-course-reveal>
         <div>
           <p class="conversion-eyebrow">Smarter gas planning</p>
           <h2 id="nitrox-start-title">Understand the gas before you use it.</h2>
@@ -74,7 +80,27 @@
           <a class="btn secondary" href="../../../contact/index.html">Ask a Question</a>
         </div>
       </section>
-      <section class="content-section summary-section">
+
+      <section class="course-outcome" id="unlocks" aria-labelledby="nitrox-unlocks-title" data-course-reveal>
+        <div class="course-outcome-media" aria-hidden="true">
+          <picture>
+            <source media="(max-width: 780px)" srcset="../../../../assets/images/hero/hero-nitrox-mobile.webp" />
+            <img src="../../../../assets/images/hero/hero-nitrox.png" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
+          </picture>
+        </div>
+        <div class="course-outcome-copy">
+          <p class="conversion-eyebrow">Where this skill fits</p>
+          <h2 id="nitrox-unlocks-title">Useful on the right profile. Responsible on every cylinder.</h2>
+          <p>Nitrox is common at resorts, liveaboards, and destinations built around repetitive diving. On appropriate profiles, it may provide longer no-decompression limits, but only when the mix, maximum operating depth, oxygen exposure, and computer settings are understood.</p>
+          <ul class="course-outcome-list">
+            <li><strong>Evaluate enriched-air options</strong>Recognize when Nitrox meaningfully fits a planned dive or repetitive dive day.</li>
+            <li><strong>Verify your own cylinder</strong>Analyze the gas, label the mix, and take responsibility for the result.</li>
+            <li><strong>Plan within the limits</strong>Use MOD, oxygen exposure, and dive-computer settings to build an appropriate profile.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-section summary-section" data-course-reveal>
         <h2>Best For</h2>
         <div class="content-columns">
           <div>
@@ -91,11 +117,11 @@
           </div>
         </div>
       </section>
-      <section class="content-section content-section-spaced">
-        <h2>What Happens Next</h2>
+      <aside class="course-start-note" data-course-reveal>
+        <h2>How to start</h2>
         <p>Tell us when you are available and where you plan to dive next. We will reply with the best Nitrox format, date options, included items, and the next step.</p>
-      </section>
-      <section class="sdi-section">
+      </aside>
+      <section class="sdi-section" data-course-reveal>
         <div class="sdi-copy">
           <h2>Planning You Can Use on Real Dive Trips</h2>
           <p>We adapt the examples and planning work to the kind of diving you do. The goal is not simply to pass a review; it is to leave able to verify a mix, set appropriate limits, and explain the plan.</p>
@@ -103,7 +129,7 @@
         <img class="sdi-logo" src="../../../../assets/images/logos/sdi-logosm.png" alt="SDI Scuba Diving International logo" />
       </section>
 
-      <section class="content-section summary-section" id="overview">
+      <section class="content-section summary-section" id="overview" data-course-reveal>
         <h2>Program Snapshot</h2>
         <p>Nitrox training connects gas theory to the analysis and planning responsibilities you will use throughout your diving.</p>
         <div class="feature-grid">
@@ -148,7 +174,7 @@
         </div>
       </section>
 
-      <section class="content-section content-section-spaced" id="how-it-works">
+      <section class="content-section content-section-spaced" id="how-it-works" data-course-reveal>
         <h2>How It Works</h2>
         <ol class="content-steps">
           <li><strong>Plan.</strong> Choose the format that fits your schedule.</li>
@@ -299,14 +325,14 @@
         </div>
       </div>
 
-      <section class="hero-band hero-band-nitrox" aria-label="Nitrox training in action">
+      <section class="hero-band hero-band-nitrox" aria-label="Nitrox training in action" data-course-reveal>
         <div class="hero-band-inner">
           <h2>Smarter Dive Planning</h2>
           <p>Better gas decisions begin with analysis, limits, and a plan you understand.</p>
         </div>
       </section>
 
-      <section class="cta">
+      <section class="cta" data-course-reveal>
         <h2>Ready to Add Nitrox to Your Dive Planning?</h2>
         <p>Ask about dates, format, and any trip-specific questions before you register.</p>
         <a class="btn primary" href="../../course-builder/index.html?course=sdi-computer-nitrox" id="request-dates">Plan Nitrox Certification</a>
@@ -322,7 +348,8 @@
       <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
     </footer>
 
-    <script src="../../../../js/main.js?v=20260728p7"></script>
+    <script src="../../../../js/main.js?v=20260822a"></script>
+    <script src="../../../../js/course-page.js?v=20260822a"></script>
   </div>
 </body>
 </html>
