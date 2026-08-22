@@ -30,6 +30,18 @@ test("course catalog pairs learning with real-world access", () => {
   assert.match(page, /Open Water and a few vacation dives can be exactly enough/);
 });
 
+test("course stages use responsive editorial imagery without changing the catalog", () => {
+  assert.equal((page.match(/class="training-stage-visual"/g) || []).length, 4);
+  ["hero-rtr", "hero-advance-ready", "hero-fullface", "rwadvanced-hero"].forEach((asset) => {
+    assert.match(page, new RegExp(`${asset}\\.png`));
+    assert.match(page, new RegExp(`${asset}-mobile\\.webp`));
+  });
+  assert.match(page, /class="training-after-bg"/);
+  assert.match(page, /hero-travel-mobile\.webp/);
+  assert.match(css, /\.training-stage-visual/);
+  assert.match(css, /\.training-after-bg/);
+});
+
 test("training landing page preserves SEO, pricing, and conversion routes", () => {
   [
     /Scuba Classes Near Chicago/,
