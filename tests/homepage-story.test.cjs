@@ -88,6 +88,12 @@ test("homepage uses deliberate scroll stories instead of generic section stackin
   assert.match(styles, /data-unlock-visual="1"\] img\{\s*object-position: center 30%/);
 });
 
+test("Open Water starting point preserves DMZ's continuing role", () => {
+  const page = read("index.html");
+  assert.match(page, /Open Water is your starting point\. DMZ helps you turn certification into real dives\./);
+  assert.doesNotMatch(page, /What you do with it is up to you\./);
+});
+
 test("scroll stories settle to a complete scene without trapping user input", () => {
   const motion = read("js/home-motion.js");
 
