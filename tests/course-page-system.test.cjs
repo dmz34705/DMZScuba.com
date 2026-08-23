@@ -73,6 +73,15 @@ test("course motion is restrained, progressive, and reduced-motion safe", () => 
   assert.match(css, /@media \(max-width: 780px\)/);
 });
 
+test("supporting course information uses grouped reading surfaces instead of floating card mosaics", () => {
+  assert.match(css, /\.course-page \.content-columns,[\s\S]*?\.course-page \.content-section > \.feature-grid\{[\s\S]*?gap: 1px;[\s\S]*?overflow: hidden;[\s\S]*?border: 1px solid var\(--course-line\);/);
+  assert.match(css, /\.course-page \.content-columns > div,[\s\S]*?\.course-page \.content-section > \.feature-grid > \.feature-card\{[\s\S]*?border: 0;[\s\S]*?border-radius: 0;[\s\S]*?box-shadow: none;/);
+  assert.match(css, /\.course-page \.two-col-grid\{[\s\S]*?overflow: hidden;[\s\S]*?border: 1px solid var\(--course-line\);[\s\S]*?gap: 0;/);
+  assert.match(css, /\.course-page \.mobile-collapsible\{[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;/);
+  assert.match(css, /\.course-page \.specialty-grid \.specialty-card\{[\s\S]*?border-radius: 18px;/);
+  Object.values(pages).forEach((html) => assert.match(html, /course-page\.css\?v=20260822b/));
+});
+
 test("existing course telemetry and builder routing remain intact", () => {
   [
     "open-water",
