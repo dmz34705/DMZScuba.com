@@ -79,7 +79,13 @@ test("supporting course information uses grouped reading surfaces instead of flo
   assert.match(css, /\.course-page \.two-col-grid\{[\s\S]*?overflow: hidden;[\s\S]*?border: 1px solid var\(--course-line\);[\s\S]*?gap: 0;/);
   assert.match(css, /\.course-page \.mobile-collapsible\{[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;/);
   assert.match(css, /\.course-page \.specialty-grid \.specialty-card\{[\s\S]*?border-radius: 18px;/);
-  Object.values(pages).forEach((html) => assert.match(html, /course-page\.css\?v=20260822b/));
+  Object.values(pages).forEach((html) => assert.match(html, /course-page\.css\?v=20260822c/));
+});
+
+test("mobile course hero proof points cannot inherit carousel height", () => {
+  assert.match(css, /@media \(max-width: 780px\)[\s\S]*?\.course-page \.course-page-hero \.hero-proof-list\{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 1fr;[\s\S]*?scroll-snap-type: none;/);
+  assert.match(css, /\.course-page \.course-page-hero \.hero-proof-list li\{[\s\S]*?min-height: 0;[\s\S]*?flex: none;[\s\S]*?scroll-snap-align: none;/);
+  assert.doesNotMatch(css, /@media \(max-width: 520px\)[\s\S]*?\.course-page \.course-page-hero \.hero-proof-list\{[\s\S]*?flex-direction: column;/);
 });
 
 test("existing course telemetry and builder routing remain intact", () => {

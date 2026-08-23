@@ -824,16 +824,22 @@
   }
 
   .course-page .course-page-hero .hero-proof-list{
-    display: flex;
+    display: grid;
     margin-bottom: 18px;
-    gap: 8px 18px;
+    grid-template-columns: 1fr;
+    gap: 8px;
     overflow: visible;
+    overscroll-behavior-inline: auto;
+    scroll-snap-type: none;
   }
 
   .course-page .course-page-hero .hero-proof-list li{
     min-height: 0;
+    width: 100%;
+    flex: none;
     padding: 2px 0 2px 14px;
     font-size: 12px;
+    scroll-snap-align: none;
   }
 
   .course-page .course-hero-summary{
@@ -1055,10 +1061,6 @@
 
   .course-page .course-page-hero .page-hero-inner{
     gap: 22px;
-  }
-
-  .course-page .course-page-hero .hero-proof-list{
-    flex-direction: column;
   }
 
   .course-page .course-summary-list li{
