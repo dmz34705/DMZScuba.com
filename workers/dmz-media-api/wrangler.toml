@@ -6,10 +6,12 @@ compatibility_date = "2026-01-01"
 binding = "DB"
 database_name = "dmz_media"
 database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
+migrations_dir = "migrations"
 
 [vars]
 # Optional: comma-separated list of allowed origins.
 ALLOWED_ORIGINS = "https://dmzscuba-com.pages.dev,https://dmzscuba.com,http://localhost:8080,http://127.0.0.1:8080"
+FUNNEL_RETENTION_DAYS = "400"
 RESEND_FROM_EMAIL = "no-reply@dmzscuba.com"
 RESEND_FROM_NAME = "DMZ Scuba"
 RESEND_TO = "info@dmzscuba.com"
@@ -30,3 +32,6 @@ RESEND_TO = "info@dmzscuba.com"
 # CF_IMAGES_ACCOUNT_ID = ""
 # CF_IMAGES_DELIVERY = "<your-images-hash-or-delivery-url>"
 # CF_IMAGES_VARIANT = "public"
+
+[triggers]
+crons = ["17 8 * * *"]

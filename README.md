@@ -301,7 +301,7 @@ Records are stored with `data_json` column holding `extras` (all non-top-level f
 |---|---|---|
 | `GET` | `/api/media` | Returns `{ mediaItems, photoItems }` from `media_items` table |
 | `POST` | `/api/contact` | Contact form: honeypot check → internal email → auto-reply → create management inquiry |
-| `POST` | `/api/client-telemetry` | Client error event logging (contact failures, upload failures) to Worker logs |
+| `POST` | `/api/client-telemetry` | Sanitized operational logging plus allowlisted training-funnel persistence in D1 |
 | `GET` | `/api/v2/destinations` | All destinations from `destinations_v2` |
 | `GET` | `/api/v2/destinations/:id` | Single destination by slug ID |
 | `GET` | `/api/v2/events` | Full events payload from `events_v2` |

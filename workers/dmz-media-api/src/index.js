@@ -3432,26 +3432,274 @@ async function handleStreamTusUpload(request, env) {
   return jsonResponse({ ok: true, uploadURL: location, uid });
 }
 
-async function handleClientTelemetry(request) {
-  const body = await request.json().catch(() => ({}));
+const PERSISTED_FUNNEL_EVENT_TYPES = new Set([
+  "training_course_view",
+  "training_cta_click",
+  "training_sticky_cta_click",
+  "training_sticky_cta_dismiss",
+  "training_internal_progression_click",
+  "training_inquiry_form_start",
+  "training_inquiry_submit_attempt",
+  "training_inquiry_completed",
+  "training_inquiry_form_abandoned",
+]);
+
+const TELEMETRY_MAX_BODY_BYTES = 12_000;
+const TELEMETRY_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function hasPotentialPii(value) {
+  const text = String(value || "");
+  return /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(text) || /\+?\d[\d\s().-]{7,}\d/.test(text);
+}
+
+function sanitizeAnalyticsValue(value, maxLength = 120) {
+  const text = String(value == null ? "" : value)
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+  if (!text || hasPotentialPii(text)) return "";
+  return text.replace(/[^a-z0-9._~:/ -]/gi, "").trim();
+}
+
+function sanitizeAnalyticsPath(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const sentinel = raw.toLowerCase();
+  if (["direct", "unspecified", "direct-or-referral"].includes(sentinel)) return sentinel;
+  if (!raw.startsWith("/") && !/^https?:\/\//i.test(raw)) return "";
+  try {
+    const url = new URL(raw, "https://www.dmzscuba.com");
+    const hostname = url.hostname.toLowerCase();
+    const isDmzHost = hostname === "dmzscuba.com" || hostname.endsWith(".dmzscuba.com");
+    const isDmzPagesHost =
+      hostname === "dmzscuba-com.pages.dev" ||
+      hostname.endsWith(".dmzscuba-com.pages.dev") ||
+      hostname === "dmzscuba-live.pages.dev" ||
+      hostname.endsWith(".dmzscuba-live.pages.dev");
+    if (/^https?:\/\//i.test(raw) && !isDmzHost && !isDmzPagesHost) return "external";
+    return String(url.pathname || "/").slice(0, 300);
+  } catch (error) {
+    return "";
+  }
+}
+
+function getTelemetryPageContext(pageUrl) {
+  try {
+    const url = new URL(String(pageUrl || ""));
+    const hostname = url.hostname.toLowerCase();
+    let siteEnvironment = "unknown";
+    if (hostname === "dmzscuba.com" || hostname === "www.dmzscuba.com" || hostname === "dmzscuba-live.pages.dev" || hostname.endsWith(".dmzscuba-live.pages.dev")) {
+      siteEnvironment = "live";
+    } else if (hostname === "dmzscuba-com.pages.dev" || hostname.endsWith(".dmzscuba-com.pages.dev")) {
+      siteEnvironment = "dev";
+    } else if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")) {
+      siteEnvironment = "local";
+    } else if (hostname.endsWith(".trycloudflare.com") || hostname.endsWith(".pages.dev")) {
+      siteEnvironment = "preview";
+    }
+    return {
+      pagePath: String(url.pathname || "/").slice(0, 300),
+      siteEnvironment,
+    };
+  } catch (error) {
+    return { pagePath: "/", siteEnvironment: "unknown" };
+  }
+}
+
+function isTrustedTelemetryOrigin(request, env) {
+  const origin = String(request.headers.get("Origin") || "").trim();
+  if (!origin) return false;
+  try {
+    const hostname = new URL(origin).hostname.toLowerCase();
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".local")) return true;
+    if (hostname === "dmzscuba.com" || hostname.endsWith(".dmzscuba.com")) return true;
+    if (hostname.endsWith(".trycloudflare.com")) return true;
+    if (
+      hostname === "dmzscuba-com.pages.dev" ||
+      hostname.endsWith(".dmzscuba-com.pages.dev") ||
+      hostname === "dmzscuba-live.pages.dev" ||
+      hostname.endsWith(".dmzscuba-live.pages.dev")
+    ) {
+      return true;
+    }
+    const allowList = String(env.ALLOWED_ORIGINS || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return allowList.includes(origin);
+  } catch (error) {
+    return false;
+  }
+}
+
+function sanitizeOperationalLogDetails(details) {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return {};
+  const sanitized = {};
+  Object.entries(details).slice(0, 20).forEach(([rawKey, rawValue]) => {
+    const key = String(rawKey || "").replace(/[^a-z0-9_-]/gi, "").slice(0, 60);
+    if (!key || /(email|phone|name|message|token|authorization|url)/i.test(key)) return;
+    if (typeof rawValue === "boolean" || typeof rawValue === "number") {
+      sanitized[key] = rawValue;
+      return;
+    }
+    if (typeof rawValue === "string") {
+      const value = sanitizeAnalyticsValue(rawValue, 200);
+      if (value) sanitized[key] = value;
+    }
+  });
+  return sanitized;
+}
+
+function normalizeOccurredAt(value, receivedAt) {
+  const receivedMs = Date.parse(receivedAt);
+  const occurredMs = Date.parse(String(value || ""));
+  const earliestAllowed = receivedMs - 7 * 24 * 60 * 60 * 1000;
+  const latestAllowed = receivedMs + 5 * 60 * 1000;
+  if (!Number.isFinite(occurredMs) || occurredMs < earliestAllowed || occurredMs > latestAllowed) {
+    return receivedAt;
+  }
+  return new Date(occurredMs).toISOString();
+}
+
+function buildFunnelEventRecord(body, receivedAt = new Date().toISOString()) {
+  const eventType = String((body && body.eventType) || "").trim().slice(0, 80);
+  if (!PERSISTED_FUNNEL_EVENT_TYPES.has(eventType)) return null;
+  const details = body.details && typeof body.details === "object" && !Array.isArray(body.details) ? body.details : {};
+  const pageContext = getTelemetryPageContext(body.pageUrl);
+  const eventId = TELEMETRY_UUID_PATTERN.test(String(body.eventId || "")) ? String(body.eventId).toLowerCase() : crypto.randomUUID();
+  const sessionId = TELEMETRY_UUID_PATTERN.test(String(body.sessionId || "")) ? String(body.sessionId).toLowerCase() : crypto.randomUUID();
+  const record = {
+    id: eventId,
+    eventType,
+    sessionId,
+    siteEnvironment: pageContext.siteEnvironment,
+    pagePath: pageContext.pagePath,
+    course: sanitizeAnalyticsValue(details.course, 80) || null,
+    device: ["mobile", "desktop"].includes(String(details.device || "").toLowerCase()) ? String(details.device).toLowerCase() : null,
+    source: null,
+    medium: null,
+    campaign: null,
+    content: null,
+    ctaType: ["primary", "secondary"].includes(String(details.ctaType || "").toLowerCase()) ? String(details.ctaType).toLowerCase() : null,
+    label: sanitizeAnalyticsValue(details.label, 120) || null,
+    placement: sanitizeAnalyticsValue(details.placement, 160) || null,
+    destinationPath: sanitizeAnalyticsPath(details.destination) || null,
+    sourcePage: sanitizeAnalyticsPath(details.sourcePage) || null,
+    experience: sanitizeAnalyticsValue(details.experience, 80) || null,
+    groupType: sanitizeAnalyticsValue(details.group, 80) || null,
+    occurredAt: normalizeOccurredAt(body.sentAt, receivedAt),
+    receivedAt,
+  };
+  if (eventType === "training_course_view") {
+    record.source = sanitizeAnalyticsValue(details.source, 100) || null;
+    record.medium = sanitizeAnalyticsValue(details.medium, 100) || null;
+    record.campaign = sanitizeAnalyticsValue(details.campaign, 120) || null;
+    record.content = sanitizeAnalyticsValue(details.content, 120) || null;
+  }
+  return record;
+}
+
+async function persistFunnelEvent(env, record) {
+  return env.DB.prepare(
+    `INSERT OR IGNORE INTO funnel_events (
+      id, event_type, session_id, site_environment, page_path, course, device,
+      source, medium, campaign, content, cta_type, label, placement, destination_path,
+      source_page, experience, group_type, occurred_at, received_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      record.id,
+      record.eventType,
+      record.sessionId,
+      record.siteEnvironment,
+      record.pagePath,
+      record.course,
+      record.device,
+      record.source,
+      record.medium,
+      record.campaign,
+      record.content,
+      record.ctaType,
+      record.label,
+      record.placement,
+      record.destinationPath,
+      record.sourcePage,
+      record.experience,
+      record.groupType,
+      record.occurredAt,
+      record.receivedAt
+    )
+    .run();
+}
+
+async function deleteExpiredFunnelEvents(env) {
+  const configuredDays = Number.parseInt(String(env.FUNNEL_RETENTION_DAYS || "400"), 10);
+  const retentionDays = Number.isFinite(configuredDays) ? Math.min(730, Math.max(30, configuredDays)) : 400;
+  const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
+  const result = await env.DB.prepare("DELETE FROM funnel_events WHERE received_at < ?").bind(cutoff).run();
+  console.log(JSON.stringify({ kind: "funnel_retention", cutoff, changes: result.meta && result.meta.changes ? result.meta.changes : 0 }));
+}
+
+async function handleClientTelemetry(request, env, context) {
+  if (!isTrustedTelemetryOrigin(request, env)) {
+    return jsonResponse({ ok: false, error: "Telemetry origin is not allowed." }, 403);
+  }
+  const declaredLength = Number.parseInt(request.headers.get("Content-Length") || "0", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > TELEMETRY_MAX_BODY_BYTES) {
+    return jsonResponse({ ok: false, error: "Telemetry payload is too large." }, 413);
+  }
+  const rawBody = await request.text();
+  if (new TextEncoder().encode(rawBody).byteLength > TELEMETRY_MAX_BODY_BYTES) {
+    return jsonResponse({ ok: false, error: "Telemetry payload is too large." }, 413);
+  }
+  let body;
+  try {
+    body = JSON.parse(rawBody || "{}");
+  } catch (error) {
+    return jsonResponse({ ok: false, error: "Invalid telemetry JSON." }, 400);
+  }
   const eventType = String(body.eventType || "").trim().slice(0, 80);
   if (!eventType) {
     return jsonResponse({ ok: false, error: "Missing eventType." }, 400);
   }
-  const payload = {
+  const receivedAt = new Date().toISOString();
+  const pageContext = getTelemetryPageContext(body.pageUrl);
+  console.log(JSON.stringify({
     kind: "client_telemetry",
     eventType,
-    pageUrl: String(body.pageUrl || "").slice(0, 500),
-    userAgent: String(body.userAgent || "").slice(0, 400),
-    details: body.details && typeof body.details === "object" ? body.details : {},
-    receivedAt: new Date().toISOString(),
-  };
-  console.log(JSON.stringify(payload));
-  return jsonResponse({ ok: true });
+    pagePath: pageContext.pagePath,
+    siteEnvironment: pageContext.siteEnvironment,
+    details: sanitizeOperationalLogDetails(body.details),
+    receivedAt,
+  }));
+
+  const record = buildFunnelEventRecord(body, receivedAt);
+  let persisted = false;
+  if (record && env.DB) {
+    const write = persistFunnelEvent(env, record).catch((error) => {
+      console.error("Funnel event persistence failed", error);
+    });
+    if (context && typeof context.waitUntil === "function") {
+      context.waitUntil(write);
+      persisted = true;
+    } else {
+      await write;
+      persisted = true;
+    }
+  }
+  return jsonResponse({ ok: true, persisted });
 }
 
+export {
+  buildFunnelEventRecord,
+  deleteExpiredFunnelEvents,
+  isTrustedTelemetryOrigin,
+  sanitizeAnalyticsPath,
+};
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, context) {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: withCors(request, env) });
     }
@@ -3467,7 +3715,7 @@ export default {
     } else if (pathname === "/api/event-alert-subscribe" && request.method === "POST") {
       response = await handleEventAlertSubscribe(request, env);
     } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
-      response = await handleClientTelemetry(request);
+      response = await handleClientTelemetry(request, env, context);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
     } else if (pathname === "/api/admin/event-alert-subscribers" && request.method === "GET") {
@@ -3563,5 +3811,12 @@ export default {
       statusText: response.statusText,
       headers,
     });
+  },
+  async scheduled(controller, env, context) {
+    context.waitUntil(
+      deleteExpiredFunnelEvents(env).catch((error) => {
+        console.error("Funnel retention cleanup failed", error);
+      })
+    );
   },
 };

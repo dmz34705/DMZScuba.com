@@ -36,7 +36,9 @@
     if (window.DMZTelemetry && typeof window.DMZTelemetry.report === "function") {
       window.DMZTelemetry.report("training_inquiry_submit_attempt", {
         course: String((courseInput && courseInput.value) || "unspecified"),
-        sourcePage: new URLSearchParams(window.location.search).get("source_page") || document.referrer || "direct",
+        sourcePage: window.DMZTelemetry.sourcePage(
+          new URLSearchParams(window.location.search).get("source_page") || document.referrer
+        ),
       });
     }
     if (window.DMZForms && typeof window.DMZForms.submit === "function") {

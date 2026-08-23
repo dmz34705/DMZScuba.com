@@ -62,13 +62,61 @@ console.log("main.js loaded");
     return base ? `${base}/api/client-telemetry` : "/api/client-telemetry";
   }
 
+  const TELEMETRY_SESSION_KEY = "dmz-funnel-session-id";
+
+  function createTelemetryId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+    const bytes = new Uint8Array(16);
+    if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let index = 0; index < bytes.length; index += 1) {
+        bytes[index] = Math.floor(Math.random() * 256);
+      }
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, "0"));
+    return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+  }
+
+  function getTelemetrySessionId() {
+    try {
+      const existing = window.sessionStorage.getItem(TELEMETRY_SESSION_KEY);
+      if (existing) return existing;
+      const next = createTelemetryId();
+      window.sessionStorage.setItem(TELEMETRY_SESSION_KEY, next);
+      return next;
+    } catch (error) {
+      return createTelemetryId();
+    }
+  }
+
+  function getTelemetryPageUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+  }
+
+  function getTelemetrySourcePage(value) {
+    const raw = String(value || "").trim();
+    if (!raw || raw === "direct") return "direct";
+    try {
+      const url = new URL(raw, window.location.origin);
+      return url.origin === window.location.origin ? url.pathname : "external";
+    } catch (error) {
+      return "unspecified";
+    }
+  }
+
   function sendTelemetry(eventType, details = {}) {
     if (!eventType) return;
     const payload = {
+      eventId: createTelemetryId(),
+      sessionId: getTelemetrySessionId(),
       eventType: String(eventType),
       details: details && typeof details === "object" ? details : {},
-      pageUrl: window.location.href,
-      userAgent: navigator.userAgent,
+      pageUrl: getTelemetryPageUrl(),
       sentAt: new Date().toISOString(),
     };
     const body = JSON.stringify(payload);
@@ -184,7 +232,7 @@ console.log("main.js loaded");
           course: String(fields.course || "unspecified"),
           experience: String(fields.experience || "unspecified"),
           group: String(fields.group || "unspecified"),
-          sourcePage: new URLSearchParams(window.location.search).get("source_page") || document.referrer || "direct",
+          sourcePage: getTelemetrySourcePage(new URLSearchParams(window.location.search).get("source_page") || document.referrer),
         });
       }
       showToast("Message sent. We will reply soon.");
@@ -299,6 +347,7 @@ console.log("main.js loaded");
   };
   window.DMZTelemetry = {
     report: sendTelemetry,
+    sourcePage: getTelemetrySourcePage,
   };
 
   // Copy helper (supports file:// via fallback)
@@ -713,7 +762,9 @@ console.log("main.js loaded");
         course: trainingCourse,
         device: window.matchMedia("(max-width: 780px)").matches ? "mobile" : "desktop",
         source: params.get("utm_source") || "direct-or-referral",
+        medium: params.get("utm_medium") || "",
         campaign: params.get("utm_campaign") || "",
+        content: params.get("utm_content") || "",
       });
 
       const campaignKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"];
@@ -911,7 +962,7 @@ console.log("main.js loaded");
           trainingFormStarted = true;
           sendTelemetry("training_inquiry_form_start", {
             course: String((document.getElementById("cb-course") || {}).value || "unspecified"),
-            sourcePage: params.get("source_page") || document.referrer || "direct",
+            sourcePage: getTelemetrySourcePage(params.get("source_page") || document.referrer),
           });
         }
         const field = e.target;
@@ -931,7 +982,7 @@ console.log("main.js loaded");
         if (!trainingFormStarted || courseBuilderForm.dataset.telemetryCompleted === "true") return;
         sendTelemetry("training_inquiry_form_abandoned", {
           course: String((document.getElementById("cb-course") || {}).value || "unspecified"),
-          sourcePage: params.get("source_page") || document.referrer || "direct",
+          sourcePage: getTelemetrySourcePage(params.get("source_page") || document.referrer),
         });
       });
     }

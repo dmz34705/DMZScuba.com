@@ -35,9 +35,10 @@ Source of truth: `src/index.js`.
   - Sends user auto-replies (general inquiry or interest-list templates/fallback)
 
 - `POST /api/client-telemetry`
-  - Accepts lightweight client error events
-  - Current usage: contact submit failures and media upload failures
-  - Logs structured telemetry to Worker logs
+  - Accepts lightweight client operational and training-funnel events from approved site origins
+  - Logs sanitized structured telemetry to Worker logs
+  - Persists only the approved `training_*` funnel events to D1 with an explicit field allowlist
+  - Does not persist full query strings, IP addresses, user-agent strings, form contents, or direct customer identifiers
 
 - `GET /api/v2/destinations`
   - Returns destination v2 collection payload
@@ -96,12 +97,13 @@ Source of truth: `src/index.js`.
 
 ## D1 Schema
 
-Run `schema.sql` when initializing D1.
+Run `schema.sql` only when initializing a new D1 database. Apply numbered migrations to an existing database.
 
 Primary tables:
 - `media_items`
 - `admin_sessions`
 - `destinations_v2`
+- `funnel_events`
 
 Legacy compatibility tables also exist in schema:
 - `destinations`
@@ -133,6 +135,7 @@ Legacy compatibility tables also exist in schema:
 ### Optional
 
 - `ALLOWED_ORIGINS`
+- `FUNNEL_RETENTION_DAYS` (defaults to `400` and is constrained to 30–730 days)
 - `CF_IMAGES_ACCOUNT_ID` (falls back to `CF_ACCOUNT_ID`)
 - `RESEND_TEMPLATE_GENERAL_INQUIRY`
 - `RESEND_TEMPLATE_QUIZ_RESULTS` (falls back to `a2b38bfb-89a1-41e4-99f9-9a95063a3cf1` if unset)
@@ -147,11 +150,29 @@ Legacy compatibility tables also exist in schema:
 
 ## Deploy
 
-From repo root:
+Authenticate Wrangler, then apply pending D1 migrations before deploying Worker code. From `workers/dmz-media-api`:
+
+```powershell
+npx wrangler login
+npx wrangler d1 migrations apply dmz_media --remote
+npx wrangler deploy
+```
+
+The scheduled Worker trigger runs daily and removes `funnel_events` rows older than `FUNNEL_RETENTION_DAYS`.
+
+For a fresh local validation database:
+
+```powershell
+npx wrangler d1 migrations apply dmz_media --local
+```
+
+From the repository root, the final deploy command can also be run through:
 
 ```powershell
 ./Deploy Worker.bat
 ```
 
 This runs `npx wrangler deploy` in `workers/dmz-media-api`.
+
+The dev and live site repositories currently use the same Worker name and D1 database ID. Apply the migration and deploy the Worker once, even when the matching source change is committed to both repositories.
 
