@@ -35,8 +35,9 @@ Browser
   │     ├── Public pages (/, /pages/**, /quiz, /pages/events/embed.html)
   │     └── /management  ← single authenticated SPA
   │
-  ├── Cloudflare Pages Function  (functions/api/[[path]].js)
-  │     └── Proxies all /api/* requests to the Worker
+  ├── Cloudflare Pages Functions
+  │     ├── functions/api/[[path]].js proxies shared /api/* requests to the Worker
+  │     └── functions/api/admin/funnel-analytics.js reads aggregate-only D1 reporting in dev
   │
   └── Cloudflare Worker  (dmz-media-api)
         ├── D1 (SQLite) — all data
@@ -192,6 +193,10 @@ Loads independently from the main operations list. Queries `GET /api/admin/manag
 
 Clicking any dashboard row dispatches a navigation to the operations panel and opens that record's editor. Overdue rows get `is-overdue` class (styled red); due-today rows get `is-today` class (styled amber).
 
+### Funnel Analytics (`management-analytics.js`)
+
+The authenticated **Site Analytics** panel summarizes the privacy-limited `funnel_events` table without sending raw event rows to the browser. It defaults to live traffic and provides 7-, 30-, 90-, and 400-day views of course-page sessions, CTA clicks, form starts, completed inquiries, daily trends, course performance, traffic sources, and device mix. The dev Pages Function validates the existing management session against `admin_sessions` before running aggregate D1 queries.
+
 ### Bulk Select (`management-bulk.js`)
 
 Injects a **Select** button into the operations topbar on load (before the **+ New** button). On click, enters bulk mode: checkboxes appear on every card. A floating action bar appears below the topbar with a status select and Apply button. Selecting all via **Select All** checks every visible card. Applying updates all selected records via individual `PUT /api/admin/management/:id` calls.
@@ -316,6 +321,7 @@ All require `Authorization: Bearer <token>`.
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/api/admin/login` | Authenticate, get 24h session token |
+| `GET` | `/api/admin/funnel-analytics` | Aggregate-only training-funnel reporting from the dev Pages Function |
 | `GET` | `/api/admin/management` | All management records |
 | `POST` | `/api/admin/management` | Create management record |
 | `PUT` | `/api/admin/management/:id` | Update management record |
@@ -688,10 +694,12 @@ Y:\980 Evo\dmz-scuba site\
 │   ├── images\ (hero, logos, globe earth tiles)
 │   └── media\thumbnails\
 ├── functions\api\[[path]].js          Pages Function — API proxy
+├── functions\api\admin\funnel-analytics.js  Authenticated aggregate funnel reporting
 ├── workers\dmz-media-api\             Cloudflare Worker
 │   ├── src\index.js                   Worker source (~2800 lines)
 │   ├── schema.sql                     D1 schema
 │   └── wrangler.toml
+├── wrangler.toml                       Dev Pages configuration and D1 binding
 ├── scripts\smoke-check.mjs
 ├── tests\media-logic.test.cjs
 ├── _redirects                         Cloudflare Pages routing rules

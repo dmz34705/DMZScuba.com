@@ -1,0 +1,19 @@
+# Downloaded from the dmzscuba-com Pages project and checked into the dev repo
+# so the dev-only Funnel Analytics Function receives its D1 binding.
+name = "dmzscuba-com"
+pages_build_output_dir = "."
+compatibility_date = "2026-01-26"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dmz_media"
+database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
+preview_database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
+
+[env.production]
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "dmz_media"
+database_id = "47d73216-f4d9-4831-a207-4548ccad9244"
+preview_database_id = "47d73216-f4d9-4831-a207-4548ccad9244"

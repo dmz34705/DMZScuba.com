@@ -1,2 +1,4 @@
 # Ignore wrangler temp deploy artifacts
+/.wrangler/
+/node_modules/
 /workers/dmz-media-api/.wrangler/

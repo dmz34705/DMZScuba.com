@@ -14,7 +14,7 @@
 
   function syncActiveState() {
     const anyMoreTargetActive = Array.from(
-      app.querySelectorAll(".mgmt-nav-secondary, [data-site-studio-tab='media'], [data-site-studio-tab='travel']")
+      app.querySelectorAll(".mgmt-nav-secondary, [data-site-studio-tab='media'], [data-site-studio-tab='travel'], [data-site-studio-tab='analytics']")
     ).some((button) => button.classList.contains("is-active"));
     toggle.classList.toggle("is-active", anyMoreTargetActive || isOpen());
     toggle.setAttribute("aria-expanded", isOpen() ? "true" : "false");
@@ -89,7 +89,7 @@
     }
   });
 
-  app.querySelectorAll(".mgmt-nav-secondary, [data-site-studio-tab='media'], [data-site-studio-tab='travel']")
+  app.querySelectorAll(".mgmt-nav-secondary, [data-site-studio-tab='media'], [data-site-studio-tab='travel'], [data-site-studio-tab='analytics']")
     .forEach((button) => {
       new MutationObserver(syncActiveState).observe(button, { attributes: true, attributeFilter: ["class"] });
     });

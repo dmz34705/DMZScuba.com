@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260730m5" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260823a" />
 </head>
 
 <body class="management-page">
@@ -114,6 +114,13 @@
                 <span class="mgmt-nav-text">Travel</span>
               </button>
 
+            </div>
+
+            <div class="mgmt-nav-section">
+              <span class="mgmt-nav-label">Insights</span>
+              <button class="mgmt-nav-item" type="button" data-site-studio-tab="analytics">
+                <span class="mgmt-nav-text">Site Analytics</span>
+              </button>
             </div>
 
             <button class="mgmt-nav-item mgmt-nav-primary" type="button"
@@ -342,6 +349,39 @@
             </div>
           </section>
 
+          <!-- Funnel Analytics -->
+          <section class="mgmt-panel mgmt-analytics-panel" data-site-studio-panel="analytics" hidden>
+            <div class="mgmt-topbar mgmt-analytics-topbar">
+              <div class="mgmt-topbar-left">
+                <p class="management-kicker">Training journey</p>
+                <h1 class="mgmt-panel-title">Site Analytics</h1>
+              </div>
+              <div class="mgmt-topbar-right mgmt-analytics-controls">
+                <label class="mgmt-analytics-filter">
+                  <span>Traffic</span>
+                  <select data-analytics-environment>
+                    <option value="live">Live site</option>
+                    <option value="dev">Dev site</option>
+                    <option value="all">All environments</option>
+                  </select>
+                </label>
+                <label class="mgmt-analytics-filter">
+                  <span>Time period</span>
+                  <select data-analytics-days>
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="400">All retained data</option>
+                  </select>
+                </label>
+                <button class="mgmt-btn-sm" type="button" data-analytics-refresh>↻ Refresh</button>
+              </div>
+            </div>
+            <div class="mgmt-analytics-body" data-funnel-analytics aria-live="polite" aria-busy="true">
+              <p class="mgmt-analytics-message">Loading Funnel Analytics…</p>
+            </div>
+          </section>
+
           <!-- ─ DASHBOARD ──────────────────────────────────── -->
           <section class="mgmt-panel mgmt-home-panel" data-site-studio-panel="home" hidden>
             <div class="mgmt-topbar">
@@ -373,6 +413,12 @@
                     <p>Homepage event cards are driven by the management calendar records.</p>
                     <button type="button" data-open-management-calendar data-site-studio-open="operations">Edit Calendar</button>
                   </article>
+                  <article>
+                    <p class="management-kicker">Training funnel</p>
+                    <h3>Site Analytics</h3>
+                    <p>See which course-page visits turn into clicks, form starts, and completed inquiries.</p>
+                    <button type="button" data-site-studio-open="analytics">View Analytics</button>
+                  </article>
                 </div>
               </div>
             </div>
@@ -399,6 +445,9 @@
           </button>
           <button class="mgmt-nav-more-item" type="button" data-more-tab="travel">
             <span class="mgmt-nav-text">Travel</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="analytics">
+            <span class="mgmt-nav-text">Site Analytics</span>
           </button>
           <a class="mgmt-nav-more-item" href="/">
             <span class="mgmt-nav-text">DMZ Scuba Home</span>
@@ -839,10 +888,11 @@
   <script src="/js/management-media-studio.js?v=20260730m6" defer></script>
   <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
   <script src="/js/management-dashboard.js?v=20260508t" defer></script>
+  <script src="/js/management-analytics.js?v=20260823a" defer></script>
   <script src="/js/management-quick-advance.js?v=20260508e" defer></script>
   <script src="/js/management-note-logger.js?v=20260508f" defer></script>
   <script src="/js/management-keyboard.js?v=20260508g" defer></script>
-  <script src="/js/management-more.js?v=20260508k" defer></script>
+  <script src="/js/management-more.js?v=20260823a" defer></script>
   <script src="/js/management-bulk.js?v=20260730b1" defer></script>
   <script src="/js/management-balance.js?v=20260508l" defer></script>
   <script src="/js/management-hide-complete.js?v=20260508u" defer></script>
@@ -851,7 +901,7 @@
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {
       var filterBtns = document.querySelectorAll('[data-filter-type]');
-      ['media', 'travel', 'home'].forEach(function (key) {
+      ['media', 'travel', 'analytics', 'home'].forEach(function (key) {
         var tab = document.querySelector('[data-site-studio-tab="' + key + '"]');
         if (tab) tab.addEventListener('click', function () {
           filterBtns.forEach(function (b) { b.classList.remove('is-active'); });
