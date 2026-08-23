@@ -171,6 +171,138 @@
   55%, to{ transform: translateY(230%); }
 }
 
+/* A fast route for returning visitors that stays visually secondary to the guided journey. */
+.training-home-page .training-class-directory{
+  position: relative;
+  z-index: 3;
+  margin-block: clamp(28px, 4vw, 52px) clamp(48px, 6vw, 78px);
+  padding: clamp(24px, 3.5vw, 38px);
+  overflow: hidden;
+  border: 1px solid var(--training-line);
+  border-radius: 24px;
+  background:
+    linear-gradient(120deg, rgba(85, 185, 255, 0.075), transparent 42%),
+    rgba(8, 20, 35, 0.7);
+}
+
+.training-home-page .training-class-directory::before{
+  position: absolute;
+  top: 0;
+  left: clamp(24px, 3.5vw, 38px);
+  width: 90px;
+  height: 2px;
+  background: linear-gradient(90deg, #8ed7ff, transparent);
+  content: "";
+}
+
+.training-home-page .training-directory-head{
+  display: grid;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+  gap: clamp(24px, 5vw, 70px);
+}
+
+.training-home-page .training-directory-head h2{
+  max-width: 620px;
+  margin: 0;
+  font-size: clamp(28px, 3.4vw, 43px);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-transform: none;
+  text-wrap: balance;
+}
+
+.training-home-page .training-directory-head > div:last-child > p{
+  margin: 0 0 9px;
+  color: rgba(234, 242, 255, 0.68);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.training-home-page .training-directory-head a{
+  color: #a9e2ff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.training-home-page .training-directory-head a:hover,
+.training-home-page .training-directory-head a:focus-visible{
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.training-home-page .training-directory-groups{
+  display: grid;
+  margin-top: clamp(24px, 3vw, 34px);
+  padding-top: clamp(20px, 2.5vw, 28px);
+  border-top: 1px solid var(--training-line);
+  grid-template-columns: 1.1fr 0.9fr 1.15fr 0.95fr;
+}
+
+.training-home-page .training-directory-group{
+  min-width: 0;
+  padding: 0 clamp(16px, 2.2vw, 28px);
+  border-left: 1px solid var(--training-line);
+}
+
+.training-home-page .training-directory-group:first-child{
+  padding-left: 0;
+  border-left: 0;
+}
+
+.training-home-page .training-directory-group:last-child{
+  padding-right: 0;
+}
+
+.training-home-page .training-directory-group h3{
+  display: flex;
+  margin: 0 0 9px;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.training-home-page .training-directory-group h3 span{
+  color: #8ed7ff;
+  font-size: 10px;
+}
+
+.training-home-page .training-directory-group > a{
+  display: flex;
+  min-height: 38px;
+  padding: 7px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(239, 248, 255, 0.82);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.training-home-page .training-directory-group > a i{
+  color: rgba(142, 215, 255, 0.7);
+  font-style: normal;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.training-home-page .training-directory-group > a:hover,
+.training-home-page .training-directory-group > a:focus-visible{
+  color: #fff;
+}
+
+.training-home-page .training-directory-group > a:hover i,
+.training-home-page .training-directory-group > a:focus-visible i{
+  transform: translateX(3px);
+  color: #8ed7ff;
+}
+
 /* Training journey: readable without JS, cinematic and sticky when enhanced. */
 .training-home-page .training-journey{
   position: relative;
@@ -679,6 +811,10 @@
   flex-direction: column;
   transition: transform 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
   backdrop-filter: blur(14px);
+}
+
+.training-home-page .training-course-card[id]{
+  scroll-margin-top: 110px;
 }
 
 .training-home-page .training-course-card::after{
@@ -1388,6 +1524,52 @@
 
   .training-home-page .training-scroll-cue{
     bottom: 17px;
+  }
+
+  .training-home-page .training-class-directory{
+    margin-block: 22px 46px;
+    padding: 24px 18px 20px;
+    border-radius: 20px;
+  }
+
+  .training-home-page .training-class-directory::before{
+    left: 18px;
+  }
+
+  .training-home-page .training-directory-head{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .training-home-page .training-directory-head h2{
+    font-size: clamp(29px, 8.5vw, 38px);
+  }
+
+  .training-home-page .training-directory-groups{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .training-home-page .training-directory-group{
+    padding: 0 12px 14px;
+  }
+
+  .training-home-page .training-directory-group:nth-child(odd){
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .training-home-page .training-directory-group:nth-child(even){
+    padding-right: 0;
+  }
+
+  .training-home-page .training-directory-group:nth-child(n + 3){
+    padding-top: 18px;
+    border-top: 1px solid var(--training-line);
+  }
+
+  .training-home-page .training-directory-group > a{
+    min-height: 44px;
+    font-size: 12.5px;
   }
 
   .training-home-page .training-actions,

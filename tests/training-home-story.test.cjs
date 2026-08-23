@@ -30,6 +30,37 @@ test("course catalog pairs learning with real-world access", () => {
   assert.match(page, /Open Water and a few vacation dives can be exactly enough/);
 });
 
+test("returning visitors get an early directory linking every current class", () => {
+  const directoryStart = page.indexOf('id="class-directory"');
+  const journeyStart = page.indexOf('id="training-journey"');
+  assert.ok(directoryStart > -1 && directoryStart < journeyStart);
+
+  const directory = page.slice(directoryStart, journeyStart);
+  assert.equal((directory.match(/class="training-directory-group"/g) || []).length, 4);
+  assert.equal((directory.match(/<a href=/g) || []).length, 12);
+  [
+    /Scuba Discovery/,
+    /Open Water/,
+    /Open Water Referral/,
+    /Advanced Adventure/,
+    /Skill Refresh/,
+    /Nitrox/,
+    /Dry Suit/,
+    /Wreck/,
+    /Full Face Mask/,
+    /Rescue Diver/,
+    /Divemaster &amp; Leadership/,
+  ].forEach((pattern) => assert.match(directory, pattern));
+  assert.match(directory, /href="#course-rescue"/);
+  assert.match(directory, /href="#course-divemaster"/);
+  assert.match(page, /class="training-course-card" id="course-rescue"/);
+  assert.match(page, /class="training-course-card" id="course-divemaster"/);
+
+  assert.match(css, /\.training-home-page \.training-class-directory/);
+  assert.match(css, /\.training-home-page \.training-directory-groups/);
+  assert.match(css, /@media \(max-width: 780px\)[\s\S]*?\.training-home-page \.training-directory-groups\{[\s\S]*?grid-template-columns: 1fr 1fr;/);
+});
+
 test("course stages use responsive editorial imagery without changing the catalog", () => {
   assert.equal((page.match(/class="training-stage-visual"/g) || []).length, 4);
   ["openwater-hero-lower", "rwadvanced-hero", "hero-specialtymain", "hero-training"].forEach((asset) => {

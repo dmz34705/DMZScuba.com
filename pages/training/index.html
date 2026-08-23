@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="../../css/pages/events.css?v=20260722a" />
-  <link rel="stylesheet" href="../../css/pages/training-home.css?v=20260822e" />
+  <link rel="stylesheet" href="../../css/pages/training-home.css?v=20260822f" />
   <link rel="stylesheet" href="../../css/responsive.css?v=20260728p7" />
 </head>
 
@@ -39,7 +39,7 @@
             <a class="btn primary" href="#open-water">Start With Open Water</a>
             <a class="btn secondary" href="#training-journey">See the Training Path</a>
           </div>
-          <p class="hero-ready-link">Already know what you need? <a href="./course-builder/index.html">Request class dates &mdash; no payment required.</a></p>
+          <p class="hero-ready-link">Looking for a specific course? <a href="#class-directory">Jump to the class directory</a>, or <a href="./course-builder/index.html">request dates</a> if you are ready.</p>
         </div>
         <div class="page-hero-card training-hero-logo" aria-hidden="true">
           <img src="../../assets/images/logos/dmz-scuba-logo-display.webp" alt="" width="512" height="512" />
@@ -49,6 +49,45 @@
     </section>
 
     <main class="training-main">
+      <section class="training-class-directory training-shell" id="class-directory" aria-labelledby="class-directory-title">
+        <header class="training-directory-head">
+          <div>
+            <p class="conversion-eyebrow">Quick class directory</p>
+            <h2 id="class-directory-title">Know the class? Go straight there.</h2>
+          </div>
+          <div>
+            <p>Every current training option in one quick index. If you are still deciding, the guided path below explains what each stage unlocks.</p>
+            <a href="#training-journey">Compare classes by capability <span aria-hidden="true">&darr;</span></a>
+          </div>
+        </header>
+
+        <nav class="training-directory-groups" aria-label="All scuba classes">
+          <div class="training-directory-group">
+            <h3><span>01</span> Start</h3>
+            <a href="./discover-scuba/index.html"><span>Scuba Discovery</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./open-water/index.html"><span>Open Water</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./open-water-referral/index.html"><span>Open Water Referral</span><i aria-hidden="true">&rarr;</i></a>
+          </div>
+          <div class="training-directory-group">
+            <h3><span>02</span> Explore</h3>
+            <a href="./advanced-specialty/index.html"><span>Advanced Adventure</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./skill-refresh/index.html"><span>Skill Refresh</span><i aria-hidden="true">&rarr;</i></a>
+          </div>
+          <div class="training-directory-group">
+            <h3><span>03</span> Specialize</h3>
+            <a href="./specialty/nitrox/index.html"><span>Nitrox</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./specialty/drysuit/index.html"><span>Dry Suit</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./specialty/wreck/index.html"><span>Wreck</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="./specialty/full-face-mask/index.html"><span>Full Face Mask</span><i aria-hidden="true">&rarr;</i></a>
+          </div>
+          <div class="training-directory-group">
+            <h3><span>04</span> Lead</h3>
+            <a href="#course-rescue"><span>Rescue Diver</span><i aria-hidden="true">&rarr;</i></a>
+            <a href="#course-divemaster"><span>Divemaster &amp; Leadership</span><i aria-hidden="true">&rarr;</i></a>
+          </div>
+        </nav>
+      </section>
+
       <section class="training-journey" id="training-journey" aria-labelledby="training-journey-title" data-training-story>
         <div class="training-journey-sticky">
           <div class="training-journey-media" aria-hidden="true">
@@ -293,7 +332,7 @@
             <figcaption><span>What this stage opens</span><strong>Experience becomes judgment&mdash;and something you can share.</strong></figcaption>
           </figure>
           <div class="training-course-grid training-course-grid-two">
-            <article class="training-course-card">
+            <article class="training-course-card" id="course-rescue">
               <div class="training-course-top"><span>Safety and response</span><strong>$699</strong></div>
               <h4>SDI Rescue Diver</h4>
               <p><b>Learn</b> Stress recognition, self-rescue, assisting another diver, emergency management, and how to think beyond only your own dive.</p>
@@ -302,7 +341,7 @@
               <a class="btn secondary" href="./course-builder/index.html?course=sdi-rescue-diver">Request Rescue Dates</a>
             </article>
 
-            <article class="training-course-card">
+            <article class="training-course-card" id="course-divemaster">
               <div class="training-course-top"><span>Professional pathway</span><strong>Plan with DMZ</strong></div>
               <h4>Divemaster and Leadership</h4>
               <p><b>Learn</b> Dive leadership, briefings, site awareness, diver support, and how experienced divers contribute to training and community operations.</p>
