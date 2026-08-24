@@ -262,7 +262,7 @@
   }
 
   async function load(force = false) {
-    const token = localStorage.getItem(TOKEN_KEY) || "";
+    const token = sessionStorage.getItem("dmzCustomerAccessToken") || localStorage.getItem(TOKEN_KEY) || "";
     if (!token) {
       showError("Your management session is not available. Log in again and retry.");
       return;

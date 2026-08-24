@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260824a" />
 </head>
 
 <body class="management-page">
@@ -21,8 +21,12 @@
       <div class="management-login-card">
         <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba logo" />
         <p class="management-kicker">Internal management</p>
-        <h1>Sign in</h1>
-        <form class="management-login-form" data-login-form>
+        <h1>Management Console</h1>
+        <p>Employees and administrators use the same DMZ account they use everywhere else.</p>
+        <a class="btn primary" href="/pages/account/">Sign In With My DMZ Account</a>
+        <details class="management-legacy-login">
+          <summary>Use the previous admin login</summary>
+          <form class="management-login-form" data-login-form>
           <label>
             Username
             <input type="text" name="user" autocomplete="username" required />
@@ -32,8 +36,9 @@
             <input type="password" name="pass" autocomplete="current-password" required />
           </label>
           <button class="btn primary" type="submit">Log In</button>
-          <p class="management-form-status" data-login-status aria-live="polite"></p>
-        </form>
+          </form>
+        </details>
+        <p class="management-form-status" data-login-status aria-live="polite"></p>
       </div>
     </section>
 
@@ -100,6 +105,11 @@
                       data-filter-type="registration" data-site-studio-open="operations">
                 <span class="mgmt-nav-text">Signups</span>
                 <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
+                      data-site-studio-tab="accounts" data-accounts-nav hidden>
+                <span class="mgmt-nav-text">Accounts</span>
               </button>
             </div>
 
@@ -420,6 +430,35 @@
                     <button type="button" data-site-studio-open="analytics">View Analytics</button>
                   </article>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="mgmt-panel mgmt-accounts-panel" data-site-studio-panel="accounts" hidden>
+            <div class="mgmt-topbar">
+              <div class="mgmt-topbar-left">
+                <p class="management-kicker">Administrator tools</p>
+                <h1 class="mgmt-panel-title">Customer Accounts</h1>
+              </div>
+              <div class="mgmt-topbar-right">
+                <input class="mgmt-search-input" type="search" data-account-search placeholder="Search name or email" aria-label="Search accounts" />
+                <select class="mgmt-sort-select" data-account-status-filter aria-label="Filter accounts">
+                  <option value="all">All accounts</option>
+                  <option value="active">Active</option>
+                  <option value="employee">Employees</option>
+                  <option value="inactive">Inactive or merged</option>
+                </select>
+                <button class="mgmt-btn-sm" type="button" data-account-refresh>Refresh</button>
+              </div>
+            </div>
+            <div class="mgmt-accounts-body">
+              <div class="mgmt-account-summary" data-account-summary></div>
+              <p class="management-form-status" data-account-admin-status aria-live="polite"></p>
+              <div class="mgmt-accounts-workspace">
+                <div class="mgmt-account-list" data-account-list aria-live="polite"></div>
+                <aside class="mgmt-account-detail" data-account-detail>
+                  <div class="mgmt-account-empty">Select an account to review its access and connected history.</div>
+                </aside>
               </div>
             </div>
           </section>
@@ -884,19 +923,20 @@
 
   </main>
 
-  <script src="/js/management.js?v=20260730a4" defer></script>
-  <script src="/js/management-media-studio.js?v=20260730m6" defer></script>
-  <script src="/js/management-travel-studio.js?v=20260507a" defer></script>
-  <script src="/js/management-dashboard.js?v=20260508t" defer></script>
-  <script src="/js/management-analytics.js?v=20260823a" defer></script>
-  <script src="/js/management-quick-advance.js?v=20260508e" defer></script>
+  <script src="/js/management.js?v=20260824a" defer></script>
+  <script src="/js/management-accounts.js?v=20260824a" defer></script>
+  <script src="/js/management-media-studio.js?v=20260824a" defer></script>
+  <script src="/js/management-travel-studio.js?v=20260824a" defer></script>
+  <script src="/js/management-dashboard.js?v=20260824a" defer></script>
+  <script src="/js/management-analytics.js?v=20260824a" defer></script>
+  <script src="/js/management-quick-advance.js?v=20260824a" defer></script>
   <script src="/js/management-note-logger.js?v=20260508f" defer></script>
   <script src="/js/management-keyboard.js?v=20260508g" defer></script>
   <script src="/js/management-more.js?v=20260823a" defer></script>
-  <script src="/js/management-bulk.js?v=20260730b1" defer></script>
-  <script src="/js/management-balance.js?v=20260508l" defer></script>
+  <script src="/js/management-bulk.js?v=20260824a" defer></script>
+  <script src="/js/management-balance.js?v=20260824a" defer></script>
   <script src="/js/management-hide-complete.js?v=20260508u" defer></script>
-  <script src="/js/management-import-export.js?v=20260509w4" defer></script>
+  <script src="/js/management-import-export.js?v=20260824a" defer></script>
   <script>
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {

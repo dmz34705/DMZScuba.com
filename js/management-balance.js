@@ -33,7 +33,7 @@
   }
 
   async function sync() {
-    const token = localStorage.getItem(TOKEN_KEY) || "";
+    const token = sessionStorage.getItem("dmzCustomerAccessToken") || localStorage.getItem(TOKEN_KEY) || "";
     if (!token) return;
 
     // Skip if nothing to badge

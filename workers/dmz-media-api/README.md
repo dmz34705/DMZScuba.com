@@ -22,13 +22,16 @@ Source of truth: `src/index.js`.
 - Token lifetime: 24 hours
 - Admin routes require header: `Authorization: Bearer <token>`
 
-Customer authentication is separate from the legacy admin login:
+Customer authentication also provides role-based management access while the legacy admin login remains available during the transition:
 
 - Supabase Auth owns customer credentials, verification codes, password recovery, and refresh tokens.
 - The website receives the refresh token only as an HTTP-only, same-site cookie.
 - Customer API routes require a short-lived Supabase JWT in `Authorization: Bearer <token>`.
 - The Worker verifies the JWT signature against Supabase's JWKS endpoint and uses its `sub` claim as the D1 customer ID.
 - D1 never stores customer passwords or Supabase refresh tokens.
+- Every account keeps the baseline `customer` role and may also have `instructor` (Professional), `staff` (Employee), or `admin` (Administrator).
+- Employee and Administrator accounts can use their normal customer session in the management console. Only Administrators can change roles, deactivate accounts, or merge duplicates.
+- D1 account status is checked on login, refresh, customer-data routes, and authenticated registration requests.
 
 ## API Routes
 
@@ -82,6 +85,16 @@ Customer authentication is separate from the legacy admin login:
   - Updates the signed-in customer's password through Supabase
 
 ### Admin
+
+- `GET /api/admin/access`
+  - Validates Employee or Administrator access for a signed-in DMZ account
+
+- `GET /api/admin/accounts`
+- `PUT /api/admin/accounts/:userId/roles`
+- `POST /api/admin/accounts/:userId/deactivate`
+- `POST /api/admin/accounts/:userId/reactivate`
+- `POST /api/admin/accounts/merge`
+  - Administrator-only account management; merges move connected business history to the surviving account and disable the duplicate login
 
 - `POST /api/admin/login`
   - Body: `{ "user": "...", "pass": "..." }`

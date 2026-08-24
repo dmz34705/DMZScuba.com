@@ -123,6 +123,11 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
   last_name TEXT,
   preferred_name TEXT,
   phone TEXT,
+  account_status TEXT NOT NULL DEFAULT 'active'
+    CHECK (account_status IN ('active', 'deactivated', 'merged')),
+  deactivated_at TEXT,
+  deactivated_by TEXT,
+  merged_into_user_id TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   last_login_at TEXT NOT NULL
@@ -130,6 +135,9 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
 
 CREATE INDEX IF NOT EXISTS idx_customer_profiles_email
   ON customer_profiles(lower(email));
+
+CREATE INDEX IF NOT EXISTS idx_customer_profiles_status
+  ON customer_profiles(account_status, updated_at);
 
 CREATE TABLE IF NOT EXISTS customer_roles (
   user_id TEXT NOT NULL,

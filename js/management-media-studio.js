@@ -5,7 +5,7 @@
   const TOKEN_KEY = 'dmzMediaToken';
   const PREVIEW_SRC = '/pages/media/';
 
-  const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+  const getToken = () => sessionStorage.getItem('dmzCustomerAccessToken') || localStorage.getItem(TOKEN_KEY) || '';
 
   function esc(s) {
     return String(s == null ? '' : s)

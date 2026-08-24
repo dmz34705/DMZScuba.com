@@ -10,6 +10,7 @@
   const homeTickerUrl = apiRoot ? `${apiRoot}/api/v2/home-ticker` : "/api/v2/home-ticker";
   const adminHomeTickerUrl = apiRoot ? `${apiRoot}/api/admin/v2/home-ticker` : "/api/admin/v2/home-ticker";
   const tokenStorageKey = "dmzMediaToken";
+  const customerTokenStorageKey = "dmzCustomerAccessToken";
   const timeOptions = Array.from({ length: 48 }, (_unused, index) => {
     const hour24 = Math.floor(index / 2);
     const minute = index % 2 === 0 ? "00" : "30";
@@ -311,7 +312,11 @@
   let editorDirty = false;
 
   function getToken() {
-    return window.localStorage.getItem(tokenStorageKey) || "";
+    return window.sessionStorage.getItem(customerTokenStorageKey) || window.localStorage.getItem(tokenStorageKey) || "";
+  }
+
+  function getCustomerToken() {
+    return window.sessionStorage.getItem(customerTokenStorageKey) || "";
   }
 
   function setToken(token) {
@@ -4083,6 +4088,12 @@
     const logoutButtons = Array.from(app.querySelectorAll("[data-logout]"));
     if (logoutButtons.length) {
       const logout = () => {
+        const customerToken = getCustomerToken();
+        if (customerToken) {
+          fetch("/api/account/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${customerToken}` }, credentials: "same-origin" }).catch(() => null);
+          window.sessionStorage.removeItem(customerTokenStorageKey);
+          window.localStorage.removeItem("dmzCustomerSignedIn");
+        }
         setToken("");
         state.records = [];
         state.allSiteEvents = [];
@@ -4248,6 +4259,16 @@
     if (!getToken()) {
       showAuthed(false);
       return;
+    }
+    if (getCustomerToken()) {
+      const accessResponse = await apiFetch(apiRoot ? `${apiRoot}/api/admin/access` : "/api/admin/access", { headers: { Accept: "application/json" } }).catch(() => null);
+      if (!accessResponse || !accessResponse.ok) {
+        showAuthed(false);
+        setStatus(loginStatus, "This account does not have Employee access. Return to My Account or ask an administrator for help.", "error");
+        return;
+      }
+      const access = await accessResponse.json().catch(() => ({}));
+      window.dispatchEvent(new CustomEvent("dmz:management-access", { detail: access }));
     }
     showAuthed(true);
     await loadRecords({ silent: true });

@@ -244,7 +244,7 @@
     bulkApplyBtn.textContent = "Saving…";
     bulkCancelBtn.disabled = true;
 
-    const token = localStorage.getItem(TOKEN_KEY) || "";
+    const token = sessionStorage.getItem("dmzCustomerAccessToken") || localStorage.getItem(TOKEN_KEY) || "";
     if (!token) { resetBar(); return; }
 
     // Fetch all records once so we can spread individual records for PUT

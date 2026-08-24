@@ -407,6 +407,11 @@
     const certifications = Array.isArray(data.certifications) ? data.certifications : [];
     const eventRegistrations = Array.isArray(data.eventRegistrations) ? data.eventRegistrations : [];
     const reservations = Array.isArray(data.reservations) ? data.reservations : [];
+    const roles = Array.isArray(data.roles) ? data.roles : [];
+    const canManage = roles.some((role) => role === "staff" || role === "admin");
+    app.querySelectorAll("[data-management-access]").forEach((link) => {
+      link.hidden = !canManage;
+    });
     const profileForm = app.querySelector("[data-profile-form]");
     if (profileForm) {
       profileForm.elements.firstName.value = profile.firstName || "";

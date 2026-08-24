@@ -69,7 +69,7 @@
       btn.disabled = true;
       btn.textContent = "…";
 
-      const token = localStorage.getItem(TOKEN_KEY) || "";
+      const token = sessionStorage.getItem("dmzCustomerAccessToken") || localStorage.getItem(TOKEN_KEY) || "";
       if (!token) { restore(); return; }
 
       // Fetch current full record so we can spread it (API requires full payload)

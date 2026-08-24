@@ -78,7 +78,7 @@
   // ── Data ──────────────────────────────────────────────────────────────────
 
   async function loadRecords() {
-    const token = localStorage.getItem(TOKEN_KEY) || "";
+    const token = sessionStorage.getItem("dmzCustomerAccessToken") || localStorage.getItem(TOKEN_KEY) || "";
     if (!token) return null;
     try {
       const resp = await fetch(`${managementUrl}?t=${Date.now()}`, {

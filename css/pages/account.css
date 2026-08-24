@@ -441,6 +441,7 @@
 }
 
 .account-nav-menu button,
+.account-nav-menu a,
 .account-signout-button,
 .account-summary-grid button {
   border: 0;
@@ -449,7 +450,8 @@
   cursor: pointer;
 }
 
-.account-nav-menu button {
+.account-nav-menu button,
+.account-nav-menu a {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -463,13 +465,15 @@
   text-align: left;
 }
 
-.account-nav-menu button > span {
+.account-nav-menu button > span,
+.account-nav-menu a > span {
   width: 20px;
   color: #8fcfff;
   text-align: center;
 }
 
 .account-nav-menu button:hover,
+.account-nav-menu a:hover,
 .account-nav-menu button[aria-current="page"] {
   background: rgba(85, 185, 255, .13);
   color: var(--text);

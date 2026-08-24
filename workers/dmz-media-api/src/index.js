@@ -49,6 +49,18 @@ async function requireAuth(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (!token) return false;
+  if (token.includes(".") && isCustomerAuthConfigured(env)) {
+    try {
+      const identity = await verifySupabaseAccessToken(token, env);
+      const profile = await ensureCustomerProfile(env, identity);
+      const roles = await getCustomerRoles(env, identity.userId);
+      if (String(profile && profile.account_status || "active") === "active" && roles.some((role) => role === "staff" || role === "admin")) {
+        return true;
+      }
+    } catch (_error) {
+      // Fall through to the temporary legacy admin session check.
+    }
+  }
   const row = await env.DB.prepare(
     "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
   )
@@ -193,7 +205,16 @@ async function requireCustomerIdentity(request, env) {
     return { response: jsonResponse({ ok: false, error: "Customer accounts are not configured yet." }, 503) };
   }
   try {
-    return { identity: await verifySupabaseAccessToken(token, env) };
+    const identity = await verifySupabaseAccessToken(token, env);
+    const profile = await ensureCustomerProfile(env, identity);
+    const accountStatus = String(profile && profile.account_status || "active");
+    if (accountStatus !== "active") {
+      const message = accountStatus === "merged"
+        ? "This account was combined with another DMZ Scuba account. Sign in with the account that was kept."
+        : "This account is currently inactive. Contact DMZ Scuba if you need help restoring access.";
+      return { response: jsonResponse({ ok: false, error: message, code: `account_${accountStatus}` }, 403) };
+    }
+    return { identity, profile };
   } catch (error) {
     const message = error && error.message === "Access token expired." ? "Your session expired. Please sign in again." : "Sign in is required.";
     return { response: jsonResponse({ ok: false, error: message }, 401) };
@@ -1132,6 +1153,19 @@ async function handleCustomerLogin(request, env) {
   if (!result.ok) {
     return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The email or password is incorrect.") }, result.status || 401);
   }
+  try {
+    const identity = await verifySupabaseAccessToken(String(result.data && result.data.access_token || ""), env);
+    const profile = await ensureCustomerProfile(env, identity);
+    if (String(profile && profile.account_status || "active") !== "active") {
+      return jsonResponse(
+        { ok: false, error: String(profile.account_status) === "merged" ? "This account was combined with another account. Sign in with the account that was kept." : "This account is currently inactive. Contact DMZ Scuba if you need help restoring access." },
+        403,
+        { "Cache-Control": "no-store", "Set-Cookie": buildCustomerRefreshCookie(request, "", 0) }
+      );
+    }
+  } catch (_error) {
+    return jsonResponse({ ok: false, error: "Sign in could not be completed. Please try again." }, 401);
+  }
   return customerSessionResponse(request, result.data);
 }
 
@@ -1146,6 +1180,19 @@ async function handleCustomerRefresh(request, env) {
       401,
       { "Cache-Control": "no-store", "Set-Cookie": buildCustomerRefreshCookie(request, "", 0) }
     );
+  }
+  try {
+    const identity = await verifySupabaseAccessToken(String(result.data && result.data.access_token || ""), env);
+    const profile = await ensureCustomerProfile(env, identity);
+    if (String(profile && profile.account_status || "active") !== "active") {
+      return jsonResponse(
+        { ok: false, error: "This account is not available. Contact DMZ Scuba if you need help." },
+        403,
+        { "Cache-Control": "no-store", "Set-Cookie": buildCustomerRefreshCookie(request, "", 0) }
+      );
+    }
+  } catch (_error) {
+    return jsonResponse({ ok: false, error: "Your session expired. Please sign in again." }, 401);
   }
   return customerSessionResponse(request, result.data);
 }
@@ -1324,11 +1371,30 @@ async function ensureCustomerProfile(env, identity) {
     .bind(identity.userId, now, identity.userId)
     .run();
   return env.DB.prepare(
-    `SELECT user_id, email, first_name, last_name, preferred_name, phone, created_at, updated_at, last_login_at
+    `SELECT user_id, email, first_name, last_name, preferred_name, phone, account_status,
+            deactivated_at, deactivated_by, merged_into_user_id, created_at, updated_at, last_login_at
      FROM customer_profiles WHERE user_id = ? LIMIT 1`
   )
     .bind(identity.userId)
     .first();
+}
+
+async function getCustomerRoles(env, userId) {
+  const rows = await env.DB.prepare("SELECT role FROM customer_roles WHERE user_id = ? ORDER BY role ASC")
+    .bind(userId)
+    .all();
+  return (rows.results || []).map((row) => String(row.role || "")).filter(Boolean);
+}
+
+async function requireManagementIdentity(request, env, adminOnly = false) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth;
+  const roles = await getCustomerRoles(env, auth.identity.userId);
+  const allowed = adminOnly ? roles.includes("admin") : roles.some((role) => role === "staff" || role === "admin");
+  if (!allowed) {
+    return { response: jsonResponse({ ok: false, error: adminOnly ? "Administrator access is required." : "Employee access is required." }, 403) };
+  }
+  return { ...auth, roles };
 }
 
 function mapCustomerProfile(row) {
@@ -1339,6 +1405,9 @@ function mapCustomerProfile(row) {
     lastName: String(row && row.last_name || ""),
     preferredName: String(row && row.preferred_name || ""),
     phone: String(row && row.phone || ""),
+    accountStatus: String(row && row.account_status || "active"),
+    deactivatedAt: String(row && row.deactivated_at || ""),
+    mergedIntoUserId: String(row && row.merged_into_user_id || ""),
     createdAt: String(row && row.created_at || ""),
     updatedAt: String(row && row.updated_at || ""),
   };
@@ -1403,6 +1472,194 @@ async function getCustomerAccountPayload(env, identity) {
       updatedAt: String(row.updated_at || ""),
     })),
   };
+}
+
+const customerRoleLabels = {
+  customer: "Diver / Customer",
+  instructor: "Professional",
+  staff: "Employee",
+  admin: "Administrator",
+};
+
+function mapManagedCustomer(row) {
+  const roles = String(row && row.roles || "customer").split(",").map((role) => role.trim()).filter(Boolean);
+  return {
+    userId: String(row && row.user_id || ""),
+    email: String(row && row.email || ""),
+    firstName: String(row && row.first_name || ""),
+    lastName: String(row && row.last_name || ""),
+    preferredName: String(row && row.preferred_name || ""),
+    phone: String(row && row.phone || ""),
+    status: String(row && row.account_status || "active"),
+    roles,
+    roleLabels: roles.map((role) => customerRoleLabels[role] || role),
+    mergedIntoUserId: String(row && row.merged_into_user_id || ""),
+    createdAt: String(row && row.created_at || ""),
+    updatedAt: String(row && row.updated_at || ""),
+    lastLoginAt: String(row && row.last_login_at || ""),
+    totals: {
+      certifications: Math.max(0, Number(row && row.certification_count) || 0),
+      registrations: Math.max(0, Number(row && row.registration_count) || 0),
+      reservations: Math.max(0, Number(row && row.reservation_count) || 0),
+      documents: Math.max(0, Number(row && row.document_count) || 0),
+      managementRecords: Math.max(0, Number(row && row.management_record_count) || 0),
+    },
+  };
+}
+
+async function handleGetManagementAccess(request, env) {
+  const auth = await requireManagementIdentity(request, env, false);
+  if (auth.response) return auth.response;
+  return jsonResponse({
+    ok: true,
+    userId: auth.identity.userId,
+    email: auth.identity.email,
+    roles: auth.roles,
+    isAdministrator: auth.roles.includes("admin"),
+  }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleListCustomerAccounts(request, env) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const rows = await env.DB.prepare(
+    `SELECT p.*,
+            COALESCE((SELECT group_concat(role, ',') FROM customer_roles r WHERE r.user_id = p.user_id), 'customer') AS roles,
+            (SELECT COUNT(*) FROM customer_certifications c WHERE c.user_id = p.user_id) AS certification_count,
+            (SELECT COUNT(*) FROM event_registrations_v2 e WHERE e.user_id = p.user_id) AS registration_count,
+            (SELECT COUNT(*) FROM customer_reservations b WHERE b.user_id = p.user_id) AS reservation_count,
+            (SELECT COUNT(*) FROM customer_documents d WHERE d.user_id = p.user_id) AS document_count,
+            (SELECT COUNT(*) FROM management_records m WHERE m.customer_user_id = p.user_id) AS management_record_count
+     FROM customer_profiles p
+     ORDER BY CASE p.account_status WHEN 'active' THEN 0 WHEN 'deactivated' THEN 1 ELSE 2 END,
+              lower(COALESCE(NULLIF(p.last_name, ''), p.email)), lower(p.first_name)`
+  ).all();
+  const accounts = (rows.results || []).map(mapManagedCustomer);
+  return jsonResponse({
+    ok: true,
+    accounts,
+    currentUserId: auth.identity.userId,
+    roleOptions: Object.entries(customerRoleLabels).map(([value, label]) => ({ value, label })),
+    summary: {
+      total: accounts.length,
+      active: accounts.filter((account) => account.status === "active").length,
+      employees: accounts.filter((account) => account.status === "active" && account.roles.some((role) => role === "staff" || role === "admin")).length,
+      inactive: accounts.filter((account) => account.status !== "active").length,
+    },
+  }, 200, { "Cache-Control": "no-store" });
+}
+
+async function getManagedCustomerProfile(env, userId) {
+  return env.DB.prepare("SELECT * FROM customer_profiles WHERE user_id = ? LIMIT 1").bind(userId).first();
+}
+
+async function handleUpdateCustomerRoles(request, env, userId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const safeUserId = normalizeCustomerText(userId, 100);
+  const target = await getManagedCustomerProfile(env, safeUserId);
+  if (!target) return jsonResponse({ ok: false, error: "Account not found." }, 404);
+  if (String(target.account_status || "active") !== "active") {
+    return jsonResponse({ ok: false, error: "Reactivate this account before changing its account types." }, 409);
+  }
+  const body = await request.json().catch(() => ({}));
+  const requested = Array.isArray(body.roles) ? body.roles.map(String) : [];
+  const roles = ["customer", ...requested.filter((role) => ["instructor", "staff", "admin"].includes(role))]
+    .filter((role, index, list) => list.indexOf(role) === index);
+  if (safeUserId === auth.identity.userId && !roles.includes("admin")) {
+    return jsonResponse({ ok: false, error: "You cannot remove your own Administrator access." }, 409);
+  }
+  const now = new Date().toISOString();
+  const statements = [env.DB.prepare("DELETE FROM customer_roles WHERE user_id = ?").bind(safeUserId)];
+  roles.forEach((role) => {
+    statements.push(env.DB.prepare(
+      "INSERT INTO customer_roles (user_id, role, created_at, created_by) VALUES (?, ?, ?, ?)"
+    ).bind(safeUserId, role, now, auth.identity.userId));
+  });
+  statements.push(env.DB.prepare("UPDATE customer_profiles SET updated_at = ? WHERE user_id = ?").bind(now, safeUserId));
+  await env.DB.batch(statements);
+  await writeCustomerAudit(env, safeUserId, "account.roles_updated", "customer_profile", safeUserId, auth.identity.userId);
+  return jsonResponse({ ok: true, roles, roleLabels: roles.map((role) => customerRoleLabels[role]) });
+}
+
+async function handleSetCustomerAccountStatus(request, env, userId, status) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const safeUserId = normalizeCustomerText(userId, 100);
+  if (safeUserId === auth.identity.userId && status !== "active") {
+    return jsonResponse({ ok: false, error: "You cannot deactivate your own account." }, 409);
+  }
+  const target = await getManagedCustomerProfile(env, safeUserId);
+  if (!target) return jsonResponse({ ok: false, error: "Account not found." }, 404);
+  if (String(target.account_status || "active") === "merged") {
+    return jsonResponse({ ok: false, error: "A merged account cannot be reactivated. Use the surviving account." }, 409);
+  }
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE customer_profiles
+     SET account_status = ?, deactivated_at = ?, deactivated_by = ?, updated_at = ?
+     WHERE user_id = ?`
+  ).bind(status, status === "active" ? null : now, status === "active" ? null : auth.identity.userId, now, safeUserId).run();
+  await writeCustomerAudit(env, safeUserId, status === "active" ? "account.reactivated" : "account.deactivated", "customer_profile", safeUserId, auth.identity.userId);
+  return jsonResponse({ ok: true, status });
+}
+
+async function handleMergeCustomerAccounts(request, env) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const sourceUserId = normalizeCustomerText(body.sourceUserId, 100);
+  const targetUserId = normalizeCustomerText(body.targetUserId, 100);
+  if (!sourceUserId || !targetUserId || sourceUserId === targetUserId) {
+    return jsonResponse({ ok: false, error: "Choose two different accounts." }, 400);
+  }
+  if (sourceUserId === auth.identity.userId) {
+    return jsonResponse({ ok: false, error: "Your signed-in account cannot be the account that is merged away." }, 409);
+  }
+  const [source, target, sourceRoles] = await Promise.all([
+    getManagedCustomerProfile(env, sourceUserId),
+    getManagedCustomerProfile(env, targetUserId),
+    getCustomerRoles(env, sourceUserId),
+  ]);
+  if (!source || !target) return jsonResponse({ ok: false, error: "One of the selected accounts no longer exists." }, 404);
+  if (String(source.account_status || "active") !== "active" || String(target.account_status || "active") !== "active") {
+    return jsonResponse({ ok: false, error: "Both accounts must be active before they can be merged." }, 409);
+  }
+  if (sourceRoles.includes("admin")) {
+    return jsonResponse({ ok: false, error: "Remove Administrator access from the duplicate account before merging it." }, 409);
+  }
+  const confirmation = String(body.confirmation || "").trim().toLowerCase();
+  if (confirmation !== String(source.email || "").trim().toLowerCase()) {
+    return jsonResponse({ ok: false, error: "Enter the email address of the duplicate account to confirm the merge." }, 400);
+  }
+  const now = new Date().toISOString();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE event_registrations_v2 SET user_id = ? WHERE user_id = ?").bind(targetUserId, sourceUserId),
+    env.DB.prepare("UPDATE customer_certifications SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare("UPDATE customer_reservations SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare("UPDATE customer_documents SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare("UPDATE management_records SET customer_user_id = ?, updated_at = ? WHERE customer_user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO customer_roles (user_id, role, created_at, created_by)
+       SELECT ?, role, ?, ? FROM customer_roles WHERE user_id = ?`
+    ).bind(targetUserId, now, auth.identity.userId, sourceUserId),
+    env.DB.prepare("DELETE FROM customer_roles WHERE user_id = ?").bind(sourceUserId),
+    env.DB.prepare(
+      `UPDATE customer_profiles SET
+         first_name = CASE WHEN trim(COALESCE(first_name, '')) = '' THEN ? ELSE first_name END,
+         last_name = CASE WHEN trim(COALESCE(last_name, '')) = '' THEN ? ELSE last_name END,
+         preferred_name = CASE WHEN trim(COALESCE(preferred_name, '')) = '' THEN ? ELSE preferred_name END,
+         phone = CASE WHEN trim(COALESCE(phone, '')) = '' THEN ? ELSE phone END,
+         updated_at = ? WHERE user_id = ?`
+    ).bind(source.first_name || "", source.last_name || "", source.preferred_name || "", source.phone || "", now, targetUserId),
+    env.DB.prepare(
+      `UPDATE customer_profiles SET account_status = 'merged', merged_into_user_id = ?,
+       deactivated_at = ?, deactivated_by = ?, updated_at = ? WHERE user_id = ?`
+    ).bind(targetUserId, now, auth.identity.userId, now, sourceUserId),
+  ]);
+  await writeCustomerAudit(env, sourceUserId, "account.merged_from", "customer_profile", targetUserId, auth.identity.userId);
+  await writeCustomerAudit(env, targetUserId, "account.merged_into", "customer_profile", sourceUserId, auth.identity.userId);
+  return jsonResponse({ ok: true, sourceUserId, targetUserId, message: "The duplicate account was merged successfully." });
 }
 
 async function handleGetCustomerAccount(request, env) {
@@ -3347,14 +3604,9 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   let customerIdentity = null;
   const customerToken = getBearerToken(request);
   if (customerToken) {
-    if (!isCustomerAuthConfigured(env)) {
-      return jsonResponse({ ok: false, error: "Customer accounts are not configured yet." }, 503);
-    }
-    try {
-      customerIdentity = await verifySupabaseAccessToken(customerToken, env);
-    } catch (_error) {
-      return jsonResponse({ ok: false, error: "Your session expired. Please sign in again." }, 401);
-    }
+    const customerAuth = await requireCustomerIdentity(request, env);
+    if (customerAuth.response) return customerAuth.response;
+    customerIdentity = customerAuth.identity;
   }
   const body = await request.json().catch(() => ({}));
   const eventDate = normalizeRegistrationText(body && body.eventDate, 20);
@@ -4572,6 +4824,21 @@ export default {
       response = await handleDeleteCustomerCertification(request, env, certificationId);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
+    } else if (pathname === "/api/admin/access" && request.method === "GET") {
+      response = await handleGetManagementAccess(request, env);
+    } else if (pathname === "/api/admin/accounts" && request.method === "GET") {
+      response = await handleListCustomerAccounts(request, env);
+    } else if (pathname === "/api/admin/accounts/merge" && request.method === "POST") {
+      response = await handleMergeCustomerAccounts(request, env);
+    } else if (/^\/api\/admin\/accounts\/[^/]+\/roles$/.test(pathname) && request.method === "PUT") {
+      const userId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleUpdateCustomerRoles(request, env, userId);
+    } else if (/^\/api\/admin\/accounts\/[^/]+\/deactivate$/.test(pathname) && request.method === "POST") {
+      const userId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleSetCustomerAccountStatus(request, env, userId, "deactivated");
+    } else if (/^\/api\/admin\/accounts\/[^/]+\/reactivate$/.test(pathname) && request.method === "POST") {
+      const userId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleSetCustomerAccountStatus(request, env, userId, "active");
     } else if (pathname === "/api/admin/event-alert-subscribers" && request.method === "GET") {
       response = await handleListEventAlertSubscribers(request, env);
     } else if (pathname === "/api/admin/management" && request.method === "GET") {

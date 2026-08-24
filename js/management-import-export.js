@@ -255,7 +255,7 @@
 
   function getToken() {
     try {
-      return window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
+      return window.sessionStorage.getItem("dmzCustomerAccessToken") || window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
     } catch (_error) {
       return "";
     }
