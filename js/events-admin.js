@@ -361,7 +361,7 @@
     };
     updateDatePicker(getSelectedEntry());
     try {
-      const resp = await apiFetch(`${publicUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`, {
+      const resp = await apiFetch(`${adminUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`, {
         method: "GET",
         cache: "no-store",
       });

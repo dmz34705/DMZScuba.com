@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>My DMZ Scuba Account</title>
+  <meta name="description" content="Sign in to your DMZ Scuba account to manage your profile, certifications, event registrations, classes, and trips." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
+</head>
+
+<body class="account-page">
+  <header class="site-header" data-site-nav></header>
+
+  <main class="account-shell" data-account-app>
+    <section class="account-intro" aria-labelledby="account-title">
+      <p class="account-eyebrow">Your diving, connected</p>
+      <h1 id="account-title">My DMZ Scuba</h1>
+      <p>Keep your contact details and certifications together, then connect your event registrations, classes, and trips as account features roll out.</p>
+      <p class="account-system-status" data-account-system-status role="status">Checking account availability...</p>
+    </section>
+
+    <section class="account-auth" data-account-auth aria-labelledby="account-access-title">
+      <div class="account-card account-access-card">
+        <div class="account-card-heading">
+          <p class="account-eyebrow">Secure account access</p>
+          <h2 id="account-access-title">Welcome, diver</h2>
+          <p>Create an account with a verified email address or sign in to continue.</p>
+        </div>
+
+        <div class="account-tabs" role="tablist" aria-label="Account access">
+          <button type="button" role="tab" aria-selected="true" data-account-tab="login">Sign In</button>
+          <button type="button" role="tab" aria-selected="false" data-account-tab="signup">Create Account</button>
+        </div>
+
+        <form class="account-form" data-account-panel="login" data-login-form>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
+          <label><span>Password</span><input type="password" name="password" autocomplete="current-password" required /></label>
+          <div class="account-turnstile" data-turnstile="login" aria-label="Security check"></div>
+          <button class="btn primary" type="submit">Sign In</button>
+          <button class="account-text-button" type="button" data-show-recovery>Forgot your password?</button>
+          <p class="account-form-status" data-login-status aria-live="polite"></p>
+        </form>
+
+        <form class="account-form" data-account-panel="signup" data-signup-form hidden>
+          <div class="account-form-grid">
+            <label><span>First Name</span><input type="text" name="firstName" autocomplete="given-name" maxlength="80" required /></label>
+            <label><span>Last Name</span><input type="text" name="lastName" autocomplete="family-name" maxlength="80" required /></label>
+          </div>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
+          <label><span>Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
+          <label><span>Confirm Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+          <label class="account-checkbox"><input type="checkbox" name="terms" required /><span>I agree to the <a href="/pages/privacy/">DMZ Scuba Privacy Policy</a>.</span></label>
+          <div class="account-turnstile" data-turnstile="signup" aria-label="Security check"></div>
+          <button class="btn primary" type="submit">Create My Account</button>
+          <p class="account-form-status" data-signup-status aria-live="polite"></p>
+        </form>
+
+        <form class="account-form" data-account-panel="verify" data-verify-form hidden>
+          <button class="account-back-button" type="button" data-back-to-login>&larr; Back to sign in</button>
+          <h3>Verify your email</h3>
+          <p data-verify-copy>Enter the six-digit code sent to your email address.</p>
+          <input type="hidden" name="type" value="signup" />
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
+          <div class="account-turnstile" data-turnstile="recovery" aria-label="Security check"></div>
+          <label><span>Verification Code</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
+          <button class="btn primary" type="submit">Verify Email</button>
+          <p class="account-form-status" data-verify-status aria-live="polite"></p>
+        </form>
+
+        <form class="account-form" data-account-panel="recovery" data-recovery-form hidden>
+          <button class="account-back-button" type="button" data-back-to-login>&larr; Back to sign in</button>
+          <h3>Reset your password</h3>
+          <p>We will email a recovery code if the address has a DMZ Scuba account.</p>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
+          <button class="btn primary" type="submit">Send Recovery Code</button>
+          <p class="account-form-status" data-recovery-status aria-live="polite"></p>
+        </form>
+
+        <form class="account-form" data-account-panel="new-password" data-password-form hidden>
+          <h3>Choose a new password</h3>
+          <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+          <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+          <button class="btn primary" type="submit">Update Password</button>
+          <p class="account-form-status" data-password-status aria-live="polite"></p>
+        </form>
+      </div>
+
+      <aside class="account-card account-security-card">
+        <span class="account-security-icon" aria-hidden="true">&#10003;</span>
+        <h2>One account for the website and app</h2>
+        <p>Your verified account will work across DMZ Scuba services. Passwords are handled by our authentication provider and are never stored in the DMZ Scuba customer database.</p>
+        <ul>
+          <li>Email verification before account access</li>
+          <li>Private profile and certification records</li>
+          <li>Secure session renewal</li>
+          <li>Future mobile app access</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="account-dashboard" data-account-dashboard hidden aria-labelledby="dashboard-title">
+      <div class="account-dashboard-head">
+        <div>
+          <p class="account-eyebrow">Account dashboard</p>
+          <h2 id="dashboard-title" data-dashboard-greeting>Your DMZ Scuba account</h2>
+          <p data-dashboard-email></p>
+        </div>
+        <div class="account-dashboard-actions">
+          <button class="btn secondary" type="button" data-link-existing>Find My Existing Records</button>
+          <button class="btn secondary" type="button" data-logout>Sign Out</button>
+        </div>
+      </div>
+      <p class="account-dashboard-status" data-dashboard-status aria-live="polite"></p>
+
+      <div class="account-dashboard-grid">
+        <article class="account-card">
+          <div class="account-card-heading">
+            <p class="account-eyebrow">Personal information</p>
+            <h3>Profile</h3>
+          </div>
+          <form class="account-form" data-profile-form>
+            <div class="account-form-grid">
+              <label><span>First Name</span><input type="text" name="firstName" maxlength="80" required /></label>
+              <label><span>Last Name</span><input type="text" name="lastName" maxlength="80" required /></label>
+            </div>
+            <label><span>Preferred Name</span><input type="text" name="preferredName" maxlength="80" /></label>
+            <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel" maxlength="40" /></label>
+            <label><span>Verified Email</span><input type="email" name="email" disabled /></label>
+            <button class="btn primary" type="submit">Save Profile</button>
+            <p class="account-form-status" data-profile-status aria-live="polite"></p>
+          </form>
+        </article>
+
+        <article class="account-card account-certifications-card">
+          <div class="account-card-heading">
+            <p class="account-eyebrow">Training history</p>
+            <h3>Certifications</h3>
+            <p>Certification details remain pending until DMZ Scuba verifies them.</p>
+          </div>
+          <div class="account-record-list" data-certification-list></div>
+          <form class="account-form account-add-certification" data-certification-form>
+            <h4>Add a certification</h4>
+            <div class="account-form-grid">
+              <label><span>Agency</span><input type="text" name="agency" placeholder="SDI, PADI, SSI..." maxlength="80" required /></label>
+              <label><span>Certification</span><input type="text" name="certificationName" placeholder="Open Water" maxlength="120" required /></label>
+            </div>
+            <label><span>Certification Number</span><input type="text" name="certificationNumber" maxlength="120" /></label>
+            <div class="account-form-grid">
+              <label><span>Issue Date</span><input type="date" name="issuedOn" /></label>
+              <label><span>Expiration Date</span><input type="date" name="expiresOn" /></label>
+            </div>
+            <button class="btn secondary" type="submit">Add Certification</button>
+            <p class="account-form-status" data-certification-status aria-live="polite"></p>
+          </form>
+        </article>
+      </div>
+
+      <div class="account-card account-activity-card">
+        <div class="account-card-heading">
+          <p class="account-eyebrow">Connected activity</p>
+          <h3>Events, classes, trips, and bookings</h3>
+          <p>Use the verified-email match to connect existing DMZ Scuba records. New signed-in registrations connect automatically.</p>
+        </div>
+        <div class="account-activity-grid">
+          <section><h4>Event Registrations</h4><div class="account-record-list" data-event-registration-list></div></section>
+          <section><h4>Classes, Trips, and Bookings</h4><div class="account-record-list" data-reservation-list></div></section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
+  </footer>
+
+  <script src="/js/main.js?v=20260823a"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="/js/account.js?v=20260823a"></script>
+</body>
+</html>

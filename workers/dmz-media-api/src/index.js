@@ -57,6 +57,221 @@ async function requireAuth(request, env) {
   return !!row;
 }
 
+const customerJwksCache = new Map();
+
+function getSupabaseUrl(env) {
+  return String((env && env.SUPABASE_URL) || "").trim().replace(/\/+$/, "");
+}
+
+function getSupabasePublishableKey(env) {
+  return String((env && (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY)) || "").trim();
+}
+
+function isCustomerAuthConfigured(env) {
+  return Boolean(getSupabaseUrl(env) && getSupabasePublishableKey(env));
+}
+
+function getCustomerTurnstileSiteKey(env) {
+  return String((env && env.TURNSTILE_SITE_KEY) || "").trim();
+}
+
+function getCustomerCaptchaToken(body) {
+  return String(body && body.captchaToken || "").trim().slice(0, 4096);
+}
+
+function base64UrlToBytes(value) {
+  const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function decodeJwtJson(value) {
+  const bytes = base64UrlToBytes(value);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function validateSupabaseClaims(claims, options = {}, nowSeconds = Math.floor(Date.now() / 1000)) {
+  if (!claims || typeof claims !== "object") throw new Error("Invalid access token.");
+  const issuer = String(options.issuer || "").replace(/\/+$/, "");
+  const expectedAudience = String(options.audience || "authenticated");
+  const audiences = Array.isArray(claims.aud) ? claims.aud.map(String) : [String(claims.aud || "")];
+  const email = String(claims.email || "").trim().toLowerCase();
+  if (!issuer || String(claims.iss || "").replace(/\/+$/, "") !== issuer) throw new Error("Invalid access token.");
+  if (!audiences.includes(expectedAudience)) throw new Error("Invalid access token.");
+  if (!Number.isFinite(Number(claims.exp)) || Number(claims.exp) <= nowSeconds) throw new Error("Access token expired.");
+  if (claims.nbf != null && Number(claims.nbf) > nowSeconds + 30) throw new Error("Invalid access token.");
+  if (claims.iat != null && Number(claims.iat) > nowSeconds + 60) throw new Error("Invalid access token.");
+  if (!String(claims.sub || "").trim()) throw new Error("Invalid access token.");
+  if (String(claims.role || "") !== "authenticated" || claims.is_anonymous === true) throw new Error("Invalid access token.");
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid access token.");
+  return {
+    userId: String(claims.sub).trim(),
+    email,
+    sessionId: String(claims.session_id || "").trim(),
+    aal: String(claims.aal || "aal1").trim(),
+    userMetadata: claims.user_metadata && typeof claims.user_metadata === "object" ? claims.user_metadata : {},
+  };
+}
+
+async function getSupabaseJwks(env, forceRefresh = false) {
+  const supabaseUrl = getSupabaseUrl(env);
+  if (!supabaseUrl) throw new Error("Customer accounts are not configured.");
+  const jwksUrl = `${supabaseUrl}/auth/v1/.well-known/jwks.json`;
+  const cached = customerJwksCache.get(jwksUrl);
+  if (!forceRefresh && cached && cached.expiresAt > Date.now()) return cached.keys;
+  const response = await fetch(jwksUrl, {
+    headers: { Accept: "application/json" },
+    cf: { cacheEverything: true, cacheTtl: 600 },
+  });
+  if (!response.ok) throw new Error("Customer authentication is temporarily unavailable.");
+  const data = await response.json().catch(() => ({}));
+  const keys = Array.isArray(data && data.keys) ? data.keys : [];
+  if (!keys.length) throw new Error("Customer authentication signing keys are unavailable.");
+  customerJwksCache.set(jwksUrl, { keys, expiresAt: Date.now() + 10 * 60 * 1000 });
+  return keys;
+}
+
+async function verifySupabaseAccessToken(token, env) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) throw new Error("Invalid access token.");
+  const header = decodeJwtJson(parts[0]);
+  const claims = decodeJwtJson(parts[1]);
+  const algorithm = String(header && header.alg || "");
+  const keyId = String(header && header.kid || "");
+  if (!keyId || !["ES256", "RS256"].includes(algorithm)) throw new Error("Invalid access token.");
+
+  let keys = await getSupabaseJwks(env);
+  let jwk = keys.find((candidate) => String(candidate && candidate.kid || "") === keyId);
+  if (!jwk) {
+    keys = await getSupabaseJwks(env, true);
+    jwk = keys.find((candidate) => String(candidate && candidate.kid || "") === keyId);
+  }
+  if (!jwk || String(jwk.alg || algorithm) !== algorithm) throw new Error("Invalid access token.");
+
+  const signingInput = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+  const signature = base64UrlToBytes(parts[2]);
+  let importedKey;
+  let verifyAlgorithm;
+  if (algorithm === "ES256") {
+    importedKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["verify"]
+    );
+    verifyAlgorithm = { name: "ECDSA", hash: "SHA-256" };
+  } else {
+    importedKey = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    verifyAlgorithm = { name: "RSASSA-PKCS1-v1_5" };
+  }
+  const validSignature = await crypto.subtle.verify(verifyAlgorithm, importedKey, signature, signingInput);
+  if (!validSignature) throw new Error("Invalid access token.");
+
+  return validateSupabaseClaims(claims, {
+    issuer: `${getSupabaseUrl(env)}/auth/v1`,
+    audience: String(env.SUPABASE_JWT_AUDIENCE || "authenticated"),
+  });
+}
+
+function getBearerToken(request) {
+  const authorization = String(request.headers.get("Authorization") || "");
+  return authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+}
+
+async function requireCustomerIdentity(request, env) {
+  const token = getBearerToken(request);
+  if (!token) return { response: jsonResponse({ ok: false, error: "Sign in is required." }, 401) };
+  if (!isCustomerAuthConfigured(env)) {
+    return { response: jsonResponse({ ok: false, error: "Customer accounts are not configured yet." }, 503) };
+  }
+  try {
+    return { identity: await verifySupabaseAccessToken(token, env) };
+  } catch (error) {
+    const message = error && error.message === "Access token expired." ? "Your session expired. Please sign in again." : "Sign in is required.";
+    return { response: jsonResponse({ ok: false, error: message }, 401) };
+  }
+}
+
+function getCustomerRefreshCookieName(request) {
+  const hostname = new URL(request.url).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" ? "dmz_customer_refresh" : "__Host-dmz_customer_refresh";
+}
+
+function getCookieValue(request, name) {
+  const cookieHeader = String(request.headers.get("Cookie") || "");
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    const key = part.slice(0, separator).trim();
+    if (key === name) return decodeURIComponent(part.slice(separator + 1).trim());
+  }
+  return "";
+}
+
+function buildCustomerRefreshCookie(request, refreshToken, maxAge = 60 * 60 * 24 * 30) {
+  const name = getCustomerRefreshCookieName(request);
+  const secure = name.startsWith("__Host-") ? "; Secure" : "";
+  return `${name}=${encodeURIComponent(String(refreshToken || ""))}; HttpOnly${secure}; SameSite=Strict; Path=/; Max-Age=${Math.max(0, Number(maxAge) || 0)}`;
+}
+
+async function callSupabaseAuth(env, path, body, accessToken = "", method = "POST") {
+  if (!isCustomerAuthConfigured(env)) {
+    return { ok: false, status: 503, data: { message: "Customer accounts are not configured yet." } };
+  }
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    apikey: getSupabasePublishableKey(env),
+  };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  const response = await fetch(`${getSupabaseUrl(env)}/auth/v1${path}`, {
+    method,
+    headers,
+    body: JSON.stringify(body || {}),
+  });
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, status: response.status, data };
+}
+
+function getSupabaseAuthError(result, fallback) {
+  const data = result && result.data && typeof result.data === "object" ? result.data : {};
+  const message = String(data.msg || data.message || data.error_description || data.error || "").trim();
+  return message && message.length <= 240 ? message : fallback;
+}
+
+function customerSessionResponse(request, data, status = 200) {
+  const accessToken = String(data && data.access_token || "");
+  const refreshToken = String(data && data.refresh_token || "");
+  if (!accessToken || !refreshToken) {
+    return jsonResponse({ ok: false, error: "A customer session could not be created." }, 502);
+  }
+  const user = data.user && typeof data.user === "object" ? data.user : {};
+  return jsonResponse(
+    {
+      ok: true,
+      accessToken,
+      expiresIn: Math.max(0, Number(data.expires_in) || 0),
+      user: {
+        id: String(user.id || ""),
+        email: String(user.email || "").trim().toLowerCase(),
+      },
+    },
+    status,
+    {
+      "Cache-Control": "no-store",
+      "Set-Cookie": buildCustomerRefreshCookie(request, refreshToken),
+    }
+  );
+}
+
 function isTrustedDestinationDevWrite(request) {
   const origin = String(request.headers.get("Origin") || "").trim().toLowerCase();
   return origin === "https://dmzscuba-com.pages.dev";
@@ -806,6 +1021,455 @@ async function handleLogin(request, env) {
     .bind(token, now.toISOString(), expires.toISOString())
     .run();
   return jsonResponse({ ok: true, token });
+}
+
+async function handleCustomerAuthStatus(env) {
+  const authConfigured = isCustomerAuthConfigured(env);
+  const turnstileSiteKey = getCustomerTurnstileSiteKey(env);
+  return jsonResponse(
+    {
+      ok: true,
+      enabled: Boolean(authConfigured && turnstileSiteKey),
+      authConfigured,
+      turnstileSiteKey,
+      emailVerification: "code",
+    },
+    200,
+    { "Cache-Control": "no-store" }
+  );
+}
+
+async function handleCustomerSignup(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const password = String(body.password || "");
+  const firstName = String(body.firstName || "").trim().slice(0, 80);
+  const lastName = String(body.lastName || "").trim().slice(0, 80);
+  const captchaToken = getCustomerCaptchaToken(body);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Enter a valid email address." }, 400);
+  }
+  if (password.length < 12 || password.length > 128) {
+    return jsonResponse({ ok: false, error: "Use a password between 12 and 128 characters." }, 400);
+  }
+  if (!firstName || !lastName) {
+    return jsonResponse({ ok: false, error: "Enter your first and last name." }, 400);
+  }
+  if (!getCustomerTurnstileSiteKey(env)) {
+    return jsonResponse({ ok: false, error: "Customer signup abuse protection is not configured yet." }, 503);
+  }
+  if (!captchaToken) return jsonResponse({ ok: false, error: "Complete the security check." }, 400);
+  const result = await callSupabaseAuth(env, "/signup", {
+    email,
+    password,
+    data: { first_name: firstName, last_name: lastName },
+    gotrue_meta_security: { captcha_token: captchaToken },
+  });
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "Account creation failed.") }, result.status || 400);
+  }
+  if (result.data && result.data.access_token) {
+    return jsonResponse(
+      { ok: false, error: "Email confirmation must be enabled before customer accounts can launch." },
+      503,
+      { "Cache-Control": "no-store" }
+    );
+  }
+  return jsonResponse(
+    { ok: true, verificationRequired: true, message: "Check your email for the six-digit verification code." },
+    201,
+    { "Cache-Control": "no-store" }
+  );
+}
+
+async function handleCustomerVerify(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const token = String(body.token || "").trim().replace(/\s+/g, "").slice(0, 20);
+  const type = String(body.type || "signup") === "recovery" ? "recovery" : "signup";
+  if (!email || !token) return jsonResponse({ ok: false, error: "Enter your email and verification code." }, 400);
+  const result = await callSupabaseAuth(env, "/verify", { email, token, type });
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The verification code is invalid or expired.") }, result.status || 400);
+  }
+  return customerSessionResponse(request, result.data);
+}
+
+async function handleCustomerLogin(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const password = String(body.password || "");
+  const captchaToken = getCustomerCaptchaToken(body);
+  if (!email || !password) return jsonResponse({ ok: false, error: "Enter your email and password." }, 400);
+  if (!getCustomerTurnstileSiteKey(env)) {
+    return jsonResponse({ ok: false, error: "Customer login abuse protection is not configured yet." }, 503);
+  }
+  if (!captchaToken) return jsonResponse({ ok: false, error: "Complete the security check." }, 400);
+  const result = await callSupabaseAuth(env, "/token?grant_type=password", {
+    email,
+    password,
+    gotrue_meta_security: { captcha_token: captchaToken },
+  });
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The email or password is incorrect.") }, result.status || 401);
+  }
+  return customerSessionResponse(request, result.data);
+}
+
+async function handleCustomerRefresh(request, env) {
+  const cookieName = getCustomerRefreshCookieName(request);
+  const refreshToken = getCookieValue(request, cookieName) || getCookieValue(request, "dmz_customer_refresh") || getCookieValue(request, "__Host-dmz_customer_refresh");
+  if (!refreshToken) return jsonResponse({ ok: false, error: "Sign in is required." }, 401, { "Cache-Control": "no-store" });
+  const result = await callSupabaseAuth(env, "/token?grant_type=refresh_token", { refresh_token: refreshToken });
+  if (!result.ok) {
+    return jsonResponse(
+      { ok: false, error: "Your session expired. Please sign in again." },
+      401,
+      { "Cache-Control": "no-store", "Set-Cookie": buildCustomerRefreshCookie(request, "", 0) }
+    );
+  }
+  return customerSessionResponse(request, result.data);
+}
+
+async function handleCustomerLogout(request, env) {
+  const accessToken = getBearerToken(request);
+  if (accessToken && isCustomerAuthConfigured(env)) {
+    await callSupabaseAuth(env, "/logout", {}, accessToken).catch(() => null);
+  }
+  return jsonResponse(
+    { ok: true },
+    200,
+    { "Cache-Control": "no-store", "Set-Cookie": buildCustomerRefreshCookie(request, "", 0) }
+  );
+}
+
+async function handleCustomerRecovery(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const captchaToken = getCustomerCaptchaToken(body);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Enter a valid email address." }, 400);
+  }
+  if (!getCustomerTurnstileSiteKey(env)) {
+    return jsonResponse({ ok: false, error: "Customer recovery abuse protection is not configured yet." }, 503);
+  }
+  if (!captchaToken) return jsonResponse({ ok: false, error: "Complete the security check." }, 400);
+  const result = await callSupabaseAuth(env, "/recover", {
+    email,
+    gotrue_meta_security: { captcha_token: captchaToken },
+  });
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "Password recovery could not be started.") }, result.status || 400);
+  }
+  return jsonResponse(
+    { ok: true, message: "If that address has an account, a recovery code is on the way." },
+    200,
+    { "Cache-Control": "no-store" }
+  );
+}
+
+async function handleCustomerPasswordUpdate(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const password = String(body.password || "");
+  if (password.length < 12 || password.length > 128) {
+    return jsonResponse({ ok: false, error: "Use a password between 12 and 128 characters." }, 400);
+  }
+  const result = await callSupabaseAuth(env, "/user", { password }, getBearerToken(request), "PUT");
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The password could not be updated.") }, result.status || 400);
+  }
+  return jsonResponse({ ok: true, message: "Your password has been updated." }, 200, { "Cache-Control": "no-store" });
+}
+
+function normalizeCustomerText(value, maxLength = 160) {
+  return String(value || "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function normalizeCustomerDate(value) {
+  const date = normalizeCustomerText(value, 10);
+  return !date || /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
+}
+
+async function writeCustomerAudit(env, userId, action, targetType = "", targetId = "", actorUserId = "") {
+  await env.DB.prepare(
+    `INSERT INTO customer_audit_log (id, user_id, actor_user_id, action, target_type, target_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      crypto.randomUUID(),
+      userId,
+      actorUserId || userId,
+      normalizeCustomerText(action, 120),
+      normalizeCustomerText(targetType, 80),
+      normalizeCustomerText(targetId, 100),
+      new Date().toISOString()
+    )
+    .run()
+    .catch(() => null);
+}
+
+async function ensureCustomerProfile(env, identity) {
+  const now = new Date().toISOString();
+  const metadata = identity.userMetadata || {};
+  const firstName = normalizeCustomerText(metadata.first_name || metadata.firstName, 80);
+  const lastName = normalizeCustomerText(metadata.last_name || metadata.lastName, 80);
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO customer_profiles
+     (user_id, email, first_name, last_name, preferred_name, phone, created_at, updated_at, last_login_at)
+     VALUES (?, ?, ?, ?, '', '', ?, ?, ?)`
+  )
+    .bind(identity.userId, identity.email, firstName, lastName, now, now, now)
+    .run();
+  await env.DB.prepare(
+    `UPDATE customer_profiles
+     SET email = ?, last_login_at = ?, updated_at = CASE WHEN email <> ? THEN ? ELSE updated_at END
+     WHERE user_id = ?`
+  )
+    .bind(identity.email, now, identity.email, now, identity.userId)
+    .run();
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO customer_roles (user_id, role, created_at, created_by)
+     VALUES (?, 'customer', ?, ?)`
+  )
+    .bind(identity.userId, now, identity.userId)
+    .run();
+  return env.DB.prepare(
+    `SELECT user_id, email, first_name, last_name, preferred_name, phone, created_at, updated_at, last_login_at
+     FROM customer_profiles WHERE user_id = ? LIMIT 1`
+  )
+    .bind(identity.userId)
+    .first();
+}
+
+function mapCustomerProfile(row) {
+  return {
+    userId: String(row && row.user_id || ""),
+    email: String(row && row.email || ""),
+    firstName: String(row && row.first_name || ""),
+    lastName: String(row && row.last_name || ""),
+    preferredName: String(row && row.preferred_name || ""),
+    phone: String(row && row.phone || ""),
+    createdAt: String(row && row.created_at || ""),
+    updatedAt: String(row && row.updated_at || ""),
+  };
+}
+
+function mapCustomerCertification(row) {
+  return {
+    id: String(row && row.id || ""),
+    agency: String(row && row.agency || ""),
+    certificationName: String(row && row.certification_name || ""),
+    certificationNumber: String(row && row.certification_number || ""),
+    issuedOn: String(row && row.issued_on || ""),
+    expiresOn: String(row && row.expires_on || ""),
+    verificationStatus: String(row && row.verification_status || "pending"),
+    createdAt: String(row && row.created_at || ""),
+    updatedAt: String(row && row.updated_at || ""),
+  };
+}
+
+async function getCustomerAccountPayload(env, identity) {
+  const profile = await ensureCustomerProfile(env, identity);
+  const [roleRows, certificationRows, registrationRows, reservationRows] = await Promise.all([
+    env.DB.prepare("SELECT role FROM customer_roles WHERE user_id = ? ORDER BY role ASC").bind(identity.userId).all(),
+    env.DB.prepare(
+      `SELECT id, agency, certification_name, certification_number, issued_on, expires_on,
+              verification_status, created_at, updated_at
+       FROM customer_certifications WHERE user_id = ? ORDER BY created_at DESC`
+    ).bind(identity.userId).all(),
+    env.DB.prepare(
+      `SELECT id, source_id, event_date, party_size, approval_status, created_at
+       FROM event_registrations_v2 WHERE user_id = ? ORDER BY event_date DESC, created_at DESC`
+    ).bind(identity.userId).all(),
+    env.DB.prepare(
+      `SELECT id, reservation_type, source_id, source_registration_id, event_date, status, party_size,
+              data_json, created_at, updated_at
+       FROM customer_reservations WHERE user_id = ? ORDER BY created_at DESC`
+    ).bind(identity.userId).all(),
+  ]);
+  return {
+    ok: true,
+    profile: mapCustomerProfile(profile),
+    roles: (roleRows.results || []).map((row) => String(row.role || "")).filter(Boolean),
+    certifications: (certificationRows.results || []).map(mapCustomerCertification),
+    eventRegistrations: (registrationRows.results || []).map((row) => ({
+      id: String(row.id || ""),
+      sourceId: String(row.source_id || ""),
+      eventDate: String(row.event_date || ""),
+      partySize: Math.max(1, Number(row.party_size) || 1),
+      status: String(row.approval_status || "pending"),
+      createdAt: String(row.created_at || ""),
+    })),
+    reservations: (reservationRows.results || []).map((row) => ({
+      id: String(row.id || ""),
+      type: String(row.reservation_type || "booking"),
+      sourceId: String(row.source_id || ""),
+      sourceRegistrationId: String(row.source_registration_id || ""),
+      eventDate: String(row.event_date || ""),
+      status: String(row.status || "pending"),
+      partySize: Math.max(1, Number(row.party_size) || 1),
+      details: parseJsonSafe(row.data_json, {}),
+      createdAt: String(row.created_at || ""),
+      updatedAt: String(row.updated_at || ""),
+    })),
+  };
+}
+
+async function handleGetCustomerAccount(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
+}
+
+async function handleUpdateCustomerProfile(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  await ensureCustomerProfile(env, auth.identity);
+  const body = await request.json().catch(() => ({}));
+  const profile = {
+    firstName: normalizeCustomerText(body.firstName, 80),
+    lastName: normalizeCustomerText(body.lastName, 80),
+    preferredName: normalizeCustomerText(body.preferredName, 80),
+    phone: normalizeCustomerText(body.phone, 40),
+  };
+  if (!profile.firstName || !profile.lastName) {
+    return jsonResponse({ ok: false, error: "First and last name are required." }, 400);
+  }
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE customer_profiles
+     SET first_name = ?, last_name = ?, preferred_name = ?, phone = ?, email = ?, updated_at = ?
+     WHERE user_id = ?`
+  )
+    .bind(profile.firstName, profile.lastName, profile.preferredName, profile.phone, auth.identity.email, now, auth.identity.userId)
+    .run();
+  await writeCustomerAudit(env, auth.identity.userId, "profile.updated", "customer_profile", auth.identity.userId);
+  return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
+}
+
+function normalizeCustomerCertification(body = {}, existing = {}) {
+  const agency = normalizeCustomerText(body.agency != null ? body.agency : existing.agency, 80);
+  const certificationName = normalizeCustomerText(
+    body.certificationName != null ? body.certificationName : existing.certificationName,
+    120
+  );
+  const certificationNumber = normalizeCustomerText(
+    body.certificationNumber != null ? body.certificationNumber : existing.certificationNumber,
+    120
+  );
+  const issuedOn = normalizeCustomerDate(body.issuedOn != null ? body.issuedOn : existing.issuedOn);
+  const expiresOn = normalizeCustomerDate(body.expiresOn != null ? body.expiresOn : existing.expiresOn);
+  if (!agency || !certificationName) return null;
+  return { agency, certificationName, certificationNumber, issuedOn, expiresOn };
+}
+
+async function handleCreateCustomerCertification(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  await ensureCustomerProfile(env, auth.identity);
+  const certification = normalizeCustomerCertification(await request.json().catch(() => ({})));
+  if (!certification) return jsonResponse({ ok: false, error: "Agency and certification name are required." }, 400);
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO customer_certifications
+     (id, user_id, agency, certification_name, certification_number, issued_on, expires_on,
+      verification_status, verified_at, verified_by, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NULL, ?, ?)`
+  )
+    .bind(
+      id,
+      auth.identity.userId,
+      certification.agency,
+      certification.certificationName,
+      certification.certificationNumber,
+      certification.issuedOn,
+      certification.expiresOn,
+      now,
+      now
+    )
+    .run();
+  await writeCustomerAudit(env, auth.identity.userId, "certification.created", "customer_certification", id);
+  return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 201, { "Cache-Control": "no-store" });
+}
+
+async function handleUpdateCustomerCertification(request, env, certificationId) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const id = normalizeCustomerText(certificationId, 100);
+  const row = await env.DB.prepare(
+    `SELECT id, agency, certification_name, certification_number, issued_on, expires_on
+     FROM customer_certifications WHERE id = ? AND user_id = ? LIMIT 1`
+  ).bind(id, auth.identity.userId).first();
+  if (!row) return jsonResponse({ ok: false, error: "Certification not found." }, 404);
+  const certification = normalizeCustomerCertification(await request.json().catch(() => ({})), {
+    agency: row.agency,
+    certificationName: row.certification_name,
+    certificationNumber: row.certification_number,
+    issuedOn: row.issued_on,
+    expiresOn: row.expires_on,
+  });
+  if (!certification) return jsonResponse({ ok: false, error: "Agency and certification name are required." }, 400);
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE customer_certifications
+     SET agency = ?, certification_name = ?, certification_number = ?, issued_on = ?, expires_on = ?,
+         verification_status = 'pending', verified_at = NULL, verified_by = NULL, updated_at = ?
+     WHERE id = ? AND user_id = ?`
+  ).bind(
+    certification.agency,
+    certification.certificationName,
+    certification.certificationNumber,
+    certification.issuedOn,
+    certification.expiresOn,
+    now,
+    id,
+    auth.identity.userId
+  ).run();
+  await writeCustomerAudit(env, auth.identity.userId, "certification.updated", "customer_certification", id);
+  return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
+}
+
+async function handleDeleteCustomerCertification(request, env, certificationId) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const id = normalizeCustomerText(certificationId, 100);
+  const result = await env.DB.prepare("DELETE FROM customer_certifications WHERE id = ? AND user_id = ?")
+    .bind(id, auth.identity.userId)
+    .run();
+  const changes = Number(result && result.meta && result.meta.changes || 0);
+  if (!changes) return jsonResponse({ ok: false, error: "Certification not found." }, 404);
+  await writeCustomerAudit(env, auth.identity.userId, "certification.deleted", "customer_certification", id);
+  return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
+}
+
+async function handleLinkCustomerRecords(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  await ensureCustomerProfile(env, auth.identity);
+  await ensureEventRegistrationsV2Table(env);
+  await ensureManagementRecordsTable(env);
+  const registrationResult = await env.DB.prepare(
+    `UPDATE event_registrations_v2 SET user_id = ?
+     WHERE user_id IS NULL AND lower(email) = ?`
+  ).bind(auth.identity.userId, auth.identity.email).run();
+  const managementResult = await env.DB.prepare(
+    `UPDATE management_records SET customer_user_id = ?
+     WHERE customer_user_id IS NULL AND lower(contact_email) = ?`
+  ).bind(auth.identity.userId, auth.identity.email).run();
+  const linkedRegistrations = Number(registrationResult && registrationResult.meta && registrationResult.meta.changes || 0);
+  const linkedRecords = Number(managementResult && managementResult.meta && managementResult.meta.changes || 0);
+  await writeCustomerAudit(env, auth.identity.userId, "records.linked", "customer_profile", auth.identity.userId);
+  return jsonResponse(
+    {
+      ...(await getCustomerAccountPayload(env, auth.identity)),
+      linked: { registrations: linkedRegistrations, records: linkedRecords },
+    },
+    200,
+    { "Cache-Control": "no-store" }
+  );
 }
 
 function buildPublicInquiryManagementRecord({ body, fields, lines, name, email, formName, subject, pageUrl, submittedAt }) {
@@ -1642,6 +2306,7 @@ async function ensureManagementRecordsTable(env) {
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS management_records (
       id TEXT PRIMARY KEY,
+      customer_user_id TEXT,
       record_type TEXT NOT NULL,
       title TEXT NOT NULL,
       status TEXT NOT NULL,
@@ -1658,11 +2323,17 @@ async function ensureManagementRecordsTable(env) {
       updated_at TEXT NOT NULL
     )`
   ).run();
+  await env.DB.prepare("ALTER TABLE management_records ADD COLUMN customer_user_id TEXT")
+    .run()
+    .catch(() => {});
   await env.DB.prepare(
     "CREATE INDEX IF NOT EXISTS idx_management_type_status ON management_records(record_type, status)"
   ).run();
   await env.DB.prepare(
     "CREATE INDEX IF NOT EXISTS idx_management_due_date ON management_records(due_date)"
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_management_customer_user ON management_records(customer_user_id, updated_at)"
   ).run();
 }
 
@@ -2228,6 +2899,7 @@ async function ensureEventRegistrationsV2Table(env) {
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS event_registrations_v2 (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       source_id TEXT NOT NULL,
       event_date TEXT NOT NULL,
       first_name TEXT NOT NULL,
@@ -2244,8 +2916,14 @@ async function ensureEventRegistrationsV2Table(env) {
   await env.DB.prepare("ALTER TABLE event_registrations_v2 ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'pending'")
     .run()
     .catch(() => {});
+  await env.DB.prepare("ALTER TABLE event_registrations_v2 ADD COLUMN user_id TEXT")
+    .run()
+    .catch(() => {});
   await env.DB.prepare(
     "CREATE INDEX IF NOT EXISTS idx_event_regs_source_date ON event_registrations_v2(source_id, event_date)"
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_event_regs_user ON event_registrations_v2(user_id, created_at)"
   ).run();
 }
 
@@ -2531,7 +3209,38 @@ async function getRegistrationSnapshot(env, sourceId, eventDate, config) {
   };
 }
 
+function buildPublicRegistrationSnapshot(snapshot) {
+  const source = snapshot && typeof snapshot === "object" ? snapshot : {};
+  return {
+    sourceId: String(source.sourceId || ""),
+    eventDate: String(source.eventDate || ""),
+    registrationEnabled: Boolean(source.registrationEnabled),
+    registrationClosed: Boolean(source.registrationClosed),
+    registrationCapacity: Math.max(0, Number(source.registrationCapacity) || 0),
+    usedSpots: Math.max(0, Number(source.usedSpots) || 0),
+    remainingSpots: Math.max(0, Number(source.remainingSpots) || 0),
+  };
+}
+
 async function handleGetEventRegistrationsV2(request, env, sourceId) {
+  const url = new URL(request.url);
+  const eventDate = String(url.searchParams.get("date") || "").trim();
+  if (!sourceId || !eventDate) {
+    return jsonResponse({ ok: false, error: "Missing source id or date." }, 400, { "Cache-Control": "no-store" });
+  }
+  const payload = await getEventsPayloadV2(env);
+  const config = resolveRegistrationConfig(payload, sourceId, eventDate);
+  if (!config) {
+    return jsonResponse({ ok: false, error: "Event not found." }, 404, { "Cache-Control": "no-store" });
+  }
+  const snapshot = await getRegistrationSnapshot(env, sourceId, eventDate, config);
+  return jsonResponse({ ok: true, ...buildPublicRegistrationSnapshot(snapshot) }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleGetAdminEventRegistrationsV2(request, env, sourceId) {
+  const authed = await requireAuth(request, env);
+  if (!authed) return jsonResponse({ ok: false, error: "Unauthorized." }, 401);
+
   const url = new URL(request.url);
   const eventDate = String(url.searchParams.get("date") || "").trim();
   if (!sourceId || !eventDate) {
@@ -2547,6 +3256,18 @@ async function handleGetEventRegistrationsV2(request, env, sourceId) {
 }
 
 async function handleCreateEventRegistrationV2(request, env, sourceId) {
+  let customerIdentity = null;
+  const customerToken = getBearerToken(request);
+  if (customerToken) {
+    if (!isCustomerAuthConfigured(env)) {
+      return jsonResponse({ ok: false, error: "Customer accounts are not configured yet." }, 503);
+    }
+    try {
+      customerIdentity = await verifySupabaseAccessToken(customerToken, env);
+    } catch (_error) {
+      return jsonResponse({ ok: false, error: "Your session expired. Please sign in again." }, 401);
+    }
+  }
   const body = await request.json().catch(() => ({}));
   const eventDate = normalizeRegistrationText(body && body.eventDate, 20);
   if (!sourceId || !eventDate) {
@@ -2581,6 +3302,13 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   if (!email.includes("@")) {
     return jsonResponse({ ok: false, error: "Email address is invalid." }, 400, { "Cache-Control": "no-store" });
   }
+  if (customerIdentity && email !== customerIdentity.email) {
+    return jsonResponse(
+      { ok: false, error: "Use the verified email address connected to your DMZ Scuba account." },
+      400,
+      { "Cache-Control": "no-store" }
+    );
+  }
 
   const snapshotBefore = await getRegistrationSnapshot(env, sourceId, eventDate, config);
   if (snapshotBefore.remainingSpots < partySize) {
@@ -2595,11 +3323,12 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
   const registrationId = crypto.randomUUID();
   await env.DB.prepare(
     `INSERT INTO event_registrations_v2
-     (id, source_id, event_date, first_name, last_name, email, phone, cert_level, additional_guests, party_size, approval_status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     (id, user_id, source_id, event_date, first_name, last_name, email, phone, cert_level, additional_guests, party_size, approval_status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       registrationId,
+      customerIdentity ? customerIdentity.userId : null,
       sourceId,
       eventDate,
       firstName,
@@ -2681,7 +3410,7 @@ async function handleCreateEventRegistrationV2(request, env, sourceId) {
       notifyEmailSent,
       attendeeEmailSent,
       emailWarning: emailWarning || undefined,
-      ...snapshotAfter,
+      ...buildPublicRegistrationSnapshot(snapshotAfter),
     },
     201,
     { "Cache-Control": "no-store" }
@@ -3693,9 +4422,12 @@ async function handleClientTelemetry(request, env, context) {
 
 export {
   buildFunnelEventRecord,
+  buildPublicRegistrationSnapshot,
   deleteExpiredFunnelEvents,
   isTrustedTelemetryOrigin,
   sanitizeAnalyticsPath,
+  validateSupabaseClaims,
+  verifySupabaseAccessToken,
 };
 
 export default {
@@ -3716,6 +4448,36 @@ export default {
       response = await handleEventAlertSubscribe(request, env);
     } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
       response = await handleClientTelemetry(request, env, context);
+    } else if (pathname === "/api/account/auth/status" && request.method === "GET") {
+      response = await handleCustomerAuthStatus(env);
+    } else if (pathname === "/api/account/auth/signup" && request.method === "POST") {
+      response = await handleCustomerSignup(request, env);
+    } else if (pathname === "/api/account/auth/verify" && request.method === "POST") {
+      response = await handleCustomerVerify(request, env);
+    } else if (pathname === "/api/account/auth/login" && request.method === "POST") {
+      response = await handleCustomerLogin(request, env);
+    } else if (pathname === "/api/account/auth/refresh" && request.method === "POST") {
+      response = await handleCustomerRefresh(request, env);
+    } else if (pathname === "/api/account/auth/logout" && request.method === "POST") {
+      response = await handleCustomerLogout(request, env);
+    } else if (pathname === "/api/account/auth/recover" && request.method === "POST") {
+      response = await handleCustomerRecovery(request, env);
+    } else if (pathname === "/api/account/auth/password" && request.method === "PUT") {
+      response = await handleCustomerPasswordUpdate(request, env);
+    } else if (pathname === "/api/account" && request.method === "GET") {
+      response = await handleGetCustomerAccount(request, env);
+    } else if (pathname === "/api/account" && request.method === "PUT") {
+      response = await handleUpdateCustomerProfile(request, env);
+    } else if (pathname === "/api/account/link-existing" && request.method === "POST") {
+      response = await handleLinkCustomerRecords(request, env);
+    } else if (pathname === "/api/account/certifications" && request.method === "POST") {
+      response = await handleCreateCustomerCertification(request, env);
+    } else if (pathname.startsWith("/api/account/certifications/") && request.method === "PUT") {
+      const certificationId = decodeURIComponent(pathname.split("/").pop() || "");
+      response = await handleUpdateCustomerCertification(request, env, certificationId);
+    } else if (pathname.startsWith("/api/account/certifications/") && request.method === "DELETE") {
+      const certificationId = decodeURIComponent(pathname.split("/").pop() || "");
+      response = await handleDeleteCustomerCertification(request, env, certificationId);
     } else if (pathname === "/api/admin/login" && request.method === "POST") {
       response = await handleLogin(request, env);
     } else if (pathname === "/api/admin/event-alert-subscribers" && request.method === "GET") {
@@ -3752,6 +4514,9 @@ export default {
     } else if (pathname.startsWith("/api/v2/events/") && pathname.endsWith("/registrations") && request.method === "POST") {
       const sourceId = decodeURIComponent(pathname.split("/")[4] || "").trim().toLowerCase();
       response = await handleCreateEventRegistrationV2(request, env, sourceId);
+    } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/registrations") && request.method === "GET") {
+      const sourceId = decodeURIComponent(pathname.split("/")[5] || "").trim().toLowerCase();
+      response = await handleGetAdminEventRegistrationsV2(request, env, sourceId);
     } else if (pathname.startsWith("/api/admin/v2/events/") && pathname.endsWith("/alerts") && request.method === "POST") {
       const parts = pathname.split("/");
       const sourceId = decodeURIComponent(parts[5] || "").trim().toLowerCase();

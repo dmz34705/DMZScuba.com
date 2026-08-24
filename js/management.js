@@ -2385,8 +2385,8 @@
     }
     state.registrationLoading = true;
     renderRegistrationManager();
-    const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
-    const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+    const resp = await apiFetch(url, { cache: "no-store" }).catch(() => null);
     const data = resp ? await resp.json().catch(() => ({})) : {};
     state.registrationLoading = false;
     if (!resp || !resp.ok || !data.ok) {
@@ -2830,8 +2830,8 @@
     }
     state.classRegistrationLoading = true;
     renderClassRegistrationEscrow(classRecord);
-    const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
-    const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+    const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+    const resp = await apiFetch(url, { cache: "no-store" }).catch(() => null);
     const data = resp ? await resp.json().catch(() => ({})) : {};
     state.classRegistrationLoading = false;
     if (!resp || !resp.ok || !data.ok) {
@@ -3302,8 +3302,8 @@
     renderRecords();
     const snapshots = await Promise.all(
       contexts.map(async (context) => {
-        const url = `${eventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
-        const resp = await fetch(url, { cache: "no-store" }).catch(() => null);
+        const url = `${adminEventsUrl}/${encodeURIComponent(context.sourceId)}/registrations?date=${encodeURIComponent(context.eventDate)}&t=${Date.now()}`;
+        const resp = await apiFetch(url, { cache: "no-store" }).catch(() => null);
         const data = resp ? await resp.json().catch(() => ({})) : {};
         if (!resp || !resp.ok || !data.ok) return null;
         return { ...data, context };

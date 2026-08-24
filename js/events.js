@@ -375,9 +375,16 @@
 
   async function submitRegistration(sourceId, payload) {
     const url = `${registrationApiRoot}/${encodeURIComponent(sourceId)}/registrations`;
+    const headers = { "Content-Type": "application/json" };
+    try {
+      const customerToken = window.sessionStorage.getItem("dmzCustomerAccessToken") || "";
+      if (customerToken) headers.Authorization = `Bearer ${customerToken}`;
+    } catch (_error) {
+      // Registration remains available when browser storage is disabled.
+    }
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     }).catch(() => null);
     if (!resp) return { ok: false, error: "Network error." };
@@ -760,8 +767,8 @@
               <h4 class="events-public-list-title">Event Registration</h4>
               <p class="events-registration-meta" data-events-registration-meta>Loading registration status...</p>
               <div class="events-registration-list-wrap">
-                <h5>Currently Registered</h5>
-                <ul class="events-registration-list" data-events-registration-list></ul>
+                <h5>Registration Activity</h5>
+                <p class="events-registration-list" data-events-registration-list></p>
               </div>
               <p class="events-registration-closed" data-events-registration-closed hidden>Registration has closed for this event.</p>
               <form class="events-registration-form" data-events-registration-form>
@@ -809,22 +816,10 @@
                   : `${remaining} of ${capacity} spots remaining`;
               if (formEl) formEl.hidden = isUnavailable;
               if (closedEl) closedEl.hidden = !isUnavailable;
-              const registrants = Array.isArray(snapshot.registeredDivers)
-                ? snapshot.registeredDivers
-                : (Array.isArray(snapshot.registrants) ? snapshot.registrants : []);
-              listEl.innerHTML = "";
-              if (!registrants.length) {
-                const li = document.createElement("li");
-                li.textContent = "No registered divers yet.";
-                listEl.appendChild(li);
-                return;
-              }
-              registrants.forEach((entry) => {
-                const li = document.createElement("li");
-                const name = entry && entry.name ? entry.name : "Registered diver";
-                li.textContent = getRegistrationApprovalStatus(entry) === "pending" ? `${name} (registration pending)` : name;
-                listEl.appendChild(li);
-              });
+              const usedSpots = Math.max(0, Number(snapshot.usedSpots) || 0);
+              listEl.textContent = usedSpots
+                ? `${usedSpots} ${usedSpots === 1 ? "spot is" : "spots are"} currently reserved.`
+                : "No spots are reserved yet.";
             };
 
             const loadSnapshot = async () => {

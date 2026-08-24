@@ -10,6 +10,7 @@ This service handles:
 - Cloudflare Stream upload helpers
 - Cloudflare Images upload/delete helpers
 - Destination v2 read/write/delete APIs
+- Customer signup, verified-email login, profiles, certifications, and linked reservations
 
 Source of truth: `src/index.js`.
 
@@ -20,6 +21,14 @@ Source of truth: `src/index.js`.
 - On success, Worker issues a token and stores it in `admin_sessions`
 - Token lifetime: 24 hours
 - Admin routes require header: `Authorization: Bearer <token>`
+
+Customer authentication is separate from the legacy admin login:
+
+- Supabase Auth owns customer credentials, verification codes, password recovery, and refresh tokens.
+- The website receives the refresh token only as an HTTP-only, same-site cookie.
+- Customer API routes require a short-lived Supabase JWT in `Authorization: Bearer <token>`.
+- The Worker verifies the JWT signature against Supabase's JWKS endpoint and uses its `sub` claim as the D1 customer ID.
+- D1 never stores customer passwords or Supabase refresh tokens.
 
 ## API Routes
 
@@ -45,6 +54,32 @@ Source of truth: `src/index.js`.
 
 - `GET /api/v2/destinations/:id`
   - Returns one destination v2 record
+
+- `GET /api/account/auth/status`
+  - Reports whether customer authentication has been configured
+
+- `POST /api/account/auth/signup`
+- `POST /api/account/auth/verify`
+- `POST /api/account/auth/login`
+- `POST /api/account/auth/refresh`
+- `POST /api/account/auth/logout`
+- `POST /api/account/auth/recover`
+  - Customer authentication proxy endpoints; refresh tokens are delivered only by HTTP-only cookie
+
+### Customer
+
+- `GET /api/account`
+  - Returns the signed-in customer's profile, roles, certifications, registrations, and reservations
+- `PUT /api/account`
+  - Updates the signed-in customer's allowed profile fields
+- `POST /api/account/link-existing`
+  - Connects existing records that exactly match the customer's verified email
+- `POST /api/account/certifications`
+- `PUT /api/account/certifications/:id`
+- `DELETE /api/account/certifications/:id`
+  - Manages customer-owned certifications; edited certifications return to pending verification
+- `PUT /api/account/auth/password`
+  - Updates the signed-in customer's password through Supabase
 
 ### Admin
 
@@ -104,6 +139,12 @@ Primary tables:
 - `admin_sessions`
 - `destinations_v2`
 - `funnel_events`
+- `customer_profiles`
+- `customer_roles`
+- `customer_certifications`
+- `customer_reservations`
+- `customer_documents`
+- `customer_audit_log`
 
 Legacy compatibility tables also exist in schema:
 - `destinations`
@@ -135,6 +176,10 @@ Legacy compatibility tables also exist in schema:
 ### Optional
 
 - `ALLOWED_ORIGINS`
+- `SUPABASE_URL` (required to enable customer accounts)
+- `SUPABASE_PUBLISHABLE_KEY` (required to enable customer accounts; never use the service-role key)
+- `SUPABASE_JWT_AUDIENCE` (defaults to `authenticated`)
+- `TURNSTILE_SITE_KEY` (required to enable customer signup, login, and recovery)
 - `FUNNEL_RETENTION_DAYS` (defaults to `400` and is constrained to 30–730 days)
 - `CF_IMAGES_ACCOUNT_ID` (falls back to `CF_ACCOUNT_ID`)
 - `RESEND_TEMPLATE_GENERAL_INQUIRY`

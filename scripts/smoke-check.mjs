@@ -130,6 +130,7 @@ async function run() {
     () => checkHtml("/pages/contact/index.html", "quickContactForm"),
     () => checkHtml("/pages/media/index.html", "mediaGrid"),
     () => checkHtml("/pages/travel/index.html", "travel-page"),
+    () => checkHtml("/pages/account/index.html", "data-account-app"),
   ];
 
   if (!skipApi) {

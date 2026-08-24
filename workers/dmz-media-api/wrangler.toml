@@ -12,6 +12,7 @@ migrations_dir = "migrations"
 # Optional: comma-separated list of allowed origins.
 ALLOWED_ORIGINS = "https://dmzscuba-com.pages.dev,https://dmzscuba.com,http://localhost:8080,http://127.0.0.1:8080"
 FUNNEL_RETENTION_DAYS = "400"
+SUPABASE_JWT_AUDIENCE = "authenticated"
 RESEND_FROM_EMAIL = "no-reply@dmzscuba.com"
 RESEND_FROM_NAME = "DMZ Scuba"
 RESEND_TO = "info@dmzscuba.com"
@@ -27,6 +28,10 @@ RESEND_TO = "info@dmzscuba.com"
 # RESEND_TEMPLATE_KEY_LARGO = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_COZUMEL = "tmpl_xxxxxxxxxxxxx"
 # RESEND_TEMPLATE_INTEREST_DEFAULT = "tmpl_xxxxxxxxxxxxx"
+# Customer accounts (configure as Worker secrets or dashboard variables; never commit a service-role key)
+# SUPABASE_URL = "https://your-project-ref.supabase.co"
+# SUPABASE_PUBLISHABLE_KEY = "sb_publishable_xxxxxxxxxxxxx"
+# TURNSTILE_SITE_KEY = "0x4AAAAAxxxxxxxxxxxx"
 # Cloudflare Images (set via dashboard/vars or secrets)
 # CF_IMAGES_TOKEN = ""
 # CF_IMAGES_ACCOUNT_ID = ""

@@ -3,6 +3,8 @@ http://dmzscuba.com/* https://www.dmzscuba.com/:splat 301
 /api/* https://dmz-media-api.zacharylisowski55.workers.dev/api/:splat 200
 /management /management/index.html 200
 /management/ /management/index.html 200
+/account /pages/account/index.html 200
+/account/ /pages/account/index.html 200
 /training /pages/training/index.html 200
 /nfc /pages/nfc/index.html 200
 /nfc/ /pages/nfc/index.html 200

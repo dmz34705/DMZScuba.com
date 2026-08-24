@@ -399,6 +399,7 @@ console.log("main.js loaded");
       { href: "/pages/events/", label: "Events" },
       { href: "/pages/contact/", label: "Contact" },
       { href: "/pages/about/", label: "About" },
+      { href: "/pages/account/", label: "Account" },
     ];
 
     const linksHtml = navLinks
