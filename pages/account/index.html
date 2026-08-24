@@ -10,7 +10,7 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260823a" />
-  <link rel="stylesheet" href="/css/pages/account.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824a" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
 </head>
 
@@ -159,6 +159,50 @@
             <p class="account-form-status" data-certification-status aria-live="polite"></p>
           </form>
         </article>
+
+        <article class="account-card account-settings-card">
+          <div class="account-card-heading">
+            <p class="account-eyebrow">Sign-in security</p>
+            <h3>Password and email</h3>
+            <p>Update the credentials you use on the DMZ Scuba website and mobile app.</p>
+          </div>
+          <div class="account-settings-grid">
+            <section>
+              <h4>Change password</h4>
+              <form class="account-form" data-change-password-form>
+                <label><span>Current Password</span><input type="password" name="currentPassword" autocomplete="current-password" required /></label>
+                <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
+                <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+                <button class="btn secondary" type="submit">Change Password</button>
+                <p class="account-form-status" data-change-password-status aria-live="polite"></p>
+              </form>
+            </section>
+
+            <section>
+              <h4>Change email address</h4>
+              <p class="account-settings-copy">Current verified email: <strong data-security-current-email></strong></p>
+              <form class="account-form" data-change-email-form>
+                <label><span>New Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
+                <button class="btn secondary" type="submit">Send Verification Codes</button>
+                <p class="account-form-status" data-change-email-status aria-live="polite"></p>
+              </form>
+
+              <div class="account-email-verification" data-email-verification hidden>
+                <p>For security, confirm the request from both inboxes.</p>
+                <form class="account-form" data-current-email-code-form>
+                  <label><span data-current-email-code-label>Code sent to your current email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
+                  <button class="btn secondary" type="submit">Verify Current Email</button>
+                  <p class="account-form-status" data-current-email-code-status aria-live="polite"></p>
+                </form>
+                <form class="account-form" data-new-email-code-form hidden>
+                  <label><span data-new-email-code-label>Code sent to your new email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
+                  <button class="btn primary" type="submit">Verify New Email</button>
+                  <p class="account-form-status" data-new-email-code-status aria-live="polite"></p>
+                </form>
+              </div>
+            </section>
+          </div>
+        </article>
       </div>
 
       <div class="account-card account-activity-card">
@@ -181,6 +225,6 @@
 
   <script src="/js/main.js?v=20260823a"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260823a"></script>
+  <script src="/js/account.js?v=20260824a"></script>
 </body>
 </html>

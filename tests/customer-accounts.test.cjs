@@ -139,12 +139,19 @@ test("account portal stays disabled until Supabase and Turnstile are configured"
   assert.equal(configuredData.turnstileSiteKey, "0x4AAAA-test");
 });
 
-test("customer account endpoints reject requests without a JWT", async () => {
+test("customer account and credential endpoints reject requests without a JWT", async () => {
   const worker = await workerModulePromise;
-  const request = new Request("https://dmzscuba.com/api/account", { method: "GET" });
-  const response = await worker.default.fetch(request, {}, { waitUntil() {} });
-  assert.equal(response.status, 401);
-  assert.deepEqual(await response.json(), { ok: false, error: "Sign in is required." });
+  const requests = [
+    new Request("https://dmzscuba.com/api/account", { method: "GET" }),
+    new Request("https://dmzscuba.com/api/account/auth/password", { method: "PUT" }),
+    new Request("https://dmzscuba.com/api/account/auth/email", { method: "PUT" }),
+    new Request("https://dmzscuba.com/api/account/auth/email/verify", { method: "POST" }),
+  ];
+  for (const request of requests) {
+    const response = await worker.default.fetch(request, {}, { waitUntil() {} });
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { ok: false, error: "Sign in is required." });
+  }
 });
 
 test("account migration and page include the required foundation", () => {
@@ -158,8 +165,15 @@ test("account migration and page include the required foundation", () => {
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
   assert.match(page, /data-signup-form/);
   assert.match(page, /data-turnstile="signup"/);
+  assert.match(page, /data-change-password-form/);
+  assert.match(page, /data-change-email-form/);
+  assert.match(page, /data-current-email-code-form/);
+  assert.match(page, /data-new-email-code-form/);
   assert.match(client, /dmzCustomerAccessToken/);
   assert.match(client, /\/api\/account\/link-existing/);
+  assert.match(client, /\/api\/account\/auth\/email\/verify/);
+  assert.match(workerSource, /current_password/);
+  assert.match(workerSource, /type: "email_change"/);
 });
 
 (async () => {

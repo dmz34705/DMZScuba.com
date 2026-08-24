@@ -21,8 +21,10 @@ In **Authentication > Providers > Email**:
 
 1. Keep email/password signup enabled.
 2. Enable email confirmation.
-3. Do not enable anonymous sign-ins.
-4. Set the one-time code expiry to one hour or less.
+3. Keep **Secure email change** enabled. The DMZ Scuba account page confirms one code from the current inbox and one from the new inbox.
+4. Enable the setting that requires the current password for password changes.
+5. Do not enable anonymous sign-ins.
+6. Set the one-time code expiry to one hour or less.
 
 The website intentionally rejects a signup that immediately returns a session because that indicates email confirmation is disabled.
 
@@ -39,7 +41,63 @@ Use the Resend SMTP credentials:
 
 Use a dedicated authentication sender such as `accounts@auth.dmzscuba.com`. Keep authentication email tracking disabled.
 
-Update the signup-confirmation and password-recovery templates to prominently display `{{ .Token }}` as a six-digit code. The account page verifies codes directly, so the customer does not need to open an email link on the same device.
+The account page verifies codes directly, so customers do not need to open an email link on the same device. In **Authentication > Email Templates**, replace these three templates.
+
+### Confirm signup
+
+Subject:
+
+```text
+Confirm your DMZ Scuba account
+```
+
+Body:
+
+```html
+<h2>Welcome to DMZ Scuba</h2>
+<p>Enter this verification code on the DMZ Scuba account page to confirm your email address:</p>
+<p style="font-size:32px;font-weight:800;letter-spacing:8px;margin:24px 0;">{{ .Token }}</p>
+<p>If you did not create a DMZ Scuba account, you can ignore this email.</p>
+```
+
+### Reset password
+
+Subject:
+
+```text
+Reset your DMZ Scuba password
+```
+
+Body:
+
+```html
+<h2>Reset your DMZ Scuba password</h2>
+<p>Enter this recovery code on the DMZ Scuba account page:</p>
+<p style="font-size:32px;font-weight:800;letter-spacing:8px;margin:24px 0;">{{ .Token }}</p>
+<p>If you did not request a password reset, you can ignore this email. Your password will not change.</p>
+```
+
+### Change email address
+
+Subject:
+
+```text
+Confirm your DMZ Scuba email change
+```
+
+Body:
+
+```html
+<h2>Confirm your email change</h2>
+<p>A request was made to change the DMZ Scuba sign-in email from <strong>{{ .Email }}</strong> to <strong>{{ .NewEmail }}</strong>.</p>
+<p>Enter the code from this email in the matching field on the DMZ Scuba account page:</p>
+<p style="font-size:32px;font-weight:800;letter-spacing:8px;margin:24px 0;">{{ .Token }}</p>
+<p>For security, the change is completed only after the codes sent to both email addresses are verified. If you did not request this change, do not enter the code.</p>
+```
+
+The **Change email address** template is sent once to the current address and once to the new address when Secure email change is enabled. Each message contains its own code.
+
+Also enable the **Password changed** and **Email changed** security-notification templates. These are alerts after a change succeeds and should tell the customer to contact DMZ Scuba immediately if they did not make the change. They do not use verification codes.
 
 ## 4. Add abuse protection
 

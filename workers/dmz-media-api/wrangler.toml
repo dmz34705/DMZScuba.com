@@ -28,10 +28,10 @@ RESEND_TO = "info@dmzscuba.com"
 # RESEND_TEMPLATE_KEY_LARGO = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # RESEND_TEMPLATE_COZUMEL = "tmpl_xxxxxxxxxxxxx"
 # RESEND_TEMPLATE_INTEREST_DEFAULT = "tmpl_xxxxxxxxxxxxx"
-# Customer accounts (configure as Worker secrets or dashboard variables; never commit a service-role key)
-# SUPABASE_URL = "https://your-project-ref.supabase.co"
-# SUPABASE_PUBLISHABLE_KEY = "sb_publishable_xxxxxxxxxxxxx"
-# TURNSTILE_SITE_KEY = "0x4AAAAAxxxxxxxxxxxx"
+# Customer accounts (public client values; never add a service-role key here)
+SUPABASE_URL = "https://nglcfndmfseknnthrvsw.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_5O0i-NkpVvg0VPr3k3fhuw_1i5WkDBE"
+TURNSTILE_SITE_KEY = "0x4AAAAAAEZxIzJa-s83Vz8i"
 # Cloudflare Images (set via dashboard/vars or secrets)
 # CF_IMAGES_TOKEN = ""
 # CF_IMAGES_ACCOUNT_ID = ""

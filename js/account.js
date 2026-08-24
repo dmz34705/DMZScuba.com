@@ -11,6 +11,7 @@
   const tabs = Array.from(app.querySelectorAll("[data-account-tab]"));
   let accessToken = "";
   let account = null;
+  let pendingEmailChange = null;
   let authEnabled = false;
   const captchaTokens = { login: "", signup: "", recovery: "" };
   const captchaWidgetIds = {};
@@ -212,9 +213,11 @@
     }
     const greeting = app.querySelector("[data-dashboard-greeting]");
     const email = app.querySelector("[data-dashboard-email]");
+    const securityEmail = app.querySelector("[data-security-current-email]");
     const displayName = profile.preferredName || profile.firstName || "Diver";
     if (greeting) greeting.textContent = `Welcome, ${displayName}`;
     if (email) email.textContent = profile.email || "";
+    if (securityEmail) securityEmail.textContent = profile.email || "";
     renderCertifications(Array.isArray(data.certifications) ? data.certifications : []);
     renderEventRegistrations(Array.isArray(data.eventRegistrations) ? data.eventRegistrations : []);
     renderReservations(Array.isArray(data.reservations) ? data.reservations : []);
@@ -225,6 +228,7 @@
 
   function showSignedOut() {
     account = null;
+    pendingEmailChange = null;
     dashboard.hidden = true;
     authSection.hidden = false;
     showPanel("login");
@@ -393,6 +397,144 @@
       setMessage(status, error.message, true);
     } finally {
       setFormBusy(passwordForm, false);
+    }
+  });
+
+  const changePasswordForm = app.querySelector("[data-change-password-form]");
+  changePasswordForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = app.querySelector("[data-change-password-status]");
+    const password = changePasswordForm.elements.password.value;
+    if (password !== changePasswordForm.elements.confirmPassword.value) {
+      setMessage(status, "The new passwords do not match.", true);
+      return;
+    }
+    setMessage(status, "Changing your password...");
+    setFormBusy(changePasswordForm, true);
+    try {
+      const data = await apiRequest("/api/account/auth/password", {
+        method: "PUT",
+        body: JSON.stringify({
+          currentPassword: changePasswordForm.elements.currentPassword.value,
+          password,
+        }),
+      });
+      changePasswordForm.reset();
+      setMessage(status, data.message || "Your password has been updated.");
+    } catch (error) {
+      setMessage(status, error.message, true);
+    } finally {
+      setFormBusy(changePasswordForm, false);
+    }
+  });
+
+  const changeEmailForm = app.querySelector("[data-change-email-form]");
+  const emailVerification = app.querySelector("[data-email-verification]");
+  const currentEmailCodeForm = app.querySelector("[data-current-email-code-form]");
+  const newEmailCodeForm = app.querySelector("[data-new-email-code-form]");
+
+  changeEmailForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = app.querySelector("[data-change-email-status]");
+    const currentEmail = String(account && account.profile && account.profile.email || "").trim().toLowerCase();
+    const newEmail = String(changeEmailForm.elements.email.value || "").trim().toLowerCase();
+    if (newEmail === currentEmail) {
+      setMessage(status, "Enter an email address different from your current one.", true);
+      return;
+    }
+    setMessage(status, "Sending verification codes...");
+    setFormBusy(changeEmailForm, true);
+    try {
+      const data = await apiRequest("/api/account/auth/email", {
+        method: "PUT",
+        body: JSON.stringify({ email: newEmail }),
+      });
+      pendingEmailChange = {
+        currentEmail: String(data.currentEmail || currentEmail).toLowerCase(),
+        newEmail: String(data.newEmail || newEmail).toLowerCase(),
+      };
+      currentEmailCodeForm.reset();
+      newEmailCodeForm.reset();
+      currentEmailCodeForm.hidden = false;
+      newEmailCodeForm.hidden = true;
+      app.querySelector("[data-current-email-code-label]").textContent = `Code sent to ${pendingEmailChange.currentEmail}`;
+      app.querySelector("[data-new-email-code-label]").textContent = `Code sent to ${pendingEmailChange.newEmail}`;
+      emailVerification.hidden = false;
+      setMessage(status, data.message || "Check both email addresses for verification codes.");
+      currentEmailCodeForm.elements.token.focus();
+    } catch (error) {
+      setMessage(status, error.message, true);
+    } finally {
+      setFormBusy(changeEmailForm, false);
+    }
+  });
+
+  currentEmailCodeForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = app.querySelector("[data-current-email-code-status]");
+    if (!pendingEmailChange) {
+      setMessage(status, "Start the email change again.", true);
+      return;
+    }
+    setMessage(status, "Verifying your current email...");
+    setFormBusy(currentEmailCodeForm, true);
+    try {
+      const data = await apiRequest("/api/account/auth/email/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          email: pendingEmailChange.currentEmail,
+          token: currentEmailCodeForm.elements.token.value,
+          stage: "current",
+        }),
+      });
+      setMessage(app.querySelector("[data-change-email-status]"), data.message);
+      currentEmailCodeForm.hidden = true;
+      newEmailCodeForm.hidden = false;
+      newEmailCodeForm.elements.token.focus();
+    } catch (error) {
+      setMessage(status, error.message, true);
+    } finally {
+      setFormBusy(currentEmailCodeForm, false);
+    }
+  });
+
+  newEmailCodeForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const status = app.querySelector("[data-new-email-code-status]");
+    if (!pendingEmailChange) {
+      setMessage(status, "Start the email change again.", true);
+      return;
+    }
+    setMessage(status, "Verifying your new email...");
+    setFormBusy(newEmailCodeForm, true);
+    try {
+      const data = await apiRequest("/api/account/auth/email/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          email: pendingEmailChange.newEmail,
+          token: newEmailCodeForm.elements.token.value,
+          stage: "new",
+        }),
+      });
+      if (data.accessToken) storeAccessToken(data.accessToken);
+      const sessionReady = Boolean(data.accessToken) || await refreshSession();
+      if (!sessionReady) {
+        const newEmail = pendingEmailChange.newEmail;
+        storeAccessToken("");
+        showSignedOut();
+        loginForm.elements.email.value = newEmail;
+        setMessage(systemStatus, "Your email was changed. Sign in again with your new email address.");
+        return;
+      }
+      pendingEmailChange = null;
+      emailVerification.hidden = true;
+      changeEmailForm.reset();
+      await loadAccount();
+      setMessage(dashboardStatus, data.message || "Your email address has been changed.");
+    } catch (error) {
+      setMessage(status, error.message, true);
+    } finally {
+      setFormBusy(newEmailCodeForm, false);
     }
   });
 

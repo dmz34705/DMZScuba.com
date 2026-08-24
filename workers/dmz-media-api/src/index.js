@@ -247,7 +247,7 @@ function getSupabaseAuthError(result, fallback) {
   return message && message.length <= 240 ? message : fallback;
 }
 
-function customerSessionResponse(request, data, status = 200) {
+function customerSessionResponse(request, data, status = 200, extra = {}) {
   const accessToken = String(data && data.access_token || "");
   const refreshToken = String(data && data.refresh_token || "");
   if (!accessToken || !refreshToken) {
@@ -257,6 +257,7 @@ function customerSessionResponse(request, data, status = 200) {
   return jsonResponse(
     {
       ok: true,
+      ...extra,
       accessToken,
       expiresIn: Math.max(0, Number(data.expires_in) || 0),
       user: {
@@ -1173,14 +1174,83 @@ async function handleCustomerPasswordUpdate(request, env) {
   if (auth.response) return auth.response;
   const body = await request.json().catch(() => ({}));
   const password = String(body.password || "");
+  const currentPassword = String(body.currentPassword || "");
   if (password.length < 12 || password.length > 128) {
     return jsonResponse({ ok: false, error: "Use a password between 12 and 128 characters." }, 400);
   }
-  const result = await callSupabaseAuth(env, "/user", { password }, getBearerToken(request), "PUT");
+  const update = { password };
+  if (currentPassword) update.current_password = currentPassword;
+  const result = await callSupabaseAuth(env, "/user", update, getBearerToken(request), "PUT");
   if (!result.ok) {
     return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The password could not be updated.") }, result.status || 400);
   }
   return jsonResponse({ ok: true, message: "Your password has been updated." }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleCustomerEmailUpdate(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Enter a valid new email address." }, 400);
+  }
+  if (email === auth.identity.email) {
+    return jsonResponse({ ok: false, error: "Enter an email address different from your current one." }, 400);
+  }
+  const result = await callSupabaseAuth(env, "/user", { email }, getBearerToken(request), "PUT");
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The email change could not be started.") }, result.status || 400);
+  }
+  await writeCustomerAudit(env, auth.identity.userId, "auth.email_change_requested", "customer_profile", auth.identity.userId);
+  return jsonResponse(
+    {
+      ok: true,
+      currentEmail: auth.identity.email,
+      newEmail: email,
+      message: "Verification codes were sent to your current and new email addresses.",
+    },
+    200,
+    { "Cache-Control": "no-store" }
+  );
+}
+
+async function handleCustomerEmailVerification(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const token = String(body.token || "").trim().replace(/\s+/g, "").slice(0, 20);
+  const stage = String(body.stage || "") === "new" ? "new" : "current";
+  if (!email || !token) return jsonResponse({ ok: false, error: "Enter the email verification code." }, 400);
+  if (stage === "current" && email !== auth.identity.email) {
+    return jsonResponse({ ok: false, error: "The current email address does not match your signed-in account." }, 400);
+  }
+  const result = await callSupabaseAuth(env, "/verify", { email, token, type: "email_change" }, getBearerToken(request));
+  if (!result.ok) {
+    return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "The verification code is invalid or expired.") }, result.status || 400);
+  }
+  if (stage === "current") {
+    return jsonResponse(
+      { ok: true, complete: false, message: "Current email verified. Now enter the code sent to your new email address." },
+      200,
+      { "Cache-Control": "no-store" }
+    );
+  }
+  await writeCustomerAudit(env, auth.identity.userId, "auth.email_change_verified", "customer_profile", auth.identity.userId);
+  if (result.data && result.data.access_token && result.data.refresh_token) {
+    return customerSessionResponse(
+      request,
+      result.data,
+      200,
+      { complete: true, message: "Your email address has been changed." }
+    );
+  }
+  return jsonResponse(
+    { ok: true, complete: true, refreshRequired: true, message: "Your email address has been changed." },
+    200,
+    { "Cache-Control": "no-store" }
+  );
 }
 
 function normalizeCustomerText(value, maxLength = 160) {
@@ -4464,6 +4534,10 @@ export default {
       response = await handleCustomerRecovery(request, env);
     } else if (pathname === "/api/account/auth/password" && request.method === "PUT") {
       response = await handleCustomerPasswordUpdate(request, env);
+    } else if (pathname === "/api/account/auth/email" && request.method === "PUT") {
+      response = await handleCustomerEmailUpdate(request, env);
+    } else if (pathname === "/api/account/auth/email/verify" && request.method === "POST") {
+      response = await handleCustomerEmailVerification(request, env);
     } else if (pathname === "/api/account" && request.method === "GET") {
       response = await handleGetCustomerAccount(request, env);
     } else if (pathname === "/api/account" && request.method === "PUT") {
