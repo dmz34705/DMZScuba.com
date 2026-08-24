@@ -670,6 +670,13 @@
 
 .mgmt-accounts-body { padding: 20px; }
 
+.mgmt-panel-subtitle {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .mgmt-account-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

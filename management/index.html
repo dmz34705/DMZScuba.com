@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260824a" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260824b" />
 </head>
 
 <body class="management-page">
@@ -51,29 +51,47 @@
 
           <div class="mgmt-brand">
             <img src="/assets/images/logos/dmz-scuba-logo.png" alt="DMZ Scuba" />
-            <span class="mgmt-brand-name">DMZ Admin</span>
+            <span class="mgmt-brand-name">DMZ Console</span>
           </div>
 
           <nav class="mgmt-nav" aria-label="Management navigation">
+            <div class="mgmt-nav-section">
+              <span class="mgmt-nav-label">Overview</span>
 
-            <button class="mgmt-nav-item mgmt-nav-home mgmt-nav-primary" type="button"
-                    data-site-studio-tab="home">
-              <span class="mgmt-nav-text mgmt-nav-home-desktop">Dashboard</span>
-              <span class="mgmt-nav-text mgmt-nav-home-mobile">Home</span>
-            </button>
+              <button class="mgmt-nav-item mgmt-nav-home mgmt-nav-primary is-active" type="button"
+                      data-site-studio-tab="home" aria-current="page">
+                <span class="mgmt-nav-text mgmt-nav-home-desktop">Dashboard</span>
+                <span class="mgmt-nav-text mgmt-nav-home-mobile">Home</span>
+              </button>
+            </div>
 
             <div class="mgmt-nav-section">
-              <span class="mgmt-nav-label">Operations</span>
+              <span class="mgmt-nav-label">People</span>
 
-              <button class="mgmt-nav-item mgmt-nav-primary is-active" type="button"
-                      data-filter-type="all" data-site-studio-tab="operations">
-                <span class="mgmt-nav-text">Agenda</span>
-                <span class="mgmt-nav-badge" data-filter-count></span>
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
+                      data-site-studio-tab="accounts" data-accounts-nav hidden>
+                <span class="mgmt-nav-text">Customer Accounts</span>
               </button>
 
               <button class="mgmt-nav-item mgmt-nav-primary" type="button"
                       data-filter-type="contact" data-site-studio-open="operations">
                 <span class="mgmt-nav-text">Contacts</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+
+              <button class="mgmt-nav-item mgmt-nav-secondary" type="button"
+                      data-filter-type="registration" data-site-studio-open="operations">
+                <span class="mgmt-nav-text">Event Signups</span>
+                <span class="mgmt-nav-badge" data-filter-count></span>
+              </button>
+            </div>
+
+            <div class="mgmt-nav-section">
+              <span class="mgmt-nav-label">Daily Work</span>
+
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
+                      data-filter-type="all" data-site-studio-tab="operations">
+                <span class="mgmt-nav-text">Agenda</span>
                 <span class="mgmt-nav-badge" data-filter-count></span>
               </button>
 
@@ -100,21 +118,10 @@
                 <span class="mgmt-nav-text">Tasks</span>
                 <span class="mgmt-nav-badge" data-filter-count></span>
               </button>
-
-              <button class="mgmt-nav-item mgmt-nav-secondary" type="button"
-                      data-filter-type="registration" data-site-studio-open="operations">
-                <span class="mgmt-nav-text">Signups</span>
-                <span class="mgmt-nav-badge" data-filter-count></span>
-              </button>
-
-              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
-                      data-site-studio-tab="accounts" data-accounts-nav hidden>
-                <span class="mgmt-nav-text">Accounts</span>
-              </button>
             </div>
 
             <div class="mgmt-nav-section">
-              <span class="mgmt-nav-label">Content</span>
+              <span class="mgmt-nav-label">Website</span>
 
               <button class="mgmt-nav-item" type="button" data-site-studio-tab="media">
                 <span class="mgmt-nav-text">Media Library</span>
@@ -127,7 +134,7 @@
             </div>
 
             <div class="mgmt-nav-section">
-              <span class="mgmt-nav-label">Insights</span>
+              <span class="mgmt-nav-label">Results</span>
               <button class="mgmt-nav-item" type="button" data-site-studio-tab="analytics">
                 <span class="mgmt-nav-text">Site Analytics</span>
               </button>
@@ -409,8 +416,20 @@
               </div>
               <!-- Site content quick links -->
               <div class="mgmt-dash-studio">
-                <h3 class="mgmt-dash-studio-hd">Site Content</h3>
+                <h3 class="mgmt-dash-studio-hd">Your Shortcuts</h3>
                 <div class="management-studio-cards">
+                  <article data-accounts-shortcut hidden>
+                    <p class="management-kicker">People and access</p>
+                    <h3>Customer Accounts</h3>
+                    <p>Review registered customers, assign account types, restore access, or combine duplicates.</p>
+                    <button type="button" data-site-studio-open="accounts">Manage Accounts</button>
+                  </article>
+                  <article>
+                    <p class="management-kicker">Today’s work</p>
+                    <h3>Agenda</h3>
+                    <p>See open follow-ups, classes, trips, inquiries, and tasks in one working list.</p>
+                    <button type="button" data-site-studio-open="operations">Open Agenda</button>
+                  </article>
                   <article>
                     <p class="management-kicker">News ticker</p>
                     <h3>Homepage Ticker</h3>
@@ -438,7 +457,8 @@
             <div class="mgmt-topbar">
               <div class="mgmt-topbar-left">
                 <p class="management-kicker">Administrator tools</p>
-                <h1 class="mgmt-panel-title">Customer Accounts</h1>
+                <h1 class="mgmt-panel-title">Registered Customer Accounts</h1>
+                <p class="mgmt-panel-subtitle">Manage who can sign in and what each person can access.</p>
               </div>
               <div class="mgmt-topbar-right">
                 <input class="mgmt-search-input" type="search" data-account-search placeholder="Search name or email" aria-label="Search accounts" />
@@ -467,6 +487,15 @@
 
         <!-- More panel: hidden on desktop, slides above tab bar on mobile -->
         <div class="mgmt-nav-more-panel" data-more-panel hidden>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="accounts" data-accounts-more hidden>
+            <span class="mgmt-nav-text">Customer Accounts</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="operations">
+            <span class="mgmt-nav-text">Agenda</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-filter="contact">
+            <span class="mgmt-nav-text">Contacts</span>
+          </button>
           <button class="mgmt-nav-more-item" type="button" data-more-filter="inquiry">
             <span class="mgmt-nav-text">Inquiries</span>
             <span class="mgmt-nav-badge" data-more-badge="inquiry"></span>
@@ -476,8 +505,14 @@
             <span class="mgmt-nav-badge" data-more-badge="task"></span>
           </button>
           <button class="mgmt-nav-more-item" type="button" data-more-filter="registration">
-            <span class="mgmt-nav-text">Signups</span>
+            <span class="mgmt-nav-text">Event Signups</span>
             <span class="mgmt-nav-badge" data-more-badge="registration"></span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-filter="class">
+            <span class="mgmt-nav-text">Classes</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-filter="trip">
+            <span class="mgmt-nav-text">Calendar</span>
           </button>
           <button class="mgmt-nav-more-item" type="button" data-more-tab="media">
             <span class="mgmt-nav-text">Media Library</span>
@@ -923,8 +958,8 @@
 
   </main>
 
-  <script src="/js/management.js?v=20260824a" defer></script>
-  <script src="/js/management-accounts.js?v=20260824a" defer></script>
+  <script src="/js/management.js?v=20260824b" defer></script>
+  <script src="/js/management-accounts.js?v=20260824b" defer></script>
   <script src="/js/management-media-studio.js?v=20260824a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260824a" defer></script>
   <script src="/js/management-dashboard.js?v=20260824a" defer></script>
@@ -932,7 +967,7 @@
   <script src="/js/management-quick-advance.js?v=20260824a" defer></script>
   <script src="/js/management-note-logger.js?v=20260508f" defer></script>
   <script src="/js/management-keyboard.js?v=20260508g" defer></script>
-  <script src="/js/management-more.js?v=20260823a" defer></script>
+  <script src="/js/management-more.js?v=20260824b" defer></script>
   <script src="/js/management-bulk.js?v=20260824a" defer></script>
   <script src="/js/management-balance.js?v=20260824a" defer></script>
   <script src="/js/management-hide-complete.js?v=20260508u" defer></script>
@@ -941,7 +976,7 @@
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {
       var filterBtns = document.querySelectorAll('[data-filter-type]');
-      ['media', 'travel', 'analytics', 'home'].forEach(function (key) {
+      ['accounts', 'media', 'travel', 'analytics', 'home'].forEach(function (key) {
         var tab = document.querySelector('[data-site-studio-tab="' + key + '"]');
         if (tab) tab.addEventListener('click', function () {
           filterBtns.forEach(function (b) { b.classList.remove('is-active'); });

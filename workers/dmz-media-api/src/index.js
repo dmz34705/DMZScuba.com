@@ -45,9 +45,20 @@ function withCors(request, env, headers = {}) {
   };
 }
 
-async function requireAuth(request, env) {
+async function hasLegacyAdminSession(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return false;
+  const row = await env.DB.prepare(
+    "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
+  )
+    .bind(token, new Date().toISOString())
+    .first();
+  return !!row;
+}
+
+async function requireAuth(request, env) {
+  const token = getBearerToken(request);
   if (!token) return false;
   if (token.includes(".") && isCustomerAuthConfigured(env)) {
     try {
@@ -61,12 +72,7 @@ async function requireAuth(request, env) {
       // Fall through to the temporary legacy admin session check.
     }
   }
-  const row = await env.DB.prepare(
-    "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
-  )
-    .bind(token, new Date().toISOString())
-    .first();
-  return !!row;
+  return hasLegacyAdminSession(request, env);
 }
 
 const customerJwksCache = new Map();
@@ -1387,6 +1393,14 @@ async function getCustomerRoles(env, userId) {
 }
 
 async function requireManagementIdentity(request, env, adminOnly = false) {
+  const token = getBearerToken(request);
+  if (token && !token.includes(".") && await hasLegacyAdminSession(request, env)) {
+    return {
+      identity: { userId: "legacy-admin", email: "", sessionId: "legacy-admin", aal: "aal1", userMetadata: {} },
+      roles: ["staff", "admin"],
+      legacy: true,
+    };
+  }
   const auth = await requireCustomerIdentity(request, env);
   if (auth.response) return auth;
   const roles = await getCustomerRoles(env, auth.identity.userId);
@@ -1516,6 +1530,7 @@ async function handleGetManagementAccess(request, env) {
     email: auth.identity.email,
     roles: auth.roles,
     isAdministrator: auth.roles.includes("admin"),
+    authMode: auth.legacy ? "legacy" : "account",
   }, 200, { "Cache-Control": "no-store" });
 }
 

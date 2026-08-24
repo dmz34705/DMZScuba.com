@@ -341,6 +341,8 @@
       const isActive = tab.getAttribute("data-site-studio-tab") === activeKey;
       tab.classList.toggle("is-active", isActive);
       tab.setAttribute("aria-selected", isActive ? "true" : "false");
+      if (isActive) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
     });
 
     const frame = targetPanel.querySelector("[data-site-studio-frame]");
@@ -353,7 +355,16 @@
   function showAuthed(authed) {
     if (loginSection) loginSection.hidden = authed;
     if (dashboard) dashboard.hidden = !authed;
-    if (authed) openSiteStudioPanel("operations");
+    if (authed) openSiteStudioPanel("home");
+  }
+
+  async function validateManagementAccess() {
+    const accessUrl = apiRoot ? `${apiRoot}/api/admin/access` : "/api/admin/access";
+    const response = await apiFetch(accessUrl, { headers: { Accept: "application/json" } }).catch(() => null);
+    if (!response || !response.ok) return null;
+    const access = await response.json().catch(() => ({}));
+    window.dispatchEvent(new CustomEvent("dmz:management-access", { detail: access }));
+    return access;
   }
 
   function syncFloatingSave() {
@@ -3792,6 +3803,12 @@
       return;
     }
     setToken(data.token);
+    const access = await validateManagementAccess();
+    if (!access) {
+      setToken("");
+      setStatus(loginStatus, "The console could not confirm your access. Please try again.", "error");
+      return;
+    }
     setStatus(loginStatus, "");
     const redirectTo = new URLSearchParams(window.location.search).get("redirect");
     if (redirectTo && redirectTo.startsWith("/")) {
@@ -4260,15 +4277,11 @@
       showAuthed(false);
       return;
     }
-    if (getCustomerToken()) {
-      const accessResponse = await apiFetch(apiRoot ? `${apiRoot}/api/admin/access` : "/api/admin/access", { headers: { Accept: "application/json" } }).catch(() => null);
-      if (!accessResponse || !accessResponse.ok) {
-        showAuthed(false);
-        setStatus(loginStatus, "This account does not have Employee access. Return to My Account or ask an administrator for help.", "error");
-        return;
-      }
-      const access = await accessResponse.json().catch(() => ({}));
-      window.dispatchEvent(new CustomEvent("dmz:management-access", { detail: access }));
+    const access = await validateManagementAccess();
+    if (!access) {
+      showAuthed(false);
+      setStatus(loginStatus, "This login does not have Management Console access. Sign in with an Employee account or ask an administrator for help.", "error");
+      return;
     }
     showAuthed(true);
     await loadRecords({ silent: true });

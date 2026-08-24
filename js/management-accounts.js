@@ -215,12 +215,13 @@
   async function enableForAdministrator(access) {
     if (!access || !access.isAdministrator) return;
     nav.hidden = false;
+    app.querySelectorAll("[data-accounts-shortcut], [data-accounts-more]").forEach((shortcut) => { shortcut.hidden = false; });
   }
 
   window.addEventListener("dmz:management-access", (event) => enableForAdministrator(event.detail));
-  const customerToken = sessionStorage.getItem("dmzCustomerAccessToken") || "";
-  if (customerToken) {
-    fetch(`${apiRoot}/api/admin/access`, { headers: { Authorization: `Bearer ${customerToken}`, Accept: "application/json" }, cache: "no-store" })
+  const accessToken = token();
+  if (accessToken) {
+    fetch(`${apiRoot}/api/admin/access`, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" }, cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then(enableForAdministrator)
       .catch(() => null);

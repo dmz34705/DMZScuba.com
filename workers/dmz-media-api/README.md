@@ -31,6 +31,7 @@ Customer authentication also provides role-based management access while the leg
 - D1 never stores customer passwords or Supabase refresh tokens.
 - Every account keeps the baseline `customer` role and may also have `instructor` (Professional), `staff` (Employee), or `admin` (Administrator).
 - Employee and Administrator accounts can use their normal customer session in the management console. Only Administrators can change roles, deactivate accounts, or merge duplicates.
+- A valid previous admin session is treated as Administrator access during the transition, including the registered-account tools.
 - D1 account status is checked on login, refresh, customer-data routes, and authenticated registration requests.
 
 ## API Routes
