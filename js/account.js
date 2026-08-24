@@ -22,6 +22,7 @@
   let turnstileSiteKey = "";
   const captchaTokens = { login: "", signup: "", recovery: "" };
   const captchaWidgetIds = {};
+  const apiTimeoutMs = 20000;
 
   try {
     accessToken = window.sessionStorage.getItem(tokenStorageKey) || "";
@@ -196,6 +197,32 @@
     return data;
   }
 
+  async function fetchWithTimeout(path, options = {}, timeoutMs = apiTimeoutMs) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(path, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        const timeoutError = new Error("The account server took too long to respond. Please try again.");
+        timeoutError.code = "ACCOUNT_REQUEST_TIMEOUT";
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }
+
+  function reportAuthFailure(stage, error) {
+    console.error("[DMZ Account] Authentication request failed", {
+      stage,
+      code: String(error && error.code || "REQUEST_FAILED"),
+      status: Number(error && error.status || 0),
+      message: String(error && error.message || "The request failed."),
+    });
+  }
+
   async function refreshSession() {
     const response = await fetch("/api/account/auth/refresh", {
       method: "POST",
@@ -220,7 +247,7 @@
     headers.Accept = "application/json";
     if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-    const response = await fetch(path, { ...options, headers, credentials: "same-origin" });
+    const response = await fetchWithTimeout(path, { ...options, headers, credentials: "same-origin" });
     if (response.status === 401 && retry && path !== "/api/account/auth/refresh") {
       const refreshed = await refreshSession();
       if (refreshed) return apiRequest(path, options, false);
@@ -380,9 +407,10 @@
       if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
       else showDashboard(options.view || activeAccountView);
       return true;
-    } catch (_error) {
+    } catch (error) {
       storeAccessToken("");
       showSignedOut();
+      if (options.throwOnError) throw error;
       return false;
     }
   }
@@ -426,8 +454,9 @@
         }),
       }, false);
       storeAccessToken(data.accessToken);
-      await loadAccount();
+      await loadAccount({ throwOnError: true });
     } catch (error) {
+      reportAuthFailure("login", error);
       setMessage(status, error.message, true);
     } finally {
       resetCaptcha("login");

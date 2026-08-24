@@ -232,13 +232,31 @@ async function callSupabaseAuth(env, path, body, accessToken = "", method = "POS
     apikey: getSupabasePublishableKey(env),
   };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  const response = await fetch(`${getSupabaseUrl(env)}/auth/v1${path}`, {
-    method,
-    headers,
-    body: JSON.stringify(body || {}),
-  });
-  const data = await response.json().catch(() => ({}));
-  return { ok: response.ok, status: response.status, data };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(`${getSupabaseUrl(env)}/auth/v1${path}`, {
+      method,
+      headers,
+      body: JSON.stringify(body || {}),
+      signal: controller.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, data };
+  } catch (error) {
+    const timedOut = error && error.name === "AbortError";
+    return {
+      ok: false,
+      status: timedOut ? 504 : 502,
+      data: {
+        message: timedOut
+          ? "The account service took too long to respond. Please try again."
+          : "The account service could not be reached. Please try again.",
+      },
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function getSupabaseAuthError(result, fallback) {
