@@ -139,6 +139,46 @@ CREATE INDEX IF NOT EXISTS idx_customer_profiles_email
 CREATE INDEX IF NOT EXISTS idx_customer_profiles_status
   ON customer_profiles(account_status, updated_at);
 
+CREATE TABLE IF NOT EXISTS customer_app_settings (
+  user_id TEXT PRIMARY KEY,
+  depth_unit TEXT NOT NULL DEFAULT 'ft'
+    CHECK (depth_unit IN ('ft', 'm')),
+  pressure_unit TEXT NOT NULL DEFAULT 'psi'
+    CHECK (pressure_unit IN ('psi', 'bar')),
+  gas_volume_unit TEXT NOT NULL DEFAULT 'ft³'
+    CHECK (gas_volume_unit IN ('ft³', 'L')),
+  temperature_unit TEXT NOT NULL DEFAULT 'F'
+    CHECK (temperature_unit IN ('F', 'C')),
+  trimix_mode INTEGER NOT NULL DEFAULT 0
+    CHECK (trimix_mode IN (0, 1)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_customer_app_settings_updated
+  ON customer_app_settings(updated_at);
+
+CREATE TABLE IF NOT EXISTS customer_account_archives (
+  id TEXT PRIMARY KEY,
+  original_user_id TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL,
+  first_name TEXT,
+  last_name TEXT,
+  preferred_name TEXT,
+  archived_at TEXT NOT NULL,
+  archived_by TEXT NOT NULL,
+  archived_reason TEXT,
+  auth_deleted_at TEXT NOT NULL,
+  snapshot_version INTEGER NOT NULL DEFAULT 1,
+  snapshot_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_customer_account_archives_email
+  ON customer_account_archives(lower(email));
+
+CREATE INDEX IF NOT EXISTS idx_customer_account_archives_date
+  ON customer_account_archives(archived_at DESC);
+
 CREATE TABLE IF NOT EXISTS customer_roles (
   user_id TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('customer', 'instructor', 'staff', 'admin')),

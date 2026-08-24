@@ -712,6 +712,32 @@
 .mgmt-account-summary strong { display: block; color: #fff; font-size: 24px; }
 .mgmt-account-summary span { color: var(--muted); font-size: 12px; }
 
+.mgmt-account-mode-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid rgba(143, 207, 255, .16);
+  border-radius: 9px;
+  background: rgba(255,255,255,.035);
+}
+
+.mgmt-account-mode-switch button {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.mgmt-account-mode-switch button.is-active {
+  background: rgba(85, 185, 255, .18);
+  color: #d8f0ff;
+}
+
 .mgmt-accounts-workspace {
   display: grid;
   grid-template-columns: minmax(280px, .8fr) minmax(420px, 1.2fr);
@@ -746,12 +772,39 @@
 .mgmt-account-totals div { padding: 10px; border-radius: 10px; background: rgba(255,255,255,.035); }
 .mgmt-account-totals strong, .mgmt-account-totals span { display: block; }
 .mgmt-account-totals span { color: var(--muted); font-size: 11px; }
+.mgmt-account-archive-section { border-color: rgba(255, 127, 135, .24) !important; }
+.mgmt-account-archive-meta { display: grid; gap: 3px; margin: 10px 0 16px; color: var(--muted); font-size: 12px; }
+.mgmt-account-snapshot { margin-top: 14px; }
+.mgmt-account-snapshot summary { color: #bfe6ff; cursor: pointer; }
+.mgmt-account-snapshot pre {
+  max-height: 360px;
+  overflow: auto;
+  margin: 10px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(143, 207, 255, .12);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, .24);
+  color: #d8e9f6;
+  font: 11px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 900px) {
   .mgmt-account-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mgmt-accounts-workspace { grid-template-columns: 1fr; }
   .mgmt-account-list { max-height: none; }
   .mgmt-account-detail { position: static; }
+  .mgmt-accounts-panel .mgmt-topbar { align-items: flex-start; flex-wrap: wrap; }
+  .mgmt-accounts-panel .mgmt-topbar-right { width: 100%; flex-wrap: wrap; }
+  .mgmt-account-mode-switch { flex: 1 1 100%; }
+  .mgmt-account-mode-switch button { flex: 1 1 50%; }
+}
+
+@media (max-width: 680px) {
+  .mgmt-accounts-panel .mgmt-topbar-right { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
+  .mgmt-accounts-panel .mgmt-account-mode-switch { grid-column: 1 / -1; width: 100%; }
+  .mgmt-accounts-panel .mgmt-search-input { width: 100%; }
 }
 
 .management-login-form label,

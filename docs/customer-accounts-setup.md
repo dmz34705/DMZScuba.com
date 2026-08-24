@@ -107,7 +107,7 @@ Add the public Turnstile site key to the Worker as `TURNSTILE_SITE_KEY`. The acc
 
 ## 5. Configure and migrate the dev Worker
 
-Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the dev Worker environment. Never use the Supabase service-role key.
+Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the dev Worker environment. Never place the Supabase service-role key in website or mobile client code.
 
 Apply the account migration before deploying Worker code:
 
@@ -123,3 +123,13 @@ The Worker currently serves both DMZ Scuba site projects. Deploying it affects t
 Use the same Supabase project URL and publishable key in the mobile app. The app sends its Supabase access JWT to the DMZ Worker in the `Authorization: Bearer <token>` header. The Worker uses the JWT `sub` claim as the same `customer_profiles.user_id` used by the website.
 
 Store mobile refresh tokens only in the platform's secure credential storage. Do not put refresh tokens in ordinary app preferences or logs.
+
+The native login screen loads the Turnstile-only document from `GET /api/account/mobile-challenge` inside its WebView. This gives the challenge a real `https://www.dmzscuba.com` origin without loading the public website UI. The app then exchanges the email, password, and short-lived CAPTCHA token directly with Supabase Auth. The password is never persisted by the app.
+
+Authenticated mobile settings use `PUT /api/account/app-settings`. `GET /api/account` returns `appSettings` when the customer has saved preferences. Apply migration `0004_customer_app_settings.sql` before deploying the Worker route.
+
+## 7. Account archival and deletion
+
+Deactivation remains reversible and blocks the same Supabase account on both the website and mobile app. The administrator-only archive action is a separate, permanent step. It stores a protected D1 snapshot, hard-deletes the Supabase Auth user, and removes operational account rows. Apply migration `0005_customer_account_archives.sql` before deploying this route.
+
+The Worker requires a server-only `SUPABASE_SERVICE_ROLE_KEY` secret for permanent login deletion. Add it with `npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY` from `workers/dmz-media-api`. Never place this key in website JavaScript, mobile code, documentation, or source control. If the secret is absent, the Worker refuses the archive-and-delete action before changing customer data.

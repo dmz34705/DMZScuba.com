@@ -61,6 +61,8 @@ Customer authentication also provides role-based management access while the leg
 
 - `GET /api/account/auth/status`
   - Reports whether customer authentication has been configured
+- `GET /api/account/mobile-challenge`
+  - Serves the Turnstile-only document used by the native app from the real DMZScuba.com origin
 
 - `POST /api/account/auth/signup`
 - `POST /api/account/auth/verify`
@@ -73,9 +75,11 @@ Customer authentication also provides role-based management access while the leg
 ### Customer
 
 - `GET /api/account`
-  - Returns the signed-in customer's profile, roles, certifications, registrations, and reservations
+  - Returns the signed-in customer's profile, roles, certifications, registrations, reservations, and app settings
 - `PUT /api/account`
   - Updates the signed-in customer's allowed profile fields
+- `PUT /api/account/app-settings`
+  - Creates or updates the signed-in customer's supported mobile calculator and unit preferences
 - `POST /api/account/link-existing`
   - Connects existing records that exactly match the customer's verified email
 - `POST /api/account/certifications`
@@ -96,6 +100,14 @@ Customer authentication also provides role-based management access while the leg
 - `POST /api/admin/accounts/:userId/reactivate`
 - `POST /api/admin/accounts/merge`
   - Administrator-only account management; merges move connected business history to the surviving account and disable the duplicate login
+- `POST /api/admin/accounts/:userId/archive`
+  - Permanently deletes a deactivated customer's shared website/mobile login and operational rows after storing a protected snapshot
+- `GET /api/admin/account-archives`
+- `GET /api/admin/account-archives/:archiveId`
+- `GET /api/admin/account-archives/:archiveId/download?format=txt|json`
+  - Lists, reviews, and downloads protected archived account records
+- `DELETE /api/admin/account-archives/:archiveId`
+  - Permanently purges the last archived copy after explicit confirmation
 
 - `POST /api/admin/login`
   - Body: `{ "user": "...", "pass": "..." }`
@@ -154,6 +166,8 @@ Primary tables:
 - `destinations_v2`
 - `funnel_events`
 - `customer_profiles`
+- `customer_app_settings`
+- `customer_account_archives`
 - `customer_roles`
 - `customer_certifications`
 - `customer_reservations`

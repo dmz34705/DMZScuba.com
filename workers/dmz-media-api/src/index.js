@@ -1085,6 +1085,63 @@ async function handleCustomerAuthStatus(env) {
   );
 }
 
+function handleCustomerMobileChallenge(env) {
+  const siteKey = getCustomerTurnstileSiteKey(env);
+  const siteKeyJson = JSON.stringify(siteKey);
+  const unavailable = siteKey ? "" : "Security verification is not configured.";
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://challenges.cloudflare.com 'unsafe-inline'; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; style-src 'unsafe-inline';" />
+  <title>DMZ Scuba Security Check</title>
+  <style>
+    html, body { background: #0b1c2e; margin: 0; min-height: 100%; overflow: hidden; }
+    body { align-items: center; display: flex; justify-content: center; padding: 8px; }
+    #challenge { width: min(100%, 340px); }
+  </style>
+  <script>
+    function send(type, value) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: type, value: value || '' }));
+      }
+    }
+    function renderChallenge() {
+      if (!${siteKeyJson}) { send('error', ${JSON.stringify(unavailable)}); return; }
+      try {
+        window.turnstile.render('#challenge', {
+          sitekey: ${siteKeyJson},
+          theme: 'dark',
+          size: 'flexible',
+          action: 'mobile_login',
+          callback: function (token) { send('token', token); },
+          'expired-callback': function () { send('expired'); },
+          'timeout-callback': function () { send('error', '110600'); },
+          'error-callback': function (code) { send('error', String(code || 'challenge-error')); }
+        });
+        send('ready');
+      } catch (error) {
+        send('error', 'render-error');
+      }
+    }
+  </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=renderChallenge&render=explicit" async defer></script>
+</head>
+<body><div id="challenge"></div></body>
+</html>`;
+  return new Response(html, {
+    status: siteKey ? 200 : 503,
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 async function handleCustomerSignup(request, env) {
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
@@ -1441,9 +1498,40 @@ function mapCustomerCertification(row) {
   };
 }
 
+function normalizeCustomerAppSettings(value = {}) {
+  const settings = value && typeof value === "object" ? value : {};
+  return {
+    depthUnit: settings.depthUnit === "m" ? "m" : "ft",
+    pressureUnit: settings.pressureUnit === "bar" ? "bar" : "psi",
+    gasVolumeUnit: settings.gasVolumeUnit === "L" ? "L" : "ft³",
+    temperatureUnit: settings.temperatureUnit === "C" ? "C" : "F",
+    trimixMode: settings.trimixMode === true,
+  };
+}
+
+function mapCustomerAppSettings(row) {
+  if (!row) return null;
+  return {
+    depthUnit: String(row.depth_unit || "ft") === "m" ? "m" : "ft",
+    pressureUnit: String(row.pressure_unit || "psi") === "bar" ? "bar" : "psi",
+    gasVolumeUnit: String(row.gas_volume_unit || "ft³") === "L" ? "L" : "ft³",
+    temperatureUnit: String(row.temperature_unit || "F") === "C" ? "C" : "F",
+    trimixMode: Number(row.trimix_mode) === 1,
+    updatedAt: String(row.updated_at || ""),
+  };
+}
+
+async function getCustomerAppSettings(env, userId) {
+  const row = await env.DB.prepare(
+    `SELECT depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, updated_at
+     FROM customer_app_settings WHERE user_id = ? LIMIT 1`
+  ).bind(userId).first();
+  return mapCustomerAppSettings(row);
+}
+
 async function getCustomerAccountPayload(env, identity) {
   const profile = await ensureCustomerProfile(env, identity);
-  const [roleRows, certificationRows, registrationRows, reservationRows] = await Promise.all([
+  const [roleRows, certificationRows, registrationRows, reservationRows, appSettings] = await Promise.all([
     env.DB.prepare("SELECT role FROM customer_roles WHERE user_id = ? ORDER BY role ASC").bind(identity.userId).all(),
     env.DB.prepare(
       `SELECT id, agency, certification_name, certification_number, issued_on, expires_on,
@@ -1456,13 +1544,15 @@ async function getCustomerAccountPayload(env, identity) {
     ).bind(identity.userId).all(),
     env.DB.prepare(
       `SELECT id, reservation_type, source_id, source_registration_id, event_date, status, party_size,
-              data_json, created_at, updated_at
+               data_json, created_at, updated_at
        FROM customer_reservations WHERE user_id = ? ORDER BY created_at DESC`
     ).bind(identity.userId).all(),
+    getCustomerAppSettings(env, identity.userId),
   ]);
   return {
     ok: true,
     profile: mapCustomerProfile(profile),
+    appSettings,
     roles: (roleRows.results || []).map((row) => String(row.role || "")).filter(Boolean),
     certifications: (certificationRows.results || []).map(mapCustomerCertification),
     eventRegistrations: (registrationRows.results || []).map((row) => ({
@@ -1531,6 +1621,7 @@ async function handleGetManagementAccess(request, env) {
     roles: auth.roles,
     isAdministrator: auth.roles.includes("admin"),
     authMode: auth.legacy ? "legacy" : "account",
+    accountArchiveDeletionConfigured: Boolean(String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()),
   }, 200, { "Cache-Control": "no-store" });
 }
 
@@ -1554,6 +1645,7 @@ async function handleListCustomerAccounts(request, env) {
     ok: true,
     accounts,
     currentUserId: auth.identity.userId,
+    accountArchiveDeletionConfigured: Boolean(String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()),
     roleOptions: Object.entries(customerRoleLabels).map(([value, label]) => ({ value, label })),
     summary: {
       total: accounts.length,
@@ -1619,6 +1711,216 @@ async function handleSetCustomerAccountStatus(request, env, userId, status) {
   return jsonResponse({ ok: true, status });
 }
 
+function mapCustomerArchive(row, includeSnapshot = false) {
+  const snapshot = includeSnapshot ? parseJsonSafe(row && row.snapshot_json, {}) : null;
+  const result = {
+    id: String(row && row.id || ""),
+    originalUserId: String(row && row.original_user_id || ""),
+    email: String(row && row.email || ""),
+    firstName: String(row && row.first_name || ""),
+    lastName: String(row && row.last_name || ""),
+    preferredName: String(row && row.preferred_name || ""),
+    archivedAt: String(row && row.archived_at || ""),
+    archivedBy: String(row && row.archived_by || ""),
+    reason: String(row && row.archived_reason || ""),
+    authDeletedAt: String(row && row.auth_deleted_at || ""),
+    snapshotVersion: Math.max(1, Number(row && row.snapshot_version) || 1),
+  };
+  if (includeSnapshot) result.snapshot = snapshot;
+  return result;
+}
+
+async function getCustomerArchiveSnapshot(env, profile) {
+  const userId = String(profile.user_id || "");
+  const [roles, appSettings, certifications, registrations, reservations, documents, managementRecords, auditLog] = await Promise.all([
+    env.DB.prepare("SELECT role, created_at, created_by FROM customer_roles WHERE user_id = ? ORDER BY role").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM customer_app_settings WHERE user_id = ? LIMIT 1").bind(userId).first(),
+    env.DB.prepare("SELECT * FROM customer_certifications WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM event_registrations_v2 WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM customer_reservations WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM customer_documents WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM management_records WHERE customer_user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM customer_audit_log WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+  ]);
+  return {
+    version: 1,
+    capturedAt: new Date().toISOString(),
+    profile: { ...profile },
+    roles: roles.results || [],
+    appSettings: appSettings || null,
+    certifications: certifications.results || [],
+    eventRegistrations: registrations.results || [],
+    reservations: reservations.results || [],
+    documents: documents.results || [],
+    managementRecords: managementRecords.results || [],
+    auditLog: auditLog.results || [],
+  };
+}
+
+async function deleteSupabaseAuthUser(env, userId) {
+  const serviceRoleKey = String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!serviceRoleKey) {
+    return { ok: false, status: 503, error: "Permanent account deletion is not configured yet. Add the Supabase service-role key to the Worker secrets." };
+  }
+  const response = await fetch(`${getSupabaseUrl(env)}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ should_soft_delete: false }),
+  }).catch(() => null);
+  if (!response) return { ok: false, status: 502, error: "Supabase could not be reached. Nothing was removed." };
+  if (response.ok || response.status === 404) return { ok: true };
+  const data = await response.json().catch(() => ({}));
+  return {
+    ok: false,
+    status: response.status || 502,
+    error: normalizeCustomerText(data.message || data.error || "Supabase could not delete this login. Nothing was removed.", 240),
+  };
+}
+
+async function handleArchiveCustomerAccount(request, env, userId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const safeUserId = normalizeCustomerText(userId, 100);
+  if (safeUserId === auth.identity.userId) {
+    return jsonResponse({ ok: false, error: "You cannot archive the account you are currently using." }, 409);
+  }
+  const profile = await getManagedCustomerProfile(env, safeUserId);
+  if (!profile) return jsonResponse({ ok: false, error: "Account not found." }, 404);
+  const accountStatus = String(profile.account_status || "active");
+  if (!["deactivated", "merged"].includes(accountStatus)) {
+    return jsonResponse({ ok: false, error: "Deactivate this account before archiving and deleting it." }, 409);
+  }
+  const roles = await getCustomerRoles(env, safeUserId);
+  if (roles.includes("admin")) {
+    return jsonResponse({ ok: false, error: "Remove Administrator access before archiving this account." }, 409);
+  }
+  const body = await request.json().catch(() => ({}));
+  const confirmation = String(body.confirmation || "").trim().toLowerCase();
+  const phrase = String(body.phrase || "").trim().toUpperCase();
+  if (confirmation !== String(profile.email || "").trim().toLowerCase() || phrase !== "ARCHIVE") {
+    return jsonResponse({ ok: false, error: "Enter the account email and ARCHIVE exactly to continue." }, 400);
+  }
+  if (!String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()) {
+    return jsonResponse({ ok: false, error: "Permanent account deletion is not configured yet. Add the Supabase service-role key to the Worker secrets." }, 503);
+  }
+  const existingArchive = await env.DB.prepare("SELECT id FROM customer_account_archives WHERE original_user_id = ? LIMIT 1")
+    .bind(safeUserId).first();
+  if (existingArchive) return jsonResponse({ ok: false, error: "This account already has an archive record." }, 409);
+
+  const snapshot = await getCustomerArchiveSnapshot(env, profile);
+  const authDeletion = await deleteSupabaseAuthUser(env, safeUserId);
+  if (!authDeletion.ok) return jsonResponse({ ok: false, error: authDeletion.error }, authDeletion.status || 502);
+
+  const archiveId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const reason = normalizeCustomerText(body.reason, 500);
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO customer_account_archives
+       (id, original_user_id, email, first_name, last_name, preferred_name, archived_at, archived_by,
+        archived_reason, auth_deleted_at, snapshot_version, snapshot_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`
+    ).bind(archiveId, safeUserId, profile.email, profile.first_name || "", profile.last_name || "", profile.preferred_name || "", now, auth.identity.userId, reason, now, JSON.stringify(snapshot)),
+    env.DB.prepare("DELETE FROM event_registrations_v2 WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_certifications WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_reservations WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_documents WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM management_records WHERE customer_user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_app_settings WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_roles WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_audit_log WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_profiles WHERE user_id = ?").bind(safeUserId),
+  ]);
+  await writeCustomerAudit(env, safeUserId, "account.archived_and_deleted", "customer_account_archive", archiveId, auth.identity.userId);
+  return jsonResponse({ ok: true, archiveId, message: "The login and operational account were deleted. The protected archive is available under Archived Accounts." });
+}
+
+async function handleListCustomerAccountArchives(request, env) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const rows = await env.DB.prepare(
+    `SELECT id, original_user_id, email, first_name, last_name, preferred_name, archived_at, archived_by,
+            archived_reason, auth_deleted_at, snapshot_version
+     FROM customer_account_archives ORDER BY archived_at DESC`
+  ).all();
+  return jsonResponse({ ok: true, archives: (rows.results || []).map((row) => mapCustomerArchive(row)) }, 200, { "Cache-Control": "no-store" });
+}
+
+async function getCustomerAccountArchive(env, archiveId) {
+  return env.DB.prepare("SELECT * FROM customer_account_archives WHERE id = ? LIMIT 1").bind(archiveId).first();
+}
+
+async function handleGetCustomerAccountArchive(request, env, archiveId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const row = await getCustomerAccountArchive(env, normalizeCustomerText(archiveId, 100));
+  if (!row) return jsonResponse({ ok: false, error: "Archived account not found." }, 404);
+  return jsonResponse({ ok: true, archive: mapCustomerArchive(row, true) }, 200, { "Cache-Control": "no-store" });
+}
+
+function formatArchivedAccountText(archive) {
+  const metadata = mapCustomerArchive(archive, false);
+  const snapshot = parseJsonSafe(archive && archive.snapshot_json, {});
+  return [
+    "DMZ SCUBA ARCHIVED ACCOUNT",
+    "============================",
+    `Archive ID: ${metadata.id}`,
+    `Original User ID: ${metadata.originalUserId}`,
+    `Name: ${[metadata.firstName, metadata.lastName].filter(Boolean).join(" ")}`,
+    `Email: ${metadata.email}`,
+    `Archived At: ${metadata.archivedAt}`,
+    `Archived By: ${metadata.archivedBy}`,
+    `Reason: ${metadata.reason || "Not provided"}`,
+    "",
+    "ARCHIVED SNAPSHOT",
+    "=================",
+    JSON.stringify(snapshot, null, 2),
+    "",
+  ].join("\n");
+}
+
+async function handleDownloadCustomerAccountArchive(request, env, archiveId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const row = await getCustomerAccountArchive(env, normalizeCustomerText(archiveId, 100));
+  if (!row) return jsonResponse({ ok: false, error: "Archived account not found." }, 404);
+  const format = new URL(request.url).searchParams.get("format") === "json" ? "json" : "txt";
+  const safeName = String(row.email || "archived-account").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "archived-account";
+  const body = format === "json"
+    ? JSON.stringify(mapCustomerArchive(row, true), null, 2)
+    : formatArchivedAccountText(row);
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "Content-Type": format === "json" ? "application/json; charset=utf-8" : "text/plain; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${safeName}-archive.${format}"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+async function handlePurgeCustomerAccountArchive(request, env, archiveId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const safeArchiveId = normalizeCustomerText(archiveId, 100);
+  const row = await getCustomerAccountArchive(env, safeArchiveId);
+  if (!row) return jsonResponse({ ok: false, error: "Archived account not found." }, 404);
+  const body = await request.json().catch(() => ({}));
+  const confirmation = String(body.confirmation || "").trim().toLowerCase();
+  const phrase = String(body.phrase || "").trim().toUpperCase();
+  if (confirmation !== String(row.email || "").trim().toLowerCase() || phrase !== "PERMANENTLY DELETE") {
+    return jsonResponse({ ok: false, error: "Enter the archived email and PERMANENTLY DELETE exactly to purge this archive." }, 400);
+  }
+  await env.DB.prepare("DELETE FROM customer_account_archives WHERE id = ?").bind(safeArchiveId).run();
+  await writeCustomerAudit(env, `archive:${safeArchiveId}`, "account.archive_purged", "customer_account_archive", safeArchiveId, auth.identity.userId);
+  return jsonResponse({ ok: true, message: "The archived personal data was permanently purged." });
+}
+
 async function handleMergeCustomerAccounts(request, env) {
   const auth = await requireManagementIdentity(request, env, true);
   if (auth.response) return auth.response;
@@ -1654,6 +1956,13 @@ async function handleMergeCustomerAccounts(request, env) {
     env.DB.prepare("UPDATE customer_reservations SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare("UPDATE customer_documents SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare("UPDATE management_records SET customer_user_id = ?, updated_at = ? WHERE customer_user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare(
+      `INSERT OR IGNORE INTO customer_app_settings
+       (user_id, depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, created_at, updated_at)
+       SELECT ?, depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, created_at, ?
+       FROM customer_app_settings WHERE user_id = ?`
+    ).bind(targetUserId, now, sourceUserId),
+    env.DB.prepare("DELETE FROM customer_app_settings WHERE user_id = ?").bind(sourceUserId),
     env.DB.prepare(
       `INSERT OR IGNORE INTO customer_roles (user_id, role, created_at, created_by)
        SELECT ?, role, ?, ? FROM customer_roles WHERE user_id = ?`
@@ -1707,6 +2016,42 @@ async function handleUpdateCustomerProfile(request, env) {
     .run();
   await writeCustomerAudit(env, auth.identity.userId, "profile.updated", "customer_profile", auth.identity.userId);
   return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
+}
+
+async function handleUpdateCustomerAppSettings(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const settings = normalizeCustomerAppSettings(body.settings || body);
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO customer_app_settings
+     (user_id, depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET
+       depth_unit = excluded.depth_unit,
+       pressure_unit = excluded.pressure_unit,
+       gas_volume_unit = excluded.gas_volume_unit,
+       temperature_unit = excluded.temperature_unit,
+       trimix_mode = excluded.trimix_mode,
+       updated_at = excluded.updated_at`
+  )
+    .bind(
+      auth.identity.userId,
+      settings.depthUnit,
+      settings.pressureUnit,
+      settings.gasVolumeUnit,
+      settings.temperatureUnit,
+      settings.trimixMode ? 1 : 0,
+      now,
+      now
+    )
+    .run();
+  return jsonResponse(
+    { ok: true, appSettings: { ...settings, updatedAt: now } },
+    200,
+    { "Cache-Control": "no-store" }
+  );
 }
 
 function normalizeCustomerCertification(body = {}, existing = {}) {
@@ -4779,7 +5124,9 @@ export {
   buildFunnelEventRecord,
   buildPublicRegistrationSnapshot,
   deleteExpiredFunnelEvents,
+  formatArchivedAccountText,
   isTrustedTelemetryOrigin,
+  normalizeCustomerAppSettings,
   sanitizeAnalyticsPath,
   validateSupabaseClaims,
   verifySupabaseAccessToken,
@@ -4803,6 +5150,8 @@ export default {
       response = await handleEventAlertSubscribe(request, env);
     } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
       response = await handleClientTelemetry(request, env, context);
+    } else if (pathname === "/api/account/mobile-challenge" && request.method === "GET") {
+      response = handleCustomerMobileChallenge(env);
     } else if (pathname === "/api/account/auth/status" && request.method === "GET") {
       response = await handleCustomerAuthStatus(env);
     } else if (pathname === "/api/account/auth/signup" && request.method === "POST") {
@@ -4827,6 +5176,8 @@ export default {
       response = await handleGetCustomerAccount(request, env);
     } else if (pathname === "/api/account" && request.method === "PUT") {
       response = await handleUpdateCustomerProfile(request, env);
+    } else if (pathname === "/api/account/app-settings" && request.method === "PUT") {
+      response = await handleUpdateCustomerAppSettings(request, env);
     } else if (pathname === "/api/account/link-existing" && request.method === "POST") {
       response = await handleLinkCustomerRecords(request, env);
     } else if (pathname === "/api/account/certifications" && request.method === "POST") {
@@ -4845,6 +5196,17 @@ export default {
       response = await handleListCustomerAccounts(request, env);
     } else if (pathname === "/api/admin/accounts/merge" && request.method === "POST") {
       response = await handleMergeCustomerAccounts(request, env);
+    } else if (pathname === "/api/admin/account-archives" && request.method === "GET") {
+      response = await handleListCustomerAccountArchives(request, env);
+    } else if (/^\/api\/admin\/account-archives\/[^/]+\/download$/.test(pathname) && request.method === "GET") {
+      const archiveId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleDownloadCustomerAccountArchive(request, env, archiveId);
+    } else if (/^\/api\/admin\/account-archives\/[^/]+$/.test(pathname) && request.method === "GET") {
+      const archiveId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleGetCustomerAccountArchive(request, env, archiveId);
+    } else if (/^\/api\/admin\/account-archives\/[^/]+$/.test(pathname) && request.method === "DELETE") {
+      const archiveId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handlePurgeCustomerAccountArchive(request, env, archiveId);
     } else if (/^\/api\/admin\/accounts\/[^/]+\/roles$/.test(pathname) && request.method === "PUT") {
       const userId = decodeURIComponent(pathname.split("/")[4] || "");
       response = await handleUpdateCustomerRoles(request, env, userId);
@@ -4854,6 +5216,9 @@ export default {
     } else if (/^\/api\/admin\/accounts\/[^/]+\/reactivate$/.test(pathname) && request.method === "POST") {
       const userId = decodeURIComponent(pathname.split("/")[4] || "");
       response = await handleSetCustomerAccountStatus(request, env, userId, "active");
+    } else if (/^\/api\/admin\/accounts\/[^/]+\/archive$/.test(pathname) && request.method === "POST") {
+      const userId = decodeURIComponent(pathname.split("/")[4] || "");
+      response = await handleArchiveCustomerAccount(request, env, userId);
     } else if (pathname === "/api/admin/event-alert-subscribers" && request.method === "GET") {
       response = await handleListEventAlertSubscribers(request, env);
     } else if (pathname === "/api/admin/management" && request.method === "GET") {

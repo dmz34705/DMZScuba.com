@@ -139,10 +139,27 @@ test("account portal stays disabled until Supabase and Turnstile are configured"
   assert.equal(configuredData.turnstileSiteKey, "0x4AAAA-test");
 });
 
+test("mobile challenge is a dedicated Turnstile page on the API origin", async () => {
+  const worker = await workerModulePromise;
+  const response = await worker.default.fetch(
+    new Request("https://www.dmzscuba.com/api/account/mobile-challenge", { method: "GET" }),
+    { TURNSTILE_SITE_KEY: "0x4AAAA-test" },
+    { waitUntil() {} }
+  );
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("Content-Type"), /^text\/html/);
+  assert.match(html, /0x4AAAA-test/);
+  assert.match(html, /turnstile\.render/);
+  assert.match(html, /window\.ReactNativeWebView\.postMessage/);
+  assert.doesNotMatch(html, /site-header|DMZ Scuba Customer Accounts/);
+});
+
 test("customer account and credential endpoints reject requests without a JWT", async () => {
   const worker = await workerModulePromise;
   const requests = [
     new Request("https://dmzscuba.com/api/account", { method: "GET" }),
+    new Request("https://dmzscuba.com/api/account/app-settings", { method: "PUT" }),
     new Request("https://dmzscuba.com/api/account/auth/password", { method: "PUT" }),
     new Request("https://dmzscuba.com/api/account/auth/email", { method: "PUT" }),
     new Request("https://dmzscuba.com/api/account/auth/email/verify", { method: "POST" }),
@@ -154,8 +171,39 @@ test("customer account and credential endpoints reject requests without a JWT", 
   }
 });
 
+test("mobile app settings are normalized to supported calculator preferences", async () => {
+  const { normalizeCustomerAppSettings } = await workerModulePromise;
+  assert.deepEqual(normalizeCustomerAppSettings({
+    depthUnit: "m",
+    pressureUnit: "bar",
+    gasVolumeUnit: "L",
+    temperatureUnit: "C",
+    trimixMode: true,
+  }), {
+    depthUnit: "m",
+    pressureUnit: "bar",
+    gasVolumeUnit: "L",
+    temperatureUnit: "C",
+    trimixMode: true,
+  });
+  assert.deepEqual(normalizeCustomerAppSettings({
+    depthUnit: "yards",
+    pressureUnit: "atm",
+    gasVolumeUnit: "gallons",
+    temperatureUnit: "K",
+    trimixMode: "yes",
+  }), {
+    depthUnit: "ft",
+    pressureUnit: "psi",
+    gasVolumeUnit: "ft³",
+    temperatureUnit: "F",
+    trimixMode: false,
+  });
+});
+
 test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
+  const settingsMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0004_customer_app_settings.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const createPage = fs.readFileSync(path.join(root, "pages", "account", "create", "index.html"), "utf8");
   const forgotPage = fs.readFileSync(path.join(root, "pages", "account", "forgot-password", "index.html"), "utf8");
@@ -168,6 +216,8 @@ test("account migration and page include the required foundation", () => {
   for (const table of ["customer_profiles", "customer_roles", "customer_certifications", "customer_reservations", "customer_documents", "customer_audit_log"]) {
     assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
   }
+  assert.match(settingsMigration, /CREATE TABLE IF NOT EXISTS customer_app_settings/);
+  assert.match(workerSource, /\/api\/account\/app-settings/);
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
   assert.match(page, /data-login-form/);
   assert.match(page, /href="\/pages\/account\/create\/"/);

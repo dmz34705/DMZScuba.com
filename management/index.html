@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260824c" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260824d" />
 </head>
 
 <body class="management-page">
@@ -461,6 +461,10 @@
                 <p class="mgmt-panel-subtitle">Manage who can sign in and what each person can access.</p>
               </div>
               <div class="mgmt-topbar-right">
+                <div class="mgmt-account-mode-switch" role="group" aria-label="Account records">
+                  <button class="is-active" type="button" data-account-mode="current" aria-pressed="true">Current Accounts</button>
+                  <button type="button" data-account-mode="archived" aria-pressed="false">Archived Accounts</button>
+                </div>
                 <input class="mgmt-search-input" type="search" data-account-search placeholder="Search name or email" aria-label="Search accounts" />
                 <select class="mgmt-sort-select" data-account-status-filter aria-label="Filter accounts">
                   <option value="all">All accounts</option>
@@ -959,7 +963,7 @@
   </main>
 
   <script src="/js/management.js?v=20260824b" defer></script>
-  <script src="/js/management-accounts.js?v=20260824b" defer></script>
+  <script src="/js/management-accounts.js?v=20260824d" defer></script>
   <script src="/js/management-media-studio.js?v=20260824a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260824a" defer></script>
   <script src="/js/management-dashboard.js?v=20260824a" defer></script>
