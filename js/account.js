@@ -3,15 +3,21 @@
   if (!app) return;
 
   const tokenStorageKey = "dmzCustomerAccessToken";
+  const accountIntro = app.querySelector("[data-account-intro]");
   const authSection = app.querySelector("[data-account-auth]");
+  const accountCreated = app.querySelector("[data-account-created]");
   const dashboard = app.querySelector("[data-account-dashboard]");
   const systemStatus = app.querySelector("[data-account-system-status]");
   const dashboardStatus = app.querySelector("[data-dashboard-status]");
   const panels = Array.from(app.querySelectorAll("[data-account-panel]"));
   const tabs = Array.from(app.querySelectorAll("[data-account-tab]"));
+  const accountViewControls = Array.from(app.querySelectorAll("[data-account-view]"));
+  const accountViewPanels = Array.from(app.querySelectorAll("[data-account-view-panel]"));
+  const accountNavButtons = Array.from(app.querySelectorAll(".account-nav-menu [data-account-view]"));
   let accessToken = "";
   let account = null;
   let pendingEmailChange = null;
+  let activeAccountView = "home";
   let authEnabled = false;
   const captchaTokens = { login: "", signup: "", recovery: "" };
   const captchaWidgetIds = {};
@@ -61,6 +67,50 @@
     tabs.forEach((tab) => {
       tab.setAttribute("aria-selected", String(tab.dataset.accountTab === name));
     });
+  }
+
+  function showAccountView(name, focusHeading = false) {
+    const requestedView = accountViewPanels.some((panel) => panel.dataset.accountViewPanel === name) ? name : "home";
+    activeAccountView = requestedView;
+    accountViewPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.accountViewPanel !== requestedView;
+    });
+    accountNavButtons.forEach((button) => {
+      if (button.dataset.accountView === requestedView) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    if (focusHeading) {
+      const activePanel = accountViewPanels.find((panel) => panel.dataset.accountViewPanel === requestedView);
+      const heading = activePanel && activePanel.querySelector("h2");
+      if (heading) {
+        heading.setAttribute("tabindex", "-1");
+        heading.focus();
+      }
+    }
+  }
+
+  function showDashboard(view = activeAccountView) {
+    accountIntro.hidden = true;
+    authSection.hidden = true;
+    accountCreated.hidden = true;
+    dashboard.hidden = false;
+    showAccountView(view);
+    setMessage(systemStatus, "Your account session is secure and active.");
+  }
+
+  function showAccountCreated(linkedCount = 0) {
+    accountIntro.hidden = true;
+    authSection.hidden = true;
+    dashboard.hidden = true;
+    accountCreated.hidden = false;
+    const linkedDetail = app.querySelector("[data-account-created-detail]");
+    if (linkedDetail) {
+      linkedDetail.textContent = linkedCount
+        ? `${linkedCount} existing ${linkedCount === 1 ? "record" : "records"} connected`
+        : "Existing records checked";
+    }
+    accountCreated.querySelector("[data-enter-account]")?.focus();
+    setMessage(systemStatus, "Your email is verified and your account has been created.");
   }
 
   function resetCaptcha(name) {
@@ -203,6 +253,9 @@
   function renderAccount(data) {
     account = data;
     const profile = data.profile || {};
+    const certifications = Array.isArray(data.certifications) ? data.certifications : [];
+    const eventRegistrations = Array.isArray(data.eventRegistrations) ? data.eventRegistrations : [];
+    const reservations = Array.isArray(data.reservations) ? data.reservations : [];
     const profileForm = app.querySelector("[data-profile-form]");
     if (profileForm) {
       profileForm.elements.firstName.value = profile.firstName || "";
@@ -212,32 +265,73 @@
       profileForm.elements.email.value = profile.email || "";
     }
     const greeting = app.querySelector("[data-dashboard-greeting]");
+    const dashboardName = app.querySelector("[data-dashboard-name]");
     const email = app.querySelector("[data-dashboard-email]");
     const securityEmail = app.querySelector("[data-security-current-email]");
+    const avatar = app.querySelector("[data-account-avatar]");
+    const createdName = app.querySelector("[data-account-created-name]");
+    const certificationCount = app.querySelector("[data-home-certification-count]");
+    const activityCount = app.querySelector("[data-home-activity-count]");
+    const profileStatus = app.querySelector("[data-home-profile-status]");
+    const nextTitle = app.querySelector("[data-home-next-title]");
+    const nextCopy = app.querySelector("[data-home-next-copy]");
+    const nextAction = app.querySelector("[data-home-next-action]");
     const displayName = profile.preferredName || profile.firstName || "Diver";
-    if (greeting) greeting.textContent = `Welcome, ${displayName}`;
+    const initials = `${String(profile.firstName || "D").charAt(0)}${String(profile.lastName || "").charAt(0)}`.toUpperCase();
+    const connectedActivityCount = eventRegistrations.length + reservations.length;
+    if (greeting) greeting.textContent = `Welcome back, ${displayName}.`;
+    if (dashboardName) dashboardName.textContent = displayName;
     if (email) email.textContent = profile.email || "";
     if (securityEmail) securityEmail.textContent = profile.email || "";
-    renderCertifications(Array.isArray(data.certifications) ? data.certifications : []);
-    renderEventRegistrations(Array.isArray(data.eventRegistrations) ? data.eventRegistrations : []);
-    renderReservations(Array.isArray(data.reservations) ? data.reservations : []);
-    authSection.hidden = true;
-    dashboard.hidden = false;
-    setMessage(systemStatus, "Your account session is secure and active.");
+    if (avatar) avatar.textContent = initials || "D";
+    if (createdName) createdName.textContent = displayName;
+    if (certificationCount) certificationCount.textContent = `${certifications.length} ${certifications.length === 1 ? "certification" : "certifications"}`;
+    if (activityCount) activityCount.textContent = `${connectedActivityCount} ${connectedActivityCount === 1 ? "record" : "records"}`;
+    if (profileStatus) profileStatus.textContent = profile.phone ? "Ready to use" : "Add your phone";
+    if (!profile.phone) {
+      if (nextTitle) nextTitle.textContent = "Add a reliable way for us to reach you.";
+      if (nextCopy) nextCopy.textContent = "Add your phone number so DMZ Scuba can contact you about classes, trips, and event details.";
+      if (nextAction) {
+        nextAction.textContent = "Review My Profile";
+        nextAction.dataset.accountView = "profile";
+      }
+    } else if (!certifications.length) {
+      if (nextTitle) nextTitle.textContent = "Bring your training history into your account.";
+      if (nextCopy) nextCopy.textContent = "Add your certification details now so they are ready for future classes, trips, and events.";
+      if (nextAction) {
+        nextAction.textContent = "Add a Certification";
+        nextAction.dataset.accountView = "certifications";
+      }
+    } else {
+      if (nextTitle) nextTitle.textContent = "Your account essentials are in place.";
+      if (nextCopy) nextCopy.textContent = "Review your connected activity or check for older DMZ Scuba records that use your verified email address.";
+      if (nextAction) {
+        nextAction.textContent = "View My Activity";
+        nextAction.dataset.accountView = "activity";
+      }
+    }
+    renderCertifications(certifications);
+    renderEventRegistrations(eventRegistrations);
+    renderReservations(reservations);
   }
 
   function showSignedOut() {
     account = null;
     pendingEmailChange = null;
+    activeAccountView = "home";
+    accountIntro.hidden = false;
+    accountCreated.hidden = true;
     dashboard.hidden = true;
     authSection.hidden = false;
     showPanel("login");
   }
 
-  async function loadAccount() {
+  async function loadAccount(options = {}) {
     if (!accessToken) return false;
     try {
       renderAccount(await apiRequest("/api/account", { method: "GET" }));
+      if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
+      else showDashboard(options.view || activeAccountView);
       return true;
     } catch (_error) {
       storeAccessToken("");
@@ -245,6 +339,15 @@
       return false;
     }
   }
+
+  accountViewControls.forEach((button) => {
+    button.addEventListener("click", () => showAccountView(button.dataset.accountView || "home", true));
+  });
+
+  app.querySelector("[data-enter-account]")?.addEventListener("click", () => {
+    showDashboard("home");
+    setMessage(dashboardStatus, "Your account is ready. Welcome to DMZ Scuba.");
+  });
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => showPanel(tab.dataset.accountTab || "login"));
@@ -368,8 +471,10 @@
       if (type === "recovery") {
         showPanel("new-password");
       } else {
-        await apiRequest("/api/account/link-existing", { method: "POST" });
-        await loadAccount();
+        const linkedAccount = await apiRequest("/api/account/link-existing", { method: "POST" }).catch(() => ({}));
+        const linked = linkedAccount.linked || {};
+        const linkedCount = Math.max(0, Number(linked.registrations) || 0) + Math.max(0, Number(linked.records) || 0);
+        await loadAccount({ created: true, linkedCount });
       }
     } catch (error) {
       setMessage(status, error.message, true);
@@ -392,7 +497,8 @@
     try {
       const data = await apiRequest("/api/account/auth/password", { method: "PUT", body: JSON.stringify({ password }) });
       setMessage(status, data.message || "Your password has been updated.");
-      await loadAccount();
+      await loadAccount({ view: "home" });
+      setMessage(dashboardStatus, "Your password has been reset successfully.");
     } catch (error) {
       setMessage(status, error.message, true);
     } finally {
@@ -529,7 +635,7 @@
       pendingEmailChange = null;
       emailVerification.hidden = true;
       changeEmailForm.reset();
-      await loadAccount();
+      await loadAccount({ view: "security" });
       setMessage(dashboardStatus, data.message || "Your email address has been changed.");
     } catch (error) {
       setMessage(status, error.message, true);

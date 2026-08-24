@@ -10,7 +10,7 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260823a" />
-  <link rel="stylesheet" href="/css/pages/account.css?v=20260824a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824b" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
 </head>
 
@@ -18,7 +18,7 @@
   <header class="site-header" data-site-nav></header>
 
   <main class="account-shell" data-account-app>
-    <section class="account-intro" aria-labelledby="account-title">
+    <section class="account-intro" data-account-intro aria-labelledby="account-title">
       <p class="account-eyebrow">Your diving, connected</p>
       <h1 id="account-title">My DMZ Scuba</h1>
       <p>Keep your contact details and certifications together, then connect your event registrations, classes, and trips as account features roll out.</p>
@@ -104,116 +104,178 @@
       </aside>
     </section>
 
-    <section class="account-dashboard" data-account-dashboard hidden aria-labelledby="dashboard-title">
-      <div class="account-dashboard-head">
-        <div>
-          <p class="account-eyebrow">Account dashboard</p>
-          <h2 id="dashboard-title" data-dashboard-greeting>Your DMZ Scuba account</h2>
-          <p data-dashboard-email></p>
-        </div>
-        <div class="account-dashboard-actions">
-          <button class="btn secondary" type="button" data-link-existing>Find My Existing Records</button>
-          <button class="btn secondary" type="button" data-logout>Sign Out</button>
-        </div>
+    <section class="account-created" data-account-created hidden aria-labelledby="account-created-title">
+      <div class="account-created-mark" aria-hidden="true">&#10003;</div>
+      <p class="account-eyebrow">Email verified</p>
+      <h2 id="account-created-title">Your account is ready.</h2>
+      <p class="account-created-lead">Welcome to DMZ Scuba, <strong data-account-created-name>Diver</strong>. You now have one secure account for the website and future mobile app.</p>
+      <div class="account-created-checks" aria-label="Account setup completed">
+        <span>Email verified</span>
+        <span>Profile created</span>
+        <span data-account-created-detail>Existing records checked</span>
       </div>
-      <p class="account-dashboard-status" data-dashboard-status aria-live="polite"></p>
+      <button class="btn primary" type="button" data-enter-account>Open My Account</button>
+    </section>
 
-      <div class="account-dashboard-grid">
-        <article class="account-card">
-          <div class="account-card-heading">
-            <p class="account-eyebrow">Personal information</p>
-            <h3>Profile</h3>
-          </div>
-          <form class="account-form" data-profile-form>
-            <div class="account-form-grid">
-              <label><span>First Name</span><input type="text" name="firstName" maxlength="80" required /></label>
-              <label><span>Last Name</span><input type="text" name="lastName" maxlength="80" required /></label>
+    <section class="account-dashboard" data-account-dashboard hidden aria-label="Customer account">
+      <div class="account-portal-shell">
+        <aside class="account-portal-nav">
+          <div class="account-portal-identity">
+            <span class="account-avatar" data-account-avatar aria-hidden="true">D</span>
+            <div>
+              <small>Signed in as</small>
+              <strong data-dashboard-name>Diver</strong>
+              <span data-dashboard-email></span>
             </div>
-            <label><span>Preferred Name</span><input type="text" name="preferredName" maxlength="80" /></label>
-            <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel" maxlength="40" /></label>
-            <label><span>Verified Email</span><input type="email" name="email" disabled /></label>
-            <button class="btn primary" type="submit">Save Profile</button>
-            <p class="account-form-status" data-profile-status aria-live="polite"></p>
-          </form>
-        </article>
-
-        <article class="account-card account-certifications-card">
-          <div class="account-card-heading">
-            <p class="account-eyebrow">Training history</p>
-            <h3>Certifications</h3>
-            <p>Certification details remain pending until DMZ Scuba verifies them.</p>
           </div>
-          <div class="account-record-list" data-certification-list></div>
-          <form class="account-form account-add-certification" data-certification-form>
-            <h4>Add a certification</h4>
-            <div class="account-form-grid">
-              <label><span>Agency</span><input type="text" name="agency" placeholder="SDI, PADI, SSI..." maxlength="80" required /></label>
-              <label><span>Certification</span><input type="text" name="certificationName" placeholder="Open Water" maxlength="120" required /></label>
-            </div>
-            <label><span>Certification Number</span><input type="text" name="certificationNumber" maxlength="120" /></label>
-            <div class="account-form-grid">
-              <label><span>Issue Date</span><input type="date" name="issuedOn" /></label>
-              <label><span>Expiration Date</span><input type="date" name="expiresOn" /></label>
-            </div>
-            <button class="btn secondary" type="submit">Add Certification</button>
-            <p class="account-form-status" data-certification-status aria-live="polite"></p>
-          </form>
-        </article>
+          <nav class="account-nav-menu" aria-label="Account sections">
+            <button type="button" data-account-view="home" aria-current="page"><span aria-hidden="true">&#8962;</span>Account Home</button>
+            <button type="button" data-account-view="profile"><span aria-hidden="true">&#9786;</span>My Profile</button>
+            <button type="button" data-account-view="certifications"><span aria-hidden="true">&#9733;</span>Certifications</button>
+            <button type="button" data-account-view="activity"><span aria-hidden="true">&#128197;</span>Bookings &amp; Activity</button>
+            <button type="button" data-account-view="security"><span aria-hidden="true">&#128274;</span>Login &amp; Security</button>
+          </nav>
+          <button class="account-signout-button" type="button" data-logout>Sign Out</button>
+        </aside>
 
-        <article class="account-card account-settings-card">
-          <div class="account-card-heading">
-            <p class="account-eyebrow">Sign-in security</p>
-            <h3>Password and email</h3>
-            <p>Update the credentials you use on the DMZ Scuba website and mobile app.</p>
-          </div>
-          <div class="account-settings-grid">
-            <section>
-              <h4>Change password</h4>
-              <form class="account-form" data-change-password-form>
-                <label><span>Current Password</span><input type="password" name="currentPassword" autocomplete="current-password" required /></label>
-                <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
-                <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
-                <button class="btn secondary" type="submit">Change Password</button>
-                <p class="account-form-status" data-change-password-status aria-live="polite"></p>
-              </form>
-            </section>
+        <div class="account-portal-content">
+          <p class="account-dashboard-status" data-dashboard-status aria-live="polite"></p>
 
-            <section>
-              <h4>Change email address</h4>
-              <p class="account-settings-copy">Current verified email: <strong data-security-current-email></strong></p>
-              <form class="account-form" data-change-email-form>
-                <label><span>New Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
-                <button class="btn secondary" type="submit">Send Verification Codes</button>
-                <p class="account-form-status" data-change-email-status aria-live="polite"></p>
-              </form>
-
-              <div class="account-email-verification" data-email-verification hidden>
-                <p>For security, confirm the request from both inboxes.</p>
-                <form class="account-form" data-current-email-code-form>
-                  <label><span data-current-email-code-label>Code sent to your current email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
-                  <button class="btn secondary" type="submit">Verify Current Email</button>
-                  <p class="account-form-status" data-current-email-code-status aria-live="polite"></p>
-                </form>
-                <form class="account-form" data-new-email-code-form hidden>
-                  <label><span data-new-email-code-label>Code sent to your new email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
-                  <button class="btn primary" type="submit">Verify New Email</button>
-                  <p class="account-form-status" data-new-email-code-status aria-live="polite"></p>
-                </form>
+          <section class="account-view account-home" data-account-view-panel="home" aria-labelledby="dashboard-title">
+            <div class="account-home-hero">
+              <p class="account-eyebrow">Account home</p>
+              <h2 id="dashboard-title" data-dashboard-greeting>Welcome back, Diver.</h2>
+              <p>Your diving information is organized and ready when you need it.</p>
+              <div class="account-home-actions">
+                <button class="btn primary" type="button" data-account-view="activity">View My Activity</button>
+                <button class="btn secondary" type="button" data-account-view="profile">Review My Profile</button>
               </div>
-            </section>
-          </div>
-        </article>
-      </div>
+            </div>
 
-      <div class="account-card account-activity-card">
-        <div class="account-card-heading">
-          <p class="account-eyebrow">Connected activity</p>
-          <h3>Events, classes, trips, and bookings</h3>
-          <p>Use the verified-email match to connect existing DMZ Scuba records. New signed-in registrations connect automatically.</p>
-        </div>
-        <div class="account-activity-grid">
-          <section><h4>Event Registrations</h4><div class="account-record-list" data-event-registration-list></div></section>
-          <section><h4>Classes, Trips, and Bookings</h4><div class="account-record-list" data-reservation-list></div></section>
+            <div class="account-summary-grid" aria-label="Account summary">
+              <article><span>Profile</span><strong data-home-profile-status>Getting started</strong><button type="button" data-account-view="profile">Review profile</button></article>
+              <article><span>Certifications</span><strong data-home-certification-count>0 added</strong><button type="button" data-account-view="certifications">Manage certifications</button></article>
+              <article><span>Connected activity</span><strong data-home-activity-count>0 records</strong><button type="button" data-account-view="activity">View activity</button></article>
+            </div>
+
+            <article class="account-card account-home-next">
+              <div>
+                <p class="account-eyebrow">A good next step</p>
+                <h3 data-home-next-title>Make your account useful before your next dive.</h3>
+                <p data-home-next-copy>Add your phone number and certification details so DMZ Scuba can better prepare for classes, trips, and events.</p>
+              </div>
+              <button class="btn secondary" type="button" data-home-next-action data-account-view="certifications">Add a Certification</button>
+            </article>
+          </section>
+
+          <section class="account-view" data-account-view-panel="profile" hidden aria-labelledby="profile-title">
+            <div class="account-section-head">
+              <p class="account-eyebrow">Personal information</p>
+              <h2 id="profile-title">My profile</h2>
+              <p>Keep your contact information accurate for classes, trips, and bookings.</p>
+            </div>
+            <article class="account-card account-detail-card">
+              <form class="account-form" data-profile-form>
+                <div class="account-form-grid">
+                  <label><span>First Name</span><input type="text" name="firstName" maxlength="80" required /></label>
+                  <label><span>Last Name</span><input type="text" name="lastName" maxlength="80" required /></label>
+                </div>
+                <label><span>Preferred Name</span><input type="text" name="preferredName" maxlength="80" /></label>
+                <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel" maxlength="40" /></label>
+                <label><span>Verified Email</span><input type="email" name="email" disabled /><small>Change your verified email under Login &amp; Security.</small></label>
+                <button class="btn primary" type="submit">Save Profile</button>
+                <p class="account-form-status" data-profile-status aria-live="polite"></p>
+              </form>
+            </article>
+          </section>
+
+          <section class="account-view" data-account-view-panel="certifications" hidden aria-labelledby="certifications-title">
+            <div class="account-section-head">
+              <p class="account-eyebrow">Training history</p>
+              <h2 id="certifications-title">Certifications</h2>
+              <p>Add your training credentials. Certification details remain pending until DMZ Scuba verifies them.</p>
+            </div>
+            <article class="account-card account-certifications-card account-detail-card">
+              <div class="account-record-list" data-certification-list></div>
+              <form class="account-form account-add-certification" data-certification-form>
+                <h3>Add a certification</h3>
+                <div class="account-form-grid">
+                  <label><span>Agency</span><input type="text" name="agency" placeholder="SDI, PADI, SSI..." maxlength="80" required /></label>
+                  <label><span>Certification</span><input type="text" name="certificationName" placeholder="Open Water" maxlength="120" required /></label>
+                </div>
+                <label><span>Certification Number</span><input type="text" name="certificationNumber" maxlength="120" /></label>
+                <div class="account-form-grid">
+                  <label><span>Issue Date</span><input type="date" name="issuedOn" /></label>
+                  <label><span>Expiration Date</span><input type="date" name="expiresOn" /></label>
+                </div>
+                <button class="btn secondary" type="submit">Add Certification</button>
+                <p class="account-form-status" data-certification-status aria-live="polite"></p>
+              </form>
+            </article>
+          </section>
+
+          <section class="account-view" data-account-view-panel="activity" hidden aria-labelledby="activity-title">
+            <div class="account-section-head account-section-head-with-action">
+              <div>
+                <p class="account-eyebrow">Connected activity</p>
+                <h2 id="activity-title">Bookings and activity</h2>
+                <p>Review the events, classes, trips, and bookings connected to your account.</p>
+              </div>
+              <button class="btn secondary" type="button" data-link-existing>Find My Existing Records</button>
+            </div>
+            <article class="account-card account-detail-card">
+              <div class="account-activity-grid">
+                <section><h3>Event Registrations</h3><div class="account-record-list" data-event-registration-list></div></section>
+                <section><h3>Classes, Trips, and Bookings</h3><div class="account-record-list" data-reservation-list></div></section>
+              </div>
+            </article>
+          </section>
+
+          <section class="account-view" data-account-view-panel="security" hidden aria-labelledby="security-title">
+            <div class="account-section-head">
+              <p class="account-eyebrow">Sign-in security</p>
+              <h2 id="security-title">Login and security</h2>
+              <p>Update the credentials you use on the DMZ Scuba website and mobile app.</p>
+            </div>
+            <article class="account-card account-settings-card account-detail-card">
+              <div class="account-settings-grid">
+                <section>
+                  <h3>Change password</h3>
+                  <form class="account-form" data-change-password-form>
+                    <label><span>Current Password</span><input type="password" name="currentPassword" autocomplete="current-password" required /></label>
+                    <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
+                    <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+                    <button class="btn secondary" type="submit">Change Password</button>
+                    <p class="account-form-status" data-change-password-status aria-live="polite"></p>
+                  </form>
+                </section>
+
+                <section>
+                  <h3>Change email address</h3>
+                  <p class="account-settings-copy">Current verified email: <strong data-security-current-email></strong></p>
+                  <form class="account-form" data-change-email-form>
+                    <label><span>New Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
+                    <button class="btn secondary" type="submit">Send Verification Codes</button>
+                    <p class="account-form-status" data-change-email-status aria-live="polite"></p>
+                  </form>
+
+                  <div class="account-email-verification" data-email-verification hidden>
+                    <p>For security, confirm the request from both inboxes.</p>
+                    <form class="account-form" data-current-email-code-form>
+                      <label><span data-current-email-code-label>Code sent to your current email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
+                      <button class="btn secondary" type="submit">Verify Current Email</button>
+                      <p class="account-form-status" data-current-email-code-status aria-live="polite"></p>
+                    </form>
+                    <form class="account-form" data-new-email-code-form hidden>
+                      <label><span data-new-email-code-label>Code sent to your new email</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
+                      <button class="btn primary" type="submit">Verify New Email</button>
+                      <p class="account-form-status" data-new-email-code-status aria-live="polite"></p>
+                    </form>
+                  </div>
+                </section>
+              </div>
+            </article>
+          </section>
         </div>
       </div>
     </section>
@@ -225,6 +287,6 @@
 
   <script src="/js/main.js?v=20260823a"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260824a"></script>
+  <script src="/js/account.js?v=20260824b"></script>
 </body>
 </html>

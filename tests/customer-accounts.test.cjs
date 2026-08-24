@@ -169,9 +169,15 @@ test("account migration and page include the required foundation", () => {
   assert.match(page, /data-change-email-form/);
   assert.match(page, /data-current-email-code-form/);
   assert.match(page, /data-new-email-code-form/);
+  assert.match(page, /data-account-created/);
+  for (const view of ["home", "profile", "certifications", "activity", "security"]) {
+    assert.match(page, new RegExp(`data-account-view-panel="${view}"`));
+  }
   assert.match(client, /dmzCustomerAccessToken/);
   assert.match(client, /\/api\/account\/link-existing/);
   assert.match(client, /\/api\/account\/auth\/email\/verify/);
+  assert.match(client, /showAccountCreated/);
+  assert.match(client, /Your account is ready\. Welcome to DMZ Scuba\./);
   assert.match(workerSource, /current_password/);
   assert.match(workerSource, /type: "email_change"/);
 });
