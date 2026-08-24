@@ -101,6 +101,10 @@
                 <span class="mgmt-nav-badge" data-filter-count></span>
               </button>
 
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings">
+                <span class="mgmt-nav-text">Bookings</span>
+              </button>
+
               <button class="mgmt-nav-item mgmt-nav-primary" type="button"
                       data-filter-type="class" data-site-studio-open="operations">
                 <span class="mgmt-nav-text">Classes</span>
@@ -483,6 +487,22 @@
                 <aside class="mgmt-account-detail" data-account-detail>
                   <div class="mgmt-account-empty">Select an account to review its access and connected history.</div>
                 </aside>
+              </div>
+            </div>
+          </section>
+
+          <section class="mgmt-panel mgmt-bookings-panel" data-site-studio-panel="bookings" hidden>
+            <div class="mgmt-topbar">
+              <div class="mgmt-topbar-left"><p class="management-kicker">Booking center</p><h1 class="mgmt-panel-title">Bookings &amp; Availability</h1><p class="mgmt-panel-subtitle">Control what customers can book and review incoming requests.</p></div>
+              <div class="mgmt-topbar-right"><button class="mgmt-btn-sm" type="button" data-booking-import>Import Upcoming Calendar</button><button class="mgmt-btn-sm" type="button" data-booking-new>New Booking Option</button><button class="mgmt-btn-sm" type="button" data-booking-refresh>Refresh</button></div>
+            </div>
+            <div class="mgmt-bookings-body">
+              <p class="management-form-status" data-booking-admin-status aria-live="polite"></p>
+              <div class="mgmt-booking-summary" data-booking-summary></div>
+              <div class="mgmt-booking-columns">
+                <section><header><h2>Customer Requests</h2><p>Review booking details, payment status, and next steps.</p></header><div class="mgmt-booking-list" data-admin-booking-list></div></section>
+                <section><header><h2>Bookable Options</h2><p>Set category, schedule, capacity, pricing, and visibility.</p></header><div class="mgmt-booking-list" data-admin-offering-list></div></section>
+                <aside class="mgmt-booking-editor" data-admin-booking-editor><div class="management-empty">Select a request or booking option to review it.</div></aside>
               </div>
             </div>
           </section>
@@ -964,6 +984,7 @@
 
   <script src="/js/management.js?v=20260824b" defer></script>
   <script src="/js/management-accounts.js?v=20260824d" defer></script>
+  <script src="/js/management-bookings.js?v=20260824a" defer></script>
   <script src="/js/management-media-studio.js?v=20260824a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260824a" defer></script>
   <script src="/js/management-dashboard.js?v=20260824a" defer></script>
@@ -980,7 +1001,7 @@
     // Nav coordinator: clear Operations filter active states when switching to Content sections
     (function () {
       var filterBtns = document.querySelectorAll('[data-filter-type]');
-      ['accounts', 'media', 'travel', 'analytics', 'home'].forEach(function (key) {
+      ['accounts', 'bookings', 'media', 'travel', 'analytics', 'home'].forEach(function (key) {
         var tab = document.querySelector('[data-site-studio-tab="' + key + '"]');
         if (tab) tab.addEventListener('click', function () {
           filterBtns.forEach(function (b) { b.classList.remove('is-active'); });

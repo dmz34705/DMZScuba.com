@@ -543,6 +543,11 @@
       }, false);
       storeAccessToken(data.accessToken);
       await loadAccount({ throwOnError: true, signedIn: true });
+      const returnPath = String(sessionStorage.getItem("dmzAccountReturnPath") || "");
+      if (returnPath.startsWith("/pages/book/")) {
+        sessionStorage.removeItem("dmzAccountReturnPath");
+        window.location.assign(returnPath);
+      }
     } catch (error) {
       reportAuthFailure("login", error);
       setMessage(status, error.message, true);

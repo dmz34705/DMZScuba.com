@@ -1089,17 +1089,37 @@ async function handleCustomerAuthStatus(env) {
   );
 }
 
-function handleCustomerMobileChallenge(env) {
+function handleCustomerMobileChallenge(request, env) {
   const siteKey = getCustomerTurnstileSiteKey(env);
-  const siteKeyJson = JSON.stringify(siteKey);
+  const inlineJson = (value) => JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+  const siteKeyJson = inlineJson(siteKey);
   const unavailable = siteKey ? "" : "Security verification is not configured.";
+  const requestUrl = new URL(request.url);
+  const requestedCallback = String(requestUrl.searchParams.get("callback") || "").slice(0, 1000);
+  const state = String(requestUrl.searchParams.get("state") || "")
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 180);
+  let callbackUrl = "";
+  try {
+    const parsedCallback = new URL(requestedCallback);
+    if (["dmzscuba:", "exp:", "exps:"].includes(parsedCallback.protocol)) {
+      callbackUrl = parsedCallback.toString();
+    }
+  } catch {
+    callbackUrl = "";
+  }
+  const callbackUrlJson = inlineJson(callbackUrl);
+  const stateJson = inlineJson(state);
   const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="robots" content="noindex,nofollow" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://challenges.cloudflare.com 'unsafe-inline'; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; style-src 'unsafe-inline';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com 'unsafe-inline'; frame-src 'self' https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; img-src 'self' data:; style-src 'unsafe-inline';" />
   <title>DMZ Scuba Security Check</title>
   <style>
     html, body { background: #0b1c2e; margin: 0; min-height: 100%; overflow: hidden; }
@@ -1112,15 +1132,27 @@ function handleCustomerMobileChallenge(env) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: type, value: value || '' }));
       }
     }
+    function completeChallenge(token) {
+      send('token', token);
+      if (!${callbackUrlJson}) return;
+      try {
+        var target = new URL(${callbackUrlJson});
+        target.searchParams.set('captchaToken', token);
+        target.searchParams.set('state', ${stateJson});
+        window.location.replace(target.toString());
+      } catch (error) {
+        send('error', 'callback-error');
+      }
+    }
     function renderChallenge() {
-      if (!${siteKeyJson}) { send('error', ${JSON.stringify(unavailable)}); return; }
+      if (!${siteKeyJson}) { send('error', ${inlineJson(unavailable)}); return; }
       try {
         window.turnstile.render('#challenge', {
           sitekey: ${siteKeyJson},
           theme: 'dark',
           size: 'flexible',
           action: 'mobile_login',
-          callback: function (token) { send('token', token); },
+          callback: function (token) { completeChallenge(token); },
           'expired-callback': function () { send('expired'); },
           'timeout-callback': function () { send('error', '110600'); },
           'error-callback': function (code) { send('error', String(code || 'challenge-error')); }
@@ -1535,7 +1567,7 @@ async function getCustomerAppSettings(env, userId) {
 
 async function getCustomerAccountPayload(env, identity) {
   const profile = await ensureCustomerProfile(env, identity);
-  const [roleRows, certificationRows, registrationRows, reservationRows, appSettings] = await Promise.all([
+  const [roleRows, certificationRows, registrationRows, reservationRows, bookingRows, appSettings] = await Promise.all([
     env.DB.prepare("SELECT role FROM customer_roles WHERE user_id = ? ORDER BY role ASC").bind(identity.userId).all(),
     env.DB.prepare(
       `SELECT id, agency, certification_name, certification_number, issued_on, expires_on,
@@ -1550,6 +1582,12 @@ async function getCustomerAccountPayload(env, identity) {
       `SELECT id, reservation_type, source_id, source_registration_id, event_date, status, party_size,
                data_json, created_at, updated_at
        FROM customer_reservations WHERE user_id = ? ORDER BY created_at DESC`
+    ).bind(identity.userId).all(),
+    env.DB.prepare(
+      `SELECT b.*, o.title AS offering_title, o.location AS offering_location,
+              o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on
+       FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id
+       WHERE b.user_id = ? ORDER BY b.created_at DESC`
     ).bind(identity.userId).all(),
     getCustomerAppSettings(env, identity.userId),
   ]);
@@ -1567,7 +1605,7 @@ async function getCustomerAccountPayload(env, identity) {
       status: String(row.approval_status || "pending"),
       createdAt: String(row.created_at || ""),
     })),
-    reservations: (reservationRows.results || []).map((row) => ({
+    reservations: [...(reservationRows.results || []).map((row) => ({
       id: String(row.id || ""),
       type: String(row.reservation_type || "booking"),
       sourceId: String(row.source_id || ""),
@@ -1578,7 +1616,19 @@ async function getCustomerAccountPayload(env, identity) {
       details: parseJsonSafe(row.data_json, {}),
       createdAt: String(row.created_at || ""),
       updatedAt: String(row.updated_at || ""),
-    })),
+    })), ...(bookingRows.results || []).map((row) => ({
+      id: String(row.id || ""),
+      type: String(row.category || "booking"),
+      sourceId: String(row.offering_title || row.offering_id || "DMZ Scuba"),
+      sourceRegistrationId: "",
+      eventDate: String(row.offering_starts_on || ""),
+      status: String(row.status || "pending"),
+      partySize: 1,
+      paymentStatus: String(row.payment_status || "unpaid"),
+      details: parseJsonSafe(row.details_json, {}),
+      createdAt: String(row.created_at || ""),
+      updatedAt: String(row.updated_at || ""),
+    }))],
   };
 }
 
@@ -1608,7 +1658,7 @@ function mapManagedCustomer(row) {
     totals: {
       certifications: Math.max(0, Number(row && row.certification_count) || 0),
       registrations: Math.max(0, Number(row && row.registration_count) || 0),
-      reservations: Math.max(0, Number(row && row.reservation_count) || 0),
+      reservations: Math.max(0, Number(row && row.reservation_count) || 0) + Math.max(0, Number(row && row.booking_count) || 0),
       documents: Math.max(0, Number(row && row.document_count) || 0),
       managementRecords: Math.max(0, Number(row && row.management_record_count) || 0),
     },
@@ -1638,6 +1688,7 @@ async function handleListCustomerAccounts(request, env) {
             (SELECT COUNT(*) FROM customer_certifications c WHERE c.user_id = p.user_id) AS certification_count,
             (SELECT COUNT(*) FROM event_registrations_v2 e WHERE e.user_id = p.user_id) AS registration_count,
             (SELECT COUNT(*) FROM customer_reservations b WHERE b.user_id = p.user_id) AS reservation_count,
+            (SELECT COUNT(*) FROM customer_bookings_v2 b2 WHERE b2.user_id = p.user_id) AS booking_count,
             (SELECT COUNT(*) FROM customer_documents d WHERE d.user_id = p.user_id) AS document_count,
             (SELECT COUNT(*) FROM management_records m WHERE m.customer_user_id = p.user_id) AS management_record_count
      FROM customer_profiles p
@@ -1736,12 +1787,13 @@ function mapCustomerArchive(row, includeSnapshot = false) {
 
 async function getCustomerArchiveSnapshot(env, profile) {
   const userId = String(profile.user_id || "");
-  const [roles, appSettings, certifications, registrations, reservations, documents, managementRecords, auditLog] = await Promise.all([
+  const [roles, appSettings, certifications, registrations, reservations, bookings, documents, managementRecords, auditLog] = await Promise.all([
     env.DB.prepare("SELECT role, created_at, created_by FROM customer_roles WHERE user_id = ? ORDER BY role").bind(userId).all(),
     env.DB.prepare("SELECT * FROM customer_app_settings WHERE user_id = ? LIMIT 1").bind(userId).first(),
     env.DB.prepare("SELECT * FROM customer_certifications WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
     env.DB.prepare("SELECT * FROM event_registrations_v2 WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
     env.DB.prepare("SELECT * FROM customer_reservations WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
+    env.DB.prepare("SELECT * FROM customer_bookings_v2 WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
     env.DB.prepare("SELECT * FROM customer_documents WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
     env.DB.prepare("SELECT * FROM management_records WHERE customer_user_id = ? ORDER BY created_at").bind(userId).all(),
     env.DB.prepare("SELECT * FROM customer_audit_log WHERE user_id = ? ORDER BY created_at").bind(userId).all(),
@@ -1755,6 +1807,7 @@ async function getCustomerArchiveSnapshot(env, profile) {
     certifications: certifications.results || [],
     eventRegistrations: registrations.results || [],
     reservations: reservations.results || [],
+    bookings: bookings.results || [],
     documents: documents.results || [],
     managementRecords: managementRecords.results || [],
     auditLog: auditLog.results || [],
@@ -1833,6 +1886,7 @@ async function handleArchiveCustomerAccount(request, env, userId) {
     env.DB.prepare("DELETE FROM event_registrations_v2 WHERE user_id = ?").bind(safeUserId),
     env.DB.prepare("DELETE FROM customer_certifications WHERE user_id = ?").bind(safeUserId),
     env.DB.prepare("DELETE FROM customer_reservations WHERE user_id = ?").bind(safeUserId),
+    env.DB.prepare("DELETE FROM customer_bookings_v2 WHERE user_id = ?").bind(safeUserId),
     env.DB.prepare("DELETE FROM customer_documents WHERE user_id = ?").bind(safeUserId),
     env.DB.prepare("DELETE FROM management_records WHERE customer_user_id = ?").bind(safeUserId),
     env.DB.prepare("DELETE FROM customer_app_settings WHERE user_id = ?").bind(safeUserId),
@@ -1958,6 +2012,7 @@ async function handleMergeCustomerAccounts(request, env) {
     env.DB.prepare("UPDATE event_registrations_v2 SET user_id = ? WHERE user_id = ?").bind(targetUserId, sourceUserId),
     env.DB.prepare("UPDATE customer_certifications SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare("UPDATE customer_reservations SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
+    env.DB.prepare("UPDATE customer_bookings_v2 SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare("UPDATE customer_documents SET user_id = ?, updated_at = ? WHERE user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare("UPDATE management_records SET customer_user_id = ?, updated_at = ? WHERE customer_user_id = ?").bind(targetUserId, now, sourceUserId),
     env.DB.prepare(
@@ -2056,6 +2111,255 @@ async function handleUpdateCustomerAppSettings(request, env) {
     200,
     { "Cache-Control": "no-store" }
   );
+}
+
+function mapBookingOffering(row) {
+  return {
+    id: String(row && row.id || ""),
+    sourceId: String(row && row.source_id || ""),
+    sourceDate: String(row && row.source_date || ""),
+    category: String(row && row.category || "event"),
+    title: String(row && row.title || ""),
+    description: String(row && row.description || ""),
+    location: String(row && row.location || ""),
+    startsOn: String(row && row.starts_on || ""),
+    endsOn: String(row && row.ends_on || ""),
+    capacity: Math.max(0, Number(row && row.capacity) || 0),
+    priceCents: Math.max(0, Number(row && row.price_cents) || 0),
+    depositCents: Math.max(0, Number(row && row.deposit_cents) || 0),
+    currency: String(row && row.currency || "usd"),
+    active: Number(row && row.active) === 1,
+    settings: parseJsonSafe(row && row.settings_json, {}),
+    createdAt: String(row && row.created_at || ""),
+    updatedAt: String(row && row.updated_at || ""),
+  };
+}
+
+function mapCustomerBooking(row) {
+  return {
+    id: String(row && row.id || ""),
+    userId: String(row && row.user_id || ""),
+    offeringId: String(row && row.offering_id || ""),
+    category: String(row && row.category || "event"),
+    status: String(row && row.status || "pending"),
+    firstName: String(row && row.registrant_first_name || ""),
+    lastName: String(row && row.registrant_last_name || ""),
+    email: String(row && row.registrant_email || ""),
+    phone: String(row && row.registrant_phone || ""),
+    birthdate: String(row && row.registrant_birthdate || ""),
+    isMinor: Number(row && row.is_minor) === 1,
+    amountDueCents: Math.max(0, Number(row && row.amount_due_cents) || 0),
+    amountPaidCents: Math.max(0, Number(row && row.amount_paid_cents) || 0),
+    paymentStatus: String(row && row.payment_status || "unpaid"),
+    stripeCheckoutSessionId: String(row && row.stripe_checkout_session_id || ""),
+    stripePaymentIntentId: String(row && row.stripe_payment_intent_id || ""),
+    details: parseJsonSafe(row && row.details_json, {}),
+    offering: row && row.offering_title ? {
+      title: String(row.offering_title || ""),
+      location: String(row.offering_location || ""),
+      startsOn: String(row.offering_starts_on || ""),
+      endsOn: String(row.offering_ends_on || ""),
+    } : null,
+    createdAt: String(row && row.created_at || ""),
+    updatedAt: String(row && row.updated_at || ""),
+  };
+}
+
+function bookingOfferingSelect() {
+  return `SELECT o.*,
+    (SELECT COUNT(*) FROM customer_bookings_v2 b
+     WHERE b.offering_id = o.id AND b.status NOT IN ('cancelled')) AS booked_count
+    FROM booking_offerings o`;
+}
+
+async function handleGetBookingCatalog(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const rows = await env.DB.prepare(`${bookingOfferingSelect()} WHERE o.active = 1 ORDER BY COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all();
+  const offerings = (rows.results || []).map((row) => ({
+    ...mapBookingOffering(row),
+    bookedCount: Math.max(0, Number(row.booked_count) || 0),
+    remaining: Number(row.capacity) > 0 ? Math.max(0, Number(row.capacity) - (Number(row.booked_count) || 0)) : null,
+  }));
+  const profile = await ensureCustomerProfile(env, auth.identity);
+  return jsonResponse({
+    ok: true,
+    offerings,
+    profile: mapCustomerProfile(profile),
+    paymentsConfigured: Boolean(String(env.STRIPE_SECRET_KEY || "").trim()),
+    stripePublishableKey: String(env.STRIPE_PUBLISHABLE_KEY || "").trim(),
+  }, 200, { "Cache-Control": "no-store" });
+}
+
+async function handleListCustomerBookings(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const rows = await env.DB.prepare(
+    `SELECT b.*, o.title AS offering_title, o.location AS offering_location,
+            o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on
+     FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id
+     WHERE b.user_id = ? ORDER BY b.created_at DESC`
+  ).bind(auth.identity.userId).all();
+  return jsonResponse({ ok: true, bookings: (rows.results || []).map(mapCustomerBooking) }, 200, { "Cache-Control": "no-store" });
+}
+
+function normalizeBookingDetails(body, category) {
+  const preferredDates = Array.isArray(body.preferredDates)
+    ? body.preferredDates.map((date) => normalizeCustomerText(date, 10)).filter(isDateKey).slice(0, 3)
+    : [];
+  return {
+    preferredDates,
+    classFormat: category === "class" && ["house_call", "virtual", "dmz_hq"].includes(body.classFormat) ? body.classFormat : "",
+    veteranPublicSafetyDiscount: Boolean(body.veteranPublicSafetyDiscount),
+    certificationLevel: normalizeCustomerText(body.certificationLevel, 120),
+    lastDiveDate: normalizeCustomerText(body.lastDiveDate, 10),
+    needsGear: Boolean(body.needsGear),
+    needsClasses: Boolean(body.needsClasses),
+    notes: normalizeCustomerText(body.notes, 1200),
+  };
+}
+
+async function handleCreateCustomerBooking(request, env) {
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const offeringId = normalizeCustomerText(body.offeringId, 100);
+  const offering = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ? AND active = 1 LIMIT 1").bind(offeringId).first();
+  if (!offering) return jsonResponse({ ok: false, error: "This booking option is no longer available." }, 404);
+  const category = String(offering.category || "event");
+  const firstName = normalizeCustomerText(body.firstName, 80);
+  const lastName = normalizeCustomerText(body.lastName, 80);
+  const email = normalizeCustomerText(body.email, 180).toLowerCase();
+  const phone = normalizeCustomerText(body.phone, 40);
+  const birthdate = normalizeCustomerText(body.birthdate, 10);
+  if (!firstName || !lastName || !email || !phone || !isDateKey(birthdate)) {
+    return jsonResponse({ ok: false, error: "Name, email, phone number, and birthdate are required." }, 400);
+  }
+  const details = normalizeBookingDetails(body, category);
+  if (category === "class" && !details.preferredDates.length) {
+    return jsonResponse({ ok: false, error: "Choose at least one preferred class date." }, 400);
+  }
+  if ((category === "trip" || category === "event") && !details.certificationLevel) {
+    return jsonResponse({ ok: false, error: "Tell us which certification you currently hold." }, 400);
+  }
+  if (Number(offering.capacity) > 0) {
+    const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM customer_bookings_v2 WHERE offering_id = ? AND status NOT IN ('cancelled')").bind(offeringId).first();
+    if ((Number(count && count.count) || 0) >= Number(offering.capacity)) {
+      return jsonResponse({ ok: false, error: "This option is currently full. Contact DMZ Scuba about the waitlist." }, 409);
+    }
+  }
+  const amountDue = Math.max(0, Number(offering.deposit_cents) || Number(offering.price_cents) || 0);
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO customer_bookings_v2
+     (id, user_id, offering_id, category, status, registrant_first_name, registrant_last_name,
+      registrant_email, registrant_phone, registrant_birthdate, is_minor, amount_due_cents,
+      amount_paid_cents, payment_status, details_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`
+  ).bind(id, auth.identity.userId, offeringId, category, firstName, lastName, email, phone, birthdate,
+    body.isMinor ? 1 : 0, amountDue, amountDue > 0 ? "unpaid" : "not_required", JSON.stringify(details), now, now).run();
+  await writeCustomerAudit(env, auth.identity.userId, "booking.created", "customer_booking", id, auth.identity.userId);
+  return jsonResponse({ ok: true, bookingId: id, amountDueCents: amountDue, paymentRequired: amountDue > 0 }, 201);
+}
+
+async function handleListAdminBookings(request, env) {
+  const auth = await requireManagementIdentity(request, env, false);
+  if (auth.response) return auth.response;
+  const [offeringRows, bookingRows] = await Promise.all([
+    env.DB.prepare(`${bookingOfferingSelect()} ORDER BY o.active DESC, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all(),
+    env.DB.prepare(
+      `SELECT b.*, o.title AS offering_title, o.location AS offering_location,
+              o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on
+       FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id
+       ORDER BY b.created_at DESC`
+    ).all(),
+  ]);
+  return jsonResponse({
+    ok: true,
+    offerings: (offeringRows.results || []).map((row) => ({ ...mapBookingOffering(row), bookedCount: Number(row.booked_count) || 0 })),
+    bookings: (bookingRows.results || []).map(mapCustomerBooking),
+    paymentsConfigured: Boolean(String(env.STRIPE_SECRET_KEY || "").trim()),
+  }, 200, { "Cache-Control": "no-store" });
+}
+
+function normalizeBookingOffering(body, existing = {}) {
+  const category = ["class", "trip", "event"].includes(body.category) ? body.category : String(existing.category || "event");
+  const priceCents = Math.max(0, Math.round(Number(body.price || 0) * 100));
+  const depositCents = Math.min(priceCents || Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(Number(body.deposit || 0) * 100)));
+  return {
+    sourceId: normalizeCustomerText(body.sourceId != null ? body.sourceId : existing.source_id, 140),
+    sourceDate: normalizeCustomerText(body.sourceDate != null ? body.sourceDate : existing.source_date, 10),
+    category,
+    title: normalizeCustomerText(body.title != null ? body.title : existing.title, 180),
+    description: normalizeCustomerText(body.description != null ? body.description : existing.description, 2000),
+    location: normalizeCustomerText(body.location != null ? body.location : existing.location, 180),
+    startsOn: normalizeCustomerText(body.startsOn != null ? body.startsOn : existing.starts_on, 10),
+    endsOn: normalizeCustomerText(body.endsOn != null ? body.endsOn : existing.ends_on, 10),
+    capacity: Math.max(0, Math.trunc(Number(body.capacity != null ? body.capacity : existing.capacity) || 0)),
+    priceCents: body.price != null ? priceCents : Math.max(0, Number(existing.price_cents) || 0),
+    depositCents: body.deposit != null ? depositCents : Math.max(0, Number(existing.deposit_cents) || 0),
+    currency: "usd",
+    active: body.active == null ? Number(existing.active == null ? 1 : existing.active) === 1 : Boolean(body.active),
+    settings: body.settings && typeof body.settings === "object" ? body.settings : parseJsonSafe(existing.settings_json, {}),
+  };
+}
+
+async function handleSaveBookingOffering(request, env, offeringId = "") {
+  const auth = await requireManagementIdentity(request, env, false);
+  if (auth.response) return auth.response;
+  const safeId = normalizeCustomerText(offeringId, 100) || crypto.randomUUID();
+  const existing = offeringId ? await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ? LIMIT 1").bind(safeId).first() : null;
+  if (offeringId && !existing) return jsonResponse({ ok: false, error: "Booking option not found." }, 404);
+  const body = await request.json().catch(() => ({}));
+  const item = normalizeBookingOffering(body.offering || body, existing || {});
+  if (!item.title) return jsonResponse({ ok: false, error: "A booking title is required." }, 400);
+  const now = new Date().toISOString();
+  const createdAt = existing && existing.created_at || now;
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO booking_offerings
+     (id, source_id, source_date, category, title, description, location, starts_on, ends_on,
+      capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(safeId, item.sourceId || null, item.sourceDate || null, item.category, item.title, item.description,
+    item.location, item.startsOn || null, item.endsOn || null, item.capacity, item.priceCents, item.depositCents,
+    item.currency, item.active ? 1 : 0, JSON.stringify(item.settings), createdAt, now).run();
+  const saved = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ?").bind(safeId).first();
+  return jsonResponse({ ok: true, offering: mapBookingOffering(saved) });
+}
+
+async function handleImportBookingOfferings(request, env) {
+  const auth = await requireManagementIdentity(request, env, false);
+  if (auth.response) return auth.response;
+  const payload = await getEventsPayloadV2(env);
+  const today = getChicagoTodayKey();
+  const events = (payload && Array.isArray(payload.events) ? payload.events : []).filter((item) => String(item.date || "") >= today);
+  const now = new Date().toISOString();
+  const statements = events.map((item) => {
+    const type = String(item.type || "").toLowerCase();
+    const category = type === "training" ? "class" : type === "travel" ? "trip" : "event";
+    return env.DB.prepare(
+      `INSERT OR IGNORE INTO booking_offerings
+       (id, source_id, source_date, category, title, description, location, starts_on, ends_on,
+        capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'usd', ?, '{}', ?, ?)`
+    ).bind(crypto.randomUUID(), String(item.id || ""), String(item.date || ""), category, String(item.title || "Upcoming booking"),
+      String(item.summary || ""), String(item.location || ""), String(item.date || ""), String(item.endDate || item.date || ""),
+      Math.max(0, Number(item.registrationCapacity) || 0), item.registrationEnabled && !item.registrationClosed ? 1 : 0, now, now);
+  });
+  if (statements.length) await env.DB.batch(statements);
+  return jsonResponse({ ok: true, imported: statements.length });
+}
+
+async function handleUpdateAdminBooking(request, env, bookingId) {
+  const auth = await requireManagementIdentity(request, env, false);
+  if (auth.response) return auth.response;
+  const body = await request.json().catch(() => ({}));
+  const status = ["pending", "reviewing", "confirmed", "waitlisted", "cancelled", "completed"].includes(body.status) ? body.status : "";
+  if (!status) return jsonResponse({ ok: false, error: "Choose a valid booking status." }, 400);
+  await env.DB.prepare("UPDATE customer_bookings_v2 SET status = ?, updated_at = ? WHERE id = ?")
+    .bind(status, new Date().toISOString(), normalizeCustomerText(bookingId, 100)).run();
+  return jsonResponse({ ok: true, status });
 }
 
 function normalizeCustomerCertification(body = {}, existing = {}) {
@@ -5155,7 +5459,7 @@ export default {
     } else if (pathname === "/api/client-telemetry" && request.method === "POST") {
       response = await handleClientTelemetry(request, env, context);
     } else if (pathname === "/api/account/mobile-challenge" && request.method === "GET") {
-      response = handleCustomerMobileChallenge(env);
+      response = handleCustomerMobileChallenge(request, env);
     } else if (pathname === "/api/account/auth/status" && request.method === "GET") {
       response = await handleCustomerAuthStatus(env);
     } else if (pathname === "/api/account/auth/signup" && request.method === "POST") {
@@ -5182,6 +5486,12 @@ export default {
       response = await handleUpdateCustomerProfile(request, env);
     } else if (pathname === "/api/account/app-settings" && request.method === "PUT") {
       response = await handleUpdateCustomerAppSettings(request, env);
+    } else if (pathname === "/api/bookings/catalog" && request.method === "GET") {
+      response = await handleGetBookingCatalog(request, env);
+    } else if (pathname === "/api/bookings" && request.method === "GET") {
+      response = await handleListCustomerBookings(request, env);
+    } else if (pathname === "/api/bookings" && request.method === "POST") {
+      response = await handleCreateCustomerBooking(request, env);
     } else if (pathname === "/api/account/link-existing" && request.method === "POST") {
       response = await handleLinkCustomerRecords(request, env);
     } else if (pathname === "/api/account/certifications" && request.method === "POST") {
@@ -5200,6 +5510,16 @@ export default {
       response = await handleListCustomerAccounts(request, env);
     } else if (pathname === "/api/admin/accounts/merge" && request.method === "POST") {
       response = await handleMergeCustomerAccounts(request, env);
+    } else if (pathname === "/api/admin/bookings" && request.method === "GET") {
+      response = await handleListAdminBookings(request, env);
+    } else if (pathname === "/api/admin/booking-offerings" && request.method === "POST") {
+      response = await handleSaveBookingOffering(request, env);
+    } else if (pathname === "/api/admin/booking-offerings/import-events" && request.method === "POST") {
+      response = await handleImportBookingOfferings(request, env);
+    } else if (/^\/api\/admin\/booking-offerings\/[^/]+$/.test(pathname) && request.method === "PUT") {
+      response = await handleSaveBookingOffering(request, env, decodeURIComponent(pathname.split("/")[4] || ""));
+    } else if (/^\/api\/admin\/bookings\/[^/]+$/.test(pathname) && request.method === "PUT") {
+      response = await handleUpdateAdminBooking(request, env, decodeURIComponent(pathname.split("/")[4] || ""));
     } else if (pathname === "/api/admin/account-archives" && request.method === "GET") {
       response = await handleListCustomerAccountArchives(request, env);
     } else if (/^\/api\/admin\/account-archives\/[^/]+\/download$/.test(pathname) && request.method === "GET") {

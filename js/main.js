@@ -433,7 +433,7 @@ console.log("main.js loaded");
       `<nav class="main-nav desktop-primary-nav" id="desktop-primary-navigation" aria-label="Primary">` +
       `<div class="nav-links">${linksHtml}</div>` +
       `<div class="nav-drawer-actions">` +
-      `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
+      `<a class="nav-cta" href="/pages/book/">Book Now</a>` +
       `</div></nav>` +
       `</div>`;
 
@@ -445,7 +445,7 @@ console.log("main.js loaded");
       `<button class="nav-menu-close" type="button" aria-label="Close menu"><span aria-hidden="true">&times;</span></button></div>` +
       `<div class="nav-drawer-links">${linksHtml}</div>` +
       `<div class="nav-drawer-actions">` +
-      `<a class="nav-cta" href="/pages/contact/?interest=training#dive-now">Start Diving</a>` +
+      `<a class="nav-cta" href="/pages/book/">Book Now</a>` +
       `<a href="tel:+16306604536">Call 630-660-4536</a>` +
       `<a href="sms:+16306604536">Text DMZ Scuba</a></div></nav>` +
       `</div>`;

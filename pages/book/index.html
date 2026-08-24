@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <title>Book Scuba Classes, Trips, and Events | DMZ Scuba</title>
+  <meta name="description" content="Sign in to book DMZ Scuba classes, local events, and dive trips from one secure account." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
+  <link rel="stylesheet" href="/css/pages/book.css?v=20260824a" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
+</head>
+<body>
+  <header class="site-header" data-site-nav></header>
+  <main class="booking-page" data-booking-app>
+    <section class="booking-hero">
+      <p class="booking-eyebrow">Book with DMZ Scuba</p>
+      <h1>Your next dive starts here.</h1>
+      <p>Choose a class, local event, or dive trip. Your DMZ account keeps the booking connected across the website and mobile apps.</p>
+    </section>
+
+    <section class="booking-gate" data-booking-gate>
+      <div>
+        <p class="booking-eyebrow">Secure booking</p>
+        <h2>Sign in before you book</h2>
+        <p>Your verified account protects personal, certification, and payment information while keeping every booking in one place.</p>
+        <div class="booking-actions">
+          <a class="btn primary" href="/pages/account/" data-booking-signin>Sign In</a>
+          <a class="btn secondary" href="/pages/account/create/">Create Account</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="booking-workspace" data-booking-workspace hidden>
+      <header class="booking-section-heading">
+        <div><p class="booking-eyebrow">Step 1</p><h2>What would you like to book?</h2></div>
+        <a href="/pages/account/" class="booking-account-link">View My Account</a>
+      </header>
+      <div class="booking-tabs" role="tablist" aria-label="Booking categories">
+        <button class="is-active" type="button" data-booking-category="class" aria-selected="true">Classes</button>
+        <button type="button" data-booking-category="trip" aria-selected="false">Dive Trips</button>
+        <button type="button" data-booking-category="event" aria-selected="false">Local Events</button>
+      </div>
+      <p class="booking-status" data-booking-status aria-live="polite">Loading available bookings...</p>
+      <div class="booking-catalog" data-booking-catalog></div>
+
+      <section class="booking-form-shell" data-booking-form-shell hidden aria-labelledby="booking-form-title">
+        <button class="booking-back" type="button" data-booking-back>&larr; Back to choices</button>
+        <div class="booking-selected" data-booking-selected></div>
+        <form class="booking-form" data-booking-form>
+          <div class="booking-form-heading"><p class="booking-eyebrow">Step 2</p><h2 id="booking-form-title">Tell us who is booking</h2></div>
+          <input type="hidden" name="offeringId" />
+          <div class="booking-form-grid">
+            <label><span>First Name</span><input name="firstName" autocomplete="given-name" required /></label>
+            <label><span>Last Name</span><input name="lastName" autocomplete="family-name" required /></label>
+            <label><span>Email Address</span><input name="email" type="email" autocomplete="email" required /></label>
+            <label><span>Phone Number</span><input name="phone" type="tel" autocomplete="tel" required /></label>
+            <label><span>Birthdate</span><input name="birthdate" type="date" autocomplete="bday" required /></label>
+          </div>
+          <label class="booking-check"><input name="isMinor" type="checkbox" /><span><strong>I am registering my child</strong><small>Select this when the participant is a minor.</small></span></label>
+
+          <fieldset data-class-fields>
+            <legend>Class schedule and preferences</legend>
+            <p>Choose up to three dates that work well. DMZ Scuba will confirm the final schedule with you.</p>
+            <div class="booking-date-grid">
+              <label><span>First Choice</span><input name="preferredDate1" type="date" /></label>
+              <label><span>Second Choice</span><input name="preferredDate2" type="date" /></label>
+              <label><span>Third Choice</span><input name="preferredDate3" type="date" /></label>
+            </div>
+            <div class="booking-choice-grid">
+              <label><input type="radio" name="classFormat" value="dmz_hq" checked /><span><strong>DMZ Scuba HQ</strong><small>Meet with DMZ Scuba in person.</small></span></label>
+              <label><input type="radio" name="classFormat" value="virtual" /><span><strong>Virtual Classroom</strong><small>Complete classroom instruction online.</small></span></label>
+              <label><input type="radio" name="classFormat" value="house_call" /><span><strong>House Call</strong><small>Ask about instruction at your location.</small></span></label>
+            </div>
+            <label class="booking-check"><input name="veteranPublicSafetyDiscount" type="checkbox" /><span><strong>Veteran or public-safety discount</strong><small>DMZ Scuba will verify eligibility before confirming the price.</small></span></label>
+          </fieldset>
+
+          <fieldset data-dive-fields hidden>
+            <legend>Diver readiness</legend>
+            <div class="booking-form-grid">
+              <label><span>Highest Certification</span><input name="certificationLevel" placeholder="For example: Open Water" /></label>
+              <label><span>Last Dive Date</span><input name="lastDiveDate" type="date" /></label>
+            </div>
+            <div class="booking-choice-grid">
+              <label><input name="needsGear" type="checkbox" /><span><strong>I need gear</strong><small>Help me arrange rental or personal equipment.</small></span></label>
+              <label><input name="needsClasses" type="checkbox" /><span><strong>I need training first</strong><small>Help me meet the requirements before this booking.</small></span></label>
+            </div>
+          </fieldset>
+
+          <label><span>Anything else we should know?</span><textarea name="notes" rows="4" maxlength="1200" placeholder="Scheduling, accessibility, gear sizing, or questions for DMZ Scuba"></textarea></label>
+          <div class="booking-review" data-booking-review></div>
+          <button class="btn primary" type="submit">Submit Booking</button>
+          <p class="booking-status" data-booking-form-status aria-live="polite"></p>
+        </form>
+      </section>
+    </section>
+
+    <section class="booking-success" data-booking-success hidden>
+      <div class="booking-success-mark" aria-hidden="true">&#10003;</div>
+      <p class="booking-eyebrow">Booking received</p>
+      <h2>We have your request.</h2>
+      <p data-booking-success-copy>DMZ Scuba will review the details and confirm your booking.</p>
+      <div class="booking-actions"><button class="btn primary" type="button" data-book-another>Book Something Else</button><a class="btn secondary" href="/pages/account/">View My Bookings</a></div>
+    </section>
+  </main>
+  <footer class="site-footer" data-site-footer></footer>
+  <script src="/js/main.js?v=20260824book" defer></script>
+  <script src="/js/booking.js?v=20260824a" defer></script>
+</body>
+</html>

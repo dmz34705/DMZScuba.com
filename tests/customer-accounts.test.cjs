@@ -152,7 +152,36 @@ test("mobile challenge is a dedicated Turnstile page on the API origin", async (
   assert.match(html, /0x4AAAA-test/);
   assert.match(html, /turnstile\.render/);
   assert.match(html, /window\.ReactNativeWebView\.postMessage/);
+  assert.match(html, /default-src 'self'/);
+  assert.match(html, /frame-src 'self' https:\/\/challenges\.cloudflare\.com/);
   assert.doesNotMatch(html, /site-header|DMZ Scuba Customer Accounts/);
+});
+
+test("mobile challenge returns successful verification only to approved app schemes", async () => {
+  const worker = await workerModulePromise;
+  const approvedResponse = await worker.default.fetch(
+    new Request(
+      "https://www.dmzscuba.com/api/account/mobile-challenge?callback=dmzscuba%3A%2F%2Faccount%2Fchallenge&state=state-123",
+      { method: "GET" }
+    ),
+    { TURNSTILE_SITE_KEY: "0x4AAAA-test" },
+    { waitUntil() {} }
+  );
+  const approvedHtml = await approvedResponse.text();
+  assert.match(approvedHtml, /dmzscuba:\/\/account\/challenge/);
+  assert.match(approvedHtml, /captchaToken/);
+  assert.match(approvedHtml, /state-123/);
+
+  const rejectedResponse = await worker.default.fetch(
+    new Request(
+      "https://www.dmzscuba.com/api/account/mobile-challenge?callback=https%3A%2F%2Fevil.example%2Fsteal&state=state-123",
+      { method: "GET" }
+    ),
+    { TURNSTILE_SITE_KEY: "0x4AAAA-test" },
+    { waitUntil() {} }
+  );
+  const rejectedHtml = await rejectedResponse.text();
+  assert.doesNotMatch(rejectedHtml, /evil\.example/);
 });
 
 test("customer account and credential endpoints reject requests without a JWT", async () => {

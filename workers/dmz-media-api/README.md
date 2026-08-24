@@ -62,7 +62,7 @@ Customer authentication also provides role-based management access while the leg
 - `GET /api/account/auth/status`
   - Reports whether customer authentication has been configured
 - `GET /api/account/mobile-challenge`
-  - Serves the Turnstile-only document used by the native app from the real DMZScuba.com origin
+  - Serves the Turnstile-only document used by the native app's system authentication browser and returns successful verification through an approved app callback scheme
 
 - `POST /api/account/auth/signup`
 - `POST /api/account/auth/verify`
@@ -88,6 +88,12 @@ Customer authentication also provides role-based management access while the leg
   - Manages customer-owned certifications; edited certifications return to pending verification
 - `PUT /api/account/auth/password`
   - Updates the signed-in customer's password through Supabase
+- `GET /api/bookings/catalog`
+  - Returns active class, trip, and local-event booking options for a signed-in customer
+- `GET /api/bookings`
+  - Returns the signed-in customer's booking requests and payment states
+- `POST /api/bookings`
+  - Creates an authenticated booking request with category-specific scheduling and diver-readiness details
 
 ### Admin
 
@@ -100,6 +106,12 @@ Customer authentication also provides role-based management access while the leg
 - `POST /api/admin/accounts/:userId/reactivate`
 - `POST /api/admin/accounts/merge`
   - Administrator-only account management; merges move connected business history to the surviving account and disable the duplicate login
+- `GET /api/admin/bookings`
+- `POST /api/admin/booking-offerings`
+- `PUT /api/admin/booking-offerings/:offeringId`
+- `POST /api/admin/booking-offerings/import-events`
+- `PUT /api/admin/bookings/:bookingId`
+  - Employee booking management for availability, category, capacity, pricing, deposits, visibility, and request status
 - `POST /api/admin/accounts/:userId/archive`
   - Permanently deletes a deactivated customer's shared website/mobile login and operational rows after storing a protected snapshot
 - `GET /api/admin/account-archives`
@@ -168,6 +180,8 @@ Primary tables:
 - `customer_profiles`
 - `customer_app_settings`
 - `customer_account_archives`
+- `booking_offerings`
+- `customer_bookings_v2`
 - `customer_roles`
 - `customer_certifications`
 - `customer_reservations`

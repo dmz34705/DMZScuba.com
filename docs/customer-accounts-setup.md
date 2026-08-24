@@ -124,7 +124,7 @@ Use the same Supabase project URL and publishable key in the mobile app. The app
 
 Store mobile refresh tokens only in the platform's secure credential storage. Do not put refresh tokens in ordinary app preferences or logs.
 
-The native login screen loads the Turnstile-only document from `GET /api/account/mobile-challenge` inside its WebView. This gives the challenge a real `https://www.dmzscuba.com` origin without loading the public website UI. The app then exchanges the email, password, and short-lived CAPTCHA token directly with Supabase Auth. The password is never persisted by the app.
+The native login screen opens the Turnstile-only document at `https://dmzscuba-com.pages.dev/api/account/mobile-challenge` in the iOS system authentication browser. After verification, the Worker returns the short-lived CAPTCHA token through the app's approved callback scheme, and the app validates the matching one-time state value before accepting it. The Pages origin avoids the additional JavaScript-detection layer injected on the proxied public hostname. Add `dmzscuba-com.pages.dev` to the Turnstile widget's allowed hostnames. Account API traffic still uses `https://www.dmzscuba.com`. The app exchanges the email, password, and CAPTCHA token directly with Supabase Auth, and the password is never persisted.
 
 Authenticated mobile settings use `PUT /api/account/app-settings`. `GET /api/account` returns `appSettings` when the customer has saved preferences. Apply migration `0004_customer_app_settings.sql` before deploying the Worker route.
 
