@@ -3,9 +3,11 @@
   if (!app) return;
 
   const tokenStorageKey = "dmzCustomerAccessToken";
+  const signedInStorageKey = "dmzCustomerSignedIn";
   const accountIntro = app.querySelector("[data-account-intro]");
   const authSection = app.querySelector("[data-account-auth]");
   const accountCreated = app.querySelector("[data-account-created]");
+  const accountSignedIn = app.querySelector("[data-account-signed-in]");
   const dashboard = app.querySelector("[data-account-dashboard]");
   const systemStatus = app.querySelector("[data-account-system-status]");
   const dashboardStatus = app.querySelector("[data-dashboard-status]");
@@ -38,6 +40,17 @@
     } catch (_error) {
       // The in-memory session remains usable when browser storage is disabled.
     }
+    try {
+      if (accessToken) window.localStorage.setItem(signedInStorageKey, "1");
+      else window.localStorage.removeItem(signedInStorageKey);
+    } catch (_error) {
+      // This is only a site-wide display hint; authentication still uses secure tokens.
+    }
+    document.querySelectorAll('a[href="/pages/account/"]').forEach((link) => {
+      if (link.closest(".nav-links, .nav-drawer-links")) {
+        link.textContent = accessToken ? "My Account" : "Account";
+      }
+    });
   }
 
   function escapeHtml(value) {
@@ -101,6 +114,7 @@
     accountIntro.hidden = true;
     authSection.hidden = true;
     accountCreated.hidden = true;
+    accountSignedIn.hidden = true;
     dashboard.hidden = false;
     showAccountView(view);
     setMessage(systemStatus, "Your account session is secure and active.");
@@ -110,6 +124,7 @@
     accountIntro.hidden = true;
     authSection.hidden = true;
     dashboard.hidden = true;
+    accountSignedIn.hidden = true;
     accountCreated.hidden = false;
     const linkedDetail = app.querySelector("[data-account-created-detail]");
     if (linkedDetail) {
@@ -119,6 +134,16 @@
     }
     accountCreated.querySelector("[data-enter-account]")?.focus();
     setMessage(systemStatus, "Your email is verified and your account has been created.");
+  }
+
+  function showLoginSuccess() {
+    accountIntro.hidden = true;
+    authSection.hidden = true;
+    accountCreated.hidden = true;
+    dashboard.hidden = true;
+    accountSignedIn.hidden = false;
+    accountSignedIn.querySelector("[data-enter-account]")?.focus();
+    setMessage(systemStatus, "You are securely signed in.");
   }
 
   function resetCaptcha(name) {
@@ -217,22 +242,29 @@
   }
 
   async function refreshSession() {
-    const response = await fetch("/api/account/auth/refresh", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { Accept: "application/json" },
-    }).catch(() => null);
-    if (!response || !response.ok) {
-      storeAccessToken("");
-      return false;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), apiTimeoutMs);
+    try {
+      const response = await fetch("/api/account/auth/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+      }).catch(() => null);
+      if (!response || !response.ok) {
+        storeAccessToken("");
+        return false;
+      }
+      const data = await response.json().catch(() => ({}));
+      if (!data || !data.ok || !data.accessToken) {
+        storeAccessToken("");
+        return false;
+      }
+      storeAccessToken(data.accessToken);
+      return true;
+    } finally {
+      window.clearTimeout(timeoutId);
     }
-    const data = await response.json().catch(() => ({}));
-    if (!data || !data.ok || !data.accessToken) {
-      storeAccessToken("");
-      return false;
-    }
-    storeAccessToken(data.accessToken);
-    return true;
   }
 
   async function apiRequest(path, options = {}, retry = true) {
@@ -361,7 +393,7 @@
     const email = app.querySelector("[data-dashboard-email]");
     const securityEmail = app.querySelector("[data-security-current-email]");
     const avatar = app.querySelector("[data-account-avatar]");
-    const createdName = app.querySelector("[data-account-created-name]");
+    const welcomeNames = app.querySelectorAll("[data-account-welcome-name]");
     const certificationCount = app.querySelector("[data-home-certification-count]");
     const activityCount = app.querySelector("[data-home-activity-count]");
     const profileStatus = app.querySelector("[data-home-profile-status]");
@@ -376,7 +408,7 @@
     if (email) email.textContent = profile.email || "";
     if (securityEmail) securityEmail.textContent = profile.email || "";
     if (avatar) avatar.textContent = initials || "D";
-    if (createdName) createdName.textContent = displayName;
+    welcomeNames.forEach((element) => { element.textContent = displayName; });
     if (certificationCount) certificationCount.textContent = `${certifications.length} ${certifications.length === 1 ? "certification" : "certifications"}`;
     if (activityCount) activityCount.textContent = `${connectedActivityCount} ${connectedActivityCount === 1 ? "record" : "records"}`;
     if (profileStatus) profileStatus.textContent = profile.phone ? "Ready to use" : "Add your phone";
@@ -413,6 +445,7 @@
     activeAccountView = "home";
     accountIntro.hidden = false;
     accountCreated.hidden = true;
+    accountSignedIn.hidden = true;
     dashboard.hidden = true;
     authSection.hidden = false;
     showPanel("login");
@@ -423,6 +456,7 @@
     try {
       renderAccount(await apiRequest("/api/account", { method: "GET" }));
       if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
+      else if (options.signedIn) showLoginSuccess();
       else showDashboard(options.view || activeAccountView);
       return true;
     } catch (error) {
@@ -437,9 +471,11 @@
     button.addEventListener("click", () => showAccountView(button.dataset.accountView || "home", true));
   });
 
-  app.querySelector("[data-enter-account]")?.addEventListener("click", () => {
-    showDashboard("home");
-    setMessage(dashboardStatus, "Your account is ready. Welcome to DMZ Scuba.");
+  app.querySelectorAll("[data-enter-account]").forEach((button) => {
+    button.addEventListener("click", () => {
+      showDashboard("home");
+      setMessage(dashboardStatus, "Your account is ready. Welcome to DMZ Scuba.");
+    });
   });
 
   tabs.forEach((tab) => {
@@ -474,7 +510,7 @@
         }),
       }, false);
       storeAccessToken(data.accessToken);
-      await loadAccount({ throwOnError: true });
+      await loadAccount({ throwOnError: true, signedIn: true });
     } catch (error) {
       reportAuthFailure("login", error);
       setMessage(status, error.message, true);
@@ -844,6 +880,9 @@
       authSection.querySelectorAll("button[type='submit']").forEach((button) => { button.disabled = true; });
       return;
     }
+    setMessage(systemStatus, "Restoring your secure account session...");
+    if (accessToken && await loadAccount()) return;
+    if (await refreshSession() && await loadAccount()) return;
     const turnstileReady = await initTurnstile(String(status.turnstileSiteKey || ""));
     if (!turnstileReady) {
       authEnabled = false;
@@ -852,8 +891,6 @@
       return;
     }
     setMessage(systemStatus, "Verified account access is available.");
-    if (accessToken && await loadAccount()) return;
-    if (await refreshSession()) await loadAccount();
   }
 
   init();

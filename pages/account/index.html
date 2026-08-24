@@ -108,13 +108,26 @@
       <div class="account-created-mark" aria-hidden="true">&#10003;</div>
       <p class="account-eyebrow">Email verified</p>
       <h2 id="account-created-title">Your account is ready.</h2>
-      <p class="account-created-lead">Welcome to DMZ Scuba, <strong data-account-created-name>Diver</strong>. You now have one secure account for the website and future mobile app.</p>
+      <p class="account-created-lead">Welcome to DMZ Scuba, <strong data-account-welcome-name>Diver</strong>. You now have one secure account for the website and future mobile app.</p>
       <div class="account-created-checks" aria-label="Account setup completed">
         <span>Email verified</span>
         <span>Profile created</span>
         <span data-account-created-detail>Existing records checked</span>
       </div>
       <button class="btn primary" type="button" data-enter-account>Open My Account</button>
+    </section>
+
+    <section class="account-created" data-account-signed-in hidden aria-labelledby="account-signed-in-title">
+      <div class="account-created-mark" aria-hidden="true">&#10003;</div>
+      <p class="account-eyebrow">Signed in securely</p>
+      <h2 id="account-signed-in-title">Welcome back.</h2>
+      <p class="account-created-lead">You are signed in, <strong data-account-welcome-name>Diver</strong>. Your account information is ready.</p>
+      <div class="account-created-checks" aria-label="Sign-in completed">
+        <span>Identity confirmed</span>
+        <span>Secure session active</span>
+        <span>Account loaded</span>
+      </div>
+      <button class="btn primary" type="button" data-enter-account>Continue to My Account</button>
     </section>
 
     <section class="account-dashboard" data-account-dashboard hidden aria-label="Customer account">
@@ -285,8 +298,8 @@
     <small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small>
   </footer>
 
-  <script src="/js/main.js?v=20260823a"></script>
+  <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260824e"></script>
+  <script src="/js/account.js?v=20260824f"></script>
 </body>
 </html>

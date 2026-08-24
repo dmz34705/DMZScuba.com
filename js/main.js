@@ -385,6 +385,16 @@ console.log("main.js loaded");
     if (!headers.length) return;
 
     const path = window.location.pathname;
+    const customerSignedIn = (() => {
+      try {
+        return Boolean(
+          window.sessionStorage.getItem("dmzCustomerAccessToken") ||
+          window.localStorage.getItem("dmzCustomerSignedIn") === "1"
+        );
+      } catch (_error) {
+        return false;
+      }
+    })();
 
     function isActive(prefix) {
       if (prefix === "/") return path === "/" || path === "/index.html";
@@ -399,7 +409,7 @@ console.log("main.js loaded");
       { href: "/pages/events/", label: "Events" },
       { href: "/pages/contact/", label: "Contact" },
       { href: "/pages/about/", label: "About" },
-      { href: "/pages/account/", label: "Account" },
+      { href: "/pages/account/", label: customerSignedIn ? "My Account" : "Account" },
     ];
 
     const linksHtml = navLinks

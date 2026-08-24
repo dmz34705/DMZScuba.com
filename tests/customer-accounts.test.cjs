@@ -158,6 +158,7 @@ test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const client = fs.readFileSync(path.join(root, "js", "account.js"), "utf8");
+  const sharedClient = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
   const recoveryPanel = page.match(/<form[^>]+data-recovery-form[\s\S]*?<\/form>/)?.[0] || "";
   const verifyPanel = page.match(/<form[^>]+data-verify-form[\s\S]*?<\/form>/)?.[0] || "";
 
@@ -174,13 +175,18 @@ test("account migration and page include the required foundation", () => {
   assert.match(page, /data-current-email-code-form/);
   assert.match(page, /data-new-email-code-form/);
   assert.match(page, /data-account-created/);
+  assert.match(page, /data-account-signed-in/);
   for (const view of ["home", "profile", "certifications", "activity", "security"]) {
     assert.match(page, new RegExp(`data-account-view-panel="${view}"`));
   }
   assert.match(client, /dmzCustomerAccessToken/);
+  assert.match(client, /dmzCustomerSignedIn/);
   assert.match(client, /\/api\/account\/link-existing/);
   assert.match(client, /\/api\/account\/auth\/email\/verify/);
   assert.match(client, /showAccountCreated/);
+  assert.match(client, /showLoginSuccess/);
+  assert.ok(client.indexOf("if (accessToken && await loadAccount()) return;") < client.indexOf("const turnstileReady = await initTurnstile"));
+  assert.match(sharedClient, /customerSignedIn \? "My Account" : "Account"/);
   assert.match(client, /Your account is ready\. Welcome to DMZ Scuba\./);
   assert.match(client, /removeTurnstile/);
   assert.match(client, /unsupported-callback/);
