@@ -19,6 +19,7 @@
   let pendingEmailChange = null;
   let activeAccountView = "home";
   let authEnabled = false;
+  let turnstileSiteKey = "";
   const captchaTokens = { login: "", signup: "", recovery: "" };
   const captchaWidgetIds = {};
 
@@ -67,6 +68,12 @@
     tabs.forEach((tab) => {
       tab.setAttribute("aria-selected", String(tab.dataset.accountTab === name));
     });
+    Object.keys(captchaWidgetIds).forEach((widgetName) => {
+      if (widgetName !== name) removeTurnstile(widgetName);
+    });
+    if (["login", "signup", "recovery"].includes(name)) {
+      window.setTimeout(() => renderTurnstile(name), 0);
+    }
   }
 
   function showAccountView(name, focusHeading = false) {
@@ -120,23 +127,63 @@
     }
   }
 
+  function getCaptchaStatus(name) {
+    return app.querySelector(`[data-${name}-status]`);
+  }
+
+  function removeTurnstile(name) {
+    captchaTokens[name] = "";
+    if (!window.turnstile || captchaWidgetIds[name] == null) return;
+    window.turnstile.remove(captchaWidgetIds[name]);
+    delete captchaWidgetIds[name];
+  }
+
+  function renderTurnstile(name) {
+    if (!turnstileSiteKey || !window.turnstile || captchaWidgetIds[name] != null) return false;
+    const container = app.querySelector(`[data-turnstile="${name}"]`);
+    if (!container || container.closest("[data-account-panel]")?.hidden) return false;
+    const status = getCaptchaStatus(name);
+    captchaWidgetIds[name] = window.turnstile.render(container, {
+      sitekey: turnstileSiteKey,
+      theme: "dark",
+      size: "flexible",
+      retry: "auto",
+      "retry-interval": 3000,
+      "refresh-expired": "auto",
+      "refresh-timeout": "auto",
+      callback: (token) => {
+        captchaTokens[name] = String(token || "");
+        if (status && status.classList.contains("is-error")) setMessage(status, "Security check complete.");
+      },
+      "expired-callback": () => {
+        captchaTokens[name] = "";
+        setMessage(status, "The security check expired and is refreshing. Please wait a moment.", true);
+      },
+      "timeout-callback": () => {
+        captchaTokens[name] = "";
+        setMessage(status, "The security check timed out and is refreshing. Please wait a moment.", true);
+      },
+      "unsupported-callback": () => {
+        captchaTokens[name] = "";
+        setMessage(status, "This browser cannot run the security check. Try an up-to-date version of Chrome, Edge, Firefox, or Safari.", true);
+      },
+      "error-callback": (errorCode) => {
+        captchaTokens[name] = "";
+        const code = String(errorCode || "").trim();
+        setMessage(status, `The security check could not finish${code ? ` (${code})` : ""}. Refresh the page or try another browser.`, true);
+        return true;
+      },
+    });
+    return true;
+  }
+
   async function initTurnstile(siteKey) {
     for (let attempt = 0; attempt < 40 && !window.turnstile; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 250));
     }
     if (!window.turnstile) return false;
-    app.querySelectorAll("[data-turnstile]").forEach((container) => {
-      const name = container.dataset.turnstile || "";
-      if (!name || captchaWidgetIds[name] != null) return;
-      captchaWidgetIds[name] = window.turnstile.render(container, {
-        sitekey: siteKey,
-        theme: "dark",
-        callback: (token) => { captchaTokens[name] = String(token || ""); },
-        "expired-callback": () => { captchaTokens[name] = ""; },
-        "error-callback": () => { captchaTokens[name] = ""; },
-      });
-    });
-    return true;
+    turnstileSiteKey = String(siteKey || "").trim();
+    return renderTurnstile("login");
   }
 
   async function parseResponse(response) {

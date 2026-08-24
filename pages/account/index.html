@@ -67,7 +67,6 @@
           <p data-verify-copy>Enter the six-digit code sent to your email address.</p>
           <input type="hidden" name="type" value="signup" />
           <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
-          <div class="account-turnstile" data-turnstile="recovery" aria-label="Security check"></div>
           <label><span>Verification Code</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
           <button class="btn primary" type="submit">Verify Email</button>
           <p class="account-form-status" data-verify-status aria-live="polite"></p>
@@ -78,6 +77,7 @@
           <h3>Reset your password</h3>
           <p>We will email a recovery code if the address has a DMZ Scuba account.</p>
           <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
+          <div class="account-turnstile" data-turnstile="recovery" aria-label="Security check"></div>
           <button class="btn primary" type="submit">Send Recovery Code</button>
           <p class="account-form-status" data-recovery-status aria-live="polite"></p>
         </form>
@@ -287,6 +287,6 @@
 
   <script src="/js/main.js?v=20260823a"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260824b"></script>
+  <script src="/js/account.js?v=20260824c"></script>
 </body>
 </html>

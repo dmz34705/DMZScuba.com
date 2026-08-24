@@ -158,6 +158,8 @@ test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const client = fs.readFileSync(path.join(root, "js", "account.js"), "utf8");
+  const recoveryPanel = page.match(/<form[^>]+data-recovery-form[\s\S]*?<\/form>/)?.[0] || "";
+  const verifyPanel = page.match(/<form[^>]+data-verify-form[\s\S]*?<\/form>/)?.[0] || "";
 
   for (const table of ["customer_profiles", "customer_roles", "customer_certifications", "customer_reservations", "customer_documents", "customer_audit_log"]) {
     assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
@@ -165,6 +167,8 @@ test("account migration and page include the required foundation", () => {
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
   assert.match(page, /data-signup-form/);
   assert.match(page, /data-turnstile="signup"/);
+  assert.match(recoveryPanel, /data-turnstile="recovery"/);
+  assert.doesNotMatch(verifyPanel, /data-turnstile/);
   assert.match(page, /data-change-password-form/);
   assert.match(page, /data-change-email-form/);
   assert.match(page, /data-current-email-code-form/);
@@ -178,6 +182,8 @@ test("account migration and page include the required foundation", () => {
   assert.match(client, /\/api\/account\/auth\/email\/verify/);
   assert.match(client, /showAccountCreated/);
   assert.match(client, /Your account is ready\. Welcome to DMZ Scuba\./);
+  assert.match(client, /removeTurnstile/);
+  assert.match(client, /unsupported-callback/);
   assert.match(workerSource, /current_password/);
   assert.match(workerSource, /type: "email_change"/);
 });
