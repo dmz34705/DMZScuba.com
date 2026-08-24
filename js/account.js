@@ -128,12 +128,19 @@
     }
   }
 
+  function renewCaptcha(name) {
+    resetCaptcha(name);
+    if (captchaWidgetIds[name] == null) {
+      window.setTimeout(() => renderTurnstile(name), 0);
+    }
+  }
+
   function getCaptchaStatus(name) {
     return app.querySelector(`[data-${name}-status]`);
   }
 
-  function removeTurnstile(name) {
-    captchaTokens[name] = "";
+  function removeTurnstile(name, preserveToken = false) {
+    if (!preserveToken) captchaTokens[name] = "";
     if (!window.turnstile || captchaWidgetIds[name] == null) return;
     window.turnstile.remove(captchaWidgetIds[name]);
     delete captchaWidgetIds[name];
@@ -147,14 +154,17 @@
     captchaWidgetIds[name] = window.turnstile.render(container, {
       sitekey: turnstileSiteKey,
       theme: "dark",
-      size: "flexible",
+      size: "normal",
       retry: "auto",
       "retry-interval": 3000,
       "refresh-expired": "auto",
       "refresh-timeout": "auto",
       callback: (token) => {
         captchaTokens[name] = String(token || "");
-        if (status && status.classList.contains("is-error")) setMessage(status, "Security check complete.");
+        if (captchaTokens[name]) {
+          setMessage(status, "Security check complete.");
+          window.setTimeout(() => removeTurnstile(name, true), 0);
+        }
       },
       "expired-callback": () => {
         captchaTokens[name] = "";
@@ -197,23 +207,6 @@
     return data;
   }
 
-  async function fetchWithTimeout(path, options = {}, timeoutMs = apiTimeoutMs) {
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      return await fetch(path, { ...options, signal: controller.signal });
-    } catch (error) {
-      if (error && error.name === "AbortError") {
-        const timeoutError = new Error("The account server took too long to respond. Please try again.");
-        timeoutError.code = "ACCOUNT_REQUEST_TIMEOUT";
-        throw timeoutError;
-      }
-      throw error;
-    } finally {
-      window.clearTimeout(timeoutId);
-    }
-  }
-
   function reportAuthFailure(stage, error) {
     console.error("[DMZ Account] Authentication request failed", {
       stage,
@@ -247,12 +240,37 @@
     headers.Accept = "application/json";
     if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
-    const response = await fetchWithTimeout(path, { ...options, headers, credentials: "same-origin" });
-    if (response.status === 401 && retry && path !== "/api/account/auth/refresh") {
-      const refreshed = await refreshSession();
-      if (refreshed) return apiRequest(path, options, false);
+    const controller = new AbortController();
+    const startedAt = Date.now();
+    const timeoutId = window.setTimeout(() => controller.abort(), apiTimeoutMs);
+    console.info("[DMZ Account] API request started", { path });
+    try {
+      const response = await fetch(path, {
+        ...options,
+        headers,
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+      console.info("[DMZ Account] API response received", {
+        path,
+        status: response.status,
+        elapsedMs: Date.now() - startedAt,
+      });
+      if (response.status === 401 && retry && path !== "/api/account/auth/refresh") {
+        const refreshed = await refreshSession();
+        if (refreshed) return apiRequest(path, options, false);
+      }
+      return await parseResponse(response);
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        const timeoutError = new Error("The account server took too long to respond. Please try again.");
+        timeoutError.code = "ACCOUNT_REQUEST_TIMEOUT";
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
     }
-    return parseResponse(response);
   }
 
   function formatDate(value) {
@@ -442,6 +460,8 @@
       setMessage(status, "Complete the security check.", true);
       return;
     }
+    const captchaToken = captchaTokens.login;
+    removeTurnstile("login", true);
     setMessage(status, "Signing you in...");
     setFormBusy(loginForm, true);
     try {
@@ -450,7 +470,7 @@
         body: JSON.stringify({
           email: loginForm.elements.email.value,
           password: loginForm.elements.password.value,
-          captchaToken: captchaTokens.login,
+          captchaToken,
         }),
       }, false);
       storeAccessToken(data.accessToken);
@@ -459,7 +479,7 @@
       reportAuthFailure("login", error);
       setMessage(status, error.message, true);
     } finally {
-      resetCaptcha("login");
+      renewCaptcha("login");
       setFormBusy(loginForm, false);
     }
   });
@@ -477,6 +497,8 @@
       setMessage(status, "Complete the security check.", true);
       return;
     }
+    const captchaToken = captchaTokens.signup;
+    removeTurnstile("signup", true);
     setMessage(status, "Creating your account...");
     setFormBusy(signupForm, true);
     try {
@@ -487,7 +509,7 @@
           lastName: signupForm.elements.lastName.value,
           email: signupForm.elements.email.value,
           password,
-          captchaToken: captchaTokens.signup,
+          captchaToken,
         }),
       }, false);
       const verifyForm = app.querySelector("[data-verify-form]");
@@ -498,7 +520,7 @@
     } catch (error) {
       setMessage(status, error.message, true);
     } finally {
-      resetCaptcha("signup");
+      renewCaptcha("signup");
       setFormBusy(signupForm, false);
     }
   });
@@ -511,12 +533,14 @@
       setMessage(status, "Complete the security check.", true);
       return;
     }
+    const captchaToken = captchaTokens.recovery;
+    removeTurnstile("recovery", true);
     setMessage(status, "Requesting a recovery code...");
     setFormBusy(recoveryForm, true);
     try {
       const data = await apiRequest("/api/account/auth/recover", {
         method: "POST",
-        body: JSON.stringify({ email: recoveryForm.elements.email.value, captchaToken: captchaTokens.recovery }),
+        body: JSON.stringify({ email: recoveryForm.elements.email.value, captchaToken }),
       }, false);
       const verifyForm = app.querySelector("[data-verify-form]");
       verifyForm.elements.email.value = recoveryForm.elements.email.value;
@@ -526,7 +550,7 @@
     } catch (error) {
       setMessage(status, error.message, true);
     } finally {
-      resetCaptcha("recovery");
+      renewCaptcha("recovery");
       setFormBusy(recoveryForm, false);
     }
   });
