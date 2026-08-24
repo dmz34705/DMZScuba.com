@@ -33,6 +33,7 @@ for (const route of ["/api/admin/access", "/api/admin/accounts", "/api/admin/acc
   assert.ok(worker.includes(route), `missing ${route}`);
 }
 assert.match(worker, /SUPABASE_SERVICE_ROLE_KEY/);
+assert.match(worker, /SUPABASE_SECRET_KEY/);
 assert.match(worker, /should_soft_delete: false/);
 assert.match(worker, /PERMANENTLY DELETE/);
 

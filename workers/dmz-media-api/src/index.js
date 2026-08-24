@@ -81,6 +81,10 @@ function getSupabaseUrl(env) {
   return String((env && env.SUPABASE_URL) || "").trim().replace(/\/+$/, "");
 }
 
+function getSupabaseAdminKey(env) {
+  return String(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+}
+
 function getSupabasePublishableKey(env) {
   return String((env && (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY)) || "").trim();
 }
@@ -1621,7 +1625,7 @@ async function handleGetManagementAccess(request, env) {
     roles: auth.roles,
     isAdministrator: auth.roles.includes("admin"),
     authMode: auth.legacy ? "legacy" : "account",
-    accountArchiveDeletionConfigured: Boolean(String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()),
+    accountArchiveDeletionConfigured: Boolean(getSupabaseAdminKey(env)),
   }, 200, { "Cache-Control": "no-store" });
 }
 
@@ -1645,7 +1649,7 @@ async function handleListCustomerAccounts(request, env) {
     ok: true,
     accounts,
     currentUserId: auth.identity.userId,
-    accountArchiveDeletionConfigured: Boolean(String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()),
+    accountArchiveDeletionConfigured: Boolean(getSupabaseAdminKey(env)),
     roleOptions: Object.entries(customerRoleLabels).map(([value, label]) => ({ value, label })),
     summary: {
       total: accounts.length,
@@ -1758,7 +1762,7 @@ async function getCustomerArchiveSnapshot(env, profile) {
 }
 
 async function deleteSupabaseAuthUser(env, userId) {
-  const serviceRoleKey = String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const serviceRoleKey = getSupabaseAdminKey(env);
   if (!serviceRoleKey) {
     return { ok: false, status: 503, error: "Permanent account deletion is not configured yet. Add the Supabase service-role key to the Worker secrets." };
   }
@@ -1805,7 +1809,7 @@ async function handleArchiveCustomerAccount(request, env, userId) {
   if (confirmation !== String(profile.email || "").trim().toLowerCase() || phrase !== "ARCHIVE") {
     return jsonResponse({ ok: false, error: "Enter the account email and ARCHIVE exactly to continue." }, 400);
   }
-  if (!String(env.SUPABASE_SERVICE_ROLE_KEY || "").trim()) {
+  if (!getSupabaseAdminKey(env)) {
     return jsonResponse({ ok: false, error: "Permanent account deletion is not configured yet. Add the Supabase service-role key to the Worker secrets." }, 503);
   }
   const existingArchive = await env.DB.prepare("SELECT id FROM customer_account_archives WHERE original_user_id = ? LIMIT 1")
