@@ -11,6 +11,7 @@ const worker = read("workers", "dmz-media-api", "src", "index.js");
 const accountPage = read("pages", "account", "index.html");
 const accountClient = read("js", "account.js");
 const managementPage = read("management", "index.html");
+const managementStyles = read("css", "pages", "management.css");
 const managementClient = read("js", "management.js");
 const accountsClient = read("js", "management-accounts.js");
 
@@ -36,6 +37,8 @@ assert.match(managementPage, /data-account-detail/);
 assert.match(managementClient, /dmzCustomerAccessToken/);
 assert.match(managementClient, /validateManagementAccess/);
 assert.match(managementClient, /openSiteStudioPanel\("home"\)/);
+assert.match(managementStyles, /\.mgmt-accounts-body\s*\{[\s\S]*?overflow-y:\s*auto/);
+assert.match(managementStyles, /\.mgmt-nav\s*\{[\s\S]*?overflow-y:\s*auto/);
 assert.match(accountsClient, /Professional/);
 assert.match(accountsClient, /Employee/);
 assert.match(accountsClient, /Administrator/);

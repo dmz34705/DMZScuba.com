@@ -96,7 +96,13 @@
   padding: 8px 8px 4px;
   flex: 1 1 auto;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
+
+.mgmt-nav::-webkit-scrollbar { width: 4px; }
+.mgmt-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
 .mgmt-nav-section {
   display: flex;
@@ -668,7 +674,17 @@
 
 .management-legacy-login summary { cursor: pointer; }
 
-.mgmt-accounts-body { padding: 20px; }
+.mgmt-accounts-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 20px 48px;
+  scrollbar-gutter: stable;
+}
+
+.mgmt-accounts-body::-webkit-scrollbar { width: 6px; }
+.mgmt-accounts-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
 .mgmt-panel-subtitle {
   margin: 5px 0 0;
