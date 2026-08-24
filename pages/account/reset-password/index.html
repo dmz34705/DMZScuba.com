@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>Reset Your Password | DMZ Scuba</title>
+  <meta name="description" content="Choose a new password for your verified DMZ Scuba account." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824d" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
+</head>
+<body class="account-page">
+  <header class="site-header" data-site-nav></header>
+  <main class="account-shell account-flow-shell" data-account-flow-app data-account-flow="reset">
+    <section class="account-auth account-auth-linear" aria-labelledby="reset-password-title">
+      <div class="account-card account-access-card account-linear-card">
+        <div class="account-card-heading">
+          <p class="account-eyebrow">Password recovery · Step 3 of 3</p>
+          <h1 id="reset-password-title">Choose a new password</h1>
+          <p>Your email is verified. Create a new password to finish recovering your account.</p>
+        </div>
+        <form class="account-form" data-account-flow-form>
+          <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
+          <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+          <button class="btn primary" type="submit">Update Password</button>
+          <p class="account-form-status" data-account-flow-status aria-live="polite"></p>
+        </form>
+        <p class="account-switch-prompt"><a href="/pages/account/forgot-password/">Request a new recovery code</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small></footer>
+  <script src="/js/main.js?v=20260824f"></script>
+  <script src="/js/account-flow.js?v=20260824a"></script>
+</body>
+</html>

@@ -157,20 +157,30 @@ test("customer account and credential endpoints reject requests without a JWT", 
 test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
+  const createPage = fs.readFileSync(path.join(root, "pages", "account", "create", "index.html"), "utf8");
+  const forgotPage = fs.readFileSync(path.join(root, "pages", "account", "forgot-password", "index.html"), "utf8");
+  const verifyPage = fs.readFileSync(path.join(root, "pages", "account", "verify", "index.html"), "utf8");
+  const resetPage = fs.readFileSync(path.join(root, "pages", "account", "reset-password", "index.html"), "utf8");
   const client = fs.readFileSync(path.join(root, "js", "account.js"), "utf8");
+  const flowClient = fs.readFileSync(path.join(root, "js", "account-flow.js"), "utf8");
   const sharedClient = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
   const accountStyles = fs.readFileSync(path.join(root, "css", "pages", "account.css"), "utf8");
-  const recoveryPanel = page.match(/<form[^>]+data-recovery-form[\s\S]*?<\/form>/)?.[0] || "";
-  const verifyPanel = page.match(/<form[^>]+data-verify-form[\s\S]*?<\/form>/)?.[0] || "";
-
   for (const table of ["customer_profiles", "customer_roles", "customer_certifications", "customer_reservations", "customer_documents", "customer_audit_log"]) {
     assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
   }
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
-  assert.match(page, /data-signup-form/);
-  assert.match(page, /data-turnstile="signup"/);
-  assert.match(recoveryPanel, /data-turnstile="recovery"/);
-  assert.doesNotMatch(verifyPanel, /data-turnstile/);
+  assert.match(page, /data-login-form/);
+  assert.match(page, /href="\/pages\/account\/create\/"/);
+  assert.match(page, /href="\/pages\/account\/forgot-password\/"/);
+  assert.doesNotMatch(page, /data-signup-form|data-recovery-form|data-verify-form|data-password-form/);
+  assert.match(createPage, /data-account-flow="signup"/);
+  assert.match(forgotPage, /data-account-flow="recovery"/);
+  assert.match(verifyPage, /data-account-flow="verify"/);
+  assert.match(resetPage, /data-account-flow="reset"/);
+  assert.match(createPage, /data-account-flow-turnstile/);
+  assert.match(forgotPage, /data-account-flow-turnstile/);
+  assert.doesNotMatch(verifyPage, /turnstile\/v0|data-account-flow-turnstile/);
+  assert.doesNotMatch(resetPage, /turnstile\/v0|data-account-flow-turnstile/);
   assert.match(page, /data-change-password-form/);
   assert.match(page, /data-change-email-form/);
   assert.match(page, /data-current-email-code-form/);
@@ -186,7 +196,14 @@ test("account migration and page include the required foundation", () => {
   assert.match(client, /\/api\/account\/auth\/email\/verify/);
   assert.match(client, /showAccountCreated/);
   assert.match(client, /showLoginSuccess/);
-  assert.ok(client.indexOf("if (accessToken && await loadAccount()) return;") < client.indexOf("const turnstileReady = await initTurnstile"));
+  assert.ok(client.indexOf("if (accessToken && await loadAccount(entryOptions))") < client.indexOf("const turnstileReady = await initTurnstile"));
+  assert.match(flowClient, /dmzAccountPendingFlow/);
+  assert.match(flowClient, /\/api\/account\/auth\/signup/);
+  assert.match(flowClient, /\/api\/account\/auth\/recover/);
+  assert.match(flowClient, /\/api\/account\/auth\/verify/);
+  assert.match(flowClient, /\/api\/account\/auth\/password/);
+  assert.match(flowClient, /redirect\("\/pages\/account\/verify\/"\)/);
+  assert.match(flowClient, /redirect\("\/pages\/account\/reset-password\/"\)/);
   assert.match(sharedClient, /customerSignedIn \? "My Account" : "Account"/);
   assert.match(accountStyles, /\.account-auth\[hidden\][\s\S]*?display:\s*none\s*!important/);
   assert.match(client, /Your account is ready\. Welcome to DMZ Scuba\./);

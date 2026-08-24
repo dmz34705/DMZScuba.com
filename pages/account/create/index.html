@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>Create a DMZ Scuba Account</title>
+  <meta name="description" content="Create your secure DMZ Scuba account with a verified email address." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824d" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
+</head>
+<body class="account-page">
+  <header class="site-header" data-site-nav></header>
+  <main class="account-shell account-flow-shell" data-account-flow-app data-account-flow="signup">
+    <section class="account-auth account-auth-linear" aria-labelledby="create-account-title">
+      <div class="account-card account-access-card account-linear-card">
+        <a class="account-back-link" href="/pages/account/">&larr; Back to sign in</a>
+        <div class="account-card-heading">
+          <p class="account-eyebrow">Account setup · Step 1 of 2</p>
+          <h1 id="create-account-title">Create your account</h1>
+          <p>Use an email address you can access. We will send a verification code before opening your account.</p>
+        </div>
+        <form class="account-form" data-account-flow-form>
+          <div class="account-form-grid">
+            <label><span>First Name</span><input type="text" name="firstName" autocomplete="given-name" maxlength="80" required /></label>
+            <label><span>Last Name</span><input type="text" name="lastName" autocomplete="family-name" maxlength="80" required /></label>
+          </div>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
+          <label><span>Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
+          <label><span>Confirm Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
+          <label class="account-checkbox"><input type="checkbox" name="terms" required /><span>I agree to the <a href="/pages/privacy/">DMZ Scuba Privacy Policy</a>.</span></label>
+          <div class="account-turnstile" data-account-flow-turnstile aria-label="Security check"></div>
+          <button class="btn primary" type="submit">Create My Account</button>
+          <p class="account-form-status" data-account-flow-status aria-live="polite"></p>
+        </form>
+        <p class="account-switch-prompt">Already have an account? <a href="/pages/account/">Sign in</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small></footer>
+  <script src="/js/main.js?v=20260824f"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="/js/account-flow.js?v=20260824a"></script>
+</body>
+</html>

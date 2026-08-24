@@ -61,6 +61,58 @@
   align-items: start;
 }
 
+.account-auth-linear {
+  display: block;
+  width: min(100%, 600px);
+  margin: 0 auto;
+}
+
+.account-flow-shell {
+  padding-top: clamp(38px, 7vw, 74px);
+}
+
+.account-linear-card {
+  display: grid;
+  gap: 26px;
+}
+
+.account-linear-card .account-card-heading h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.04;
+  letter-spacing: -.035em;
+}
+
+.account-back-link,
+.account-text-link,
+.account-switch-prompt a {
+  color: #9bd3ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.account-back-link,
+.account-text-link {
+  justify-self: start;
+}
+
+.account-back-link:hover,
+.account-back-link:focus-visible,
+.account-text-link:hover,
+.account-text-link:focus-visible,
+.account-switch-prompt a:hover,
+.account-switch-prompt a:focus-visible {
+  text-decoration: underline;
+}
+
+.account-switch-prompt {
+  margin: 0;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  color: var(--muted);
+  text-align: center;
+}
+
 .account-card {
   border: 1px solid rgba(255, 255, 255, .11);
   border-radius: 24px;
@@ -158,6 +210,11 @@
   cursor: not-allowed;
 }
 
+.account-form input[readonly] {
+  color: rgba(234, 242, 255, .82);
+  background: rgba(255, 255, 255, .045);
+}
+
 .account-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -253,6 +310,7 @@
 .account-auth[hidden],
 .account-created[hidden],
 .account-dashboard[hidden],
+.account-form[hidden],
 .account-view[hidden] {
   display: none !important;
 }

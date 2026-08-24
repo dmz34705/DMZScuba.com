@@ -10,7 +10,7 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260823a" />
-  <link rel="stylesheet" href="/css/pages/account.css?v=20260824c" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824d" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
 </head>
 
@@ -25,17 +25,12 @@
       <p class="account-system-status" data-account-system-status role="status">Checking account availability...</p>
     </section>
 
-    <section class="account-auth" data-account-auth aria-labelledby="account-access-title">
+    <section class="account-auth account-auth-linear" data-account-auth aria-labelledby="account-access-title">
       <div class="account-card account-access-card">
         <div class="account-card-heading">
           <p class="account-eyebrow">Secure account access</p>
-          <h2 id="account-access-title">Welcome, diver</h2>
-          <p>Create an account with a verified email address or sign in to continue.</p>
-        </div>
-
-        <div class="account-tabs" role="tablist" aria-label="Account access">
-          <button type="button" role="tab" aria-selected="true" data-account-tab="login">Sign In</button>
-          <button type="button" role="tab" aria-selected="false" data-account-tab="signup">Create Account</button>
+          <h2 id="account-access-title">Sign in to your account</h2>
+          <p>Enter your verified email address and password to continue.</p>
         </div>
 
         <form class="account-form" data-account-panel="login" data-login-form>
@@ -43,65 +38,11 @@
           <label><span>Password</span><input type="password" name="password" autocomplete="current-password" required /></label>
           <div class="account-turnstile" data-turnstile="login" aria-label="Security check"></div>
           <button class="btn primary" type="submit">Sign In</button>
-          <button class="account-text-button" type="button" data-show-recovery>Forgot your password?</button>
+          <a class="account-text-link" href="/pages/account/forgot-password/">Forgot your password?</a>
           <p class="account-form-status" data-login-status aria-live="polite"></p>
         </form>
-
-        <form class="account-form" data-account-panel="signup" data-signup-form hidden>
-          <div class="account-form-grid">
-            <label><span>First Name</span><input type="text" name="firstName" autocomplete="given-name" maxlength="80" required /></label>
-            <label><span>Last Name</span><input type="text" name="lastName" autocomplete="family-name" maxlength="80" required /></label>
-          </div>
-          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
-          <label><span>Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /><small>Use at least 12 characters.</small></label>
-          <label><span>Confirm Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
-          <label class="account-checkbox"><input type="checkbox" name="terms" required /><span>I agree to the <a href="/pages/privacy/">DMZ Scuba Privacy Policy</a>.</span></label>
-          <div class="account-turnstile" data-turnstile="signup" aria-label="Security check"></div>
-          <button class="btn primary" type="submit">Create My Account</button>
-          <p class="account-form-status" data-signup-status aria-live="polite"></p>
-        </form>
-
-        <form class="account-form" data-account-panel="verify" data-verify-form hidden>
-          <button class="account-back-button" type="button" data-back-to-login>&larr; Back to sign in</button>
-          <h3>Verify your email</h3>
-          <p data-verify-copy>Enter the six-digit code sent to your email address.</p>
-          <input type="hidden" name="type" value="signup" />
-          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
-          <label><span>Verification Code</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required /></label>
-          <button class="btn primary" type="submit">Verify Email</button>
-          <p class="account-form-status" data-verify-status aria-live="polite"></p>
-        </form>
-
-        <form class="account-form" data-account-panel="recovery" data-recovery-form hidden>
-          <button class="account-back-button" type="button" data-back-to-login>&larr; Back to sign in</button>
-          <h3>Reset your password</h3>
-          <p>We will email a recovery code if the address has a DMZ Scuba account.</p>
-          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" required /></label>
-          <div class="account-turnstile" data-turnstile="recovery" aria-label="Security check"></div>
-          <button class="btn primary" type="submit">Send Recovery Code</button>
-          <p class="account-form-status" data-recovery-status aria-live="polite"></p>
-        </form>
-
-        <form class="account-form" data-account-panel="new-password" data-password-form hidden>
-          <h3>Choose a new password</h3>
-          <label><span>New Password</span><input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
-          <label><span>Confirm New Password</span><input type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required /></label>
-          <button class="btn primary" type="submit">Update Password</button>
-          <p class="account-form-status" data-password-status aria-live="polite"></p>
-        </form>
+        <p class="account-switch-prompt">New to DMZ Scuba? <a href="/pages/account/create/">Create an account</a></p>
       </div>
-
-      <aside class="account-card account-security-card">
-        <span class="account-security-icon" aria-hidden="true">&#10003;</span>
-        <h2>One account for the website and app</h2>
-        <p>Your verified account will work across DMZ Scuba services. Passwords are handled by our authentication provider and are never stored in the DMZ Scuba customer database.</p>
-        <ul>
-          <li>Email verification before account access</li>
-          <li>Private profile and certification records</li>
-          <li>Secure session renewal</li>
-          <li>Future mobile app access</li>
-        </ul>
-      </aside>
     </section>
 
     <section class="account-created" data-account-created hidden aria-labelledby="account-created-title">
@@ -119,8 +60,8 @@
 
     <section class="account-created" data-account-signed-in hidden aria-labelledby="account-signed-in-title">
       <div class="account-created-mark" aria-hidden="true">&#10003;</div>
-      <p class="account-eyebrow">Signed in securely</p>
-      <h2 id="account-signed-in-title">Welcome back.</h2>
+      <p class="account-eyebrow" data-account-signed-in-eyebrow>Signed in securely</p>
+      <h2 id="account-signed-in-title" data-account-signed-in-heading>Welcome back.</h2>
       <p class="account-created-lead">You are signed in, <strong data-account-welcome-name>Diver</strong>. Your account information is ready.</p>
       <div class="account-created-checks" aria-label="Sign-in completed">
         <span>Identity confirmed</span>
@@ -300,6 +241,6 @@
 
   <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260824f"></script>
+  <script src="/js/account.js?v=20260824g"></script>
 </body>
 </html>

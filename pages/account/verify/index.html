@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>Verify Your Email | DMZ Scuba</title>
+  <meta name="description" content="Verify your email address to finish securing your DMZ Scuba account." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824d" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
+</head>
+<body class="account-page">
+  <header class="site-header" data-site-nav></header>
+  <main class="account-shell account-flow-shell" data-account-flow-app data-account-flow="verify">
+    <section class="account-auth account-auth-linear" aria-labelledby="verify-email-title">
+      <div class="account-card account-access-card account-linear-card">
+        <a class="account-back-link" data-account-flow-back href="/pages/account/create/">&larr; Go back</a>
+        <div class="account-card-heading">
+          <p class="account-eyebrow" data-account-flow-step>Account setup · Step 2 of 2</p>
+          <h1 id="verify-email-title" data-account-flow-heading>Verify your email</h1>
+          <p data-account-flow-copy>Enter the verification code sent to your email address.</p>
+        </div>
+        <form class="account-form" data-account-flow-form>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" readonly /></label>
+          <label><span>Verification Code</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required autofocus /></label>
+          <button class="btn primary" type="submit">Verify Email</button>
+          <p class="account-form-status" data-account-flow-status aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small></footer>
+  <script src="/js/main.js?v=20260824f"></script>
+  <script src="/js/account-flow.js?v=20260824a"></script>
+</body>
+</html>

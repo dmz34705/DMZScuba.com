@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
+  <title>Forgot Password | DMZ Scuba</title>
+  <meta name="description" content="Request a secure password-recovery code for your DMZ Scuba account." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css?v=20260823a" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20260824d" />
+  <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
+</head>
+<body class="account-page">
+  <header class="site-header" data-site-nav></header>
+  <main class="account-shell account-flow-shell" data-account-flow-app data-account-flow="recovery">
+    <section class="account-auth account-auth-linear" aria-labelledby="forgot-password-title">
+      <div class="account-card account-access-card account-linear-card">
+        <a class="account-back-link" href="/pages/account/">&larr; Back to sign in</a>
+        <div class="account-card-heading">
+          <p class="account-eyebrow">Password recovery · Step 1 of 3</p>
+          <h1 id="forgot-password-title">Forgot your password?</h1>
+          <p>Enter your account email address. We will send a recovery code if it matches a DMZ Scuba account.</p>
+        </div>
+        <form class="account-form" data-account-flow-form>
+          <label><span>Email Address</span><input type="email" name="email" autocomplete="email" maxlength="180" required /></label>
+          <div class="account-turnstile" data-account-flow-turnstile aria-label="Security check"></div>
+          <button class="btn primary" type="submit">Send Recovery Code</button>
+          <p class="account-form-status" data-account-flow-status aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><small>&copy; <span id="year"></span> DMZ Scuba. All rights reserved.</small></footer>
+  <script src="/js/main.js?v=20260824f"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="/js/account-flow.js?v=20260824a"></script>
+</body>
+</html>

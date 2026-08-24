@@ -4,6 +4,7 @@
 
   const tokenStorageKey = "dmzCustomerAccessToken";
   const signedInStorageKey = "dmzCustomerSignedIn";
+  const entryStateStorageKey = "dmzAccountEntryState";
   const accountIntro = app.querySelector("[data-account-intro]");
   const authSection = app.querySelector("[data-account-auth]");
   const accountCreated = app.querySelector("[data-account-created]");
@@ -51,6 +52,23 @@
         link.textContent = accessToken ? "My Account" : "Account";
       }
     });
+  }
+
+  function getAccountEntryState() {
+    try {
+      const value = JSON.parse(window.sessionStorage.getItem(entryStateStorageKey) || "null");
+      return value && typeof value === "object" ? value : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function clearAccountEntryState() {
+    try {
+      window.sessionStorage.removeItem(entryStateStorageKey);
+    } catch (_error) {
+      // Entry state is optional and expires with the browser session.
+    }
   }
 
   function escapeHtml(value) {
@@ -136,12 +154,21 @@
     setMessage(systemStatus, "Your email is verified and your account has been created.");
   }
 
-  function showLoginSuccess() {
+  function showLoginSuccess(entryMode = "") {
     accountIntro.hidden = true;
     authSection.hidden = true;
     accountCreated.hidden = true;
     dashboard.hidden = true;
     accountSignedIn.hidden = false;
+    const eyebrow = accountSignedIn.querySelector("[data-account-signed-in-eyebrow]");
+    const heading = accountSignedIn.querySelector("[data-account-signed-in-heading]");
+    if (entryMode === "password-reset") {
+      if (eyebrow) eyebrow.textContent = "Password updated";
+      if (heading) heading.textContent = "Your password is ready.";
+    } else {
+      if (eyebrow) eyebrow.textContent = "Signed in securely";
+      if (heading) heading.textContent = "Welcome back.";
+    }
     accountSignedIn.querySelector("[data-enter-account]")?.focus();
     setMessage(systemStatus, "You are securely signed in.");
   }
@@ -174,7 +201,7 @@
   function renderTurnstile(name) {
     if (!turnstileSiteKey || !window.turnstile || captchaWidgetIds[name] != null) return false;
     const container = app.querySelector(`[data-turnstile="${name}"]`);
-    if (!container || container.closest("[data-account-panel]")?.hidden) return false;
+    if (!container || authSection.hidden || container.closest("[data-account-panel]")?.hidden) return false;
     const status = getCaptchaStatus(name);
     captchaWidgetIds[name] = window.turnstile.render(container, {
       sitekey: turnstileSiteKey,
@@ -456,7 +483,7 @@
     try {
       renderAccount(await apiRequest("/api/account", { method: "GET" }));
       if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
-      else if (options.signedIn) showLoginSuccess();
+      else if (options.signedIn) showLoginSuccess(options.entryMode || "");
       else showDashboard(options.view || activeAccountView);
       return true;
     } catch (error) {
@@ -881,8 +908,20 @@
       return;
     }
     setMessage(systemStatus, "Restoring your secure account session...");
-    if (accessToken && await loadAccount()) return;
-    if (await refreshSession() && await loadAccount()) return;
+    const entryState = getAccountEntryState();
+    const entryOptions = entryState && entryState.mode === "created"
+      ? { created: true, linkedCount: entryState.linkedCount }
+      : entryState && entryState.mode === "password-reset"
+        ? { signedIn: true, entryMode: "password-reset" }
+        : {};
+    if (accessToken && await loadAccount(entryOptions)) {
+      clearAccountEntryState();
+      return;
+    }
+    if (await refreshSession() && await loadAccount(entryOptions)) {
+      clearAccountEntryState();
+      return;
+    }
     const turnstileReady = await initTurnstile(String(status.turnstileSiteKey || ""));
     if (!turnstileReady) {
       authEnabled = false;
