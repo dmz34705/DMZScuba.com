@@ -154,6 +154,8 @@ test("mobile challenge is a dedicated Turnstile page on the API origin", async (
   assert.match(html, /window\.ReactNativeWebView\.postMessage/);
   assert.match(html, /default-src 'self'/);
   assert.match(html, /frame-src 'self' https:\/\/challenges\.cloudflare\.com/);
+  assert.match(html, /window\.location\.href = target\.toString\(\)/);
+  assert.match(html, /Return to DMZ Scuba/);
   assert.doesNotMatch(html, /site-header|DMZ Scuba Customer Accounts/);
 });
 
@@ -247,6 +249,8 @@ test("account migration and page include the required foundation", () => {
   }
   assert.match(settingsMigration, /CREATE TABLE IF NOT EXISTS customer_app_settings/);
   assert.match(workerSource, /\/api\/account\/app-settings/);
+  assert.match(client, /redirectToStoredReturnPath/);
+  assert.match(client, /response\.status === 401 \|\| response\.status === 403/);
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
   assert.match(page, /data-login-form/);
   assert.match(page, /href="\/pages\/account\/create\/"/);

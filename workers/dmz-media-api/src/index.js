@@ -1123,8 +1123,12 @@ function handleCustomerMobileChallenge(request, env) {
   <title>DMZ Scuba Security Check</title>
   <style>
     html, body { background: #0b1c2e; margin: 0; min-height: 100%; overflow: hidden; }
-    body { align-items: center; display: flex; justify-content: center; padding: 8px; }
-    #challenge { width: min(100%, 340px); }
+    body { align-items: center; color: #edf8ff; display: flex; font-family: -apple-system, BlinkMacSystemFont, sans-serif; justify-content: center; padding: 16px; text-align: center; }
+    main { width: min(100%, 340px); }
+    #challenge { width: 100%; }
+    #status { color: #a9c2d5; font-size: 14px; line-height: 20px; margin: 16px 0 0; }
+    #return-link { background: #e21b23; border-radius: 10px; color: #fff; display: inline-block; font-size: 15px; font-weight: 700; margin-top: 16px; padding: 12px 18px; text-decoration: none; }
+    #return-link[hidden] { display: none; }
   </style>
   <script>
     function send(type, value) {
@@ -1139,7 +1143,12 @@ function handleCustomerMobileChallenge(request, env) {
         var target = new URL(${callbackUrlJson});
         target.searchParams.set('captchaToken', token);
         target.searchParams.set('state', ${stateJson});
-        window.location.replace(target.toString());
+        var returnLink = document.getElementById('return-link');
+        var status = document.getElementById('status');
+        returnLink.href = target.toString();
+        returnLink.hidden = false;
+        status.textContent = 'Verified. Returning to DMZ Scuba…';
+        window.location.href = target.toString();
       } catch (error) {
         send('error', 'callback-error');
       }
@@ -1165,7 +1174,13 @@ function handleCustomerMobileChallenge(request, env) {
   </script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=renderChallenge&render=explicit" async defer></script>
 </head>
-<body><div id="challenge"></div></body>
+<body>
+  <main>
+    <div id="challenge"></div>
+    <p id="status">Complete the security check to return to DMZ Scuba.</p>
+    <a id="return-link" href="#" hidden>Return to DMZ Scuba</a>
+  </main>
+</body>
 </html>`;
   return new Response(html, {
     status: siteKey ? 200 : 503,

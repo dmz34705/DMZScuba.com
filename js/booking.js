@@ -22,7 +22,11 @@
 
   async function parse(response) {
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.ok === false) throw new Error(data.error || "The booking request could not be completed.");
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.error || "The booking request could not be completed.");
+      error.status = response.status;
+      throw error;
+    }
     return data;
   }
 
@@ -93,9 +97,14 @@
       workspace.hidden = false;
       renderCatalog();
       setMessage(status, "Choose an option to begin.");
-    } catch (_error) {
-      gate.hidden = false;
-      workspace.hidden = true;
+    } catch (error) {
+      const signedOut = Number(error && error.status) === 401;
+      gate.hidden = !signedOut;
+      workspace.hidden = signedOut;
+      if (!signedOut) {
+        catalog.innerHTML = "";
+        setMessage(status, error.message || "Bookings could not load. Please refresh and try again.", true);
+      }
     }
   }
 

@@ -54,6 +54,14 @@
     });
   }
 
+  function redirectToStoredReturnPath() {
+    const returnPath = String(window.sessionStorage.getItem("dmzAccountReturnPath") || "");
+    if (!returnPath.startsWith("/pages/book/")) return false;
+    window.sessionStorage.removeItem("dmzAccountReturnPath");
+    window.location.assign(returnPath);
+    return true;
+  }
+
   function getAccountEntryState() {
     try {
       const value = JSON.parse(window.sessionStorage.getItem(entryStateStorageKey) || "null");
@@ -279,7 +287,7 @@
         signal: controller.signal,
       }).catch(() => null);
       if (!response || !response.ok) {
-        storeAccessToken("");
+        if (response && (response.status === 401 || response.status === 403)) storeAccessToken("");
         return false;
       }
       const data = await response.json().catch(() => ({}));
@@ -492,7 +500,9 @@
       else showDashboard(options.view || activeAccountView);
       return true;
     } catch (error) {
-      storeAccessToken("");
+      if (Number(error && error.status) === 401 || Number(error && error.status) === 403) {
+        storeAccessToken("");
+      }
       showSignedOut();
       if (options.throwOnError) throw error;
       return false;
@@ -543,11 +553,7 @@
       }, false);
       storeAccessToken(data.accessToken);
       await loadAccount({ throwOnError: true, signedIn: true });
-      const returnPath = String(sessionStorage.getItem("dmzAccountReturnPath") || "");
-      if (returnPath.startsWith("/pages/book/")) {
-        sessionStorage.removeItem("dmzAccountReturnPath");
-        window.location.assign(returnPath);
-      }
+      redirectToStoredReturnPath();
     } catch (error) {
       reportAuthFailure("login", error);
       setMessage(status, error.message, true);
@@ -926,10 +932,12 @@
         : {};
     if (accessToken && await loadAccount(entryOptions)) {
       clearAccountEntryState();
+      if (redirectToStoredReturnPath()) return;
       return;
     }
     if (await refreshSession() && await loadAccount(entryOptions)) {
       clearAccountEntryState();
+      if (redirectToStoredReturnPath()) return;
       return;
     }
     const turnstileReady = await initTurnstile(String(status.turnstileSiteKey || ""));

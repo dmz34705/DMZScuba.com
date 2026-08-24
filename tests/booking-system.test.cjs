@@ -29,6 +29,7 @@ test("booking page requires an account and supports all three booking journeys",
   assert.match(page, /Virtual Classroom/);
   assert.match(page, /Veteran or public-safety discount/);
   assert.match(client, /dmzAccountReturnPath/);
+  assert.match(client, /error\.status = response\.status/);
   assert.match(client, /preferredDates/);
   assert.match(page, /name="certificationLevel"/);
 });
