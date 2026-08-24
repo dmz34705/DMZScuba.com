@@ -159,6 +159,7 @@ test("account migration and page include the required foundation", () => {
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const client = fs.readFileSync(path.join(root, "js", "account.js"), "utf8");
   const sharedClient = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
+  const accountStyles = fs.readFileSync(path.join(root, "css", "pages", "account.css"), "utf8");
   const recoveryPanel = page.match(/<form[^>]+data-recovery-form[\s\S]*?<\/form>/)?.[0] || "";
   const verifyPanel = page.match(/<form[^>]+data-verify-form[\s\S]*?<\/form>/)?.[0] || "";
 
@@ -187,6 +188,7 @@ test("account migration and page include the required foundation", () => {
   assert.match(client, /showLoginSuccess/);
   assert.ok(client.indexOf("if (accessToken && await loadAccount()) return;") < client.indexOf("const turnstileReady = await initTurnstile"));
   assert.match(sharedClient, /customerSignedIn \? "My Account" : "Account"/);
+  assert.match(accountStyles, /\.account-auth\[hidden\][\s\S]*?display:\s*none\s*!important/);
   assert.match(client, /Your account is ready\. Welcome to DMZ Scuba\./);
   assert.match(client, /removeTurnstile/);
   assert.match(client, /unsupported-callback/);

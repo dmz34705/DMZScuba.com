@@ -249,9 +249,12 @@
   text-align: center;
 }
 
+.account-intro[hidden],
+.account-auth[hidden],
 .account-created[hidden],
+.account-dashboard[hidden],
 .account-view[hidden] {
-  display: none;
+  display: none !important;
 }
 
 .account-created-mark {
