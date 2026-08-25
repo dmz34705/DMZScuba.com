@@ -1098,6 +1098,8 @@ function handleCustomerMobileChallenge(request, env) {
   const siteKeyJson = inlineJson(siteKey);
   const unavailable = siteKey ? "" : "Security verification is not configured.";
   const requestUrl = new URL(request.url);
+  const requestedAction = String(requestUrl.searchParams.get("action") || "");
+  const action = requestedAction === "mobile_signup" ? "mobile_signup" : "mobile_login";
   const requestedCallback = String(requestUrl.searchParams.get("callback") || "").slice(0, 1000);
   const state = String(requestUrl.searchParams.get("state") || "")
     .replace(/[^a-zA-Z0-9_-]/g, "")
@@ -1113,6 +1115,7 @@ function handleCustomerMobileChallenge(request, env) {
   }
   const callbackUrlJson = inlineJson(callbackUrl);
   const stateJson = inlineJson(state);
+  const actionJson = inlineJson(action);
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -1160,7 +1163,7 @@ function handleCustomerMobileChallenge(request, env) {
           sitekey: ${siteKeyJson},
           theme: 'dark',
           size: 'flexible',
-          action: 'mobile_login',
+          action: ${actionJson},
           callback: function (token) { completeChallenge(token); },
           'expired-callback': function () { send('expired'); },
           'timeout-callback': function () { send('error', '110600'); },
@@ -1485,7 +1488,8 @@ async function ensureCustomerProfile(env, identity) {
     .bind(identity.userId, now, identity.userId)
     .run();
   return env.DB.prepare(
-    `SELECT user_id, email, first_name, last_name, preferred_name, phone, account_status,
+    `SELECT user_id, email, first_name, last_name, preferred_name, phone, home_location,
+            emergency_contact_name, emergency_contact_phone, logged_dives, default_pp_o2, default_rmv, account_status,
             deactivated_at, deactivated_by, merged_into_user_id, created_at, updated_at, last_login_at
      FROM customer_profiles WHERE user_id = ? LIMIT 1`
   )
@@ -1527,6 +1531,12 @@ function mapCustomerProfile(row) {
     lastName: String(row && row.last_name || ""),
     preferredName: String(row && row.preferred_name || ""),
     phone: String(row && row.phone || ""),
+    location: String(row && row.home_location || ""),
+    emergencyContactName: String(row && row.emergency_contact_name || ""),
+    emergencyContactPhone: String(row && row.emergency_contact_phone || ""),
+    loggedDives: Math.max(0, Number(row && row.logged_dives) || 0),
+    defaultPpO2: Number(row && row.default_pp_o2) || 1.4,
+    defaultRmv: Number(row && row.default_rmv) || 18,
     accountStatus: String(row && row.account_status || "active"),
     deactivatedAt: String(row && row.deactivated_at || ""),
     mergedIntoUserId: String(row && row.merged_into_user_id || ""),
@@ -2048,8 +2058,27 @@ async function handleMergeCustomerAccounts(request, env) {
          last_name = CASE WHEN trim(COALESCE(last_name, '')) = '' THEN ? ELSE last_name END,
          preferred_name = CASE WHEN trim(COALESCE(preferred_name, '')) = '' THEN ? ELSE preferred_name END,
          phone = CASE WHEN trim(COALESCE(phone, '')) = '' THEN ? ELSE phone END,
+         home_location = CASE WHEN trim(COALESCE(home_location, '')) = '' THEN ? ELSE home_location END,
+         emergency_contact_name = CASE WHEN trim(COALESCE(emergency_contact_name, '')) = '' THEN ? ELSE emergency_contact_name END,
+         emergency_contact_phone = CASE WHEN trim(COALESCE(emergency_contact_phone, '')) = '' THEN ? ELSE emergency_contact_phone END,
+         logged_dives = CASE WHEN logged_dives = 0 THEN ? ELSE logged_dives END,
+         default_pp_o2 = CASE WHEN default_pp_o2 = 1.4 THEN ? ELSE default_pp_o2 END,
+         default_rmv = CASE WHEN default_rmv = 18 THEN ? ELSE default_rmv END,
          updated_at = ? WHERE user_id = ?`
-    ).bind(source.first_name || "", source.last_name || "", source.preferred_name || "", source.phone || "", now, targetUserId),
+    ).bind(
+      source.first_name || "",
+      source.last_name || "",
+      source.preferred_name || "",
+      source.phone || "",
+      source.home_location || "",
+      source.emergency_contact_name || "",
+      source.emergency_contact_phone || "",
+      Math.max(0, Number(source.logged_dives) || 0),
+      Number(source.default_pp_o2) || 1.4,
+      Number(source.default_rmv) || 18,
+      now,
+      targetUserId
+    ),
     env.DB.prepare(
       `UPDATE customer_profiles SET account_status = 'merged', merged_into_user_id = ?,
        deactivated_at = ?, deactivated_by = ?, updated_at = ? WHERE user_id = ?`
@@ -2076,17 +2105,45 @@ async function handleUpdateCustomerProfile(request, env) {
     lastName: normalizeCustomerText(body.lastName, 80),
     preferredName: normalizeCustomerText(body.preferredName, 80),
     phone: normalizeCustomerText(body.phone, 40),
+    location: normalizeCustomerText(body.location, 120),
+    emergencyContactName: normalizeCustomerText(body.emergencyContactName, 120),
+    emergencyContactPhone: normalizeCustomerText(body.emergencyContactPhone, 40),
+    loggedDives: Math.max(0, Math.min(100000, Math.trunc(Number(body.loggedDives) || 0))),
+    defaultPpO2: Number(body.defaultPpO2),
+    defaultRmv: Number(body.defaultRmv),
   };
   if (!profile.firstName || !profile.lastName) {
     return jsonResponse({ ok: false, error: "First and last name are required." }, 400);
   }
+  if (!Number.isFinite(profile.defaultPpO2) || profile.defaultPpO2 < 0.5 || profile.defaultPpO2 > 2) {
+    return jsonResponse({ ok: false, error: "Working ppO2 must be between 0.5 and 2.0 ATA." }, 400);
+  }
+  if (!Number.isFinite(profile.defaultRmv) || profile.defaultRmv < 1 || profile.defaultRmv > 200) {
+    return jsonResponse({ ok: false, error: "Planning RMV must be between 1 and 200 L/min." }, 400);
+  }
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_profiles
-     SET first_name = ?, last_name = ?, preferred_name = ?, phone = ?, email = ?, updated_at = ?
+     SET first_name = ?, last_name = ?, preferred_name = ?, phone = ?, home_location = ?,
+         emergency_contact_name = ?, emergency_contact_phone = ?, logged_dives = ?,
+         default_pp_o2 = ?, default_rmv = ?, email = ?, updated_at = ?
      WHERE user_id = ?`
   )
-    .bind(profile.firstName, profile.lastName, profile.preferredName, profile.phone, auth.identity.email, now, auth.identity.userId)
+    .bind(
+      profile.firstName,
+      profile.lastName,
+      profile.preferredName,
+      profile.phone,
+      profile.location,
+      profile.emergencyContactName,
+      profile.emergencyContactPhone,
+      profile.loggedDives,
+      profile.defaultPpO2,
+      profile.defaultRmv,
+      auth.identity.email,
+      now,
+      auth.identity.userId
+    )
     .run();
   await writeCustomerAudit(env, auth.identity.userId, "profile.updated", "customer_profile", auth.identity.userId);
   return jsonResponse(await getCustomerAccountPayload(env, auth.identity), 200, { "Cache-Control": "no-store" });
@@ -2134,6 +2191,7 @@ function mapBookingOffering(row) {
     sourceId: String(row && row.source_id || ""),
     sourceDate: String(row && row.source_date || ""),
     category: String(row && row.category || "event"),
+    bookingMode: String(row && row.booking_mode || (row && row.starts_on ? "scheduled" : "on_demand")),
     title: String(row && row.title || ""),
     description: String(row && row.description || ""),
     location: String(row && row.location || ""),
@@ -2174,6 +2232,7 @@ function mapCustomerBooking(row) {
       location: String(row.offering_location || ""),
       startsOn: String(row.offering_starts_on || ""),
       endsOn: String(row.offering_ends_on || ""),
+      bookingMode: String(row.offering_booking_mode || (row.offering_starts_on ? "scheduled" : "on_demand")),
     } : null,
     createdAt: String(row && row.created_at || ""),
     updatedAt: String(row && row.updated_at || ""),
@@ -2190,7 +2249,7 @@ function bookingOfferingSelect() {
 async function handleGetBookingCatalog(request, env) {
   const auth = await requireCustomerIdentity(request, env);
   if (auth.response) return auth.response;
-  const rows = await env.DB.prepare(`${bookingOfferingSelect()} WHERE o.active = 1 ORDER BY COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all();
+  const rows = await env.DB.prepare(`${bookingOfferingSelect()} WHERE o.active = 1 ORDER BY o.category, o.booking_mode, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all();
   const offerings = (rows.results || []).map((row) => ({
     ...mapBookingOffering(row),
     bookedCount: Math.max(0, Number(row.booked_count) || 0),
@@ -2211,7 +2270,8 @@ async function handleListCustomerBookings(request, env) {
   if (auth.response) return auth.response;
   const rows = await env.DB.prepare(
     `SELECT b.*, o.title AS offering_title, o.location AS offering_location,
-            o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on
+            o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on,
+            o.booking_mode AS offering_booking_mode
      FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id
      WHERE b.user_id = ? ORDER BY b.created_at DESC`
   ).bind(auth.identity.userId).all();
@@ -2242,6 +2302,7 @@ async function handleCreateCustomerBooking(request, env) {
   const offering = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ? AND active = 1 LIMIT 1").bind(offeringId).first();
   if (!offering) return jsonResponse({ ok: false, error: "This booking option is no longer available." }, 404);
   const category = String(offering.category || "event");
+  const bookingMode = String(offering.booking_mode || (offering.starts_on ? "scheduled" : "on_demand"));
   const firstName = normalizeCustomerText(body.firstName, 80);
   const lastName = normalizeCustomerText(body.lastName, 80);
   const email = normalizeCustomerText(body.email, 180).toLowerCase();
@@ -2251,8 +2312,8 @@ async function handleCreateCustomerBooking(request, env) {
     return jsonResponse({ ok: false, error: "Name, email, phone number, and birthdate are required." }, 400);
   }
   const details = normalizeBookingDetails(body, category);
-  if (category === "class" && !details.preferredDates.length) {
-    return jsonResponse({ ok: false, error: "Choose at least one preferred class date." }, 400);
+  if (bookingMode === "on_demand" && !details.preferredDates.length) {
+    return jsonResponse({ ok: false, error: "Choose at least one preferred date so DMZ Scuba can begin planning." }, 400);
   }
   if ((category === "trip" || category === "event") && !details.certificationLevel) {
     return jsonResponse({ ok: false, error: "Tell us which certification you currently hold." }, 400);
@@ -2275,17 +2336,25 @@ async function handleCreateCustomerBooking(request, env) {
   ).bind(id, auth.identity.userId, offeringId, category, firstName, lastName, email, phone, birthdate,
     body.isMinor ? 1 : 0, amountDue, amountDue > 0 ? "unpaid" : "not_required", JSON.stringify(details), now, now).run();
   await writeCustomerAudit(env, auth.identity.userId, "booking.created", "customer_booking", id, auth.identity.userId);
-  return jsonResponse({ ok: true, bookingId: id, amountDueCents: amountDue, paymentRequired: amountDue > 0 }, 201);
+  const paymentsConfigured = Boolean(String(env.STRIPE_SECRET_KEY || "").trim());
+  return jsonResponse({
+    ok: true,
+    bookingId: id,
+    amountDueCents: amountDue,
+    paymentPlanned: amountDue > 0,
+    paymentRequired: amountDue > 0 && paymentsConfigured,
+  }, 201);
 }
 
 async function handleListAdminBookings(request, env) {
   const auth = await requireManagementIdentity(request, env, false);
   if (auth.response) return auth.response;
   const [offeringRows, bookingRows] = await Promise.all([
-    env.DB.prepare(`${bookingOfferingSelect()} ORDER BY o.active DESC, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all(),
+    env.DB.prepare(`${bookingOfferingSelect()} ORDER BY o.active DESC, o.category, o.booking_mode, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all(),
     env.DB.prepare(
       `SELECT b.*, o.title AS offering_title, o.location AS offering_location,
-              o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on
+              o.starts_on AS offering_starts_on, o.ends_on AS offering_ends_on,
+              o.booking_mode AS offering_booking_mode
        FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id
        ORDER BY b.created_at DESC`
     ).all(),
@@ -2300,17 +2369,21 @@ async function handleListAdminBookings(request, env) {
 
 function normalizeBookingOffering(body, existing = {}) {
   const category = ["class", "trip", "event"].includes(body.category) ? body.category : String(existing.category || "event");
+  const bookingMode = ["on_demand", "scheduled"].includes(body.bookingMode)
+    ? body.bookingMode
+    : String(existing.booking_mode || (existing.starts_on ? "scheduled" : "on_demand"));
   const priceCents = Math.max(0, Math.round(Number(body.price || 0) * 100));
   const depositCents = Math.min(priceCents || Number.MAX_SAFE_INTEGER, Math.max(0, Math.round(Number(body.deposit || 0) * 100)));
   return {
     sourceId: normalizeCustomerText(body.sourceId != null ? body.sourceId : existing.source_id, 140),
     sourceDate: normalizeCustomerText(body.sourceDate != null ? body.sourceDate : existing.source_date, 10),
     category,
+    bookingMode,
     title: normalizeCustomerText(body.title != null ? body.title : existing.title, 180),
     description: normalizeCustomerText(body.description != null ? body.description : existing.description, 2000),
     location: normalizeCustomerText(body.location != null ? body.location : existing.location, 180),
-    startsOn: normalizeCustomerText(body.startsOn != null ? body.startsOn : existing.starts_on, 10),
-    endsOn: normalizeCustomerText(body.endsOn != null ? body.endsOn : existing.ends_on, 10),
+    startsOn: bookingMode === "scheduled" ? normalizeCustomerText(body.startsOn != null ? body.startsOn : existing.starts_on, 10) : "",
+    endsOn: bookingMode === "scheduled" ? normalizeCustomerText(body.endsOn != null ? body.endsOn : existing.ends_on, 10) : "",
     capacity: Math.max(0, Math.trunc(Number(body.capacity != null ? body.capacity : existing.capacity) || 0)),
     priceCents: body.price != null ? priceCents : Math.max(0, Number(existing.price_cents) || 0),
     depositCents: body.deposit != null ? depositCents : Math.max(0, Number(existing.deposit_cents) || 0),
@@ -2329,14 +2402,20 @@ async function handleSaveBookingOffering(request, env, offeringId = "") {
   const body = await request.json().catch(() => ({}));
   const item = normalizeBookingOffering(body.offering || body, existing || {});
   if (!item.title) return jsonResponse({ ok: false, error: "A booking title is required." }, 400);
+  if (item.bookingMode === "scheduled" && !isDateKey(item.startsOn)) {
+    return jsonResponse({ ok: false, error: "Choose a start date for this scheduled listing." }, 400);
+  }
+  if (item.endsOn && !isDateKey(item.endsOn)) {
+    return jsonResponse({ ok: false, error: "Choose a valid end date." }, 400);
+  }
   const now = new Date().toISOString();
   const createdAt = existing && existing.created_at || now;
   await env.DB.prepare(
     `INSERT OR REPLACE INTO booking_offerings
-     (id, source_id, source_date, category, title, description, location, starts_on, ends_on,
+     (id, source_id, source_date, category, booking_mode, title, description, location, starts_on, ends_on,
       capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(safeId, item.sourceId || null, item.sourceDate || null, item.category, item.title, item.description,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(safeId, item.sourceId || null, item.sourceDate || null, item.category, item.bookingMode, item.title, item.description,
     item.location, item.startsOn || null, item.endsOn || null, item.capacity, item.priceCents, item.depositCents,
     item.currency, item.active ? 1 : 0, JSON.stringify(item.settings), createdAt, now).run();
   const saved = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ?").bind(safeId).first();
@@ -2355,9 +2434,9 @@ async function handleImportBookingOfferings(request, env) {
     const category = type === "training" ? "class" : type === "travel" ? "trip" : "event";
     return env.DB.prepare(
       `INSERT OR IGNORE INTO booking_offerings
-       (id, source_id, source_date, category, title, description, location, starts_on, ends_on,
+       (id, source_id, source_date, category, booking_mode, title, description, location, starts_on, ends_on,
         capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'usd', ?, '{}', ?, ?)`
+       VALUES (?, ?, ?, ?, 'scheduled', ?, ?, ?, ?, ?, ?, 0, 0, 'usd', ?, '{}', ?, ?)`
     ).bind(crypto.randomUUID(), String(item.id || ""), String(item.date || ""), category, String(item.title || "Upcoming booking"),
       String(item.summary || ""), String(item.location || ""), String(item.date || ""), String(item.endDate || item.date || ""),
       Math.max(0, Number(item.registrationCapacity) || 0), item.registrationEnabled && !item.registrationClosed ? 1 : 0, now, now);

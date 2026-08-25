@@ -123,6 +123,15 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
   last_name TEXT,
   preferred_name TEXT,
   phone TEXT,
+  home_location TEXT NOT NULL DEFAULT '',
+  emergency_contact_name TEXT NOT NULL DEFAULT '',
+  emergency_contact_phone TEXT NOT NULL DEFAULT '',
+  logged_dives INTEGER NOT NULL DEFAULT 0
+    CHECK (logged_dives >= 0 AND logged_dives <= 100000),
+  default_pp_o2 REAL NOT NULL DEFAULT 1.4
+    CHECK (default_pp_o2 >= 0.5 AND default_pp_o2 <= 2.0),
+  default_rmv REAL NOT NULL DEFAULT 18
+    CHECK (default_rmv >= 1 AND default_rmv <= 200),
   account_status TEXT NOT NULL DEFAULT 'active'
     CHECK (account_status IN ('active', 'deactivated', 'merged')),
   deactivated_at TEXT,
@@ -228,6 +237,8 @@ CREATE TABLE IF NOT EXISTS booking_offerings (
   source_id TEXT,
   source_date TEXT,
   category TEXT NOT NULL CHECK (category IN ('class', 'trip', 'event')),
+  booking_mode TEXT NOT NULL DEFAULT 'scheduled'
+    CHECK (booking_mode IN ('on_demand', 'scheduled')),
   title TEXT NOT NULL,
   description TEXT,
   location TEXT,
@@ -246,6 +257,9 @@ CREATE TABLE IF NOT EXISTS booking_offerings (
 
 CREATE INDEX IF NOT EXISTS idx_booking_offerings_active
   ON booking_offerings(active, category, starts_on);
+
+CREATE INDEX IF NOT EXISTS idx_booking_offerings_catalog
+  ON booking_offerings(active, category, booking_mode, starts_on);
 
 CREATE TABLE IF NOT EXISTS customer_bookings_v2 (
   id TEXT PRIMARY KEY,

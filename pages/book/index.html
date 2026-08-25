@@ -9,7 +9,7 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/book.css?v=20260824a" />
+  <link rel="stylesheet" href="/css/pages/book.css?v=20260824b" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 </head>
 <body>
@@ -27,8 +27,8 @@
         <h2>Sign in before you book</h2>
         <p>Your verified account protects personal, certification, and payment information while keeping every booking in one place.</p>
         <div class="booking-actions">
-          <a class="btn primary" href="/pages/account/" data-booking-signin>Sign In</a>
-          <a class="btn secondary" href="/pages/account/create/">Create Account</a>
+          <a class="btn primary" href="/pages/account/?return=booking" data-booking-auth-link>Sign In</a>
+          <a class="btn secondary" href="/pages/account/create/?return=booking" data-booking-auth-link>Create Account</a>
         </div>
       </div>
     </section>
@@ -36,7 +36,7 @@
     <section class="booking-workspace" data-booking-workspace hidden>
       <header class="booking-section-heading">
         <div><p class="booking-eyebrow">Step 1</p><h2>What would you like to book?</h2></div>
-        <a href="/pages/account/" class="booking-account-link">View My Account</a>
+        <a href="/pages/account/" class="booking-account-link" data-booking-account-link>View My Account</a>
       </header>
       <div class="booking-tabs" role="tablist" aria-label="Booking categories">
         <button class="is-active" type="button" data-booking-category="class" aria-selected="true">Classes</button>
@@ -61,14 +61,18 @@
           </div>
           <label class="booking-check"><input name="isMinor" type="checkbox" /><span><strong>I am registering my child</strong><small>Select this when the participant is a minor.</small></span></label>
 
-          <fieldset data-class-fields>
-            <legend>Class schedule and preferences</legend>
-            <p>Choose up to three dates that work well. DMZ Scuba will confirm the final schedule with you.</p>
+          <fieldset data-schedule-fields hidden>
+            <legend>Your preferred dates</legend>
+            <p>This option is available on demand. Choose up to three dates that work well, and DMZ Scuba will help finalize the schedule.</p>
             <div class="booking-date-grid">
               <label><span>First Choice</span><input name="preferredDate1" type="date" /></label>
               <label><span>Second Choice</span><input name="preferredDate2" type="date" /></label>
               <label><span>Third Choice</span><input name="preferredDate3" type="date" /></label>
             </div>
+          </fieldset>
+
+          <fieldset data-class-fields>
+            <legend>Class preferences</legend>
             <div class="booking-choice-grid">
               <label><input type="radio" name="classFormat" value="dmz_hq" checked /><span><strong>DMZ Scuba HQ</strong><small>Meet with DMZ Scuba in person.</small></span></label>
               <label><input type="radio" name="classFormat" value="virtual" /><span><strong>Virtual Classroom</strong><small>Complete classroom instruction online.</small></span></label>
@@ -102,11 +106,11 @@
       <p class="booking-eyebrow">Booking received</p>
       <h2>We have your request.</h2>
       <p data-booking-success-copy>DMZ Scuba will review the details and confirm your booking.</p>
-      <div class="booking-actions"><button class="btn primary" type="button" data-book-another>Book Something Else</button><a class="btn secondary" href="/pages/account/">View My Bookings</a></div>
+      <div class="booking-actions"><button class="btn primary" type="button" data-book-another>Book Something Else</button><a class="btn secondary" href="/pages/account/" data-booking-account-link>View My Bookings</a></div>
     </section>
   </main>
   <footer class="site-footer" data-site-footer></footer>
   <script src="/js/main.js?v=20260824book" defer></script>
-  <script src="/js/booking.js?v=20260824b" defer></script>
+  <script src="/js/booking.js?v=20260824c" defer></script>
 </body>
 </html>

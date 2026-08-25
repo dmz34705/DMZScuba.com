@@ -2,6 +2,7 @@
   "use strict";
   const app = document.querySelector("[data-booking-app]");
   if (!app) return;
+
   const gate = app.querySelector("[data-booking-gate]");
   const workspace = app.querySelector("[data-booking-workspace]");
   const catalog = app.querySelector("[data-booking-catalog]");
@@ -10,6 +11,7 @@
   const form = app.querySelector("[data-booking-form]");
   const success = app.querySelector("[data-booking-success]");
   const tokenKey = "dmzCustomerAccessToken";
+  const returnPathKey = "dmzAccountReturnPath";
   let accessToken = sessionStorage.getItem(tokenKey) || "";
   let offerings = [];
   let activeCategory = "class";
@@ -17,8 +19,14 @@
   let profile = {};
 
   const escapeHtml = (value) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const money = (cents, currency = "usd") => cents > 0 ? new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100) : "No online payment required";
-  const date = (value) => value ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`)) : "Schedule with DMZ Scuba";
+  const money = (cents, currency = "usd") => cents > 0
+    ? new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100)
+    : "Confirmed after review";
+  const date = (value) => value
+    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`))
+    : "Plan dates with DMZ Scuba";
+  const categoryLabel = (category) => category === "class" ? "Class" : category === "trip" ? "Dive Trip" : "Local Event";
+  const modeLabel = (item) => item.bookingMode === "scheduled" ? "Scheduled by DMZ Scuba" : "Available on demand";
 
   async function parse(response) {
     const data = await response.json().catch(() => ({}));
@@ -43,7 +51,12 @@
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const response = await fetch(path, { ...options, headers, credentials: "include", cache: "no-store" });
     if (response.status === 401 && retry) {
-      try { await refresh(); return api(path, options, false); } catch (_error) { /* show gate below */ }
+      try {
+        await refresh();
+        return api(path, options, false);
+      } catch (_error) {
+        // The sign-in gate is shown below when refresh is unavailable.
+      }
     }
     return parse(response);
   }
@@ -59,14 +72,26 @@
       catalog.innerHTML = `<div class="booking-empty"><h3>No ${activeCategory === "class" ? "classes" : activeCategory === "trip" ? "trips" : "local events"} are open for direct booking yet.</h3><p>DMZ Scuba is adding availability now. Check back soon or contact us for help planning.</p></div>`;
       return;
     }
-    catalog.innerHTML = items.map((item) => `
-      <article class="booking-card">
-        <div><span class="booking-card-type">${escapeHtml(item.category === "class" ? "Class" : item.category === "trip" ? "Dive Trip" : "Local Event")}</span><h3>${escapeHtml(item.title)}</h3></div>
-        <p>${escapeHtml(item.description || "Open this booking to share your details and preferences with DMZ Scuba.")}</p>
-        <dl><div><dt>Date</dt><dd>${escapeHtml(date(item.startsOn))}</dd></div>${item.location ? `<div><dt>Location</dt><dd>${escapeHtml(item.location)}</dd></div>` : ""}<div><dt>Due now</dt><dd>${escapeHtml(money(item.depositCents || item.priceCents, item.currency))}</dd></div></dl>
-        ${item.remaining !== null ? `<small>${item.remaining} spot${item.remaining === 1 ? "" : "s"} currently available</small>` : ""}
-        <button class="btn primary" type="button" data-select-offering="${escapeHtml(item.id)}" ${item.remaining === 0 ? "disabled" : ""}>${item.remaining === 0 ? "Currently Full" : "Choose This Option"}</button>
-      </article>`).join("");
+
+    catalog.innerHTML = ["on_demand", "scheduled"].map((mode) => {
+      const group = items.filter((item) => item.bookingMode === mode);
+      if (!group.length) return "";
+      const heading = mode === "on_demand" ? "Book on your schedule" : "Scheduled by DMZ Scuba";
+      const copy = mode === "on_demand"
+        ? "Choose an offering and tell us which dates work for you."
+        : "Choose a published date and request your place.";
+      return `<section class="booking-catalog-group">
+        <header><h3>${heading}</h3><p>${copy}</p></header>
+        <div class="booking-catalog-grid">${group.map((item) => `
+          <article class="booking-card">
+            <div><span class="booking-card-type">${escapeHtml(categoryLabel(item.category))} &middot; ${escapeHtml(modeLabel(item))}</span><h3>${escapeHtml(item.title)}</h3></div>
+            <p>${escapeHtml(item.description || "Open this booking to share your details and preferences with DMZ Scuba.")}</p>
+            <dl><div><dt>${item.bookingMode === "scheduled" ? "Date" : "Schedule"}</dt><dd>${escapeHtml(date(item.startsOn))}</dd></div>${item.location ? `<div><dt>Location</dt><dd>${escapeHtml(item.location)}</dd></div>` : ""}<div><dt>Pricing</dt><dd>${escapeHtml(money(item.depositCents || item.priceCents, item.currency))}</dd></div></dl>
+            ${item.remaining !== null ? `<small>${item.remaining} spot${item.remaining === 1 ? "" : "s"} currently available</small>` : ""}
+            <button class="btn primary" type="button" data-select-offering="${escapeHtml(item.id)}" ${item.remaining === 0 ? "disabled" : ""}>${item.remaining === 0 ? "Currently Full" : item.bookingMode === "scheduled" ? "Request This Spot" : "Start Planning"}</button>
+          </article>`).join("")}</div>
+      </section>`;
+    }).join("");
   }
 
   function selectOffering(id) {
@@ -79,18 +104,29 @@
     form.elements.lastName.value = profile.lastName || "";
     form.elements.email.value = profile.email || "";
     form.elements.phone.value = profile.phone || "";
-    app.querySelector("[data-booking-selected]").innerHTML = `<span>${escapeHtml(selected.category === "class" ? "Class" : selected.category === "trip" ? "Dive Trip" : "Local Event")}</span><h3>${escapeHtml(selected.title)}</h3><p>${escapeHtml(date(selected.startsOn))}${selected.location ? ` · ${escapeHtml(selected.location)}` : ""}</p>`;
-    app.querySelector("[data-class-fields]").hidden = selected.category !== "class";
-    app.querySelector("[data-dive-fields]").hidden = selected.category === "class";
+    app.querySelector("[data-booking-selected]").innerHTML = `<span>${escapeHtml(categoryLabel(selected.category))} &middot; ${escapeHtml(modeLabel(selected))}</span><h3>${escapeHtml(selected.title)}</h3><p>${escapeHtml(date(selected.startsOn))}${selected.location ? ` &middot; ${escapeHtml(selected.location)}` : ""}</p>`;
+
+    const scheduleFields = app.querySelector("[data-schedule-fields]");
+    const classFields = app.querySelector("[data-class-fields]");
+    const diveFields = app.querySelector("[data-dive-fields]");
+    const asksForDates = selected.bookingMode !== "scheduled";
+    scheduleFields.hidden = !asksForDates;
+    scheduleFields.disabled = !asksForDates;
+    form.elements.preferredDate1.required = asksForDates;
+    classFields.hidden = selected.category !== "class";
+    classFields.disabled = selected.category !== "class";
+    diveFields.hidden = selected.category === "class";
+    diveFields.disabled = selected.category === "class";
+
     const due = selected.depositCents || selected.priceCents;
-    app.querySelector("[data-booking-review]").innerHTML = `<strong>${due > 0 ? `${escapeHtml(money(due, selected.currency))} due to continue` : "No payment required right now"}</strong><span>DMZ Scuba will review availability before the booking is final.</span>`;
+    app.querySelector("[data-booking-review]").innerHTML = `<strong>${due > 0 ? `Planned deposit: ${escapeHtml(money(due, selected.currency))}` : "Pricing confirmed after review"}</strong><span>No payment will be collected today. DMZ Scuba will confirm availability, details, and pricing first.</span>`;
     formShell.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   async function init() {
-    sessionStorage.setItem("dmzAccountReturnPath", "/pages/book/");
     try {
       const data = await api("/api/bookings/catalog");
+      sessionStorage.removeItem(returnPathKey);
       offerings = Array.isArray(data.offerings) ? data.offerings : [];
       profile = data.profile || {};
       gate.hidden = true;
@@ -99,6 +135,7 @@
       setMessage(status, "Choose an option to begin.");
     } catch (error) {
       const signedOut = Number(error && error.status) === 401;
+      if (signedOut) sessionStorage.setItem(returnPathKey, "/pages/book/");
       gate.hidden = !signedOut;
       workspace.hidden = signedOut;
       if (!signedOut) {
@@ -108,17 +145,34 @@
     }
   }
 
-  app.querySelector("[data-booking-signin]")?.addEventListener("click", () => sessionStorage.setItem("dmzAccountReturnPath", "/pages/book/"));
+  app.querySelectorAll("[data-booking-auth-link]").forEach((link) => link.addEventListener("click", () => sessionStorage.setItem(returnPathKey, "/pages/book/")));
+  app.querySelectorAll("[data-booking-account-link]").forEach((link) => link.addEventListener("click", () => sessionStorage.removeItem(returnPathKey)));
   app.querySelectorAll("[data-booking-category]").forEach((button) => button.addEventListener("click", () => {
     activeCategory = button.dataset.bookingCategory;
-    app.querySelectorAll("[data-booking-category]").forEach((item) => { const active = item === button; item.classList.toggle("is-active", active); item.setAttribute("aria-selected", String(active)); });
+    app.querySelectorAll("[data-booking-category]").forEach((item) => {
+      const active = item === button;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-selected", String(active));
+    });
     formShell.hidden = true;
     catalog.hidden = false;
     renderCatalog();
   }));
-  catalog.addEventListener("click", (event) => { const button = event.target.closest("[data-select-offering]"); if (button) selectOffering(button.dataset.selectOffering); });
-  app.querySelector("[data-booking-back]")?.addEventListener("click", () => { formShell.hidden = true; catalog.hidden = false; selected = null; });
-  app.querySelector("[data-book-another]")?.addEventListener("click", () => { success.hidden = true; workspace.hidden = false; form.reset(); renderCatalog(); });
+  catalog.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-select-offering]");
+    if (button) selectOffering(button.dataset.selectOffering);
+  });
+  app.querySelector("[data-booking-back]")?.addEventListener("click", () => {
+    formShell.hidden = true;
+    catalog.hidden = false;
+    selected = null;
+  });
+  app.querySelector("[data-book-another]")?.addEventListener("click", () => {
+    success.hidden = true;
+    workspace.hidden = false;
+    form.reset();
+    renderCatalog();
+  });
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!selected) return;
@@ -134,16 +188,17 @@
     button.disabled = true;
     setMessage(formStatus, "Submitting your booking...");
     try {
-      const data = await api("/api/bookings", { method: "POST", body: JSON.stringify(body) });
+      await api("/api/bookings", { method: "POST", body: JSON.stringify(body) });
       workspace.hidden = true;
       success.hidden = false;
-      app.querySelector("[data-booking-success-copy]").textContent = data.paymentRequired
-        ? "Your request is saved. Online payment will open after DMZ Scuba confirms availability and pricing."
-        : "DMZ Scuba will review your details and confirm the schedule by email.";
+      app.querySelector("[data-booking-success-copy]").textContent = "DMZ Scuba will review your details, confirm availability and pricing, and contact you by email. No payment was collected today.";
       success.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       setMessage(formStatus, error.message, true);
-    } finally { button.disabled = false; }
+    } finally {
+      button.disabled = false;
+    }
   });
+
   init();
 })();

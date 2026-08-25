@@ -62,6 +62,16 @@
     return true;
   }
 
+  function syncBookingReturnRequest() {
+    const requested = new URLSearchParams(window.location.search).get("return") === "booking";
+    try {
+      if (requested) window.sessionStorage.setItem("dmzAccountReturnPath", "/pages/book/");
+      else window.sessionStorage.removeItem("dmzAccountReturnPath");
+    } catch (_error) {
+      // Returning to booking is optional when browser storage is unavailable.
+    }
+  }
+
   function getAccountEntryState() {
     try {
       const value = JSON.parse(window.sessionStorage.getItem(entryStateStorageKey) || "null");
@@ -915,6 +925,7 @@
   });
 
   async function init() {
+    syncBookingReturnRequest();
     const response = await fetch("/api/account/auth/status", { headers: { Accept: "application/json" }, cache: "no-store" }).catch(() => null);
     const status = response ? await response.json().catch(() => ({})) : {};
     authEnabled = Boolean(response && response.ok && status && status.enabled);

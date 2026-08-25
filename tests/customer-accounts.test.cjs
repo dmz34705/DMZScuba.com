@@ -186,6 +186,23 @@ test("mobile challenge returns successful verification only to approved app sche
   assert.doesNotMatch(rejectedHtml, /evil\.example/);
 });
 
+test("mobile challenge limits native actions to login and signup", async () => {
+  const worker = await workerModulePromise;
+  const signupResponse = await worker.default.fetch(
+    new Request("https://www.dmzscuba.com/api/account/mobile-challenge?action=mobile_signup", { method: "GET" }),
+    { TURNSTILE_SITE_KEY: "0x4AAAA-test" },
+    { waitUntil() {} }
+  );
+  assert.match(await signupResponse.text(), /action: "mobile_signup"/);
+
+  const unknownResponse = await worker.default.fetch(
+    new Request("https://www.dmzscuba.com/api/account/mobile-challenge?action=untrusted_action", { method: "GET" }),
+    { TURNSTILE_SITE_KEY: "0x4AAAA-test" },
+    { waitUntil() {} }
+  );
+  assert.match(await unknownResponse.text(), /action: "mobile_login"/);
+});
+
 test("customer account and credential endpoints reject requests without a JWT", async () => {
   const worker = await workerModulePromise;
   const requests = [
@@ -235,6 +252,7 @@ test("mobile app settings are normalized to supported calculator preferences", a
 test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
   const settingsMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0004_customer_app_settings.sql"), "utf8");
+  const diverProfileMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0007_customer_diver_profiles.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const createPage = fs.readFileSync(path.join(root, "pages", "account", "create", "index.html"), "utf8");
   const forgotPage = fs.readFileSync(path.join(root, "pages", "account", "forgot-password", "index.html"), "utf8");
@@ -248,8 +266,14 @@ test("account migration and page include the required foundation", () => {
     assert.match(migration, new RegExp(`CREATE TABLE IF NOT EXISTS ${table}`));
   }
   assert.match(settingsMigration, /CREATE TABLE IF NOT EXISTS customer_app_settings/);
+  for (const column of ["home_location", "emergency_contact_name", "emergency_contact_phone", "logged_dives", "default_pp_o2", "default_rmv"]) {
+    assert.match(diverProfileMigration, new RegExp(`ADD COLUMN ${column}`));
+  }
   assert.match(workerSource, /\/api\/account\/app-settings/);
+  assert.match(workerSource, /emergencyContactName/);
+  assert.match(workerSource, /defaultPpO2/);
   assert.match(client, /redirectToStoredReturnPath/);
+  assert.match(client, /syncBookingReturnRequest/);
   assert.match(client, /response\.status === 401 \|\| response\.status === 403/);
   assert.match(migration, /ALTER TABLE event_registrations_v2 ADD COLUMN user_id/);
   assert.match(page, /data-login-form/);

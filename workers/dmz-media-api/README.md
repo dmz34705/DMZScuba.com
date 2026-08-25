@@ -75,7 +75,7 @@ Customer authentication also provides role-based management access while the leg
 ### Customer
 
 - `GET /api/account`
-  - Returns the signed-in customer's profile, roles, certifications, registrations, reservations, and app settings
+  - Returns the signed-in customer's contact and diver profile, roles, certifications, registrations, reservations, and app settings
 - `PUT /api/account`
   - Updates the signed-in customer's allowed profile fields
 - `PUT /api/account/app-settings`
@@ -89,7 +89,7 @@ Customer authentication also provides role-based management access while the leg
 - `PUT /api/account/auth/password`
   - Updates the signed-in customer's password through Supabase
 - `GET /api/bookings/catalog`
-  - Returns active class, trip, and local-event booking options for a signed-in customer
+  - Returns active class, trip, and local-event booking options for a signed-in customer, separated into on-demand offerings and scheduled DMZ Scuba listings
 - `GET /api/bookings`
   - Returns the signed-in customer's booking requests and payment states
 - `POST /api/bookings`
@@ -111,7 +111,7 @@ Customer authentication also provides role-based management access while the leg
 - `PUT /api/admin/booking-offerings/:offeringId`
 - `POST /api/admin/booking-offerings/import-events`
 - `PUT /api/admin/bookings/:bookingId`
-  - Employee booking management for availability, category, capacity, pricing, deposits, visibility, and request status
+  - Employee booking management for category, on-demand or scheduled availability, capacity, future pricing and deposits, visibility, and request status
 - `POST /api/admin/accounts/:userId/archive`
   - Permanently deletes a deactivated customer's shared website/mobile login and operational rows after storing a protected snapshot
 - `GET /api/admin/account-archives`

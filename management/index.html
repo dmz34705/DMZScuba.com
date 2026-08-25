@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
-  <link rel="stylesheet" href="/css/pages/management.css?v=20260824d" />
+  <link rel="stylesheet" href="/css/pages/management.css?v=20260824e" />
 </head>
 
 <body class="management-page">
@@ -101,20 +101,20 @@
                 <span class="mgmt-nav-badge" data-filter-count></span>
               </button>
 
-              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings">
-                <span class="mgmt-nav-text">Bookings</span>
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings" data-booking-open="requests">
+                <span class="mgmt-nav-text">Booking Requests</span>
               </button>
 
-              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
-                      data-filter-type="class" data-site-studio-open="operations">
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings" data-booking-open="class">
                 <span class="mgmt-nav-text">Classes</span>
-                <span class="mgmt-nav-badge" data-filter-count></span>
               </button>
 
-              <button class="mgmt-nav-item mgmt-nav-primary" type="button"
-                      data-filter-type="trip" data-site-studio-open="operations">
-                <span class="mgmt-nav-text">Calendar</span>
-                <span class="mgmt-nav-badge" data-filter-count></span>
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings" data-booking-open="trip">
+                <span class="mgmt-nav-text">Dive Trips</span>
+              </button>
+
+              <button class="mgmt-nav-item mgmt-nav-primary" type="button" data-site-studio-tab="bookings" data-booking-open="event">
+                <span class="mgmt-nav-text">Local Events</span>
               </button>
 
               <button class="mgmt-nav-item mgmt-nav-secondary" type="button"
@@ -493,15 +493,21 @@
 
           <section class="mgmt-panel mgmt-bookings-panel" data-site-studio-panel="bookings" hidden>
             <div class="mgmt-topbar">
-              <div class="mgmt-topbar-left"><p class="management-kicker">Booking center</p><h1 class="mgmt-panel-title">Bookings &amp; Availability</h1><p class="mgmt-panel-subtitle">Control what customers can book and review incoming requests.</p></div>
-              <div class="mgmt-topbar-right"><button class="mgmt-btn-sm" type="button" data-booking-import>Import Upcoming Calendar</button><button class="mgmt-btn-sm" type="button" data-booking-new>New Booking Option</button><button class="mgmt-btn-sm" type="button" data-booking-refresh>Refresh</button></div>
+              <div class="mgmt-topbar-left"><p class="management-kicker">Booking center</p><h1 class="mgmt-panel-title" data-booking-panel-title>Booking Requests</h1><p class="mgmt-panel-subtitle" data-booking-panel-subtitle>Review customer requests and move each booking toward confirmation.</p></div>
+              <div class="mgmt-topbar-right"><button class="mgmt-btn-sm" type="button" data-booking-import hidden>Import Scheduled Calendar Items</button><button class="mgmt-btn-sm" type="button" data-booking-new hidden>Create Offering</button><button class="mgmt-btn-sm" type="button" data-booking-refresh>Refresh</button></div>
             </div>
             <div class="mgmt-bookings-body">
               <p class="management-form-status" data-booking-admin-status aria-live="polite"></p>
+              <div class="mgmt-booking-view-switch" role="tablist" aria-label="Booking management categories">
+                <button class="is-active" type="button" data-booking-admin-view="requests">Requests</button>
+                <button type="button" data-booking-admin-view="class">Classes</button>
+                <button type="button" data-booking-admin-view="trip">Dive Trips</button>
+                <button type="button" data-booking-admin-view="event">Local Events</button>
+              </div>
               <div class="mgmt-booking-summary" data-booking-summary></div>
               <div class="mgmt-booking-columns">
-                <section><header><h2>Customer Requests</h2><p>Review booking details, payment status, and next steps.</p></header><div class="mgmt-booking-list" data-admin-booking-list></div></section>
-                <section><header><h2>Bookable Options</h2><p>Set category, schedule, capacity, pricing, and visibility.</p></header><div class="mgmt-booking-list" data-admin-offering-list></div></section>
+                <section data-booking-request-column><header><h2>Customer Requests</h2><p>Review contact details, booking preferences, and the next step.</p></header><div class="mgmt-booking-list" data-admin-booking-list></div></section>
+                <section data-booking-offering-column hidden><header><h2 data-booking-list-title>Class Offerings</h2><p>Publish on-demand offerings or specific scheduled listings.</p><label class="mgmt-booking-filter"><span>Show</span><select data-booking-mode-filter><option value="all">All availability</option><option value="on_demand">On-demand offerings</option><option value="scheduled">Scheduled listings</option><option value="hidden">Hidden</option></select></label></header><div class="mgmt-booking-list" data-admin-offering-list></div></section>
                 <aside class="mgmt-booking-editor" data-admin-booking-editor><div class="management-empty">Select a request or booking option to review it.</div></aside>
               </div>
             </div>
@@ -532,11 +538,17 @@
             <span class="mgmt-nav-text">Event Signups</span>
             <span class="mgmt-nav-badge" data-more-badge="registration"></span>
           </button>
-          <button class="mgmt-nav-more-item" type="button" data-more-filter="class">
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="bookings" data-booking-open="requests">
+            <span class="mgmt-nav-text">Booking Requests</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="bookings" data-booking-open="class">
             <span class="mgmt-nav-text">Classes</span>
           </button>
-          <button class="mgmt-nav-more-item" type="button" data-more-filter="trip">
-            <span class="mgmt-nav-text">Calendar</span>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="bookings" data-booking-open="trip">
+            <span class="mgmt-nav-text">Dive Trips</span>
+          </button>
+          <button class="mgmt-nav-more-item" type="button" data-more-tab="bookings" data-booking-open="event">
+            <span class="mgmt-nav-text">Local Events</span>
           </button>
           <button class="mgmt-nav-more-item" type="button" data-more-tab="media">
             <span class="mgmt-nav-text">Media Library</span>
@@ -984,7 +996,7 @@
 
   <script src="/js/management.js?v=20260824b" defer></script>
   <script src="/js/management-accounts.js?v=20260824d" defer></script>
-  <script src="/js/management-bookings.js?v=20260824a" defer></script>
+  <script src="/js/management-bookings.js?v=20260824b" defer></script>
   <script src="/js/management-media-studio.js?v=20260824a" defer></script>
   <script src="/js/management-travel-studio.js?v=20260824a" defer></script>
   <script src="/js/management-dashboard.js?v=20260824a" defer></script>

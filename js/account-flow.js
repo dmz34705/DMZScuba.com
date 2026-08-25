@@ -8,6 +8,7 @@
   const pendingFlowStorageKey = "dmzAccountPendingFlow";
   const entryStateStorageKey = "dmzAccountEntryState";
   const apiTimeoutMs = 20000;
+  const returnToBooking = new URLSearchParams(window.location.search).get("return") === "booking";
   const form = app.querySelector("[data-account-flow-form]");
   const status = app.querySelector("[data-account-flow-status]");
   const submitButton = form?.querySelector('button[type="submit"]');
@@ -179,7 +180,9 @@
   }
 
   function redirect(path) {
-    window.location.assign(path);
+    const target = new URL(path, window.location.origin);
+    if (returnToBooking) target.searchParams.set("return", "booking");
+    window.location.assign(`${target.pathname}${target.search}${target.hash}`);
   }
 
   async function handleSignup(event) {
