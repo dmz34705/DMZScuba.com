@@ -1786,19 +1786,23 @@ async function getCustomerAccountPayload(env, identity) {
       details: parseJsonSafe(row.data_json, {}),
       createdAt: String(row.created_at || ""),
       updatedAt: String(row.updated_at || ""),
-    })), ...(bookingRows.results || []).map((row) => ({
+    })), ...(bookingRows.results || []).map((row) => {
+      const details = parseJsonSafe(row.details_json, {});
+      const savedOffering = details && details.cancelledOffering && typeof details.cancelledOffering === "object" ? details.cancelledOffering : {};
+      return {
       id: String(row.id || ""),
       type: String(row.category || "booking"),
-      sourceId: String(row.offering_title || row.offering_id || "DMZ Scuba"),
+      sourceId: String(row.offering_title || savedOffering.title || row.offering_id || "DMZ Scuba"),
       sourceRegistrationId: "",
-      eventDate: String(row.offering_starts_on || ""),
+      eventDate: String(row.offering_starts_on || savedOffering.startsOn || ""),
       status: String(row.status || "pending"),
       partySize: 1,
       paymentStatus: String(row.payment_status || "unpaid"),
-      details: parseJsonSafe(row.details_json, {}),
+      details,
       createdAt: String(row.created_at || ""),
       updatedAt: String(row.updated_at || ""),
-    }))],
+    };
+    })],
   };
 }
 
@@ -2396,6 +2400,11 @@ function getBookingOfferingDurationDays(startsOn, endsOn) {
 }
 
 function mapCustomerBooking(row) {
+  const details = parseJsonSafe(row && row.details_json, {});
+  const savedOffering = details && details.cancelledOffering && typeof details.cancelledOffering === "object"
+    ? details.cancelledOffering
+    : {};
+  const offeringTitle = String(row && row.offering_title || savedOffering.title || "").trim();
   return {
     id: String(row && row.id || ""),
     userId: String(row && row.user_id || ""),
@@ -2413,13 +2422,13 @@ function mapCustomerBooking(row) {
     paymentStatus: String(row && row.payment_status || "unpaid"),
     stripeCheckoutSessionId: String(row && row.stripe_checkout_session_id || ""),
     stripePaymentIntentId: String(row && row.stripe_payment_intent_id || ""),
-    details: parseJsonSafe(row && row.details_json, {}),
-    offering: row && row.offering_title ? {
-      title: String(row.offering_title || ""),
-      location: String(row.offering_location || ""),
-      startsOn: String(row.offering_starts_on || ""),
-      endsOn: String(row.offering_ends_on || ""),
-      bookingMode: String(row.offering_booking_mode || (row.offering_starts_on ? "scheduled" : "on_demand")),
+    details,
+    offering: offeringTitle ? {
+      title: offeringTitle,
+      location: String(row && row.offering_location || savedOffering.location || ""),
+      startsOn: String(row && row.offering_starts_on || savedOffering.startsOn || ""),
+      endsOn: String(row && row.offering_ends_on || savedOffering.endsOn || ""),
+      bookingMode: String(row && row.offering_booking_mode || savedOffering.bookingMode || (row && row.offering_starts_on ? "scheduled" : "on_demand")),
     } : null,
     createdAt: String(row && row.created_at || ""),
     updatedAt: String(row && row.updated_at || ""),
@@ -2670,8 +2679,8 @@ async function handleDeleteBookingOffering(request, env, offeringId) {
   const safeId = normalizeCustomerText(offeringId, 100);
   const existing = await env.DB.prepare("SELECT id, title FROM booking_offerings WHERE id = ? LIMIT 1").bind(safeId).first();
   if (!existing) return jsonResponse({ ok: false, error: "Booking option not found." }, 404);
-  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM customer_bookings_v2 WHERE offering_id = ?").bind(safeId).first();
-  if (Number(count && count.count) > 0) return jsonResponse({ ok: false, error: "This booking option has customer history. Cancel or hide it instead of deleting it." }, 409);
+  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM customer_bookings_v2 WHERE offering_id = ? AND status NOT IN ('cancelled')").bind(safeId).first();
+  if (Number(count && count.count) > 0) return jsonResponse({ ok: false, error: "Remove or cancel every customer booking before deleting this option." }, 409);
   await env.DB.prepare("DELETE FROM booking_offerings WHERE id = ?").bind(safeId).run();
   return jsonResponse({ ok: true, message: "Booking option deleted." });
 }
@@ -2705,8 +2714,18 @@ async function handleUpdateAdminBooking(request, env, bookingId) {
   const body = await request.json().catch(() => ({}));
   const status = ["pending", "reviewing", "confirmed", "waitlisted", "cancelled", "completed"].includes(body.status) ? body.status : "";
   if (!status) return jsonResponse({ ok: false, error: "Choose a valid booking status." }, 400);
-  await env.DB.prepare("UPDATE customer_bookings_v2 SET status = ?, updated_at = ? WHERE id = ?")
-    .bind(status, new Date().toISOString(), normalizeCustomerText(bookingId, 100)).run();
+  const safeId = normalizeCustomerText(bookingId, 100);
+  const existing = await env.DB.prepare(`SELECT b.details_json, o.title, o.location, o.starts_on, o.ends_on, o.booking_mode FROM customer_bookings_v2 b LEFT JOIN booking_offerings o ON o.id = b.offering_id WHERE b.id = ? LIMIT 1`).bind(safeId).first();
+  if (!existing) return jsonResponse({ ok: false, error: "Booking request not found." }, 404);
+  const now = new Date().toISOString();
+  const details = parseJsonSafe(existing.details_json, {});
+  if (status === "cancelled" && !details.cancelledOffering) {
+    details.cancelledOffering = { title: String(existing.title || "Removed booking item"), location: String(existing.location || ""), startsOn: String(existing.starts_on || ""), endsOn: String(existing.ends_on || ""), bookingMode: String(existing.booking_mode || "") };
+    details.cancelledAt = now;
+    details.cancellationReason = String(body.reason || "Removed by DMZ Scuba").trim().slice(0, 240);
+  }
+  await env.DB.prepare("UPDATE customer_bookings_v2 SET status = ?, details_json = ?, updated_at = ? WHERE id = ?")
+    .bind(status, JSON.stringify(details), now, safeId).run();
   return jsonResponse({ ok: true, status });
 }
 

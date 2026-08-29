@@ -146,6 +146,9 @@
     selectedId = item.id;
     const details = item.details || {};
     editor.innerHTML = `<p class="management-kicker">Customer request</p><h2>${esc(item.offering?.title || "Booking")}</h2><dl class="mgmt-booking-details"><div><dt>Category</dt><dd>${esc(categorySingular[item.category] || "Booking")}</dd></div><div><dt>Registrant</dt><dd>${esc(item.firstName)} ${esc(item.lastName)}${item.isMinor ? " (minor)" : ""}</dd></div><div><dt>Contact</dt><dd>${esc(item.email)}<br>${esc(item.phone)}</dd></div><div><dt>Birthdate</dt><dd>${esc(item.birthdate)}</dd></div><div><dt>Pricing record</dt><dd>${money(item.amountDueCents)} planned &middot; ${money(item.amountPaidCents)} collected</dd></div><div><dt>Preferred dates</dt><dd>${(details.preferredDates || []).map(date).join(", ") || "Uses the published schedule"}</dd></div><div><dt>Class format</dt><dd>${esc(details.classFormat || "Not applicable")}</dd></div><div><dt>Certification</dt><dd>${esc(details.certificationLevel || "Not provided")}</dd></div><div><dt>Last dive</dt><dd>${esc(details.lastDiveDate || "Not provided")}</dd></div><div><dt>Needs</dt><dd>${details.needsGear ? "Gear " : ""}${details.needsClasses ? "Training" : ""}${!details.needsGear && !details.needsClasses ? "None noted" : ""}</dd></div><div><dt>Notes</dt><dd>${esc(details.notes || "None")}</dd></div></dl><p class="mgmt-booking-mode-note">Online payments are not enabled yet. Pricing is stored so checkout can be connected later.</p><form data-admin-booking-status data-id="${esc(item.id)}"><label><span>Booking Status</span><select name="status">${["pending", "reviewing", "confirmed", "waitlisted", "cancelled", "completed"].map((value) => `<option value="${value}" ${item.status === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}</select></label><button class="btn primary" type="submit">Save Status</button></form>`;
+    if (item.status !== "cancelled") {
+      editor.querySelector("[data-admin-booking-status]")?.insertAdjacentHTML("beforeend", '<button class="btn danger" type="button" data-booking-remove>Remove customer from this booking</button>');
+    }
     render();
   }
 
@@ -226,6 +229,16 @@
           return load("Booking item deleted.");
         })
         .catch((error) => setStatus(error.message || "The booking item could not be deleted.", true));
+    }
+    const removeCustomerButton = event.target.closest("[data-booking-remove]");
+    if (removeCustomerButton) {
+      const form = editor.querySelector("[data-admin-booking-status]");
+      const id = form?.dataset.id || "";
+      if (!id || !window.confirm("Remove this customer from the booking? Their record will be kept as cancelled in their profile.")) return;
+      setStatus("Removing customer from booking...");
+      request(`/api/admin/bookings/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify({ status: "cancelled", reason: "Removed from booking by DMZ Scuba" }) })
+        .then(() => load("Customer removed; their cancelled booking history was preserved."))
+        .catch((error) => setStatus(error.message || "The customer could not be removed.", true));
     }
   });
   panel.addEventListener("change", (event) => {
