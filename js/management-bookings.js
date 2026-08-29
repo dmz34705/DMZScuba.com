@@ -218,9 +218,14 @@
       const item = offerings.find((entry) => entry.id === deleteButton.dataset.bookingDelete);
       if (!item || !permissions.administrator) return;
       if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return;
+      setStatus(`Deleting ${item.title}...`);
       request(`/api/admin/booking-offerings/${encodeURIComponent(item.id)}`, { method: "DELETE" })
-        .then(() => load("Booking item deleted."))
-        .catch((error) => setStatus(error.message, true));
+        .then(() => {
+          selectedId = "";
+          editor.innerHTML = '<div class="management-empty">Select an offering to edit it.</div>';
+          return load("Booking item deleted.");
+        })
+        .catch((error) => setStatus(error.message || "The booking item could not be deleted.", true));
     }
   });
   panel.addEventListener("change", (event) => {
