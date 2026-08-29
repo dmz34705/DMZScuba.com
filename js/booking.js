@@ -17,6 +17,7 @@
   let activeCategory = "class";
   let selected = null;
   let profile = {};
+  let certifications = [];
 
   const escapeHtml = (value) => String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const money = (cents, currency = "usd") => cents > 0
@@ -104,6 +105,15 @@
     form.elements.lastName.value = profile.lastName || "";
     form.elements.email.value = profile.email || "";
     form.elements.phone.value = profile.phone || "";
+    form.elements.birthdate.value = profile.birthdate || "";
+    const address = profile.address || {};
+    form.elements.houseCallAddressLine1.value = address.line1 || "";
+    form.elements.houseCallAddressLine2.value = address.line2 || "";
+    form.elements.houseCallAddressCity.value = address.city || "";
+    form.elements.houseCallAddressRegion.value = address.region || "";
+    form.elements.houseCallAddressPostalCode.value = address.postalCode || "";
+    form.elements.houseCallAddressCountryCode.value = address.countryCode || "US";
+    form.elements.certificationLevel.value = certifications[0]?.certificationName || "";
     app.querySelector("[data-booking-selected]").innerHTML = `<span>${escapeHtml(categoryLabel(selected.category))} &middot; ${escapeHtml(modeLabel(selected))}</span><h3>${escapeHtml(selected.title)}</h3><p>${escapeHtml(date(selected.startsOn))}${selected.location ? ` &middot; ${escapeHtml(selected.location)}` : ""}</p>`;
 
     const scheduleFields = app.querySelector("[data-schedule-fields]");
@@ -117,10 +127,21 @@
     classFields.disabled = selected.category !== "class";
     diveFields.hidden = selected.category === "class";
     diveFields.disabled = selected.category === "class";
+    syncHouseCallAddress();
 
     const due = selected.depositCents || selected.priceCents;
     app.querySelector("[data-booking-review]").innerHTML = `<strong>${due > 0 ? `Planned deposit: ${escapeHtml(money(due, selected.currency))}` : "Pricing confirmed after review"}</strong><span>No payment will be collected today. DMZ Scuba will confirm availability, details, and pricing first.</span>`;
     formShell.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function syncHouseCallAddress() {
+    const fields = app.querySelector("[data-house-call-address]");
+    if (!fields) return;
+    const visible = Boolean(selected && selected.category === "class" && form.elements.classFormat.value === "house_call");
+    fields.hidden = !visible;
+    fields.disabled = !visible;
+    ["houseCallAddressLine1", "houseCallAddressCity", "houseCallAddressRegion", "houseCallAddressPostalCode"]
+      .forEach((name) => { form.elements[name].required = visible; });
   }
 
   async function init() {
@@ -129,6 +150,7 @@
       sessionStorage.removeItem(returnPathKey);
       offerings = Array.isArray(data.offerings) ? data.offerings : [];
       profile = data.profile || {};
+      certifications = Array.isArray(data.certifications) ? data.certifications : [];
       gate.hidden = true;
       workspace.hidden = false;
       renderCatalog();
@@ -158,6 +180,7 @@
     catalog.hidden = false;
     renderCatalog();
   }));
+  form.querySelectorAll('input[name="classFormat"]').forEach((input) => input.addEventListener("change", syncHouseCallAddress));
   catalog.addEventListener("click", (event) => {
     const button = event.target.closest("[data-select-offering]");
     if (button) selectOffering(button.dataset.selectOffering);
@@ -185,6 +208,14 @@
     body.needsGear = values.has("needsGear");
     body.needsClasses = values.has("needsClasses");
     body.preferredDates = [values.get("preferredDate1"), values.get("preferredDate2"), values.get("preferredDate3")].filter(Boolean);
+    body.houseCallAddress = {
+      line1: values.get("houseCallAddressLine1") || "",
+      line2: values.get("houseCallAddressLine2") || "",
+      city: values.get("houseCallAddressCity") || "",
+      region: values.get("houseCallAddressRegion") || "",
+      postalCode: values.get("houseCallAddressPostalCode") || "",
+      countryCode: values.get("houseCallAddressCountryCode") || "US",
+    };
     button.disabled = true;
     setMessage(formStatus, "Submitting your booking...");
     try {

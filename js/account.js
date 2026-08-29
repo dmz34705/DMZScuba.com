@@ -23,6 +23,7 @@
   let activeAccountView = "home";
   let authEnabled = false;
   let turnstileSiteKey = "";
+  let certificationCatalog = { agencies: [], certifications: [] };
   const captchaTokens = { login: "", signup: "", recovery: "" };
   const captchaWidgetIds = {};
   const apiTimeoutMs = 20000;
@@ -106,8 +107,15 @@
 
   function setFormBusy(form, busy) {
     if (!form) return;
-    form.querySelectorAll("button, input").forEach((control) => {
-      if (control.type !== "hidden") control.disabled = Boolean(busy);
+    form.querySelectorAll("button, input, select, textarea").forEach((control) => {
+      if (control.type === "hidden") return;
+      if (busy) {
+        control.dataset.busyWasDisabled = control.disabled ? "1" : "0";
+        control.disabled = true;
+      } else {
+        control.disabled = control.dataset.busyWasDisabled === "1";
+        delete control.dataset.busyWasDisabled;
+      }
     });
   }
 
@@ -358,6 +366,88 @@
     return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
   }
 
+  function normalizeCatalogLookup(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  function findCatalogAgency(value) {
+    const lookup = normalizeCatalogLookup(value);
+    return certificationCatalog.agencies.find((agency) => [agency.code, agency.label, agency.name]
+      .some((candidate) => normalizeCatalogLookup(candidate) === lookup)) || null;
+  }
+
+  function findCatalogCertification(value) {
+    const lookup = normalizeCatalogLookup(value);
+    return certificationCatalog.certifications.find((certification) => [certification.code, certification.name]
+      .some((candidate) => normalizeCatalogLookup(candidate) === lookup)) || null;
+  }
+
+  function syncCertificationForm() {
+    const form = app.querySelector("[data-certification-form]");
+    if (!form) return;
+    const agency = findCatalogAgency(form.elements.agency.value);
+    const certification = findCatalogCertification(form.elements.certificationName.value);
+    form.elements.agencyCode.value = agency ? agency.code : "";
+    form.elements.certificationCode.value = certification ? certification.code : "";
+
+    const otherAgencyField = form.querySelector("[data-other-agency-field]");
+    const otherCertificationField = form.querySelector("[data-other-certification-field]");
+    const isOtherAgency = agency && agency.code === "other";
+    const isOtherCertification = certification && certification.code === "other";
+    otherAgencyField.hidden = !isOtherAgency;
+    otherAgencyField.querySelector("input").required = Boolean(isOtherAgency);
+    otherCertificationField.hidden = !isOtherCertification;
+    otherCertificationField.querySelector("input").required = Boolean(isOtherCertification);
+
+    const professionalInput = form.querySelector("[data-certification-professional]");
+    if (certification && certification.code !== "other") {
+      professionalInput.checked = Boolean(certification.professional);
+      professionalInput.disabled = true;
+    } else {
+      professionalInput.disabled = false;
+    }
+    const professionalFields = form.querySelector("[data-professional-certification-fields]");
+    const isProfessional = professionalInput.checked;
+    professionalFields.hidden = !isProfessional;
+    professionalFields.disabled = !isProfessional;
+    form.elements.professionalStatus.required = isProfessional;
+    form.elements.professionalInsuranceCurrent.required = isProfessional;
+  }
+
+  function syncCertificationExpiration() {
+    const form = app.querySelector("[data-certification-form]");
+    if (!form) return;
+    const doesNotExpire = form.querySelector("[data-certification-no-expiration]").checked;
+    const expirationField = form.querySelector("[data-expiration-field]");
+    expirationField.hidden = doesNotExpire;
+    form.elements.expiresOn.required = !doesNotExpire;
+    if (doesNotExpire) form.elements.expiresOn.value = "";
+  }
+
+  async function loadCertificationCatalog() {
+    const response = await fetch("/api/account/certification-catalog", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    const data = await parseResponse(response);
+    certificationCatalog = {
+      agencies: Array.isArray(data.agencies) ? data.agencies : [],
+      certifications: Array.isArray(data.certifications) ? data.certifications : [],
+    };
+    const agencyOptions = app.querySelector("[data-certification-agency-options]");
+    const certificationOptions = app.querySelector("[data-certification-type-options]");
+    if (agencyOptions) {
+      agencyOptions.innerHTML = certificationCatalog.agencies.map((agency) =>
+        `<option value="${escapeHtml(agency.label)}">${escapeHtml(agency.name)}</option>`).join("");
+    }
+    if (certificationOptions) {
+      certificationOptions.innerHTML = certificationCatalog.certifications.map((certification) =>
+        `<option value="${escapeHtml(certification.name)}">${escapeHtml(`${certification.category} | ${certification.keywords || ""}`)}</option>`).join("");
+    }
+    syncCertificationForm();
+    syncCertificationExpiration();
+  }
+
   function renderCertifications(certifications) {
     const list = app.querySelector("[data-certification-list]");
     if (!list) return;
@@ -369,13 +459,20 @@
       const details = [
         certification.certificationNumber ? `#${certification.certificationNumber}` : "",
         certification.issuedOn ? `Issued ${formatDate(certification.issuedOn)}` : "",
-        certification.expiresOn ? `Expires ${formatDate(certification.expiresOn)}` : "",
+        certification.doesNotExpire ? "Does not expire" : certification.expiresOn ? `Expires ${formatDate(certification.expiresOn)}` : "Expiration not provided",
       ].filter(Boolean).join(" | ");
+      const professionalDetails = certification.isProfessional ? [
+        certification.professionalStatus ? `${certification.professionalStatus === "active" ? "Active" : "Inactive"} professional` : "Professional status not provided",
+        certification.professionalInsuranceCurrent === true ? "Insurance: current" : certification.professionalInsuranceCurrent === false ? "Insurance: not current" : "Insurance not provided",
+        certification.professionalFacility ? `Facility: ${certification.professionalFacility}` : "",
+        certification.certifyingInstructor ? `Certifying instructor: ${certification.certifyingInstructor}` : "",
+      ].filter(Boolean).join(" | ") : "";
       return `
         <div class="account-record">
           <div>
             <strong>${escapeHtml(certification.agency)} ${escapeHtml(certification.certificationName)}</strong>
             <span>${escapeHtml(details || "No card number or date added")}</span>
+            ${professionalDetails ? `<span class="account-record-secondary">${escapeHtml(professionalDetails)}</span>` : ""}
           </div>
           <div>
             <span class="account-record-badge">${escapeHtml(certification.verificationStatus || "pending")}</span>
@@ -429,6 +526,8 @@
     const canManage = roles.some((role) => role === "staff" || role === "admin");
     app.querySelectorAll("[data-management-access]").forEach((link) => {
       link.hidden = !canManage;
+      link.setAttribute("aria-hidden", String(!canManage));
+      link.tabIndex = canManage ? 0 : -1;
     });
     const profileForm = app.querySelector("[data-profile-form]");
     if (profileForm) {
@@ -436,7 +535,19 @@
       profileForm.elements.lastName.value = profile.lastName || "";
       profileForm.elements.preferredName.value = profile.preferredName || "";
       profileForm.elements.phone.value = profile.phone || "";
+      profileForm.elements.birthdate.value = profile.birthdate || "";
       profileForm.elements.email.value = profile.email || "";
+      const address = profile.address || {};
+      profileForm.elements.addressLine1.value = address.line1 || "";
+      profileForm.elements.addressLine2.value = address.line2 || "";
+      profileForm.elements.addressCity.value = address.city || "";
+      profileForm.elements.addressRegion.value = address.region || "";
+      profileForm.elements.addressPostalCode.value = address.postalCode || "";
+      profileForm.elements.addressCountryCode.value = address.countryCode || "US";
+      const addressDetails = profileForm.querySelector(".account-optional-fields");
+      if (addressDetails && Object.values(address).some((value) => String(value || "").trim() && value !== "US")) {
+        addressDetails.open = true;
+      }
     }
     const greeting = app.querySelector("[data-dashboard-greeting]");
     const dashboardName = app.querySelector("[data-dashboard-name]");
@@ -461,10 +572,11 @@
     welcomeNames.forEach((element) => { element.textContent = displayName; });
     if (certificationCount) certificationCount.textContent = `${certifications.length} ${certifications.length === 1 ? "certification" : "certifications"}`;
     if (activityCount) activityCount.textContent = `${connectedActivityCount} ${connectedActivityCount === 1 ? "record" : "records"}`;
-    if (profileStatus) profileStatus.textContent = profile.phone ? "Ready to use" : "Add your phone";
-    if (!profile.phone) {
-      if (nextTitle) nextTitle.textContent = "Add a reliable way for us to reach you.";
-      if (nextCopy) nextCopy.textContent = "Add your phone number so DMZ Scuba can contact you about classes, trips, and event details.";
+    const profileReady = Boolean(profile.firstName && profile.lastName && profile.phone && profile.birthdate);
+    if (profileStatus) profileStatus.textContent = profileReady ? "Ready to use" : "Finish your profile";
+    if (!profileReady) {
+      if (nextTitle) nextTitle.textContent = "Finish the details used for your bookings.";
+      if (nextCopy) nextCopy.textContent = "Add your birthdate and phone number so future class, trip, and event forms can start with accurate information.";
       if (nextAction) {
         nextAction.textContent = "Review My Profile";
         nextAction.dataset.accountView = "profile";
@@ -847,6 +959,15 @@
           lastName: profileForm.elements.lastName.value,
           preferredName: profileForm.elements.preferredName.value,
           phone: profileForm.elements.phone.value,
+          birthdate: profileForm.elements.birthdate.value,
+          address: {
+            line1: profileForm.elements.addressLine1.value,
+            line2: profileForm.elements.addressLine2.value,
+            city: profileForm.elements.addressCity.value,
+            region: profileForm.elements.addressRegion.value,
+            postalCode: profileForm.elements.addressPostalCode.value,
+            countryCode: profileForm.elements.addressCountryCode.value,
+          },
         }),
       });
       renderAccount(data);
@@ -859,9 +980,26 @@
   });
 
   const certificationForm = app.querySelector("[data-certification-form]");
+  certificationForm?.elements.agency.addEventListener("input", syncCertificationForm);
+  certificationForm?.elements.certificationName.addEventListener("input", syncCertificationForm);
+  certificationForm?.querySelector("[data-certification-professional]")?.addEventListener("change", syncCertificationForm);
+  certificationForm?.querySelector("[data-certification-no-expiration]")?.addEventListener("change", syncCertificationExpiration);
   certificationForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const status = app.querySelector("[data-certification-status]");
+    syncCertificationForm();
+    syncCertificationExpiration();
+    const agency = findCatalogAgency(certificationForm.elements.agency.value);
+    const certification = findCatalogCertification(certificationForm.elements.certificationName.value);
+    if (!agency || !certification) {
+      setMessage(status, "Choose an agency and certification from the searchable lists.", true);
+      return;
+    }
+    const isProfessional = certificationForm.querySelector("[data-certification-professional]").checked;
+    if (isProfessional && (!certificationForm.elements.professionalStatus.value || !certificationForm.elements.professionalInsuranceCurrent.value)) {
+      setMessage(status, "Choose the professional status and whether professional insurance is current.", true);
+      return;
+    }
     setMessage(status, "Adding your certification...");
     setFormBusy(certificationForm, true);
     try {
@@ -869,13 +1007,25 @@
         method: "POST",
         body: JSON.stringify({
           agency: certificationForm.elements.agency.value,
+          agencyCode: certificationForm.elements.agencyCode.value,
+          otherAgencyName: certificationForm.elements.otherAgencyName.value,
           certificationName: certificationForm.elements.certificationName.value,
+          certificationCode: certificationForm.elements.certificationCode.value,
+          otherCertificationName: certificationForm.elements.otherCertificationName.value,
           certificationNumber: certificationForm.elements.certificationNumber.value,
           issuedOn: certificationForm.elements.issuedOn.value,
           expiresOn: certificationForm.elements.expiresOn.value,
+          doesNotExpire: certificationForm.querySelector("[data-certification-no-expiration]").checked,
+          isProfessional,
+          professionalStatus: certificationForm.elements.professionalStatus.value,
+          professionalInsuranceCurrent: certificationForm.elements.professionalInsuranceCurrent.value,
+          professionalFacility: certificationForm.elements.professionalFacility.value,
+          certifyingInstructor: certificationForm.elements.certifyingInstructor.value,
         }),
       });
       certificationForm.reset();
+      syncCertificationForm();
+      syncCertificationExpiration();
       renderAccount(data);
       setMessage(status, "Certification added and awaiting verification.");
     } catch (error) {
@@ -926,6 +1076,10 @@
 
   async function init() {
     syncBookingReturnRequest();
+    loadCertificationCatalog().catch((error) => {
+      console.error("[DMZ Account] Certification catalog could not load", error);
+      setMessage(dashboardStatus, "The certification list could not load. Refresh before adding a certification.", true);
+    });
     const response = await fetch("/api/account/auth/status", { headers: { Accept: "application/json" }, cache: "no-store" }).catch(() => null);
     const status = response ? await response.json().catch(() => ({})) : {};
     authEnabled = Boolean(response && response.ok && status && status.enabled);

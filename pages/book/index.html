@@ -78,6 +78,18 @@
               <label><input type="radio" name="classFormat" value="virtual" /><span><strong>Virtual Classroom</strong><small>Complete classroom instruction online.</small></span></label>
               <label><input type="radio" name="classFormat" value="house_call" /><span><strong>House Call</strong><small>Ask about instruction at your location.</small></span></label>
             </div>
+            <fieldset data-house-call-address hidden disabled>
+              <legend>House-call instruction address</legend>
+              <p>Your saved mailing address is used as a starting point. You can change it for this booking without changing your account profile.</p>
+              <label><span>Street Address</span><input name="houseCallAddressLine1" autocomplete="address-line1" maxlength="160" /></label>
+              <label><span>Apartment, Suite, or Unit</span><input name="houseCallAddressLine2" autocomplete="address-line2" maxlength="160" /></label>
+              <div class="booking-form-grid">
+                <label><span>City</span><input name="houseCallAddressCity" autocomplete="address-level2" maxlength="100" /></label>
+                <label><span>State / Province / Region</span><input name="houseCallAddressRegion" autocomplete="address-level1" maxlength="100" /></label>
+                <label><span>Postal Code</span><input name="houseCallAddressPostalCode" autocomplete="postal-code" maxlength="30" /></label>
+                <label><span>Country Code</span><input name="houseCallAddressCountryCode" autocomplete="country" maxlength="2" value="US" /></label>
+              </div>
+            </fieldset>
             <label class="booking-check"><input name="veteranPublicSafetyDiscount" type="checkbox" /><span><strong>Veteran or public-safety discount</strong><small>DMZ Scuba will verify eligibility before confirming the price.</small></span></label>
           </fieldset>
 
@@ -111,6 +123,6 @@
   </main>
   <footer class="site-footer" data-site-footer></footer>
   <script src="/js/main.js?v=20260824book" defer></script>
-  <script src="/js/booking.js?v=20260824c" defer></script>
+  <script src="/js/booking.js?v=20260829profile" defer></script>
 </body>
 </html>

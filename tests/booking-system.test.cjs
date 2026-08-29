@@ -38,6 +38,12 @@ test("booking page requires an account and supports all three booking journeys",
   assert.match(client, /sessionStorage\.removeItem\(returnPathKey\)/);
   assert.match(page, /name="certificationLevel"/);
   assert.match(page, /data-schedule-fields/);
+  assert.match(page, /data-house-call-address/);
+  assert.match(client, /profile\.birthdate/);
+  assert.match(client, /profile\.address/);
+  assert.match(client, /certifications\[0\]\?\.certificationName/);
+  assert.match(client, /body\.houseCallAddress/);
+  assert.match(workerSource, /Add the instruction address for a house-call booking/);
 });
 
 test("management console separates booking categories and availability types", () => {

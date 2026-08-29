@@ -249,10 +249,73 @@ test("mobile app settings are normalized to supported calculator preferences", a
   });
 });
 
+test("certification catalog normalizes agency-specific names for shared website and app data", async () => {
+  const { getCertificationCatalog, normalizeCustomerCertification } = await workerModulePromise;
+  const catalog = getCertificationCatalog();
+  assert.ok(catalog.agencies.length >= 20);
+  assert.ok(catalog.certifications.length >= 50);
+  assert.ok(catalog.agencies.some((agency) => agency.code === "padi"));
+  assert.ok(catalog.agencies.some((agency) => agency.code === "tdi"));
+  assert.ok(catalog.certifications.some((certification) => certification.code === "ccr_advanced_mixed_gas"));
+
+  assert.deepEqual(normalizeCustomerCertification({
+    agency: "SDI",
+    certificationName: "Computer Nitrox",
+    certificationNumber: "12345",
+    issuedOn: "2025-01-10",
+    doesNotExpire: true,
+  }), {
+    agency: "SDI",
+    agencyCode: "sdi",
+    certificationName: "Nitrox / Enriched Air",
+    certificationCode: "nitrox",
+    category: "specialty",
+    certificationNumber: "12345",
+    issuedOn: "2025-01-10",
+    expiresOn: "",
+    doesNotExpire: true,
+    isProfessional: false,
+    professionalStatus: "",
+    professionalInsuranceCurrent: null,
+    professionalFacility: "",
+    certifyingInstructor: "",
+  });
+
+  const professional = normalizeCustomerCertification({
+    agencyCode: "padi",
+    certificationCode: "open_water_instructor",
+    certificationNumber: "DMZ-1",
+    doesNotExpire: true,
+    professionalStatus: "active",
+    professionalInsuranceCurrent: "yes",
+    professionalFacility: "DMZ Scuba HQ",
+    certifyingInstructor: "Instructor Trainer",
+  });
+  assert.equal(professional.isProfessional, true);
+  assert.equal(professional.professionalStatus, "active");
+  assert.equal(professional.professionalInsuranceCurrent, true);
+});
+
+test("public certification catalog endpoint exposes stable codes without customer data", async () => {
+  const worker = await workerModulePromise;
+  const response = await worker.default.fetch(
+    new Request("https://dmzscuba.com/api/account/certification-catalog", { method: "GET" }),
+    {},
+    { waitUntil() {} }
+  );
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(data.ok, true);
+  assert.equal(data.version, "2026-08-29");
+  assert.ok(data.certifications.some((certification) => certification.code === "nitrox"));
+  assert.equal(Object.hasOwn(data, "profile"), false);
+});
+
 test("account migration and page include the required foundation", () => {
   const migration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0002_create_customer_accounts.sql"), "utf8");
   const settingsMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0004_customer_app_settings.sql"), "utf8");
   const diverProfileMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0007_customer_diver_profiles.sql"), "utf8");
+  const completeProfileMigration = fs.readFileSync(path.join(root, "workers", "dmz-media-api", "migrations", "0009_customer_profile_certification_details.sql"), "utf8");
   const page = fs.readFileSync(path.join(root, "pages", "account", "index.html"), "utf8");
   const createPage = fs.readFileSync(path.join(root, "pages", "account", "create", "index.html"), "utf8");
   const forgotPage = fs.readFileSync(path.join(root, "pages", "account", "forgot-password", "index.html"), "utf8");
@@ -268,6 +331,9 @@ test("account migration and page include the required foundation", () => {
   assert.match(settingsMigration, /CREATE TABLE IF NOT EXISTS customer_app_settings/);
   for (const column of ["home_location", "emergency_contact_name", "emergency_contact_phone", "logged_dives", "default_pp_o2", "default_rmv"]) {
     assert.match(diverProfileMigration, new RegExp(`ADD COLUMN ${column}`));
+  }
+  for (const column of ["birthdate", "address_line1", "address_city", "address_region", "address_postal_code", "address_country_code", "agency_code", "certification_code", "does_not_expire", "is_professional", "professional_status", "professional_insurance_current", "professional_facility", "certifying_instructor"]) {
+    assert.match(completeProfileMigration, new RegExp(`ADD COLUMN ${column}`));
   }
   assert.match(workerSource, /\/api\/account\/app-settings/);
   assert.match(workerSource, /emergencyContactName/);
@@ -290,6 +356,12 @@ test("account migration and page include the required foundation", () => {
   assert.doesNotMatch(resetPage, /turnstile\/v0|data-account-flow-turnstile/);
   assert.match(page, /data-change-password-form/);
   assert.match(page, /data-change-email-form/);
+  assert.match(page, /name="birthdate"[^>]*required/);
+  assert.match(page, /name="addressLine1"/);
+  assert.match(page, /data-certification-agency-options/);
+  assert.match(page, /data-certification-type-options/);
+  assert.match(page, /data-professional-certification-fields/);
+  assert.match(page, /name="professionalInsuranceCurrent"/);
   assert.match(page, /data-current-email-code-form/);
   assert.match(page, /data-new-email-code-form/);
   assert.match(page, /data-account-created/);
@@ -299,6 +371,8 @@ test("account migration and page include the required foundation", () => {
   }
   assert.match(client, /dmzCustomerAccessToken/);
   assert.match(client, /dmzCustomerSignedIn/);
+  assert.match(client, /\/api\/account\/certification-catalog/);
+  assert.match(client, /link\.tabIndex = canManage \? 0 : -1/);
   assert.match(client, /\/api\/account\/link-existing/);
   assert.match(client, /\/api\/account\/auth\/email\/verify/);
   assert.match(client, /showAccountCreated/);

@@ -1444,6 +1444,127 @@ function normalizeCustomerDate(value) {
   return !date || /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
 }
 
+const certificationCatalogVersion = "2026-08-29";
+
+const certificationAgencies = [
+  { code: "padi", label: "PADI", name: "Professional Association of Diving Instructors" },
+  { code: "ssi", label: "SSI", name: "Scuba Schools International" },
+  { code: "sdi", label: "SDI", name: "Scuba Diving International" },
+  { code: "tdi", label: "TDI", name: "Technical Diving International" },
+  { code: "erdi", label: "ERDI", name: "Emergency Response Diving International" },
+  { code: "pfi", label: "PFI", name: "Performance Freediving International" },
+  { code: "naui", label: "NAUI", name: "National Association of Underwater Instructors" },
+  { code: "raid", label: "RAID", name: "Rebreather Association of International Divers" },
+  { code: "gue", label: "GUE", name: "Global Underwater Explorers" },
+  { code: "iantd", label: "IANTD", name: "International Association of Nitrox and Technical Divers" },
+  { code: "bsac", label: "BSAC", name: "British Sub-Aqua Club" },
+  { code: "cmas", label: "CMAS", name: "World Underwater Federation" },
+  { code: "sei", label: "SEI", name: "Scuba Educators International" },
+  { code: "psai", label: "PSAI", name: "Professional Scuba Association International" },
+  { code: "andi", label: "ANDI", name: "American Nitrox Divers International" },
+  { code: "utd", label: "UTD", name: "Unified Team Diving" },
+  { code: "nss_cds", label: "NSS-CDS", name: "National Speleological Society Cave Diving Section" },
+  { code: "nacd", label: "NACD", name: "National Association for Cave Diving" },
+  { code: "dan", label: "DAN", name: "Divers Alert Network" },
+  { code: "idea", label: "IDEA", name: "International Diving Educators Association" },
+  { code: "pdic", label: "PDIC", name: "Professional Diving Instructors Corporation" },
+  { code: "nase", label: "NASE", name: "National Academy of Scuba Educators" },
+  { code: "acuc", label: "ACUC", name: "American Canadian Underwater Certifications" },
+  { code: "ymca", label: "YMCA Scuba", name: "YMCA Scuba (legacy certification)" },
+  { code: "military_public_safety", label: "Military / Public Safety", name: "Military or public-safety training authority" },
+  { code: "other", label: "Other / Not Listed", name: "Another recognized training organization" },
+];
+
+const certificationTypes = [
+  { code: "supervised_diver", name: "Supervised Scuba Diver", category: "recreational", keywords: "scuba diver level 1 discovery" },
+  { code: "open_water", name: "Open Water / Autonomous Diver", category: "recreational", keywords: "basic ocean one star level 2" },
+  { code: "advanced_open_water", name: "Advanced Open Water / Advanced Adventure Diver", category: "recreational", keywords: "advanced ocean sports two star" },
+  { code: "rescue_diver", name: "Rescue Diver / Diver Stress and Rescue", category: "recreational", keywords: "rescue stress" },
+  { code: "master_scuba_diver", name: "Master Scuba Diver / Advanced Recognition", category: "recreational", keywords: "master advanced specialty three star first class" },
+  { code: "adaptive_diver", name: "Adaptive / Special Needs Diver", category: "recreational", keywords: "adaptive handicapped special needs" },
+
+  { code: "nitrox", name: "Nitrox / Enriched Air", category: "specialty", keywords: "eanx computer nitrox enriched air 40" },
+  { code: "deep_diver", name: "Deep Diver", category: "specialty", keywords: "deep" },
+  { code: "dry_suit", name: "Dry Suit Diver", category: "specialty", keywords: "drysuit" },
+  { code: "navigation", name: "Underwater Navigation", category: "specialty", keywords: "navigation compass" },
+  { code: "night_limited_visibility", name: "Night / Limited Visibility Diver", category: "specialty", keywords: "night limited visibility" },
+  { code: "wreck_diver", name: "Wreck Diver (Non-Penetration)", category: "specialty", keywords: "wreck external survey" },
+  { code: "search_recovery", name: "Search and Recovery Diver", category: "specialty", keywords: "search recovery salvage" },
+  { code: "peak_buoyancy", name: "Buoyancy / Trim Specialty", category: "specialty", keywords: "peak performance buoyancy perfect trim" },
+  { code: "drift_diver", name: "Drift Diver", category: "specialty", keywords: "drift current" },
+  { code: "boat_diver", name: "Boat Diver", category: "specialty", keywords: "boat" },
+  { code: "altitude_diver", name: "Altitude Diver", category: "specialty", keywords: "altitude mountain" },
+  { code: "ice_diver", name: "Ice Diver", category: "specialty", keywords: "ice overhead" },
+  { code: "cavern_diver", name: "Cavern Diver", category: "specialty", keywords: "cavern daylight overhead" },
+  { code: "recreational_sidemount", name: "Recreational Sidemount Diver", category: "specialty", keywords: "sidemount" },
+  { code: "dpv_diver", name: "Diver Propulsion Vehicle (DPV) Diver", category: "specialty", keywords: "dpv scooter" },
+  { code: "full_face_mask", name: "Full-Face Mask Diver", category: "specialty", keywords: "full face mask communications" },
+  { code: "equipment_specialist", name: "Equipment Specialist", category: "specialty", keywords: "equipment maintenance" },
+  { code: "underwater_imaging", name: "Underwater Photo / Video", category: "specialty", keywords: "photography videography digital imaging" },
+  { code: "naturalist_ecology", name: "Underwater Naturalist / Marine Ecology", category: "specialty", keywords: "naturalist ecology fish coral conservation" },
+  { code: "self_reliant", name: "Self-Reliant / Solo Diver", category: "specialty", keywords: "solo independent self reliant" },
+  { code: "oxygen_provider", name: "Emergency Oxygen Provider", category: "support", keywords: "o2 oxygen provider dan" },
+  { code: "first_aid_cpr", name: "Diving First Aid / CPR", category: "support", keywords: "first aid cpr bls emergency response" },
+
+  { code: "intro_technical", name: "Technical Fundamentals / Intro to Tech", category: "technical", keywords: "fundamentals intro tech doubles twinset" },
+  { code: "advanced_nitrox", name: "Advanced Nitrox", category: "technical", keywords: "advanced eanx oxygen decompression gas" },
+  { code: "decompression_procedures", name: "Decompression Procedures / Deco Diver", category: "technical", keywords: "decompression procedures staged deco" },
+  { code: "extended_range", name: "Extended Range / Technical Diver", category: "technical", keywords: "extended range technical air" },
+  { code: "normoxic_trimix", name: "Normoxic Trimix", category: "technical", keywords: "trimix normoxic mixed gas" },
+  { code: "hypoxic_trimix", name: "Hypoxic / Advanced Trimix", category: "technical", keywords: "trimix hypoxic advanced expedition mixed gas" },
+  { code: "technical_sidemount", name: "Technical / Extended Range Sidemount", category: "technical", keywords: "technical sidemount extended range" },
+  { code: "advanced_wreck", name: "Advanced Wreck / Wreck Penetration", category: "technical", keywords: "advanced wreck penetration overhead" },
+  { code: "intro_cave", name: "Intro to Cave / Cave Diver Level 1", category: "technical", keywords: "intro cave apprentice cave level 1" },
+  { code: "full_cave", name: "Full Cave / Cave Diver Level 2", category: "technical", keywords: "full cave level 2" },
+  { code: "advanced_cave", name: "Advanced Cave / Cave Diver Level 3", category: "technical", keywords: "advanced cave stage survey dpv level 3" },
+  { code: "mine_diver", name: "Mine Diver", category: "technical", keywords: "mine overhead" },
+  { code: "scr_diver", name: "Semi-Closed Rebreather (SCR) Diver", category: "technical", keywords: "scr semi closed rebreather" },
+  { code: "ccr_air_diluent", name: "CCR Air Diluent / No-Decompression Diver", category: "technical", keywords: "ccr rebreather air diluent no deco mod 1" },
+  { code: "ccr_decompression", name: "CCR Air Diluent Decompression Diver", category: "technical", keywords: "ccr rebreather decompression deco" },
+  { code: "ccr_mixed_gas", name: "CCR Mixed Gas / Normoxic Trimix Diver", category: "technical", keywords: "ccr mixed gas normoxic trimix mod 2" },
+  { code: "ccr_advanced_mixed_gas", name: "CCR Advanced Mixed Gas / Hypoxic Trimix Diver", category: "technical", keywords: "ccr advanced mixed gas hypoxic trimix mod 3" },
+  { code: "gas_blender_nitrox", name: "Nitrox Gas Blender", category: "technical", keywords: "gas blender nitrox eanx" },
+  { code: "gas_blender_trimix", name: "Trimix / Advanced Gas Blender", category: "technical", keywords: "gas blender trimix helium advanced" },
+  { code: "oxygen_service_technician", name: "Oxygen Equipment Service Technician", category: "technical", keywords: "o2 service technician oxygen clean" },
+
+  { code: "public_safety_diver", name: "Public Safety Diver", category: "public_safety", keywords: "public safety erdi recovery" },
+  { code: "public_safety_tender", name: "Public Safety Tender / Surface Support", category: "public_safety", keywords: "tender surface support" },
+  { code: "public_safety_supervisor", name: "Public Safety Dive Supervisor", category: "public_safety", keywords: "supervisor incident command" },
+  { code: "contaminated_water", name: "Contaminated Water Diver", category: "public_safety", keywords: "contaminated hazmat dry suit public safety" },
+  { code: "surface_supplied", name: "Surface-Supplied / Hookah Diver", category: "public_safety", keywords: "surface supplied hookah commercial" },
+
+  { code: "dive_guide", name: "Dive Guide", category: "professional", professional: true, keywords: "guide leader" },
+  { code: "divemaster", name: "Divemaster / Dive Leader", category: "professional", professional: true, keywords: "dive master leader three star" },
+  { code: "assistant_instructor", name: "Assistant Instructor / Training Assistant", category: "professional", professional: true, keywords: "assistant instructor certified assistant" },
+  { code: "open_water_instructor", name: "Open Water Scuba Instructor", category: "professional", professional: true, keywords: "instructor owsi one star" },
+  { code: "specialty_instructor", name: "Specialty Instructor", category: "professional", professional: true, keywords: "specialty instructor" },
+  { code: "technical_instructor", name: "Technical / Cave / Rebreather Instructor", category: "professional", professional: true, keywords: "technical cave rebreather instructor" },
+  { code: "public_safety_instructor", name: "Public Safety Diving Instructor", category: "professional", professional: true, keywords: "public safety instructor erdi" },
+  { code: "staff_instructor", name: "Staff Instructor / Instructor Developer", category: "professional", professional: true, keywords: "staff instructor developer" },
+  { code: "instructor_trainer", name: "Instructor Trainer / Course Director", category: "professional", professional: true, keywords: "trainer course director examiner three star national" },
+  { code: "freediving_instructor", name: "Freediving Instructor", category: "professional", professional: true, keywords: "freedive apnea instructor" },
+
+  { code: "other", name: "Other / Not Listed", category: "other", keywords: "other legacy custom" },
+];
+
+const certificationAgencyByCode = new Map(certificationAgencies.map((agency) => [agency.code, agency]));
+const certificationTypeByCode = new Map(certificationTypes.map((certification) => [certification.code, certification]));
+
+function getCertificationCatalog() {
+  return {
+    ok: true,
+    version: certificationCatalogVersion,
+    agencies: certificationAgencies,
+    certifications: certificationTypes,
+  };
+}
+
+function handleGetCertificationCatalog() {
+  return jsonResponse(getCertificationCatalog(), 200, {
+    "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+  });
+}
+
 async function writeCustomerAudit(env, userId, action, targetType = "", targetId = "", actorUserId = "") {
   await env.DB.prepare(
     `INSERT INTO customer_audit_log (id, user_id, actor_user_id, action, target_type, target_id, created_at)
@@ -1488,7 +1609,9 @@ async function ensureCustomerProfile(env, identity) {
     .bind(identity.userId, now, identity.userId)
     .run();
   return env.DB.prepare(
-    `SELECT user_id, email, first_name, last_name, preferred_name, phone, home_location,
+    `SELECT user_id, email, first_name, last_name, preferred_name, phone, birthdate,
+            address_line1, address_line2, address_city, address_region, address_postal_code, address_country_code,
+            home_location,
             emergency_contact_name, emergency_contact_phone, logged_dives, default_pp_o2, default_rmv, account_status,
             deactivated_at, deactivated_by, merged_into_user_id, created_at, updated_at, last_login_at
      FROM customer_profiles WHERE user_id = ? LIMIT 1`
@@ -1531,6 +1654,15 @@ function mapCustomerProfile(row) {
     lastName: String(row && row.last_name || ""),
     preferredName: String(row && row.preferred_name || ""),
     phone: String(row && row.phone || ""),
+    birthdate: String(row && row.birthdate || ""),
+    address: {
+      line1: String(row && row.address_line1 || ""),
+      line2: String(row && row.address_line2 || ""),
+      city: String(row && row.address_city || ""),
+      region: String(row && row.address_region || ""),
+      postalCode: String(row && row.address_postal_code || ""),
+      countryCode: String(row && row.address_country_code || "US"),
+    },
     location: String(row && row.home_location || ""),
     emergencyContactName: String(row && row.emergency_contact_name || ""),
     emergencyContactPhone: String(row && row.emergency_contact_phone || ""),
@@ -1549,10 +1681,21 @@ function mapCustomerCertification(row) {
   return {
     id: String(row && row.id || ""),
     agency: String(row && row.agency || ""),
+    agencyCode: String(row && row.agency_code || "other"),
     certificationName: String(row && row.certification_name || ""),
+    certificationCode: String(row && row.certification_code || "other"),
+    category: String(row && row.certification_category || "other"),
     certificationNumber: String(row && row.certification_number || ""),
     issuedOn: String(row && row.issued_on || ""),
     expiresOn: String(row && row.expires_on || ""),
+    doesNotExpire: Number(row && row.does_not_expire) === 1,
+    isProfessional: Number(row && row.is_professional) === 1,
+    professionalStatus: String(row && row.professional_status || ""),
+    professionalInsuranceCurrent: row && row.professional_insurance_current == null
+      ? null
+      : Number(row.professional_insurance_current) === 1,
+    professionalFacility: String(row && row.professional_facility || ""),
+    certifyingInstructor: String(row && row.certifying_instructor || ""),
     verificationStatus: String(row && row.verification_status || "pending"),
     createdAt: String(row && row.created_at || ""),
     updatedAt: String(row && row.updated_at || ""),
@@ -1595,7 +1738,9 @@ async function getCustomerAccountPayload(env, identity) {
   const [roleRows, certificationRows, registrationRows, reservationRows, bookingRows, appSettings] = await Promise.all([
     env.DB.prepare("SELECT role FROM customer_roles WHERE user_id = ? ORDER BY role ASC").bind(identity.userId).all(),
     env.DB.prepare(
-      `SELECT id, agency, certification_name, certification_number, issued_on, expires_on,
+      `SELECT id, agency, agency_code, certification_name, certification_code, certification_category,
+              certification_number, issued_on, expires_on, does_not_expire, is_professional,
+              professional_status, professional_insurance_current, professional_facility, certifying_instructor,
               verification_status, created_at, updated_at
        FROM customer_certifications WHERE user_id = ? ORDER BY created_at DESC`
     ).bind(identity.userId).all(),
@@ -2100,20 +2245,44 @@ async function handleUpdateCustomerProfile(request, env) {
   if (auth.response) return auth.response;
   await ensureCustomerProfile(env, auth.identity);
   const body = await request.json().catch(() => ({}));
+  const existing = await env.DB.prepare("SELECT * FROM customer_profiles WHERE user_id = ? LIMIT 1")
+    .bind(auth.identity.userId)
+    .first();
+  const address = body.address && typeof body.address === "object" ? body.address : {};
+  const field = (value, fallback, maxLength) => value == null
+    ? normalizeCustomerText(fallback, maxLength)
+    : normalizeCustomerText(value, maxLength);
   const profile = {
-    firstName: normalizeCustomerText(body.firstName, 80),
-    lastName: normalizeCustomerText(body.lastName, 80),
-    preferredName: normalizeCustomerText(body.preferredName, 80),
-    phone: normalizeCustomerText(body.phone, 40),
-    location: normalizeCustomerText(body.location, 120),
-    emergencyContactName: normalizeCustomerText(body.emergencyContactName, 120),
-    emergencyContactPhone: normalizeCustomerText(body.emergencyContactPhone, 40),
-    loggedDives: Math.max(0, Math.min(100000, Math.trunc(Number(body.loggedDives) || 0))),
-    defaultPpO2: Number(body.defaultPpO2),
-    defaultRmv: Number(body.defaultRmv),
+    firstName: field(body.firstName, existing.first_name, 80),
+    lastName: field(body.lastName, existing.last_name, 80),
+    preferredName: field(body.preferredName, existing.preferred_name, 80),
+    phone: field(body.phone, existing.phone, 40),
+    birthdate: body.birthdate == null
+      ? normalizeCustomerDate(existing.birthdate)
+      : normalizeCustomerDate(body.birthdate),
+    addressLine1: field(address.line1 != null ? address.line1 : body.addressLine1, existing.address_line1, 160),
+    addressLine2: field(address.line2 != null ? address.line2 : body.addressLine2, existing.address_line2, 160),
+    addressCity: field(address.city != null ? address.city : body.addressCity, existing.address_city, 100),
+    addressRegion: field(address.region != null ? address.region : body.addressRegion, existing.address_region, 100),
+    addressPostalCode: field(address.postalCode != null ? address.postalCode : body.addressPostalCode, existing.address_postal_code, 30),
+    addressCountryCode: field(address.countryCode != null ? address.countryCode : body.addressCountryCode, existing.address_country_code || "US", 2).toUpperCase(),
+    location: field(body.location, existing.home_location, 120),
+    emergencyContactName: field(body.emergencyContactName, existing.emergency_contact_name, 120),
+    emergencyContactPhone: field(body.emergencyContactPhone, existing.emergency_contact_phone, 40),
+    loggedDives: body.loggedDives == null
+      ? Math.max(0, Math.min(100000, Math.trunc(Number(existing.logged_dives) || 0)))
+      : Math.max(0, Math.min(100000, Math.trunc(Number(body.loggedDives) || 0))),
+    defaultPpO2: body.defaultPpO2 == null ? Number(existing.default_pp_o2) : Number(body.defaultPpO2),
+    defaultRmv: body.defaultRmv == null ? Number(existing.default_rmv) : Number(body.defaultRmv),
   };
   if (!profile.firstName || !profile.lastName) {
     return jsonResponse({ ok: false, error: "First and last name are required." }, 400);
+  }
+  if (body.birthdate != null && body.birthdate !== "" && !profile.birthdate) {
+    return jsonResponse({ ok: false, error: "Enter a valid birthdate." }, 400);
+  }
+  if (!/^[A-Z]{2}$/.test(profile.addressCountryCode)) {
+    return jsonResponse({ ok: false, error: "Use a two-letter country code for the mailing address." }, 400);
   }
   if (!Number.isFinite(profile.defaultPpO2) || profile.defaultPpO2 < 0.5 || profile.defaultPpO2 > 2) {
     return jsonResponse({ ok: false, error: "Working ppO2 must be between 0.5 and 2.0 ATA." }, 400);
@@ -2124,7 +2293,9 @@ async function handleUpdateCustomerProfile(request, env) {
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_profiles
-     SET first_name = ?, last_name = ?, preferred_name = ?, phone = ?, home_location = ?,
+     SET first_name = ?, last_name = ?, preferred_name = ?, phone = ?, birthdate = ?,
+         address_line1 = ?, address_line2 = ?, address_city = ?, address_region = ?,
+         address_postal_code = ?, address_country_code = ?, home_location = ?,
          emergency_contact_name = ?, emergency_contact_phone = ?, logged_dives = ?,
          default_pp_o2 = ?, default_rmv = ?, email = ?, updated_at = ?
      WHERE user_id = ?`
@@ -2134,6 +2305,13 @@ async function handleUpdateCustomerProfile(request, env) {
       profile.lastName,
       profile.preferredName,
       profile.phone,
+      profile.birthdate,
+      profile.addressLine1,
+      profile.addressLine2,
+      profile.addressCity,
+      profile.addressRegion,
+      profile.addressPostalCode,
+      profile.addressCountryCode,
       profile.location,
       profile.emergencyContactName,
       profile.emergencyContactPhone,
@@ -2256,10 +2434,19 @@ async function handleGetBookingCatalog(request, env) {
     remaining: Number(row.capacity) > 0 ? Math.max(0, Number(row.capacity) - (Number(row.booked_count) || 0)) : null,
   }));
   const profile = await ensureCustomerProfile(env, auth.identity);
+  const certificationRows = await env.DB.prepare(
+    `SELECT id, agency, agency_code, certification_name, certification_code, certification_category,
+            certification_number, issued_on, expires_on, does_not_expire, is_professional,
+            professional_status, professional_insurance_current, professional_facility, certifying_instructor,
+            verification_status, created_at, updated_at
+     FROM customer_certifications WHERE user_id = ?
+     ORDER BY CASE verification_status WHEN 'verified' THEN 0 ELSE 1 END, issued_on DESC, created_at DESC`
+  ).bind(auth.identity.userId).all();
   return jsonResponse({
     ok: true,
     offerings,
     profile: mapCustomerProfile(profile),
+    certifications: (certificationRows.results || []).map(mapCustomerCertification),
     paymentsConfigured: Boolean(String(env.STRIPE_SECRET_KEY || "").trim()),
     stripePublishableKey: String(env.STRIPE_PUBLISHABLE_KEY || "").trim(),
   }, 200, { "Cache-Control": "no-store" });
@@ -2282,9 +2469,21 @@ function normalizeBookingDetails(body, category) {
   const preferredDates = Array.isArray(body.preferredDates)
     ? body.preferredDates.map((date) => normalizeCustomerText(date, 10)).filter(isDateKey).slice(0, 3)
     : [];
+  const classFormat = category === "class" && ["house_call", "virtual", "dmz_hq"].includes(body.classFormat) ? body.classFormat : "";
+  const houseCallAddress = body.houseCallAddress && typeof body.houseCallAddress === "object"
+    ? body.houseCallAddress
+    : {};
   return {
     preferredDates,
-    classFormat: category === "class" && ["house_call", "virtual", "dmz_hq"].includes(body.classFormat) ? body.classFormat : "",
+    classFormat,
+    houseCallAddress: classFormat === "house_call" ? {
+      line1: normalizeCustomerText(houseCallAddress.line1, 160),
+      line2: normalizeCustomerText(houseCallAddress.line2, 160),
+      city: normalizeCustomerText(houseCallAddress.city, 100),
+      region: normalizeCustomerText(houseCallAddress.region, 100),
+      postalCode: normalizeCustomerText(houseCallAddress.postalCode, 30),
+      countryCode: normalizeCustomerText(houseCallAddress.countryCode || "US", 2).toUpperCase(),
+    } : null,
     veteranPublicSafetyDiscount: Boolean(body.veteranPublicSafetyDiscount),
     certificationLevel: normalizeCustomerText(body.certificationLevel, 120),
     lastDiveDate: normalizeCustomerText(body.lastDiveDate, 10),
@@ -2317,6 +2516,10 @@ async function handleCreateCustomerBooking(request, env) {
   }
   if ((category === "trip" || category === "event") && !details.certificationLevel) {
     return jsonResponse({ ok: false, error: "Tell us which certification you currently hold." }, 400);
+  }
+  if (details.classFormat === "house_call" && (!details.houseCallAddress.line1 || !details.houseCallAddress.city
+    || !details.houseCallAddress.region || !details.houseCallAddress.postalCode)) {
+    return jsonResponse({ ok: false, error: "Add the instruction address for a house-call booking." }, 400);
   }
   if (Number(offering.capacity) > 0) {
     const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM customer_bookings_v2 WHERE offering_id = ? AND status NOT IN ('cancelled')").bind(offeringId).first();
@@ -2456,20 +2659,124 @@ async function handleUpdateAdminBooking(request, env, bookingId) {
   return jsonResponse({ ok: true, status });
 }
 
+function normalizeCatalogLookup(value) {
+  return normalizeCustomerText(value, 160).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function inferCertificationCode(value) {
+  const lookup = normalizeCatalogLookup(value);
+  const aliases = {
+    "open water": "open_water",
+    "open water diver": "open_water",
+    "advanced open water": "advanced_open_water",
+    "advanced open water diver": "advanced_open_water",
+    "advanced adventure diver": "advanced_open_water",
+    "rescue diver": "rescue_diver",
+    "diver stress and rescue": "rescue_diver",
+    "nitrox": "nitrox",
+    "nitrox diver": "nitrox",
+    "computer nitrox": "nitrox",
+    "enriched air": "nitrox",
+    "enriched air diver": "nitrox",
+    "dive guide": "dive_guide",
+    "divemaster": "divemaster",
+    "dive master": "divemaster",
+    "dive leader": "divemaster",
+    "assistant instructor": "assistant_instructor",
+    "open water instructor": "open_water_instructor",
+    "open water scuba instructor": "open_water_instructor",
+  };
+  return aliases[lookup] || "other";
+}
+
+function normalizeOptionalBoolean(value, fallback = null) {
+  if (value == null || value === "") return fallback;
+  if (value === true || value === 1 || value === "1" || value === "yes") return true;
+  if (value === false || value === 0 || value === "0" || value === "no") return false;
+  return fallback;
+}
+
 function normalizeCustomerCertification(body = {}, existing = {}) {
-  const agency = normalizeCustomerText(body.agency != null ? body.agency : existing.agency, 80);
-  const certificationName = normalizeCustomerText(
+  const requestedAgency = normalizeCustomerText(body.agency != null ? body.agency : existing.agency, 80);
+  const requestedAgencyCode = normalizeCustomerText(
+    body.agencyCode != null ? body.agencyCode : existing.agencyCode,
+    40
+  ).toLowerCase();
+  const matchedAgency = certificationAgencies.find((item) => {
+    const lookup = normalizeCatalogLookup(requestedAgency);
+    return lookup && (normalizeCatalogLookup(item.label) === lookup || normalizeCatalogLookup(item.name) === lookup);
+  });
+  const agencyCode = certificationAgencyByCode.has(requestedAgencyCode)
+    ? requestedAgencyCode
+    : matchedAgency ? matchedAgency.code : "other";
+  const agencyDefinition = certificationAgencyByCode.get(agencyCode);
+  const agency = agencyCode === "other"
+    ? normalizeCustomerText(body.otherAgencyName || requestedAgency || "Other", 80)
+    : agencyDefinition.label;
+
+  const requestedCertificationName = normalizeCustomerText(
     body.certificationName != null ? body.certificationName : existing.certificationName,
     120
   );
+  const requestedCertificationCode = normalizeCustomerText(
+    body.certificationCode != null ? body.certificationCode : existing.certificationCode,
+    60
+  ).toLowerCase();
+  const inferredCertificationCode = inferCertificationCode(requestedCertificationName);
+  const certificationCode = certificationTypeByCode.has(requestedCertificationCode)
+    ? requestedCertificationCode
+    : inferredCertificationCode;
+  const certificationDefinition = certificationTypeByCode.get(certificationCode) || certificationTypeByCode.get("other");
+  const certificationName = certificationCode === "other"
+    ? normalizeCustomerText(body.otherCertificationName || requestedCertificationName || "Other", 120)
+    : certificationDefinition.name;
   const certificationNumber = normalizeCustomerText(
     body.certificationNumber != null ? body.certificationNumber : existing.certificationNumber,
     120
   );
   const issuedOn = normalizeCustomerDate(body.issuedOn != null ? body.issuedOn : existing.issuedOn);
-  const expiresOn = normalizeCustomerDate(body.expiresOn != null ? body.expiresOn : existing.expiresOn);
+  const requestedExpiresOn = normalizeCustomerDate(body.expiresOn != null ? body.expiresOn : existing.expiresOn);
+  const doesNotExpire = body.doesNotExpire == null
+    ? existing.doesNotExpire == null ? !requestedExpiresOn : Boolean(existing.doesNotExpire)
+    : Boolean(body.doesNotExpire);
+  const expiresOn = doesNotExpire ? "" : requestedExpiresOn;
+  const isProfessional = Boolean(certificationDefinition.professional)
+    || (certificationCode === "other" && Boolean(body.isProfessional != null ? body.isProfessional : existing.isProfessional));
+  const requestedProfessionalStatus = normalizeCustomerText(
+    body.professionalStatus != null ? body.professionalStatus : existing.professionalStatus,
+    20
+  ).toLowerCase();
+  const professionalStatus = isProfessional && ["active", "inactive"].includes(requestedProfessionalStatus)
+    ? requestedProfessionalStatus
+    : "";
+  const professionalInsuranceCurrent = isProfessional
+    ? normalizeOptionalBoolean(body.professionalInsuranceCurrent, existing.professionalInsuranceCurrent == null
+      ? null
+      : Boolean(existing.professionalInsuranceCurrent))
+    : null;
+  const professionalFacility = isProfessional
+    ? normalizeCustomerText(body.professionalFacility != null ? body.professionalFacility : existing.professionalFacility, 160)
+    : "";
+  const certifyingInstructor = isProfessional
+    ? normalizeCustomerText(body.certifyingInstructor != null ? body.certifyingInstructor : existing.certifyingInstructor, 160)
+    : "";
   if (!agency || !certificationName) return null;
-  return { agency, certificationName, certificationNumber, issuedOn, expiresOn };
+  return {
+    agency,
+    agencyCode,
+    certificationName,
+    certificationCode,
+    category: certificationDefinition.category,
+    certificationNumber,
+    issuedOn,
+    expiresOn,
+    doesNotExpire,
+    isProfessional,
+    professionalStatus,
+    professionalInsuranceCurrent,
+    professionalFacility,
+    certifyingInstructor,
+  };
 }
 
 async function handleCreateCustomerCertification(request, env) {
@@ -2482,18 +2789,29 @@ async function handleCreateCustomerCertification(request, env) {
   const now = new Date().toISOString();
   await env.DB.prepare(
     `INSERT INTO customer_certifications
-     (id, user_id, agency, certification_name, certification_number, issued_on, expires_on,
+     (id, user_id, agency, agency_code, certification_name, certification_code, certification_category,
+      certification_number, issued_on, expires_on, does_not_expire, is_professional,
+      professional_status, professional_insurance_current, professional_facility, certifying_instructor,
       verification_status, verified_at, verified_by, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NULL, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NULL, ?, ?)`
   )
     .bind(
       id,
       auth.identity.userId,
       certification.agency,
+      certification.agencyCode,
       certification.certificationName,
+      certification.certificationCode,
+      certification.category,
       certification.certificationNumber,
       certification.issuedOn,
       certification.expiresOn,
+      certification.doesNotExpire ? 1 : 0,
+      certification.isProfessional ? 1 : 0,
+      certification.professionalStatus,
+      certification.professionalInsuranceCurrent == null ? null : certification.professionalInsuranceCurrent ? 1 : 0,
+      certification.professionalFacility,
+      certification.certifyingInstructor,
       now,
       now
     )
@@ -2507,30 +2825,51 @@ async function handleUpdateCustomerCertification(request, env, certificationId) 
   if (auth.response) return auth.response;
   const id = normalizeCustomerText(certificationId, 100);
   const row = await env.DB.prepare(
-    `SELECT id, agency, certification_name, certification_number, issued_on, expires_on
+    `SELECT id, agency, agency_code, certification_name, certification_code, certification_category,
+            certification_number, issued_on, expires_on, does_not_expire, is_professional,
+            professional_status, professional_insurance_current, professional_facility, certifying_instructor
      FROM customer_certifications WHERE id = ? AND user_id = ? LIMIT 1`
   ).bind(id, auth.identity.userId).first();
   if (!row) return jsonResponse({ ok: false, error: "Certification not found." }, 404);
   const certification = normalizeCustomerCertification(await request.json().catch(() => ({})), {
     agency: row.agency,
+    agencyCode: row.agency_code,
     certificationName: row.certification_name,
+    certificationCode: row.certification_code,
     certificationNumber: row.certification_number,
     issuedOn: row.issued_on,
     expiresOn: row.expires_on,
+    doesNotExpire: Number(row.does_not_expire) === 1,
+    isProfessional: Number(row.is_professional) === 1,
+    professionalStatus: row.professional_status,
+    professionalInsuranceCurrent: row.professional_insurance_current == null ? null : Number(row.professional_insurance_current) === 1,
+    professionalFacility: row.professional_facility,
+    certifyingInstructor: row.certifying_instructor,
   });
   if (!certification) return jsonResponse({ ok: false, error: "Agency and certification name are required." }, 400);
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_certifications
-     SET agency = ?, certification_name = ?, certification_number = ?, issued_on = ?, expires_on = ?,
+     SET agency = ?, agency_code = ?, certification_name = ?, certification_code = ?, certification_category = ?,
+         certification_number = ?, issued_on = ?, expires_on = ?, does_not_expire = ?, is_professional = ?,
+         professional_status = ?, professional_insurance_current = ?, professional_facility = ?, certifying_instructor = ?,
          verification_status = 'pending', verified_at = NULL, verified_by = NULL, updated_at = ?
      WHERE id = ? AND user_id = ?`
   ).bind(
     certification.agency,
+    certification.agencyCode,
     certification.certificationName,
+    certification.certificationCode,
+    certification.category,
     certification.certificationNumber,
     certification.issuedOn,
     certification.expiresOn,
+    certification.doesNotExpire ? 1 : 0,
+    certification.isProfessional ? 1 : 0,
+    certification.professionalStatus,
+    certification.professionalInsuranceCurrent == null ? null : certification.professionalInsuranceCurrent ? 1 : 0,
+    certification.professionalFacility,
+    certification.certifyingInstructor,
     now,
     id,
     auth.identity.userId
@@ -5527,8 +5866,10 @@ export {
   buildPublicRegistrationSnapshot,
   deleteExpiredFunnelEvents,
   formatArchivedAccountText,
+  getCertificationCatalog,
   isTrustedTelemetryOrigin,
   normalizeCustomerAppSettings,
+  normalizeCustomerCertification,
   sanitizeAnalyticsPath,
   validateSupabaseClaims,
   verifySupabaseAccessToken,
@@ -5556,6 +5897,8 @@ export default {
       response = handleCustomerMobileChallenge(request, env);
     } else if (pathname === "/api/account/auth/status" && request.method === "GET") {
       response = await handleCustomerAuthStatus(env);
+    } else if (pathname === "/api/account/certification-catalog" && request.method === "GET") {
+      response = handleGetCertificationCatalog();
     } else if (pathname === "/api/account/auth/signup" && request.method === "POST") {
       response = await handleCustomerSignup(request, env);
     } else if (pathname === "/api/account/auth/verify" && request.method === "POST") {

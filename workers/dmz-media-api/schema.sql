@@ -123,6 +123,13 @@ CREATE TABLE IF NOT EXISTS customer_profiles (
   last_name TEXT,
   preferred_name TEXT,
   phone TEXT,
+  birthdate TEXT NOT NULL DEFAULT '',
+  address_line1 TEXT NOT NULL DEFAULT '',
+  address_line2 TEXT NOT NULL DEFAULT '',
+  address_city TEXT NOT NULL DEFAULT '',
+  address_region TEXT NOT NULL DEFAULT '',
+  address_postal_code TEXT NOT NULL DEFAULT '',
+  address_country_code TEXT NOT NULL DEFAULT 'US',
   home_location TEXT NOT NULL DEFAULT '',
   emergency_contact_name TEXT NOT NULL DEFAULT '',
   emergency_contact_phone TEXT NOT NULL DEFAULT '',
@@ -200,10 +207,23 @@ CREATE TABLE IF NOT EXISTS customer_certifications (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   agency TEXT NOT NULL,
+  agency_code TEXT NOT NULL DEFAULT 'other',
   certification_name TEXT NOT NULL,
+  certification_code TEXT NOT NULL DEFAULT 'other',
+  certification_category TEXT NOT NULL DEFAULT 'other',
   certification_number TEXT,
   issued_on TEXT,
   expires_on TEXT,
+  does_not_expire INTEGER NOT NULL DEFAULT 1
+    CHECK (does_not_expire IN (0, 1)),
+  is_professional INTEGER NOT NULL DEFAULT 0
+    CHECK (is_professional IN (0, 1)),
+  professional_status TEXT NOT NULL DEFAULT ''
+    CHECK (professional_status IN ('', 'active', 'inactive')),
+  professional_insurance_current INTEGER
+    CHECK (professional_insurance_current IS NULL OR professional_insurance_current IN (0, 1)),
+  professional_facility TEXT NOT NULL DEFAULT '',
+  certifying_instructor TEXT NOT NULL DEFAULT '',
   verification_status TEXT NOT NULL DEFAULT 'pending'
     CHECK (verification_status IN ('pending', 'verified', 'rejected')),
   verified_at TEXT,
@@ -214,6 +234,9 @@ CREATE TABLE IF NOT EXISTS customer_certifications (
 
 CREATE INDEX IF NOT EXISTS idx_customer_certifications_user
   ON customer_certifications(user_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_customer_certifications_lookup
+  ON customer_certifications(user_id, certification_code, verification_status);
 
 CREATE TABLE IF NOT EXISTS customer_reservations (
   id TEXT PRIMARY KEY,

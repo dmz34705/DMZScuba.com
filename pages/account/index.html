@@ -127,7 +127,7 @@
             <div class="account-section-head">
               <p class="account-eyebrow">Personal information</p>
               <h2 id="profile-title">My profile</h2>
-              <p>Keep your contact information accurate for classes, trips, and bookings.</p>
+              <p>Keep your core information ready for classes, trips, bookings, and the DMZ Scuba mobile app.</p>
             </div>
             <article class="account-card account-detail-card">
               <form class="account-form" data-profile-form>
@@ -136,8 +136,46 @@
                   <label><span>Last Name</span><input type="text" name="lastName" maxlength="80" required /></label>
                 </div>
                 <label><span>Preferred Name</span><input type="text" name="preferredName" maxlength="80" /></label>
-                <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel" maxlength="40" /></label>
+                <div class="account-form-grid">
+                  <label><span>Birthdate</span><input type="date" name="birthdate" autocomplete="bday" required /></label>
+                  <label><span>Phone</span><input type="tel" name="phone" autocomplete="tel" maxlength="40" required /></label>
+                </div>
                 <label><span>Verified Email</span><input type="email" name="email" disabled /><small>Change your verified email under Login &amp; Security.</small></label>
+
+                <details class="account-optional-fields">
+                  <summary>Add a mailing address <small>Optional until a booking requires it</small></summary>
+                  <div class="account-optional-fields-body">
+                    <label><span>Street Address</span><input type="text" name="addressLine1" autocomplete="address-line1" maxlength="160" /></label>
+                    <label><span>Apartment, Suite, or Unit</span><input type="text" name="addressLine2" autocomplete="address-line2" maxlength="160" /></label>
+                    <div class="account-form-grid">
+                      <label><span>City</span><input type="text" name="addressCity" autocomplete="address-level2" maxlength="100" /></label>
+                      <label><span>State / Province / Region</span><input type="text" name="addressRegion" autocomplete="address-level1" maxlength="100" /></label>
+                    </div>
+                    <div class="account-form-grid">
+                      <label><span>Postal Code</span><input type="text" name="addressPostalCode" autocomplete="postal-code" maxlength="30" /></label>
+                      <label><span>Country</span>
+                        <select name="addressCountryCode" autocomplete="country">
+                          <option value="US">United States</option>
+                          <option value="CA">Canada</option>
+                          <option value="MX">Mexico</option>
+                          <option value="BS">Bahamas</option>
+                          <option value="BZ">Belize</option>
+                          <option value="CR">Costa Rica</option>
+                          <option value="HN">Honduras</option>
+                          <option value="KY">Cayman Islands</option>
+                          <option value="DO">Dominican Republic</option>
+                          <option value="JM">Jamaica</option>
+                          <option value="GB">United Kingdom</option>
+                          <option value="AU">Australia</option>
+                          <option value="PH">Philippines</option>
+                          <option value="ID">Indonesia</option>
+                          <option value="FJ">Fiji</option>
+                          <option value="MV">Maldives</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                </details>
                 <button class="btn primary" type="submit">Save Profile</button>
                 <p class="account-form-status" data-profile-status aria-live="polite"></p>
               </form>
@@ -154,15 +192,47 @@
               <div class="account-record-list" data-certification-list></div>
               <form class="account-form account-add-certification" data-certification-form>
                 <h3>Add a certification</h3>
+                <p class="account-form-help">Search the standardized lists. Agency-specific names are grouped under a shared certification type so future services can recognize equivalent training.</p>
                 <div class="account-form-grid">
-                  <label><span>Agency</span><input type="text" name="agency" placeholder="SDI, PADI, SSI..." maxlength="80" required /></label>
-                  <label><span>Certification</span><input type="text" name="certificationName" placeholder="Open Water" maxlength="120" required /></label>
+                  <label><span>Agency</span><input type="text" name="agency" list="certification-agency-options" placeholder="Start typing an agency" maxlength="100" autocomplete="off" data-certification-agency-input required /><small data-agency-selection-help>Choose one of the listed agencies.</small></label>
+                  <label><span>Certification</span><input type="text" name="certificationName" list="certification-type-options" placeholder="Start typing a certification" maxlength="140" autocomplete="off" data-certification-type-input required /><small data-certification-selection-help>Search by common or agency-specific terminology.</small></label>
                 </div>
+                <datalist id="certification-agency-options" data-certification-agency-options></datalist>
+                <datalist id="certification-type-options" data-certification-type-options></datalist>
+                <input type="hidden" name="agencyCode" />
+                <input type="hidden" name="certificationCode" />
+                <label data-other-agency-field hidden><span>Agency Name</span><input type="text" name="otherAgencyName" maxlength="80" /></label>
+                <label data-other-certification-field hidden><span>Certification Name</span><input type="text" name="otherCertificationName" maxlength="120" /></label>
                 <label><span>Certification Number</span><input type="text" name="certificationNumber" maxlength="120" /></label>
                 <div class="account-form-grid">
                   <label><span>Issue Date</span><input type="date" name="issuedOn" /></label>
-                  <label><span>Expiration Date</span><input type="date" name="expiresOn" /></label>
+                  <label data-expiration-field hidden><span>Expiration Date</span><input type="date" name="expiresOn" /></label>
                 </div>
+                <label class="account-choice-line"><input type="checkbox" name="doesNotExpire" checked data-certification-no-expiration /><span><strong>This certification does not expire</strong><small>Uncheck this only when the credential has a printed expiration date.</small></span></label>
+                <label class="account-choice-line"><input type="checkbox" name="isProfessional" data-certification-professional /><span><strong>This is a professional certification</strong><small>Professional ratings include dive guide, divemaster, assistant instructor, instructor, and instructor trainer credentials.</small></span></label>
+
+                <fieldset class="account-professional-fields" data-professional-certification-fields hidden disabled>
+                  <legend>Professional credential details</legend>
+                  <p>Professional standing and insurance can change even when the certification card itself does not expire.</p>
+                  <div class="account-form-grid">
+                    <label><span>Professional Status</span>
+                      <select name="professionalStatus">
+                        <option value="">Choose status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </label>
+                    <label><span>Current Professional Insurance</span>
+                      <select name="professionalInsuranceCurrent">
+                        <option value="">Choose yes or no</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label><span>Affiliated Facility</span><input type="text" name="professionalFacility" maxlength="160" placeholder="Dive center, shop, club, or training facility" /></label>
+                  <label><span>Certifying Instructor</span><input type="text" name="certifyingInstructor" maxlength="160" placeholder="Instructor who issued this professional rating" /></label>
+                </fieldset>
                 <button class="btn secondary" type="submit">Add Certification</button>
                 <p class="account-form-status" data-certification-status aria-live="polite"></p>
               </form>
@@ -242,6 +312,6 @@
 
   <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260824j"></script>
+  <script src="/js/account.js?v=20260829profile"></script>
 </body>
 </html>

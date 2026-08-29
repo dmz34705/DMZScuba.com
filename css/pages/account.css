@@ -189,7 +189,9 @@
   font-weight: 500;
 }
 
-.account-form input {
+.account-form input,
+.account-form select,
+.account-form textarea {
   width: 100%;
   min-height: 48px;
   border: 1px solid rgba(255, 255, 255, .14);
@@ -200,7 +202,9 @@
   font: inherit;
 }
 
-.account-form input:focus {
+.account-form input:focus,
+.account-form select:focus,
+.account-form textarea:focus {
   border-color: rgba(85, 185, 255, .72);
   outline: 3px solid rgba(85, 185, 255, .13);
 }
@@ -213,6 +217,102 @@
 .account-form input[readonly] {
   color: rgba(234, 242, 255, .82);
   background: rgba(255, 255, 255, .045);
+}
+
+.account-form select {
+  appearance: auto;
+}
+
+.account-form-help {
+  margin: -5px 0 1px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.account-optional-fields {
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, .14);
+}
+
+.account-optional-fields summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 17px;
+  color: rgba(234, 242, 255, .9);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.account-optional-fields summary small {
+  color: var(--muted-2);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.account-optional-fields-body {
+  display: grid;
+  gap: 17px;
+  padding: 2px 17px 17px;
+}
+
+.account-choice-line {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, .13);
+  cursor: pointer;
+}
+
+.account-choice-line input {
+  width: 20px;
+  min-height: 20px;
+  margin-top: 1px;
+}
+
+.account-choice-line strong,
+.account-choice-line small {
+  display: block;
+}
+
+.account-choice-line small {
+  margin-top: 3px;
+}
+
+.account-professional-fields {
+  display: grid;
+  gap: 17px;
+  margin: 3px 0;
+  padding: 19px;
+  border: 1px solid rgba(85, 185, 255, .23);
+  border-radius: 16px;
+  background: rgba(85, 185, 255, .055);
+}
+
+.account-professional-fields[hidden],
+.account-form [hidden],
+.account-nav-menu [data-management-access][hidden] {
+  display: none !important;
+}
+
+.account-professional-fields legend {
+  padding: 0 7px;
+  color: #bce5ff;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.account-professional-fields > p {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .account-form-grid {
@@ -670,6 +770,13 @@
 .account-record strong,
 .account-record span {
   display: block;
+}
+
+.account-record .account-record-secondary {
+  max-width: 680px;
+  color: rgba(188, 229, 255, .78);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .account-record span {

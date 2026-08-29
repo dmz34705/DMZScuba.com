@@ -130,6 +130,8 @@ Authenticated mobile settings use `PUT /api/account/app-settings`. `GET /api/acc
 
 The native diver profile uses the same `GET /api/account`, `PUT /api/account`, and certification endpoints as the website. Migration `0007_customer_diver_profiles.sql` adds home location, emergency contact, logged dives, working ppO2, and planning RMV so those values sync with the customer account instead of remaining local to one device.
 
+Migration `0009_customer_profile_certification_details.sql` adds birthdate, an optional structured mailing address, stable agency and certification codes, non-expiring credentials, and professional standing details. The website and mobile app should load searchable choices from `GET /api/account/certification-catalog`; do not maintain separate agency lists in each client. See [Certification Catalog](certification-catalog.md) for the normalization rules and official source review.
+
 ## 7. Account archival and deletion
 
 Deactivation remains reversible and blocks the same Supabase account on both the website and mobile app. The administrator-only archive action is a separate, permanent step. It stores a protected D1 snapshot, hard-deletes the Supabase Auth user, and removes operational account rows. Apply migration `0005_customer_account_archives.sql` before deploying this route.
