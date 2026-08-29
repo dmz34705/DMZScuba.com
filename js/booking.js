@@ -10,8 +10,12 @@
   const formShell = app.querySelector("[data-booking-form-shell]");
   const form = app.querySelector("[data-booking-form]");
   const success = app.querySelector("[data-booking-success]");
+  const startModal = app.querySelector("[data-booking-start-modal]");
+  const startForm = app.querySelector("[data-booking-start-form]");
   const tokenKey = "dmzCustomerAccessToken";
   const returnPathKey = "dmzAccountReturnPath";
+  const pendingOfferingKey = "dmzBookingPendingOffering";
+  const signupPrefillKey = "dmzBookingSignupPrefill";
   let accessToken = sessionStorage.getItem(tokenKey) || "";
   let offerings = [];
   let activeCategory = "class";
@@ -99,9 +103,8 @@
     selected = offerings.find((item) => item.id === id) || null;
     if (!selected) return;
     if (!accessToken) {
-      gate.hidden = false;
-      setMessage(status, "Sign in or create a free account to start this booking.");
-      gate.scrollIntoView({ behavior: "smooth", block: "start" });
+      startModal.hidden = false;
+      startForm?.elements.firstName.focus();
       return;
     }
     catalog.hidden = true;
@@ -166,6 +169,12 @@
       workspace.hidden = false;
       renderCatalog();
       setMessage(status, authenticated ? "Choose an option to begin." : "Browse the options below. Sign in only when you are ready to start a booking.");
+      let pendingOffering = "";
+      try { pendingOffering = sessionStorage.getItem(pendingOfferingKey) || ""; } catch (_error) { /* optional */ }
+      if (authenticated && pendingOffering) {
+        try { sessionStorage.removeItem(pendingOfferingKey); } catch (_error) { /* optional */ }
+        selectOffering(pendingOffering);
+      }
     } catch (error) {
       const signedOut = Number(error && error.status) === 401;
       if (signedOut) sessionStorage.setItem(returnPathKey, "/pages/book/");
@@ -181,6 +190,19 @@
   }
 
   app.querySelectorAll("[data-booking-auth-link]").forEach((link) => link.addEventListener("click", () => sessionStorage.setItem(returnPathKey, "/pages/book/")));
+  app.querySelector("[data-booking-start-close]")?.addEventListener("click", () => { startModal.hidden = true; });
+  startModal?.addEventListener("click", (event) => { if (event.target === startModal) startModal.hidden = true; });
+  startForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!selected) return;
+    const values = new FormData(startForm);
+    try {
+      sessionStorage.setItem(pendingOfferingKey, selected.id);
+      sessionStorage.setItem(signupPrefillKey, JSON.stringify({ firstName: values.get("firstName") || "", lastName: values.get("lastName") || "", email: values.get("email") || "" }));
+      sessionStorage.setItem(returnPathKey, "/pages/book/");
+    } catch (_error) { /* account setup still works without prefill */ }
+    window.location.assign("/pages/account/create/?return=booking");
+  });
   app.querySelectorAll("[data-booking-account-link]").forEach((link) => link.addEventListener("click", () => sessionStorage.removeItem(returnPathKey)));
   app.querySelectorAll("[data-booking-category]").forEach((button) => button.addEventListener("click", () => {
     activeCategory = button.dataset.bookingCategory;

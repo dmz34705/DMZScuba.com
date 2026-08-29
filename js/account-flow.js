@@ -7,6 +7,7 @@
   const signedInStorageKey = "dmzCustomerSignedIn";
   const pendingFlowStorageKey = "dmzAccountPendingFlow";
   const entryStateStorageKey = "dmzAccountEntryState";
+  const signupPrefillStorageKey = "dmzBookingSignupPrefill";
   const apiTimeoutMs = 20000;
   const returnToBooking = new URLSearchParams(window.location.search).get("return") === "booking";
   const form = app.querySelector("[data-account-flow-form]");
@@ -318,6 +319,15 @@
     }
 
     if (flow === "signup" || flow === "recovery") {
+      if (flow === "signup") {
+        const prefill = readSessionValue(signupPrefillStorageKey);
+        if (prefill) {
+          ["firstName", "lastName", "email"].forEach((name) => {
+            if (form?.elements[name] && prefill[name]) form.elements[name].value = prefill[name];
+          });
+          removeSessionValue(signupPrefillStorageKey);
+        }
+      }
       turnstileSiteKey = String(authStatus.turnstileSiteKey || "").trim();
       await initTurnstile();
     } else if (flow === "verify") {

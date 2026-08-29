@@ -46,6 +46,24 @@
         </div>
       </section>
 
+      <section class="booking-start-modal" data-booking-start-modal hidden role="dialog" aria-modal="true" aria-labelledby="booking-start-title">
+        <div class="booking-start-modal-card">
+          <button class="booking-start-modal-close" type="button" data-booking-start-close aria-label="Close">&times;</button>
+          <p class="booking-eyebrow">Start your booking</p>
+          <h2 id="booking-start-title">Create your DMZ Scuba profile</h2>
+          <p>It only takes a moment. We’ll save this selection while you finish setting up your verified account, then bring you right back to complete the booking.</p>
+          <form class="booking-start-form" data-booking-start-form>
+            <div class="booking-form-grid">
+              <label><span>First Name</span><input name="firstName" autocomplete="given-name" required /></label>
+              <label><span>Last Name</span><input name="lastName" autocomplete="family-name" required /></label>
+            </div>
+            <label><span>Email Address</span><input name="email" type="email" autocomplete="email" required /></label>
+            <button class="btn primary" type="submit">Continue to account setup</button>
+          </form>
+          <p class="booking-start-login">Already have an account? <a href="/pages/account/?return=booking" data-booking-auth-link>Sign in instead</a></p>
+        </div>
+      </section>
+
       <section class="booking-form-shell" data-booking-form-shell hidden aria-labelledby="booking-form-title">
         <button class="booking-back" type="button" data-booking-back>&larr; Back to choices</button>
         <div class="booking-selected" data-booking-selected></div>

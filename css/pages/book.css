@@ -35,6 +35,15 @@ body { background: #06111f; color: #eef6ff; }
 .booking-card dd { margin: 0; text-align: right; }
 .booking-card small { color: #8fd4ff; }
 .booking-card .btn { align-self: end; justify-content: center; }
+.booking-start-modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(1, 8, 16, .78); backdrop-filter: blur(8px); }
+.booking-start-modal[hidden] { display: none; }
+.booking-start-modal-card { position: relative; width: min(100%, 620px); padding: clamp(24px, 5vw, 42px); border: 1px solid rgba(143,207,255,.35); border-radius: 20px; background: #0a1c2d; box-shadow: 0 30px 90px rgba(0,0,0,.5); }
+.booking-start-modal-card h2 { margin: 7px 0 10px; }
+.booking-start-modal-card > p:not(.booking-eyebrow):not(.booking-start-login) { color: #afc3d6; line-height: 1.6; }
+.booking-start-modal-close { position: absolute; top: 12px; right: 16px; border: 0; background: none; color: #b9d1e4; font-size: 30px; line-height: 1; cursor: pointer; }
+.booking-start-form { display: grid; gap: 15px; margin-top: 22px; }
+.booking-start-login { margin: 20px 0 0; color: #91a9bd; text-align: center; }
+.booking-start-login a { color: #9bd8ff; }
 .booking-empty { grid-column: 1 / -1; text-align: center; padding: 42px; }
 .booking-empty h3, .booking-empty p { margin: 0; }
 .booking-form-shell { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--book-line); }
