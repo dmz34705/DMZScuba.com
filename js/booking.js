@@ -98,6 +98,12 @@
   function selectOffering(id) {
     selected = offerings.find((item) => item.id === id) || null;
     if (!selected) return;
+    if (!accessToken) {
+      gate.hidden = false;
+      setMessage(status, "Sign in or create a free account to start this booking.");
+      gate.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     catalog.hidden = true;
     formShell.hidden = false;
     form.elements.offeringId.value = selected.id;
@@ -147,22 +153,24 @@
   async function init() {
     try {
       const data = await api("/api/bookings/catalog");
-      sessionStorage.removeItem(returnPathKey);
       offerings = Array.isArray(data.offerings) ? data.offerings : [];
       profile = data.profile || {};
       certifications = Array.isArray(data.certifications) ? data.certifications : [];
-      gate.hidden = true;
+      if (accessToken) sessionStorage.removeItem(returnPathKey);
+      gate.hidden = Boolean(accessToken);
       workspace.hidden = false;
       renderCatalog();
-      setMessage(status, "Choose an option to begin.");
+      setMessage(status, accessToken ? "Choose an option to begin." : "Browse the options below. Sign in only when you are ready to start a booking.");
     } catch (error) {
       const signedOut = Number(error && error.status) === 401;
       if (signedOut) sessionStorage.setItem(returnPathKey, "/pages/book/");
-      gate.hidden = !signedOut;
-      workspace.hidden = signedOut;
+      gate.hidden = false;
+      workspace.hidden = false;
       if (!signedOut) {
         catalog.innerHTML = "";
         setMessage(status, error.message || "Bookings could not load. Please refresh and try again.", true);
+      } else {
+        setMessage(status, "Browse the options below. Sign in only when you are ready to start a booking.");
       }
     }
   }

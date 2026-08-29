@@ -2443,28 +2443,43 @@ function bookingOfferingSelect() {
 }
 
 async function handleGetBookingCatalog(request, env) {
-  const auth = await requireCustomerIdentity(request, env);
-  if (auth.response) return auth.response;
   const rows = await env.DB.prepare(`${bookingOfferingSelect()} WHERE o.active = 1 ORDER BY o.category, o.booking_mode, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all();
   const offerings = (rows.results || []).map((row) => ({
     ...mapBookingOffering(row),
     bookedCount: Math.max(0, Number(row.booked_count) || 0),
     remaining: Number(row.capacity) > 0 ? Math.max(0, Number(row.capacity) - (Number(row.booked_count) || 0)) : null,
   }));
-  const profile = await ensureCustomerProfile(env, auth.identity);
-  const certificationRows = await env.DB.prepare(
-    `SELECT id, agency, agency_code, certification_name, certification_code, certification_category,
-            certification_number, issued_on, expires_on, does_not_expire, is_professional,
-            professional_status, professional_insurance_current, professional_facility, certifying_instructor,
-            verification_status, created_at, updated_at
-     FROM customer_certifications WHERE user_id = ?
-     ORDER BY CASE verification_status WHEN 'verified' THEN 0 ELSE 1 END, issued_on DESC, created_at DESC`
-  ).bind(auth.identity.userId).all();
+  // The catalog is intentionally public so visitors can browse before creating an
+  // account. Only hydrate personal profile data when a valid customer token is
+  // supplied; unauthenticated (or expired) tokens still receive the public catalog.
+  let profile = null;
+  let certifications = [];
+  const token = getBearerToken(request);
+  if (token && isCustomerAuthConfigured(env)) {
+    try {
+      const identity = await verifySupabaseAccessToken(token, env);
+      const customerProfile = await ensureCustomerProfile(env, identity);
+      if (String(customerProfile && customerProfile.account_status || "active") === "active") {
+        profile = mapCustomerProfile(customerProfile);
+        const certificationRows = await env.DB.prepare(
+          `SELECT id, agency, agency_code, certification_name, certification_code, certification_category,
+                  certification_number, issued_on, expires_on, does_not_expire, is_professional,
+                  professional_status, professional_insurance_current, professional_facility, certifying_instructor,
+                  verification_status, created_at, updated_at
+           FROM customer_certifications WHERE user_id = ?
+           ORDER BY CASE verification_status WHEN 'verified' THEN 0 ELSE 1 END, issued_on DESC, created_at DESC`
+        ).bind(identity.userId).all();
+        certifications = (certificationRows.results || []).map(mapCustomerCertification);
+      }
+    } catch (_error) {
+      // Public browsing must not fail because an optional session is stale.
+    }
+  }
   return jsonResponse({
     ok: true,
     offerings,
-    profile: mapCustomerProfile(profile),
-    certifications: (certificationRows.results || []).map(mapCustomerCertification),
+    profile,
+    certifications,
     paymentsConfigured: Boolean(String(env.STRIPE_SECRET_KEY || "").trim()),
     stripePublishableKey: String(env.STRIPE_PUBLISHABLE_KEY || "").trim(),
   }, 200, { "Cache-Control": "no-store" });

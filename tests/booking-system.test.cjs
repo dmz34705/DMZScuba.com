@@ -23,8 +23,8 @@ test("booking storage separates offerings, customer requests, and payment state"
   assert.match(offeringModesMigration, /booking_mode = 'on_demand'/);
 });
 
-test("booking page requires an account and supports all three booking journeys", () => {
-  assert.match(page, /Sign in before you book/);
+test("booking page supports public browsing and all three booking journeys", () => {
+  assert.match(page, /browse every available option below without an account/i);
   assert.match(page, /data-booking-category="class"/);
   assert.match(page, /data-booking-category="trip"/);
   assert.match(page, /data-booking-category="event"/);
@@ -60,11 +60,11 @@ test("management console separates booking categories and availability types", (
   assert.match(managementClient, /Booking Status/);
 });
 
-test("booking APIs reject unauthenticated requests", async () => {
+test("booking catalog is public while booking mutations remain protected", async () => {
+  assert.match(workerSource, /public catalog/);
   const worker = await import(`data:text/javascript;base64,${Buffer.from(workerSource).toString("base64")}`);
   const env = { SUPABASE_URL: "https://example.supabase.co", SUPABASE_PUBLISHABLE_KEY: "public" };
   for (const request of [
-    new Request("https://dmzscuba.com/api/bookings/catalog"),
     new Request("https://dmzscuba.com/api/bookings", { method: "POST", body: "{}" }),
     new Request("https://dmzscuba.com/api/admin/bookings"),
   ]) {
