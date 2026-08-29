@@ -17,6 +17,9 @@
   const modeFilter = panel.querySelector("[data-booking-mode-filter]");
   const newButton = panel.querySelector("[data-booking-new]");
   const importButton = panel.querySelector("[data-booking-import]");
+  const requestTitle = panel.querySelector("[data-booking-request-title]");
+  const requestSubtitle = panel.querySelector("[data-booking-request-subtitle]");
+  const requestSwitches = Array.from(panel.querySelectorAll("[data-booking-request-view]"));
   const apiRoot = document.body.dataset.adminApi || document.body.dataset.mediaApi || "";
   let bookings = [];
   let offerings = [];
@@ -24,6 +27,7 @@
   let selectedId = "";
   let loaded = false;
   let permissions = { administrator: false, professionalClassCreator: false };
+  let requestView = "active";
 
   const categoryNames = { class: "Classes", trip: "Dive Trips", event: "Local Events" };
   const categorySingular = { class: "Class", trip: "Dive Trip", event: "Local Event" };
@@ -54,11 +58,12 @@
 
   function renderSummary() {
     if (currentView === "requests") {
+      const visibleRequests = bookings.filter((item) => requestView === "previous" ? ["cancelled", "completed"].includes(item.status) : !["cancelled", "completed"].includes(item.status));
       summary.innerHTML = [
-        summaryCard(bookings.length, "Total requests"),
-        summaryCard(bookings.filter((item) => ["pending", "reviewing"].includes(item.status)).length, "Needs attention"),
-        summaryCard(bookings.filter((item) => item.status === "confirmed").length, "Confirmed"),
-        summaryCard(bookings.filter((item) => item.status === "completed").length, "Completed"),
+        summaryCard(visibleRequests.length, requestView === "previous" ? "Previous requests" : "Active requests"),
+        summaryCard(visibleRequests.filter((item) => ["pending", "reviewing"].includes(item.status)).length, "Needs attention"),
+        summaryCard(visibleRequests.filter((item) => item.status === "confirmed").length, "Confirmed"),
+        summaryCard(visibleRequests.filter((item) => item.status === "completed").length, "Completed"),
       ].join("");
       return;
     }
@@ -72,11 +77,12 @@
   }
 
   function renderRequests() {
-    bookingList.innerHTML = bookings.length ? bookings.map((item) => `
+    const visible = bookings.filter((item) => requestView === "previous" ? ["cancelled", "completed"].includes(item.status) : !["cancelled", "completed"].includes(item.status));
+    bookingList.innerHTML = visible.length ? visible.map((item) => `
       <button class="${item.id === selectedId ? "is-selected" : ""}" type="button" data-admin-booking="${esc(item.id)}">
         <span><strong>${esc(item.offering?.title || "Booking")}</strong><small>${esc(item.firstName)} ${esc(item.lastName)} &middot; ${esc(categorySingular[item.category] || "Booking")}</small></span>
         <span class="mgmt-booking-badge">${esc(item.status)}</span>
-      </button>`).join("") : '<div class="management-empty">No customer booking requests yet.</div>';
+      </button>`).join("") : `<div class="management-empty">No ${requestView === "previous" ? "previous" : "active"} booking requests.</div>`;
   }
 
   function visibleOfferings() {
@@ -122,6 +128,9 @@
     panelSubtitle.textContent = requestsView
       ? "Review customer requests and move each booking toward confirmation."
       : `Create ${categoryNames[currentView].toLowerCase()} customers can start on demand or book for a specific DMZ Scuba date.`;
+    requestTitle.textContent = requestView === "previous" ? "Previous Requests" : "Active Requests";
+    requestSubtitle.textContent = requestView === "previous" ? "Cancelled and completed requests remain available here for reference." : "Review current customer requests and move each booking toward confirmation.";
+    requestSwitches.forEach((button) => { const active = button.dataset.bookingRequestView === requestView; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); });
     listTitle.textContent = `${categorySingular[currentView] || "Booking"} Offerings`;
     newButton.textContent = `Create ${categorySingular[currentView] || "Offering"}`;
     newButton.disabled = permissions.professionalClassCreator && currentView !== "class";
@@ -205,6 +214,8 @@
   }
 
   panel.addEventListener("click", (event) => {
+    const requestViewButton = event.target.closest("[data-booking-request-view]");
+    if (requestViewButton) { requestView = requestViewButton.dataset.bookingRequestView === "previous" ? "previous" : "active"; selectedId = ""; editor.innerHTML = '<div class="management-empty">Select a request to review its details.</div>'; render(); return; }
     const viewButton = event.target.closest("[data-booking-admin-view]");
     if (viewButton) setView(viewButton.dataset.bookingAdminView);
     const bookingButton = event.target.closest("[data-admin-booking]");

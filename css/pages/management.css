@@ -5124,4 +5124,7 @@ body.mgmt-ie-open {
 .mgmt-booking-offering-form button[data-booking-delete] { border: 1px solid rgba(255, 120, 128, 0.72); background: #7f202b; color: #fff7f7; font-weight: 850; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
 .mgmt-booking-offering-form .btn.danger:hover,
 .mgmt-booking-offering-form button[data-booking-delete]:hover { border-color: #ffb3b8; background: #a52d3a; color: #fff; }
+.mgmt-booking-request-switch { display: flex; gap: 7px; margin-top: 13px; }
+.mgmt-booking-request-switch button { padding: 7px 11px; border: 1px solid rgba(155, 211, 255, .18); border-radius: 8px; background: rgba(155, 211, 255, .05); color: rgba(234, 242, 255, .65); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.mgmt-booking-request-switch button.is-active { border-color: rgba(85, 185, 255, .7); background: rgba(85, 185, 255, .18); color: #fff; }
 @media (max-width: 700px) { .mgmt-booking-insight-grid { grid-template-columns: 1fr; } .mgmt-booking-roster li { grid-template-columns: 1fr; } .mgmt-booking-roster small { grid-column: auto; grid-row: auto; } .mgmt-booking-offering-form .btn.danger { margin: 8px 0 0; } }
