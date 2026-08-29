@@ -1836,7 +1836,7 @@ function mapManagedCustomer(row) {
 }
 
 async function handleGetManagementAccess(request, env) {
-  const auth = await requireManagementIdentity(request, env, false);
+  const auth = await requireBookingOfferingIdentity(request, env);
   if (auth.response) return auth.response;
   return jsonResponse({
     ok: true,
@@ -1844,6 +1844,7 @@ async function handleGetManagementAccess(request, env) {
     email: auth.identity.email,
     roles: auth.roles,
     isAdministrator: auth.roles.includes("admin"),
+    isProfessionalBookingCreator: auth.roles.includes("instructor") && !auth.roles.some((role) => role === "staff" || role === "admin"),
     authMode: auth.legacy ? "legacy" : "account",
     accountArchiveDeletionConfigured: Boolean(getSupabaseAdminKey(env)),
   }, 200, { "Cache-Control": "no-store" });
@@ -2386,6 +2387,14 @@ function mapBookingOffering(row) {
   };
 }
 
+function getBookingOfferingDurationDays(startsOn, endsOn) {
+  if (!isDateKey(startsOn)) return null;
+  const start = new Date(`${startsOn}T12:00:00Z`);
+  const end = new Date(`${isDateKey(endsOn) ? endsOn : startsOn}T12:00:00Z`);
+  const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  return days > 0 && days < 3660 ? days : null;
+}
+
 function mapCustomerBooking(row) {
   return {
     id: String(row && row.id || ""),
@@ -2549,8 +2558,26 @@ async function handleCreateCustomerBooking(request, env) {
   }, 201);
 }
 
+async function requireBookingOfferingIdentity(request, env) {
+  const token = getBearerToken(request);
+  if (token && !token.includes(".") && await hasLegacyAdminSession(request, env)) {
+    return {
+      identity: { userId: "legacy-admin", email: "", sessionId: "legacy-admin", aal: "aal1", userMetadata: {} },
+      roles: ["staff", "admin"],
+      legacy: true,
+    };
+  }
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth;
+  const roles = await getCustomerRoles(env, auth.identity.userId);
+  if (!roles.some((role) => ["instructor", "staff", "admin"].includes(role))) {
+    return { response: jsonResponse({ ok: false, error: "Professional or Employee access is required." }, 403) };
+  }
+  return { ...auth, roles };
+}
+
 async function handleListAdminBookings(request, env) {
-  const auth = await requireManagementIdentity(request, env, false);
+  const auth = await requireBookingOfferingIdentity(request, env);
   if (auth.response) return auth.response;
   const [offeringRows, bookingRows] = await Promise.all([
     env.DB.prepare(`${bookingOfferingSelect()} ORDER BY o.active DESC, o.category, o.booking_mode, COALESCE(o.starts_on, '9999-12-31'), lower(o.title)`).all(),
@@ -2562,10 +2589,18 @@ async function handleListAdminBookings(request, env) {
        ORDER BY b.created_at DESC`
     ).all(),
   ]);
+  const allOfferings = (offeringRows.results || []).map((row) => ({ ...mapBookingOffering(row), bookedCount: Number(row.booked_count) || 0 }));
+  const allBookings = (bookingRows.results || []).map(mapCustomerBooking);
+  const professionalOnly = auth.roles.includes("instructor") && !auth.roles.some((role) => role === "staff" || role === "admin");
+  const offerings = (professionalOnly ? allOfferings.filter((item) => item.category === "class") : allOfferings).map((item) => {
+    const roster = allBookings.filter((booking) => booking.offeringId === item.id && booking.status !== "cancelled");
+    return { ...item, remaining: item.capacity > 0 ? Math.max(0, item.capacity - roster.length) : null, durationDays: getBookingOfferingDurationDays(item.startsOn, item.endsOn), registrants: roster.map((booking) => ({ id: booking.id, name: `${booking.firstName} ${booking.lastName}`.trim(), email: booking.email, phone: booking.phone, status: booking.status, createdAt: booking.createdAt })) };
+  });
   return jsonResponse({
     ok: true,
-    offerings: (offeringRows.results || []).map((row) => ({ ...mapBookingOffering(row), bookedCount: Number(row.booked_count) || 0 })),
-    bookings: (bookingRows.results || []).map(mapCustomerBooking),
+    offerings,
+    bookings: professionalOnly ? allBookings.filter((item) => item.category === "class") : allBookings,
+    permissions: { administrator: auth.roles.includes("admin"), professionalClassCreator: professionalOnly },
     paymentsConfigured: Boolean(String(env.STRIPE_SECRET_KEY || "").trim()),
   }, 200, { "Cache-Control": "no-store" });
 }
@@ -2597,13 +2632,17 @@ function normalizeBookingOffering(body, existing = {}) {
 }
 
 async function handleSaveBookingOffering(request, env, offeringId = "") {
-  const auth = await requireManagementIdentity(request, env, false);
+  const auth = await requireBookingOfferingIdentity(request, env);
   if (auth.response) return auth.response;
   const safeId = normalizeCustomerText(offeringId, 100) || crypto.randomUUID();
   const existing = offeringId ? await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ? LIMIT 1").bind(safeId).first() : null;
   if (offeringId && !existing) return jsonResponse({ ok: false, error: "Booking option not found." }, 404);
   const body = await request.json().catch(() => ({}));
   const item = normalizeBookingOffering(body.offering || body, existing || {});
+  const professionalOnly = auth.roles.includes("instructor") && !auth.roles.some((role) => role === "staff" || role === "admin");
+  if (professionalOnly && (existing || item.category !== "class" || item.bookingMode !== "scheduled")) {
+    return jsonResponse({ ok: false, error: "Professional accounts can create scheduled class listings only." }, 403);
+  }
   if (!item.title) return jsonResponse({ ok: false, error: "A booking title is required." }, 400);
   if (item.bookingMode === "scheduled" && !isDateKey(item.startsOn)) {
     return jsonResponse({ ok: false, error: "Choose a start date for this scheduled listing." }, 400);
@@ -2623,6 +2662,18 @@ async function handleSaveBookingOffering(request, env, offeringId = "") {
     item.currency, item.active ? 1 : 0, JSON.stringify(item.settings), createdAt, now).run();
   const saved = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ?").bind(safeId).first();
   return jsonResponse({ ok: true, offering: mapBookingOffering(saved) });
+}
+
+async function handleDeleteBookingOffering(request, env, offeringId) {
+  const auth = await requireManagementIdentity(request, env, true);
+  if (auth.response) return auth.response;
+  const safeId = normalizeCustomerText(offeringId, 100);
+  const existing = await env.DB.prepare("SELECT id, title FROM booking_offerings WHERE id = ? LIMIT 1").bind(safeId).first();
+  if (!existing) return jsonResponse({ ok: false, error: "Booking option not found." }, 404);
+  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM customer_bookings_v2 WHERE offering_id = ?").bind(safeId).first();
+  if (Number(count && count.count) > 0) return jsonResponse({ ok: false, error: "This booking option has customer history. Cancel or hide it instead of deleting it." }, 409);
+  await env.DB.prepare("DELETE FROM booking_offerings WHERE id = ?").bind(safeId).run();
+  return jsonResponse({ ok: true, message: "Booking option deleted." });
 }
 
 async function handleImportBookingOfferings(request, env) {
@@ -5955,6 +6006,8 @@ export default {
       response = await handleImportBookingOfferings(request, env);
     } else if (/^\/api\/admin\/booking-offerings\/[^/]+$/.test(pathname) && request.method === "PUT") {
       response = await handleSaveBookingOffering(request, env, decodeURIComponent(pathname.split("/")[4] || ""));
+    } else if (/^\/api\/admin\/booking-offerings\/[^/]+$/.test(pathname) && request.method === "DELETE") {
+      response = await handleDeleteBookingOffering(request, env, decodeURIComponent(pathname.split("/")[4] || ""));
     } else if (/^\/api\/admin\/bookings\/[^/]+$/.test(pathname) && request.method === "PUT") {
       response = await handleUpdateAdminBooking(request, env, decodeURIComponent(pathname.split("/")[4] || ""));
     } else if (pathname === "/api/admin/account-archives" && request.method === "GET") {

@@ -23,6 +23,7 @@
   let currentView = "requests";
   let selectedId = "";
   let loaded = false;
+  let permissions = { administrator: false, professionalClassCreator: false };
 
   const categoryNames = { class: "Classes", trip: "Dive Trips", event: "Local Events" };
   const categorySingular = { class: "Class", trip: "Dive Trip", event: "Local Event" };
@@ -110,6 +111,7 @@
   }
 
   function setView(view) {
+    if (permissions.professionalClassCreator && !["requests", "class"].includes(view)) view = "class";
     currentView = ["requests", "class", "trip", "event"].includes(view) ? view : "requests";
     const requestsView = currentView === "requests";
     requestColumn.hidden = !requestsView;
@@ -122,6 +124,7 @@
       : `Create ${categoryNames[currentView].toLowerCase()} customers can start on demand or book for a specific DMZ Scuba date.`;
     listTitle.textContent = `${categorySingular[currentView] || "Booking"} Offerings`;
     newButton.textContent = `Create ${categorySingular[currentView] || "Offering"}`;
+    newButton.disabled = permissions.professionalClassCreator && currentView !== "class";
     panel.querySelectorAll("[data-booking-admin-view]").forEach((button) => {
       const active = button.dataset.bookingAdminView === currentView;
       button.classList.toggle("is-active", active);
@@ -150,7 +153,15 @@
     selectedId = item.id || "";
     const category = ["class", "trip", "event"].includes(item.category) ? item.category : (currentView === "requests" ? "class" : currentView);
     const bookingMode = item.bookingMode === "scheduled" ? "scheduled" : "on_demand";
+    const roster = Array.isArray(item.registrants) ? item.registrants : [];
+    const days = item.durationDays ? `${item.durationDays} day${item.durationDays === 1 ? "" : "s"}` : "Customer schedule";
+    const capacity = item.capacity > 0 ? `${item.remaining} spot${item.remaining === 1 ? "" : "s"} remaining` : "Unlimited capacity";
     editor.innerHTML = `<p class="management-kicker">${item.id ? modeName(bookingMode) : `New ${categorySingular[category].toLowerCase()}`}</p><h2>${item.id ? esc(item.title) : `Create a ${categorySingular[category].toLowerCase()}`}</h2><form class="mgmt-booking-offering-form" data-admin-offering-form data-id="${esc(item.id)}"><label><span>Customer-facing title</span><input name="title" required value="${esc(item.title)}" placeholder="For example: Cozumel Dive Trip" /></label><label><span>Category</span><select name="category">${[["class", "Class"], ["trip", "Dive Trip"], ["event", "Local Event"]].map(([value, label]) => `<option value="${value}" ${category === value ? "selected" : ""}>${label}</option>`).join("")}</select></label><label><span>Availability Type</span><select name="bookingMode" data-offering-mode><option value="on_demand" ${bookingMode === "on_demand" ? "selected" : ""}>On demand — customer proposes dates</option><option value="scheduled" ${bookingMode === "scheduled" ? "selected" : ""}>Scheduled — DMZ Scuba sets the dates</option></select></label><p class="mgmt-booking-mode-note" data-offering-mode-note>${bookingMode === "scheduled" ? "Use this for a specific class session, trip departure, or local event." : "Use this for something DMZ Scuba can arrange when a customer is ready."}</p><label><span>Description</span><textarea name="description" rows="4" placeholder="Explain what is included and who this is for.">${esc(item.description)}</textarea></label><div data-offering-schedule ${bookingMode === "scheduled" ? "" : "hidden"}><div class="mgmt-booking-form-row"><label><span>Start date</span><input name="startsOn" type="date" value="${esc(item.startsOn)}" /></label><label><span>End date</span><input name="endsOn" type="date" value="${esc(item.endsOn)}" /></label></div></div><label><span>Location</span><input name="location" value="${esc(item.location)}" placeholder="DMZ Scuba HQ, Cozumel, local dive site..." /></label><div class="mgmt-booking-form-row"><label><span>Capacity (0 = unlimited)</span><input name="capacity" type="number" min="0" value="${Number(item.capacity) || 0}" /></label><label><span>Planned full price</span><input name="price" type="number" min="0" step="0.01" value="${((Number(item.priceCents) || 0) / 100).toFixed(2)}" /></label><label><span>Planned deposit</span><input name="deposit" type="number" min="0" step="0.01" value="${((Number(item.depositCents) || 0) / 100).toFixed(2)}" /></label></div><p class="mgmt-booking-mode-note">Prices are displayed for planning only. The site will not collect payment until checkout is enabled later.</p><label class="mgmt-booking-check"><input name="active" type="checkbox" ${item.active !== false ? "checked" : ""} /><span>Visible to customers</span></label><button class="btn primary" type="submit">Save ${categorySingular[category]}</button>${item.id ? `<button class="btn secondary" type="button" data-booking-duplicate="${esc(item.id)}">Create ${bookingMode === "scheduled" ? "On-Demand" : "Scheduled"} Copy</button>` : ""}</form>`;
+    if (item.id) {
+      const insight = `<div class="mgmt-booking-insight-grid"><article><strong>${roster.length}</strong><span>Signed up</span></article><article><strong>${esc(capacity)}</strong><span>Capacity</span></article><article><strong>${esc(days)}</strong><span>Schedule</span></article></div><section class="mgmt-booking-roster-panel"><h3>Customer roster</h3>${roster.length ? `<ul class="mgmt-booking-roster">${roster.map((person) => `<li><strong>${esc(person.name || "Registrant")}</strong><span>${esc(person.email)}${person.phone ? ` · ${esc(person.phone)}` : ""}</span><small>${esc(person.status)}</small></li>`).join("")}</ul>` : '<p class="management-empty management-empty-compact">No customers are signed up yet.</p>'}</section>`;
+      editor.insertAdjacentHTML("afterbegin", insight);
+      if (permissions.administrator) editor.querySelector("[data-admin-offering-form]")?.insertAdjacentHTML("beforeend", `<button class="btn danger" type="button" data-booking-delete="${esc(item.id)}">Delete booking item</button>`);
+    }
     render();
   }
 
@@ -172,6 +183,8 @@
       const data = await request("/api/admin/bookings");
       bookings = data.bookings || [];
       offerings = data.offerings || [];
+      permissions = { ...permissions, ...(data.permissions || {}) };
+      if (permissions.professionalClassCreator && !["requests", "class"].includes(currentView)) setView("class");
       loaded = true;
       render();
       setStatus(message);
@@ -191,6 +204,15 @@
     if (duplicateButton) {
       const source = offerings.find((item) => item.id === duplicateButton.dataset.bookingDuplicate);
       if (source) offeringEditor({ ...source, id: "", sourceId: "", sourceDate: "", bookingMode: source.bookingMode === "scheduled" ? "on_demand" : "scheduled", startsOn: "", endsOn: "", active: false });
+    }
+    const deleteButton = event.target.closest("[data-booking-delete]");
+    if (deleteButton) {
+      const item = offerings.find((entry) => entry.id === deleteButton.dataset.bookingDelete);
+      if (!item || !permissions.administrator) return;
+      if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return;
+      request(`/api/admin/booking-offerings/${encodeURIComponent(item.id)}`, { method: "DELETE" })
+        .then(() => load("Booking item deleted."))
+        .catch((error) => setStatus(error.message, true));
     }
   });
   panel.addEventListener("change", (event) => {
@@ -223,7 +245,7 @@
     }
   });
 
-  newButton.addEventListener("click", () => offeringEditor({ active: true, category: currentView, bookingMode: "on_demand" }));
+  newButton.addEventListener("click", () => offeringEditor({ active: true, category: currentView, bookingMode: permissions.professionalClassCreator ? "scheduled" : "on_demand" }));
   panel.querySelector("[data-booking-refresh]").addEventListener("click", () => load());
   importButton.addEventListener("click", async () => {
     try {

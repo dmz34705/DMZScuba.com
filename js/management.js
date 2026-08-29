@@ -66,6 +66,7 @@
   const siteStudioTabs = Array.from(app.querySelectorAll("[data-site-studio-tab]"));
   const siteStudioOpenButtons = Array.from(app.querySelectorAll("[data-site-studio-open]"));
   const siteStudioPanels = Array.from(app.querySelectorAll("[data-site-studio-panel]"));
+  let professionalBookingOnly = false;
   const extraFieldsSection = app.querySelector(".management-extra-fields");
   const classSessionTypes = ["classroom", "pool", "openWater"];
   const classSessionLabels = {
@@ -355,7 +356,18 @@
   function showAuthed(authed) {
     if (loginSection) loginSection.hidden = authed;
     if (dashboard) dashboard.hidden = !authed;
-    if (authed) openSiteStudioPanel("home");
+    if (authed) {
+      if (professionalBookingOnly) openSiteStudioPanel("bookings");
+      else openSiteStudioPanel("home");
+    }
+  }
+
+  function configureManagementAccess(access) {
+    const roles = Array.isArray(access && access.roles) ? access.roles : [];
+    professionalBookingOnly = roles.includes("instructor") && !roles.some((role) => role === "staff" || role === "admin");
+    if (!professionalBookingOnly) return;
+    siteStudioTabs.forEach((button) => { button.hidden = !["home", "bookings"].includes(button.getAttribute("data-site-studio-tab")); });
+    app.querySelectorAll("[data-site-studio-open], [data-filter-type], [data-more-toggle]").forEach((button) => { button.hidden = true; });
   }
 
   async function validateManagementAccess() {
@@ -3809,6 +3821,7 @@
       setStatus(loginStatus, "The console could not confirm your access. Please try again.", "error");
       return;
     }
+    configureManagementAccess(access);
     setStatus(loginStatus, "");
     const redirectTo = new URLSearchParams(window.location.search).get("redirect");
     if (redirectTo && redirectTo.startsWith("/")) {
@@ -4283,6 +4296,7 @@
       setStatus(loginStatus, "This login does not have Management Console access. Sign in with an Employee account or ask an administrator for help.", "error");
       return;
     }
+    configureManagementAccess(access);
     showAuthed(true);
     await loadRecords({ silent: true });
     await loadSiteCalendar({ silent: true });

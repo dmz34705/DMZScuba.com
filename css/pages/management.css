@@ -5106,3 +5106,18 @@ body.mgmt-ie-open {
   .mgmt-analytics-stats { grid-template-columns: 1fr; }
   .mgmt-analytics-stat { min-height: 112px; }
 }
+
+.mgmt-booking-insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 18px; }
+.mgmt-booking-insight-grid article { display: grid; gap: 5px; padding: 12px; border: 1px solid rgba(155, 211, 255, 0.15); border-radius: 10px; background: rgba(155, 211, 255, 0.05); }
+.mgmt-booking-insight-grid strong { color: var(--text); font-size: 16px; line-height: 1.2; }
+.mgmt-booking-insight-grid span { color: rgba(234, 242, 255, 0.58); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.mgmt-booking-roster-panel { margin: 0 0 18px; padding: 14px; border: 1px solid rgba(155, 211, 255, 0.14); border-radius: 12px; }
+.mgmt-booking-roster-panel h3 { margin: 0 0 10px; font-size: 15px; }
+.mgmt-booking-roster { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.mgmt-booking-roster li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.mgmt-booking-roster li:first-child { border-top: 0; }
+.mgmt-booking-roster strong { color: var(--text); font-size: 13px; }
+.mgmt-booking-roster span { min-width: 0; color: rgba(234,242,255,.64); font-size: 12px; overflow-wrap: anywhere; }
+.mgmt-booking-roster small { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: rgba(155,211,255,.8); font-size: 11px; text-transform: capitalize; }
+.mgmt-booking-offering-form .btn.danger { margin-left: 8px; }
+@media (max-width: 700px) { .mgmt-booking-insight-grid { grid-template-columns: 1fr; } .mgmt-booking-roster li { grid-template-columns: 1fr; } .mgmt-booking-roster small { grid-column: auto; grid-row: auto; } .mgmt-booking-offering-form .btn.danger { margin: 8px 0 0; } }
