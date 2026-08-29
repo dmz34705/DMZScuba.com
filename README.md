@@ -195,7 +195,7 @@ Clicking any dashboard row dispatches a navigation to the operations panel and o
 
 ### Funnel Analytics (`management-analytics.js`)
 
-The authenticated **Site Analytics** panel summarizes the privacy-limited `funnel_events` table without sending raw event rows to the browser. It defaults to live traffic and provides 7-, 30-, 90-, and 400-day views of course-page sessions, CTA clicks, form starts, completed inquiries, daily trends, course performance, traffic sources, and device mix. The dev Pages Function validates the existing management session against `admin_sessions` before running aggregate D1 queries.
+The authenticated **Site Analytics** panel summarizes the privacy-limited `funnel_events` table without sending raw event rows to the browser. It defaults to live traffic and provides 7-, 30-, 90-, and 400-day views of course-page sessions, CTA clicks, form starts, completed inquiries, daily trends, course performance, traffic sources, and device mix. The dev Pages Function accepts legacy `admin_sessions` tokens and validates website/mobile account sessions through the Worker's shared Employee/Administrator access check before running aggregate D1 queries.
 
 ### Bulk Select (`management-bulk.js`)
 

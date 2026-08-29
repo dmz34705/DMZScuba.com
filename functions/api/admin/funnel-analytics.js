@@ -1,5 +1,6 @@
 const ALLOWED_RANGES = new Set([7, 30, 90, 400]);
 const ALLOWED_ENVIRONMENTS = new Set(["live", "dev", "all"]);
+const MANAGEMENT_ACCESS_URL = "https://dmz-media-api.zacharylisowski55.workers.dev/api/admin/access";
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -87,16 +88,40 @@ const SUMMARY_SELECT = `
   MIN(received_at) AS first_event_at,
   MAX(received_at) AS last_event_at`;
 
-async function requireAnalyticsAuth(request, env) {
+async function requireAnalyticsAuth(request, env, fetchImpl = fetch) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-  if (!token || !env.DB) return false;
-  const row = await env.DB.prepare(
-    "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
-  )
-    .bind(token, new Date().toISOString())
-    .first();
-  return Boolean(row);
+  if (!token) return false;
+
+  // Preserve the original console login while account-based management access
+  // is adopted across the website and mobile app.
+  if (!token.includes(".") && env.DB) {
+    const row = await env.DB.prepare(
+      "SELECT token FROM admin_sessions WHERE token = ? AND expires_at > ?"
+    )
+      .bind(token, new Date().toISOString())
+      .first();
+    if (row) return true;
+  }
+
+  // Supabase account sessions are validated by the Worker, which is the
+  // authoritative source for Employee and Administrator roles.
+  try {
+    const response = await fetchImpl(MANAGEMENT_ACCESS_URL, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) return false;
+    const result = await response.json().catch(() => null);
+    return Boolean(result && result.ok && Array.isArray(result.roles)
+      && result.roles.some((role) => role === "staff" || role === "admin"));
+  } catch (error) {
+    console.error("Funnel Analytics access validation failed", error);
+    return false;
+  }
 }
 
 function statement(env, sql, bindings) {
@@ -231,4 +256,5 @@ export {
   onRequestGet,
   onRequestOptions,
   parseAnalyticsFilters,
+  requireAnalyticsAuth,
 };

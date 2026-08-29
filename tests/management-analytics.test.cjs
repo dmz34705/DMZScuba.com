@@ -82,6 +82,52 @@ test("analytics endpoint requires a valid management session", async () => {
   assert.equal(batchCalled, false);
 });
 
+test("analytics accepts an account session with a management role", async () => {
+  const { requireAnalyticsAuth } = await functionModulePromise;
+  let requestedUrl = "";
+  let requestedAuthorization = "";
+  const allowed = await requireAnalyticsAuth(
+    new Request("https://example.test/api/admin/funnel-analytics", {
+      headers: { Authorization: "Bearer header.payload.signature" },
+    }),
+    {
+      DB: {
+        prepare() {
+          throw new Error("Supabase sessions must not use the legacy token table.");
+        },
+      },
+    },
+    async (url, options) => {
+      requestedUrl = url;
+      requestedAuthorization = options.headers.Authorization;
+      return new Response(JSON.stringify({ ok: true, roles: ["customer", "admin"] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  );
+
+  assert.equal(allowed, true);
+  assert.equal(requestedUrl, "https://dmz-media-api.zacharylisowski55.workers.dev/api/admin/access");
+  assert.equal(requestedAuthorization, "Bearer header.payload.signature");
+});
+
+test("analytics rejects an account session without a management role", async () => {
+  const { requireAnalyticsAuth } = await functionModulePromise;
+  const allowed = await requireAnalyticsAuth(
+    new Request("https://example.test/api/admin/funnel-analytics", {
+      headers: { Authorization: "Bearer header.payload.signature" },
+    }),
+    { DB: {} },
+    async () => new Response(JSON.stringify({ ok: true, roles: ["customer"] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  );
+
+  assert.equal(allowed, false);
+});
+
 test("analytics endpoint returns aggregate-only D1 reporting", async () => {
   const { onRequestGet } = await functionModulePromise;
   const prepared = [];
