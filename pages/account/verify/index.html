@@ -27,9 +27,11 @@
         <form class="account-form" data-account-flow-form>
           <label><span>Email Address</span><input type="email" name="email" autocomplete="email" readonly /></label>
           <label><span>Verification Code</span><input class="account-code-input" type="text" name="token" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required autofocus /></label>
+          <div class="account-turnstile" data-account-flow-turnstile aria-label="Security check"></div>
           <button class="btn primary" type="submit">Verify Email</button>
           <p class="account-form-status" data-account-flow-status aria-live="polite"></p>
         </form>
+        <button class="account-text-button" type="button" data-account-flow-resend>Didn’t receive it? Resend code</button>
       </div>
     </section>
   </main>

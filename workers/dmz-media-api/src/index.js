@@ -1239,6 +1239,24 @@ async function handleCustomerSignup(request, env) {
   );
 }
 
+async function handleCustomerResendVerification(request, env) {
+  const body = await request.json().catch(() => ({}));
+  const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
+  const captchaToken = getCustomerCaptchaToken(body);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Enter a valid email address." }, 400);
+  }
+  if (!getCustomerTurnstileSiteKey(env)) return jsonResponse({ ok: false, error: "Customer signup abuse protection is not configured yet." }, 503);
+  if (!captchaToken) return jsonResponse({ ok: false, error: "Complete the security check before resending." }, 400);
+  const result = await callSupabaseAuth(env, "/resend", {
+    type: "signup",
+    email,
+    gotrue_meta_security: { captcha_token: captchaToken },
+  });
+  if (!result.ok) return jsonResponse({ ok: false, error: getSupabaseAuthError(result, "We could not resend the verification code. Please try again.") }, result.status || 400);
+  return jsonResponse({ ok: true, message: "A new verification code is on its way. Check your inbox and spam folder." }, 200, { "Cache-Control": "no-store" });
+}
+
 async function handleCustomerVerify(request, env) {
   const body = await request.json().catch(() => ({}));
   const email = String(body.email || "").trim().toLowerCase().slice(0, 180);
@@ -5986,6 +6004,8 @@ export default {
       response = handleGetCertificationCatalog();
     } else if (pathname === "/api/account/auth/signup" && request.method === "POST") {
       response = await handleCustomerSignup(request, env);
+    } else if (pathname === "/api/account/auth/resend" && request.method === "POST") {
+      response = await handleCustomerResendVerification(request, env);
     } else if (pathname === "/api/account/auth/verify" && request.method === "POST") {
       response = await handleCustomerVerify(request, env);
     } else if (pathname === "/api/account/auth/login" && request.method === "POST") {

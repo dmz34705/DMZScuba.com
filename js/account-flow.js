@@ -13,6 +13,7 @@
   const form = app.querySelector("[data-account-flow-form]");
   const status = app.querySelector("[data-account-flow-status]");
   const submitButton = form?.querySelector('button[type="submit"]');
+  const resendButton = app.querySelector("[data-account-flow-resend]");
   let accessToken = "";
   let turnstileSiteKey = "";
   let captchaToken = "";
@@ -280,6 +281,37 @@
     }
   }
 
+  async function handleResend() {
+    if (flow !== "verify") return;
+    const pending = readSessionValue(pendingFlowStorageKey);
+    if (!pending?.email || pending.type !== "signup") {
+      setMessage("Start account creation again to request a new verification code.", true);
+      return;
+    }
+    if (!captchaToken) {
+      setMessage("Complete the security check before resending.", true);
+      return;
+    }
+    const token = consumeCaptcha();
+    resendButton.disabled = true;
+    setMessage("Sending a new verification code...");
+    try {
+      const data = await apiRequest("/api/account/auth/resend", { method: "POST", body: JSON.stringify({ email: pending.email, captchaToken: token }) });
+      setMessage(data.message || "A new verification code is on its way. Check your inbox and spam folder.");
+      renewCaptcha();
+      let remaining = 30;
+      const timer = window.setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) { window.clearInterval(timer); resendButton.disabled = false; resendButton.textContent = "Didn’t receive it? Resend code"; }
+        else resendButton.textContent = `Resend code (${remaining}s)`;
+      }, 1000);
+    } catch (error) {
+      setMessage(error.message, true);
+      resendButton.disabled = false;
+      renewCaptcha();
+    }
+  }
+
   async function handlePasswordReset(event) {
     event.preventDefault();
     const password = form.elements.password.value;
@@ -331,6 +363,7 @@
       turnstileSiteKey = String(authStatus.turnstileSiteKey || "").trim();
       await initTurnstile();
     } else if (flow === "verify") {
+      turnstileSiteKey = String(authStatus.turnstileSiteKey || "").trim();
       const pending = readSessionValue(pendingFlowStorageKey);
       const emailInput = form?.elements.email;
       const step = app.querySelector("[data-account-flow-step]");
@@ -343,6 +376,7 @@
         return;
       }
       if (emailInput) emailInput.value = pending.email;
+      if (pending.type === "signup") await initTurnstile();
       if (pending.type === "recovery") {
         if (step) step.textContent = "Password recovery · Step 2 of 3";
         if (heading) heading.textContent = "Verify your email";
@@ -360,6 +394,7 @@
   if (flow === "signup") form?.addEventListener("submit", handleSignup);
   if (flow === "recovery") form?.addEventListener("submit", handleRecovery);
   if (flow === "verify") form?.addEventListener("submit", handleVerification);
+  resendButton?.addEventListener("click", handleResend);
   if (flow === "reset") form?.addEventListener("submit", handlePasswordReset);
   init();
 })();
