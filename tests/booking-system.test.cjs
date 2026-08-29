@@ -24,7 +24,7 @@ test("booking storage separates offerings, customer requests, and payment state"
 });
 
 test("booking page supports public browsing and all three booking journeys", () => {
-  assert.match(page, /browse every available option below without an account/i);
+  assert.match(page, /browse every available option above without an account/i);
   assert.match(page, /data-booking-category="class"/);
   assert.match(page, /data-booking-category="trip"/);
   assert.match(page, /data-booking-category="event"/);
