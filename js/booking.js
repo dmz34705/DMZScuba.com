@@ -156,11 +156,16 @@
       offerings = Array.isArray(data.offerings) ? data.offerings : [];
       profile = data.profile || {};
       certifications = Array.isArray(data.certifications) ? data.certifications : [];
-      if (accessToken) sessionStorage.removeItem(returnPathKey);
-      gate.hidden = Boolean(accessToken);
+      const authenticated = Boolean(accessToken && data.profile);
+      if (!authenticated && accessToken) {
+        accessToken = "";
+        sessionStorage.removeItem(tokenKey);
+      }
+      if (authenticated) sessionStorage.removeItem(returnPathKey);
+      gate.hidden = authenticated;
       workspace.hidden = false;
       renderCatalog();
-      setMessage(status, accessToken ? "Choose an option to begin." : "Browse the options below. Sign in only when you are ready to start a booking.");
+      setMessage(status, authenticated ? "Choose an option to begin." : "Browse the options below. Sign in only when you are ready to start a booking.");
     } catch (error) {
       const signedOut = Number(error && error.status) === 401;
       if (signedOut) sessionStorage.setItem(returnPathKey, "/pages/book/");
