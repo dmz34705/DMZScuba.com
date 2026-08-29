@@ -7,6 +7,7 @@ body { background: #06111f; color: #eef6ff; }
 .booking-eyebrow, .booking-card-type { color: #8fd4ff; font-size: 12px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 .booking-gate, .booking-workspace, .booking-success { border: 1px solid var(--book-line); border-radius: 20px; background: var(--book-card); box-shadow: 0 28px 80px rgba(0,0,0,.22); }
 .booking-gate { max-width: 720px; padding: clamp(24px, 5vw, 48px); }
+.booking-gate--below-catalog { max-width: none; margin-top: 30px; padding: clamp(22px, 4vw, 34px); background: linear-gradient(135deg, rgba(72,171,232,.12), rgba(8,27,45,.88) 58%); }
 .booking-gate h2, .booking-success h2 { margin: 7px 0 10px; }
 .booking-gate p:not(.booking-eyebrow), .booking-success p:not(.booking-eyebrow) { color: #afc3d6; line-height: 1.6; }
 .booking-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }

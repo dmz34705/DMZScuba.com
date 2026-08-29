@@ -21,18 +21,6 @@
       <p>Choose a class, local event, or dive trip. Your DMZ account keeps the booking connected across the website and mobile apps.</p>
     </section>
 
-    <section class="booking-gate" data-booking-gate>
-      <div>
-        <p class="booking-eyebrow">Secure booking</p>
-        <h2>Ready to book?</h2>
-        <p>You can browse every available option below without an account. When you choose one, sign in or create a free verified account to securely save your details and submit the request.</p>
-        <div class="booking-actions">
-          <a class="btn primary" href="/pages/account/?return=booking" data-booking-auth-link>Sign In</a>
-          <a class="btn secondary" href="/pages/account/create/?return=booking" data-booking-auth-link>Create Account</a>
-        </div>
-      </div>
-    </section>
-
     <section class="booking-workspace" data-booking-workspace hidden>
       <header class="booking-section-heading">
         <div><p class="booking-eyebrow">Step 1</p><h2>What would you like to book?</h2></div>
@@ -45,6 +33,18 @@
       </div>
       <p class="booking-status" data-booking-status aria-live="polite">Loading available bookings...</p>
       <div class="booking-catalog" data-booking-catalog></div>
+
+      <section class="booking-gate booking-gate--below-catalog" data-booking-gate>
+        <div>
+          <p class="booking-eyebrow">Secure booking</p>
+          <h2>Ready to book?</h2>
+          <p>You can browse every available option above without an account. When you choose one, sign in or create a free verified account to securely save your details and submit the request.</p>
+          <div class="booking-actions">
+            <a class="btn primary" href="/pages/account/?return=booking" data-booking-auth-link>Sign In</a>
+            <a class="btn secondary" href="/pages/account/create/?return=booking" data-booking-auth-link>Create Account</a>
+          </div>
+        </div>
+      </section>
 
       <section class="booking-form-shell" data-booking-form-shell hidden aria-labelledby="booking-form-title">
         <button class="booking-back" type="button" data-booking-back>&larr; Back to choices</button>
