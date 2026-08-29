@@ -367,6 +367,7 @@
     professionalBookingOnly = roles.includes("instructor") && !roles.some((role) => role === "staff" || role === "admin");
     if (!professionalBookingOnly) return;
     siteStudioTabs.forEach((button) => { button.hidden = !["home", "bookings"].includes(button.getAttribute("data-site-studio-tab")); });
+    app.querySelectorAll("[data-booking-open]").forEach((button) => { button.hidden = !["requests", "class"].includes(button.getAttribute("data-booking-open")); });
     app.querySelectorAll("[data-site-studio-open], [data-filter-type], [data-more-toggle]").forEach((button) => { button.hidden = true; });
   }
 
