@@ -32,6 +32,11 @@
     : "Plan dates with DMZ Scuba";
   const categoryLabel = (category) => category === "class" ? "Class" : category === "trip" ? "Dive Trip" : "Local Event";
   const modeLabel = (item) => item.bookingMode === "scheduled" ? "Scheduled by DMZ Scuba" : "Available on demand";
+  const priceLabel = (item) => {
+    const fullPrice = Number(item.priceCents) || 0;
+    const deposit = Number(item.depositCents) || 0;
+    return `<div><dt>Full price</dt><dd>${escapeHtml(money(fullPrice, item.currency))}</dd></div>${deposit > 0 ? `<div><dt>Deposit to reserve</dt><dd>${escapeHtml(money(deposit, item.currency))}</dd></div>` : ""}`;
+  };
 
   async function parse(response) {
     const data = await response.json().catch(() => ({}));
@@ -91,7 +96,7 @@
           <article class="booking-card">
             <div><span class="booking-card-type">${escapeHtml(categoryLabel(item.category))} &middot; ${escapeHtml(modeLabel(item))}</span><h3>${escapeHtml(item.title)}</h3></div>
             <p>${escapeHtml(item.description || "Open this booking to share your details and preferences with DMZ Scuba.")}</p>
-            <dl><div><dt>${item.bookingMode === "scheduled" ? "Date" : "Schedule"}</dt><dd>${escapeHtml(date(item.startsOn))}</dd></div>${item.location ? `<div><dt>Location</dt><dd>${escapeHtml(item.location)}</dd></div>` : ""}<div><dt>Pricing</dt><dd>${escapeHtml(money(item.depositCents || item.priceCents, item.currency))}</dd></div></dl>
+            <dl><div><dt>${item.bookingMode === "scheduled" ? "Date" : "Schedule"}</dt><dd>${escapeHtml(date(item.startsOn))}</dd></div>${item.location ? `<div><dt>Location</dt><dd>${escapeHtml(item.location)}</dd></div>` : ""}${priceLabel(item)}</dl>
             ${item.remaining !== null ? `<small>${item.remaining} spot${item.remaining === 1 ? "" : "s"} currently available</small>` : ""}
             <button class="btn primary" type="button" data-select-offering="${escapeHtml(item.id)}" ${item.remaining === 0 ? "disabled" : ""}>${item.remaining === 0 ? "Currently Full" : item.bookingMode === "scheduled" ? "Request This Spot" : "Start Planning"}</button>
           </article>`).join("")}</div>
@@ -138,8 +143,9 @@
     diveFields.disabled = selected.category === "class";
     syncHouseCallAddress();
 
-    const due = selected.depositCents || selected.priceCents;
-    app.querySelector("[data-booking-review]").innerHTML = `<strong>${due > 0 ? `Planned deposit: ${escapeHtml(money(due, selected.currency))}` : "Pricing confirmed after review"}</strong><span>No payment will be collected today. DMZ Scuba will confirm availability, details, and pricing first.</span>`;
+    const due = Number(selected.depositCents) || 0;
+    const fullPrice = Number(selected.priceCents) || 0;
+    app.querySelector("[data-booking-review]").innerHTML = `<strong>${fullPrice > 0 ? `Full price: ${escapeHtml(money(fullPrice, selected.currency))}${due > 0 ? ` · Deposit: ${escapeHtml(money(due, selected.currency))}` : ""}` : "Pricing confirmed after review"}</strong><span>No payment will be collected today. DMZ Scuba will confirm availability, details, and pricing first.</span>`;
     formShell.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
