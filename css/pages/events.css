@@ -207,12 +207,17 @@
 }
 
 .events-embed-frame-wrap {
+  display: none;
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.08);
   background:
     radial-gradient(300px 180px at 0% 0%, rgba(85,185,255,0.10), rgba(85,185,255,0)),
     rgba(7, 19, 37, 0.78);
   overflow: hidden;
+}
+
+body.events-authenticated .events-embed-frame-wrap {
+  display: block;
 }
 
 .events-embed-frame {
