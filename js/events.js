@@ -269,6 +269,31 @@
     return generated.sort((a, b) => a.dateObj - b.dateObj);
   }
 
+  function mergeBookingOfferings(payload, catalogData) {
+    const safePayload = payload && typeof payload === "object" ? payload : {};
+    const scheduled = Array.isArray(catalogData && catalogData.offerings)
+      ? catalogData.offerings.filter((item) => item && item.active !== false && item.bookingMode === "scheduled" && item.startsOn)
+      : [];
+    if (!scheduled.length) return safePayload;
+    const existing = Array.isArray(safePayload.events) ? safePayload.events : [];
+    const existingIds = new Set(existing.map((item) => normalizeText(item && item.id)).filter(Boolean));
+    const bookingEvents = scheduled.filter((item) => !existingIds.has(`booking-${item.id}`)).map((item) => ({
+      id: `booking-${item.id}`,
+      eventId: `booking-${item.id}`,
+      sourceId: `booking-${item.id}`,
+      bookingOfferingId: item.id,
+      title: item.title,
+      type: item.category === "class" ? "Training" : item.category === "trip" ? "Travel" : "Local Dive",
+      summary: item.description || "Scheduled DMZ Scuba booking.",
+      date: item.startsOn,
+      endDate: item.endsOn || item.startsOn,
+      location: item.location || "DMZ Scuba",
+      ctaLabel: "Book this",
+      registrationEnabled: false,
+    }));
+    return { ...safePayload, events: existing.concat(bookingEvents) };
+  }
+
   function buildMonthGroups(events, horizonMonths) {
     const today = startOfDay(new Date());
     const currentMonth = startOfMonth(today);
@@ -701,8 +726,10 @@
         if (!registrationEnabled) {
           const actionLink = document.createElement("a");
           actionLink.className = "btn secondary";
-          actionLink.href = ctaHref;
-          actionLink.textContent = ctaLabel || "Contact Us";
+          actionLink.href = eventItem.bookingOfferingId
+            ? `/pages/book/?offering=${encodeURIComponent(eventItem.bookingOfferingId)}`
+            : ctaHref;
+          actionLink.textContent = eventItem.bookingOfferingId ? "Book this" : (ctaLabel || "Contact Us");
           actions.appendChild(actionLink);
         }
         actions.appendChild(shareBtn);
@@ -1855,7 +1882,10 @@
         return loadPayload(fallbackDataUrl);
       })
       .then((payload) => {
-        applyPayload(payload);
+        return fetch("/api/bookings/catalog", { headers: { Accept: "application/json" }, cache: "no-store" })
+          .then((response) => response.ok ? response.json() : {})
+          .catch(() => ({}))
+          .then((catalogData) => applyPayload(mergeBookingOfferings(payload, catalogData)));
       })
       .catch(() => {
         renderError();

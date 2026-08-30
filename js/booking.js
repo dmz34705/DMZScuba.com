@@ -177,6 +177,7 @@
       setMessage(status, authenticated ? "Choose an option to begin." : "Browse the options below. Sign in only when you are ready to start a booking.");
       let pendingOffering = "";
       try { pendingOffering = sessionStorage.getItem(pendingOfferingKey) || ""; } catch (_error) { /* optional */ }
+      if (!pendingOffering) pendingOffering = new URLSearchParams(window.location.search).get("offering") || "";
       if (authenticated && pendingOffering) {
         try { sessionStorage.removeItem(pendingOfferingKey); } catch (_error) { /* optional */ }
         selectOffering(pendingOffering);
