@@ -2395,6 +2395,7 @@ function mapBookingOffering(row) {
     bookingMode: String(row && row.booking_mode || (row && row.starts_on ? "scheduled" : "on_demand")),
     title: String(row && row.title || ""),
     description: String(row && row.description || ""),
+    longDescriptionHtml: String(row && row.long_description_html || ""),
     location: String(row && row.location || ""),
     startsOn: String(row && row.starts_on || ""),
     endsOn: String(row && row.ends_on || ""),
@@ -2661,6 +2662,7 @@ function normalizeBookingOffering(body, existing = {}) {
     bookingMode,
     title: normalizeCustomerText(body.title != null ? body.title : existing.title, 180),
     description: normalizeCustomerText(body.description != null ? body.description : existing.description, 2000),
+    longDescriptionHtml: String(body.longDescriptionHtml != null ? body.longDescriptionHtml : (existing.long_description_html || "")).slice(0, 50000),
     location: normalizeCustomerText(body.location != null ? body.location : existing.location, 180),
     startsOn: bookingMode === "scheduled" ? normalizeCustomerText(body.startsOn != null ? body.startsOn : existing.starts_on, 10) : "",
     endsOn: bookingMode === "scheduled" ? normalizeCustomerText(body.endsOn != null ? body.endsOn : existing.ends_on, 10) : "",
@@ -2696,10 +2698,10 @@ async function handleSaveBookingOffering(request, env, offeringId = "") {
   const createdAt = existing && existing.created_at || now;
   await env.DB.prepare(
     `INSERT OR REPLACE INTO booking_offerings
-     (id, source_id, source_date, category, booking_mode, title, description, location, starts_on, ends_on,
+     (id, source_id, source_date, category, booking_mode, title, description, long_description_html, location, starts_on, ends_on,
       capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(safeId, item.sourceId || null, item.sourceDate || null, item.category, item.bookingMode, item.title, item.description,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(safeId, item.sourceId || null, item.sourceDate || null, item.category, item.bookingMode, item.title, item.description, item.longDescriptionHtml,
     item.location, item.startsOn || null, item.endsOn || null, item.capacity, item.priceCents, item.depositCents,
     item.currency, item.active ? 1 : 0, JSON.stringify(item.settings), createdAt, now).run();
   const saved = await env.DB.prepare("SELECT * FROM booking_offerings WHERE id = ?").bind(safeId).first();
@@ -2730,11 +2732,11 @@ async function handleImportBookingOfferings(request, env) {
     const category = type === "training" ? "class" : type === "travel" ? "trip" : "event";
     return env.DB.prepare(
       `INSERT OR IGNORE INTO booking_offerings
-       (id, source_id, source_date, category, booking_mode, title, description, location, starts_on, ends_on,
+       (id, source_id, source_date, category, booking_mode, title, description, long_description_html, location, starts_on, ends_on,
         capacity, price_cents, deposit_cents, currency, active, settings_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'scheduled', ?, ?, ?, ?, ?, ?, 0, 0, 'usd', ?, '{}', ?, ?)`
+       VALUES (?, ?, ?, ?, 'scheduled', ?, ?, ?, ?, ?, ?, ?, 0, 0, 'usd', ?, '{}', ?, ?)`
     ).bind(crypto.randomUUID(), String(item.id || ""), String(item.date || ""), category, String(item.title || "Upcoming booking"),
-      String(item.summary || ""), String(item.location || ""), String(item.date || ""), String(item.endDate || item.date || ""),
+      String(item.summary || ""), "", String(item.location || ""), String(item.date || ""), String(item.endDate || item.date || ""),
       Math.max(0, Number(item.registrationCapacity) || 0), item.registrationEnabled && !item.registrationClosed ? 1 : 0, now, now);
   });
   if (statements.length) await env.DB.batch(statements);

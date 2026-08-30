@@ -98,7 +98,7 @@
             <p>${escapeHtml(item.description || "Open this booking to share your details and preferences with DMZ Scuba.")}</p>
             <dl><div><dt>${item.bookingMode === "scheduled" ? "Date" : "Schedule"}</dt><dd>${escapeHtml(date(item.startsOn))}</dd></div>${item.location ? `<div><dt>Location</dt><dd>${escapeHtml(item.location)}</dd></div>` : ""}${priceLabel(item)}</dl>
             ${item.remaining !== null ? `<small>${item.remaining} spot${item.remaining === 1 ? "" : "s"} currently available</small>` : ""}
-            <button class="btn primary" type="button" data-select-offering="${escapeHtml(item.id)}" ${item.remaining === 0 ? "disabled" : ""}>${item.remaining === 0 ? "Currently Full" : item.bookingMode === "scheduled" ? "Request This Spot" : "Start Planning"}</button>
+            <div class="booking-card-actions"><a class="btn secondary" href="/pages/events/detail/?id=${encodeURIComponent(item.id)}">Learn More</a><button class="btn primary" type="button" data-select-offering="${escapeHtml(item.id)}" ${item.remaining === 0 ? "disabled" : ""}>${item.remaining === 0 ? "Currently Full" : item.bookingMode === "scheduled" ? "Request This Spot" : "Start Planning"}</button></div>
           </article>`).join("")}</div>
       </section>`;
     }).join("");

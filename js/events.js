@@ -734,6 +734,13 @@
             : ctaHref;
           actionLink.textContent = eventItem.bookingOfferingId ? "Book this" : (ctaLabel || "Contact Us");
           actions.appendChild(actionLink);
+          if (eventItem.bookingOfferingId) {
+            const learnLink = document.createElement("a");
+            learnLink.className = "btn secondary";
+            learnLink.href = `/pages/events/detail/?id=${encodeURIComponent(eventItem.bookingOfferingId)}`;
+            learnLink.textContent = "Learn More";
+            actions.appendChild(learnLink);
+          }
         }
         actions.appendChild(shareBtn);
         body.appendChild(actions);
