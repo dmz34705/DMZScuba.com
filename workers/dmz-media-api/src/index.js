@@ -5968,6 +5968,124 @@ async function handleClientTelemetry(request, env, context) {
   return jsonResponse({ ok: true, persisted });
 }
 
+const VISION_GEMINI_MODEL = "gemini-3.6-flash";
+const VISION_MAX_BASE64_CHARS = 9000000; // ~6.5MB raw image, comfortably under Gemini's inline-data limit
+
+const VISION_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    category: { type: "STRING", enum: ["marine_life", "gear", "unclear"] },
+    commonName: { type: "STRING" },
+    scientificName: { type: "STRING", nullable: true },
+    confidence: { type: "STRING", enum: ["high", "medium", "low"] },
+    description: { type: "STRING" },
+    safetyNote: { type: "STRING", nullable: true },
+    funFact: { type: "STRING", nullable: true },
+  },
+  required: ["category", "commonName", "confidence", "description"],
+};
+
+const VISION_PROMPT = `You are Dive Lens, an identification assistant inside the DMZ Scuba mobile app. A recreational scuba diver or snorkeler has submitted a photo taken above or below water. Identify the single most prominent subject in the photo.
+
+Rules:
+- If the subject is an animal, plant, or coral, set category to "marine_life" and give its common name and, if you're confident, its scientific (Latin binomial) name.
+- If the subject is scuba/snorkeling/dive gear or equipment, set category to "gear" and name the item and, if identifiable, its likely type or use.
+- If you cannot confidently identify a marine-life or gear subject in the photo, set category to "unclear", briefly explain what you do see in description, and leave scientificName/safetyNote/funFact null.
+- Be honest about uncertainty — reflect it in the confidence field rather than hedging in the description.
+- If the subject could be venomous, dangerous, an endangered/protected species, or otherwise something a diver should not touch or approach, ALWAYS fill in safetyNote with a short, clear warning. Otherwise leave safetyNote null.
+- Keep description to 2-3 friendly, educational sentences.
+- funFact is optional: one interesting sentence, or null.
+- Respond ONLY with JSON matching the provided schema.`;
+
+async function handleVisionIdentify(request, env) {
+  const apiKey = String(env.GEMINI_API_KEY || "").trim();
+  if (!apiKey) {
+    return jsonResponse({ ok: false, error: "Dive Lens is not configured yet." }, 500);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : "";
+  const mimeType =
+    typeof body.mimeType === "string" && body.mimeType.startsWith("image/") ? body.mimeType : "image/jpeg";
+
+  if (!imageBase64) {
+    return jsonResponse({ ok: false, error: "No image was provided." }, 400);
+  }
+  if (imageBase64.length > VISION_MAX_BASE64_CHARS) {
+    return jsonResponse({ ok: false, error: "That photo is too large. Try a smaller or more compressed image." }, 413);
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+  let geminiResponse;
+  try {
+    geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${VISION_GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: VISION_PROMPT }, { inlineData: { mimeType, data: imageBase64 } }],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: VISION_RESPONSE_SCHEMA,
+            temperature: 0.2,
+          },
+        }),
+      }
+    );
+  } catch (error) {
+    const timedOut = error && error.name === "AbortError";
+    return jsonResponse(
+      {
+        ok: false,
+        error: timedOut
+          ? "Dive Lens took too long to respond. Please try again."
+          : "The identification service could not be reached.",
+      },
+      timedOut ? 504 : 502
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!geminiResponse.ok) {
+    const errorBody = await geminiResponse.text().catch(() => "");
+    console.error("Dive Lens Gemini error", geminiResponse.status, errorBody.slice(0, 500));
+    const status = geminiResponse.status === 429 ? 429 : 502;
+    const message =
+      status === 429
+        ? "Dive Lens is busy right now. Please try again in a moment."
+        : "That photo could not be analyzed. Try a clearer, closer shot.";
+    return jsonResponse({ ok: false, error: message }, status);
+  }
+
+  const data = await geminiResponse.json().catch(() => null);
+  const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
+    ? data.candidates[0].content.parts?.[0]?.text
+    : null;
+  if (!text) {
+    console.error("Dive Lens Gemini unexpected response", JSON.stringify(data).slice(0, 800));
+    return jsonResponse({ ok: false, error: "That photo could not be analyzed. Try a clearer, closer shot." }, 502);
+  }
+
+  let result;
+  try {
+    result = JSON.parse(text);
+  } catch (error) {
+    return jsonResponse({ ok: false, error: "That photo could not be analyzed. Try a clearer, closer shot." }, 502);
+  }
+
+  return jsonResponse({ ok: true, result });
+}
+
 export {
   buildFunnelEventRecord,
   buildPublicRegistrationSnapshot,
@@ -6173,6 +6291,8 @@ export default {
       } else if (request.method === "DELETE") {
         response = await handleDeleteMedia(request, env, id);
       }
+    } else if (pathname === "/api/vision/identify" && request.method === "POST") {
+      response = await handleVisionIdentify(request, env);
     }
 
     if (!response) {
