@@ -804,16 +804,17 @@
                 <div data-class-registration-list></div>
               </div>
             </details>
+            <p class="management-form-note management-legacy-registration-note">Accountless calendar registration is retired. Use Booking Center offerings for all classes, trips, and local events. Existing registration records remain available above for history.</p>
             <div class="management-form-grid">
               <label data-field="capacity">
                 Capacity / Roster Size
                 <input type="number" min="0" step="1" name="capacity" />
               </label>
-              <label data-field="registrationEnabled" class="management-checkbox-field">
+              <label data-field="registrationEnabled" class="management-checkbox-field management-legacy-registration-control">
                 <span>Enable Registration</span>
                 <input type="checkbox" name="registrationEnabled" value="1" />
               </label>
-              <label data-field="registrationClosed" class="management-checkbox-field">
+              <label data-field="registrationClosed" class="management-checkbox-field management-legacy-registration-control">
                 <span>Close Registration</span>
                 <input type="checkbox" name="registrationClosed" value="1" />
               </label>
@@ -822,33 +823,33 @@
                 <input type="text" name="certification" maxlength="120" placeholder="Open Water, Nitrox, AOW..." />
               </label>
             </div>
-            <label data-field="registrationEmailSubject">
+            <label data-field="registrationEmailSubject" class="management-legacy-registration-control">
               Registration Email Subject
               <input type="text" name="registrationEmailSubject" maxlength="180" placeholder="You're signed up for {{event_title}}" />
               <span class="management-character-counter" data-character-counter-for="registrationEmailSubject"></span>
             </label>
-            <label data-field="registrationEmailUseTemplate" class="management-checkbox-field">
+            <label data-field="registrationEmailUseTemplate" class="management-checkbox-field management-legacy-registration-control">
               <span>Use Resend template</span>
               <input type="checkbox" name="registrationEmailUseTemplate" value="1" />
             </label>
-            <label data-field="registrationEmailTemplateId">
+            <label data-field="registrationEmailTemplateId" class="management-legacy-registration-control">
               Resend Template ID
               <input type="text" name="registrationEmailTemplateId" maxlength="180" placeholder="tmpl_..." />
             </label>
-            <label data-field="registrationEmailIsHtml" class="management-checkbox-field">
+            <label data-field="registrationEmailIsHtml" class="management-checkbox-field management-legacy-registration-control">
               <span>Registration message is HTML</span>
               <input type="checkbox" name="registrationEmailIsHtml" value="1" />
             </label>
-            <label data-field="registrationEmailContent" class="management-notes-label">
+            <label data-field="registrationEmailContent" class="management-notes-label management-legacy-registration-control">
               Registration Email Message
               <textarea name="registrationEmailContent" rows="10" maxlength="12000" placeholder="Private confirmation details sent after someone registers."></textarea>
               <span class="management-character-counter" data-character-counter-for="registrationEmailContent"></span>
             </label>
-            <label data-field="registrationEmailUseFullHtml" class="management-checkbox-field">
+            <label data-field="registrationEmailUseFullHtml" class="management-checkbox-field management-legacy-registration-control">
               <span>Use full custom HTML email</span>
               <input type="checkbox" name="registrationEmailUseFullHtml" value="1" />
             </label>
-            <label data-field="registrationEmailFullHtml" class="management-notes-label">
+            <label data-field="registrationEmailFullHtml" class="management-notes-label management-legacy-registration-control">
               Full Custom Email HTML
               <textarea name="registrationEmailFullHtml" rows="10" maxlength="20000" placeholder="Paste a complete custom HTML email. Merge tags like {{first_name}} still work."></textarea>
               <span class="management-character-counter" data-character-counter-for="registrationEmailFullHtml"></span>

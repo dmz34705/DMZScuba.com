@@ -352,7 +352,9 @@ test("account migration and page include the required foundation", () => {
   assert.match(resetPage, /data-account-flow="reset"/);
   assert.match(createPage, /data-account-flow-turnstile/);
   assert.match(forgotPage, /data-account-flow-turnstile/);
-  assert.doesNotMatch(verifyPage, /turnstile\/v0|data-account-flow-turnstile/);
+  assert.match(verifyPage, /data-account-flow-resend/);
+  assert.match(verifyPage, /data-account-flow-turnstile/);
+  assert.match(workerSource, /account\/auth\/resend/);
   assert.doesNotMatch(resetPage, /turnstile\/v0|data-account-flow-turnstile/);
   assert.match(page, /data-change-password-form/);
   assert.match(page, /data-change-email-form/);

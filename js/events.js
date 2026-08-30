@@ -366,9 +366,9 @@
   }
 
   function isRegistrationEnabled(eventItem) {
-    const enabled = Boolean(eventItem && eventItem.registrationEnabled);
-    const capacity = Math.max(0, Number((eventItem && eventItem.registrationCapacity) || 0) || 0);
-    return enabled && capacity > 0;
+    // Accountless legacy registrations are retired. Bookable classes, trips,
+    // and events use the authenticated booking-offering flow instead.
+    return false;
   }
 
   function isRegistrationClosed(eventItem) {

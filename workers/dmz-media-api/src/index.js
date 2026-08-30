@@ -4805,6 +4805,8 @@ async function handleGetAdminEventRegistrationsV2(request, env, sourceId) {
 }
 
 async function handleCreateEventRegistrationV2(request, env, sourceId) {
+  return jsonResponse({ ok: false, error: "Accountless event registration has been retired. Use a DMZ Scuba booking offering." }, 410, { "Cache-Control": "no-store" });
+  /* legacy implementation retained below for historical code reference */
   let customerIdentity = null;
   const customerToken = getBearerToken(request);
   if (customerToken) {

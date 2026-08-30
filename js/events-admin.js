@@ -250,22 +250,7 @@
   }
 
   function getEntryRegistrationContext(entry) {
-    if (!entry) return null;
-    const item = entry.item || {};
-    if (!item.registrationEnabled || Math.max(0, Number(item.registrationCapacity) || 0) <= 0) return null;
-    const sourceId = String(item.id || "").trim();
-    let eventDate = "";
-    if (entry.kind === "event") {
-      eventDate = String(selectionContext.requestedDate || item.date || "").trim();
-    } else if (selectionContext.requestedDate && templateCoversDate(item, selectionContext.requestedDate)) {
-      eventDate = String(selectionContext.requestedDate || "").trim();
-    }
-    if (!sourceId || !eventDate) return null;
-    return {
-      sourceId,
-      eventDate,
-      registrationCapacity: Math.max(0, Number(item.registrationCapacity) || 0),
-    };
+    return null;
   }
 
   function resetRegistrationUiState() {
