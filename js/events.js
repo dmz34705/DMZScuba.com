@@ -44,6 +44,7 @@
   });
 
   const EVENT_TYPE_META = {
+    General: { icon: "EV", className: "event-type-default" },
     Training: { icon: "T", className: "event-type-training" },
     Travel: { icon: "TR", className: "event-type-travel" },
     "Local Dive": { icon: "LD", className: "event-type-local-dive" },
@@ -233,6 +234,7 @@
     explicitEvents.forEach((eventItem) => {
       const normalized = normalizeEventInstance({
         ...eventItem,
+        type: eventItem.bookingOfferingId || ["General", "Workshop", "Community"].includes(normalizeText(eventItem.type)) ? eventItem.type : "General",
         eventId: eventItem.eventId || eventItem.id,
         sourceId: eventItem.id || "",
       });
@@ -256,6 +258,7 @@
 
         const normalized = normalizeEventInstance({
           ...template,
+          type: template.bookingOfferingId || ["General", "Workshop", "Community"].includes(normalizeText(template.type)) ? template.type : "General",
           id: `${template.id}-${dateKey(occurrence)}`,
           eventId: template.eventId || template.id,
           date: dateKey(occurrence),
