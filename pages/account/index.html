@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260823a" />
   <link rel="stylesheet" href="/css/pages/account.css?v=20260824h" />
+  <link rel="stylesheet" href="/css/pages/account-diving.css?v=20260924a" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
 </head>
 
@@ -84,6 +85,8 @@
           </div>
           <nav class="account-nav-menu" aria-label="Account sections">
             <button type="button" data-account-view="home" aria-current="page"><span aria-hidden="true">&#8962;</span>Account Home</button>
+            <button type="button" data-account-view="logbook"><span aria-hidden="true">&#8779;</span>My Logbook</button>
+            <button type="button" data-account-view="gear"><span aria-hidden="true">&#9671;</span>Gear Locker</button>
             <button type="button" data-account-view="profile"><span aria-hidden="true">&#9786;</span>My Profile</button>
             <button type="button" data-account-view="certifications"><span aria-hidden="true">&#9733;</span>Certifications</button>
             <button type="button" data-account-view="activity"><span aria-hidden="true">&#128197;</span>Bookings &amp; Activity</button>
@@ -102,8 +105,8 @@
               <h2 id="dashboard-title" data-dashboard-greeting>Welcome back, Diver.</h2>
               <p>Your diving information is organized and ready when you need it.</p>
               <div class="account-home-actions">
-                <button class="btn primary" type="button" data-account-view="activity">View My Activity</button>
-                <button class="btn secondary" type="button" data-account-view="profile">Review My Profile</button>
+                <button class="btn primary" type="button" data-account-view="logbook">Open My Logbook</button>
+                <button class="btn secondary" type="button" data-account-view="gear">Open Gear Locker</button>
               </div>
             </div>
 
@@ -123,6 +126,8 @@
             </article>
           </section>
 
+          <section class="account-view" data-account-view-panel="logbook" hidden aria-labelledby="logbook-title"><div data-diving-logbook></div></section>
+          <section class="account-view" data-account-view-panel="gear" hidden aria-labelledby="gear-title"><div data-diving-gear></div></section>
           <section class="account-view" data-account-view-panel="profile" hidden aria-labelledby="profile-title">
             <div class="account-section-head">
               <p class="account-eyebrow">Personal information</p>
@@ -312,6 +317,7 @@
 
   <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account.js?v=20260829profile"></script>
+  <script src="/js/account-diving.js?v=20260924a"></script>
+  <script src="/js/account.js?v=20260924sync"></script>
 </body>
 </html>

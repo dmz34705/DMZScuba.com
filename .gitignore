@@ -2,3 +2,4 @@
 /.wrangler/
 /node_modules/
 /workers/dmz-media-api/.wrangler/
+/workers/dmz-account-sync/.wrangler/

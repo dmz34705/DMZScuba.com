@@ -1,0 +1,8 @@
+name = "dmz-account-sync-dev"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dmz-account-sync-dev"
+database_id = "892a7121-e461-4116-b113-b5370cdc4423"
