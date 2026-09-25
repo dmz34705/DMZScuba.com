@@ -2371,6 +2371,78 @@ body.travel-page button.destination-item {
   }
 }
 
+.atlas-gear-dialog {
+  width: min(780px, calc(100vw - 28px));
+  max-height: min(90vh, 920px);
+  padding: 0;
+  border: 1px solid rgba(121, 225, 221, .35);
+  border-radius: 20px;
+  background: #091b28;
+  color: #eef8fb;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .65);
+}
+
+.atlas-gear-dialog::backdrop { background: rgba(2, 10, 17, .8); }
+.atlas-gear-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid rgba(165, 211, 225, .18); }
+.atlas-gear-header h2 { margin: 5px 0 0; font-size: clamp(1.3rem, 3vw, 1.8rem); }
+.atlas-gear-close { flex: none; width: 42px; height: 42px; border: 1px solid rgba(165, 211, 225, .28); border-radius: 50%; background: #153140; color: #eaf6fa; font-size: 1.7rem; cursor: pointer; }
+.atlas-gear-content { padding: 22px 24px 28px; overflow-y: auto; max-height: calc(min(90vh, 920px) - 90px); }
+.atlas-gear-content h3, .atlas-gear-content h4 { margin: 0 0 8px; }
+.atlas-gear-content p { line-height: 1.55; }
+.atlas-gear-content a { color: #8de5e1; }
+.atlas-gear-intro { margin-top: 0; color: #c4d9e2; }
+.atlas-gear-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.atlas-gear-grid label, .atlas-gear-preferences label { display: grid; gap: 7px; color: #d2e5e9; font-weight: 700; }
+.atlas-gear-grid input, .atlas-gear-grid select, .atlas-gear-preferences input, .atlas-gear-preferences select { min-height: 44px; width: 100%; padding: 9px 12px; border: 1px solid rgba(162, 206, 220, .3); border-radius: 10px; background: #102937; color: #f2fbfc; font: inherit; }
+.atlas-gear-grid .atlas-gear-check { display: flex; align-items: center; gap: 10px; }
+.atlas-gear-grid .atlas-gear-check input { width: 20px; min-height: 20px; }
+.atlas-gear-card { margin: 16px 0; padding: 18px; border: 1px solid rgba(134, 201, 214, .22); border-radius: 14px; background: #102937; }
+.atlas-gear-card p { margin: 7px 0; }
+.atlas-gear-card ul { margin-bottom: 0; padding-left: 20px; }
+.atlas-gear-note { color: #adc4ce; font-size: .9rem; }
+.atlas-gear-warning { color: #ffd39a; }
+.atlas-gear-locker { margin-top: 24px; }
+.atlas-gear-preferences { margin: 18px 0; padding: 14px 18px; border: 1px solid rgba(134, 201, 214, .22); border-radius: 12px; }
+.atlas-gear-preferences summary, .atlas-gear-card summary { color: #88e5de; cursor: pointer; font-weight: 700; }
+.atlas-gear-preferences label { margin-top: 12px; }
+
+.atlas-journey-site { margin: 0; font-size: 1.45rem; }
+.atlas-journey-crumbs { margin: 6px 0; color: #a8bfc8; }
+.atlas-journey-origin label { margin-top: 0; }
+.atlas-journey-locate { min-height: 44px; margin-top: 8px; padding: 0; border: 0; background: none; color: #8de5e1; font: inherit; font-weight: 700; cursor: pointer; }
+.atlas-journey-locate:disabled { opacity: .6; cursor: progress; }
+.atlas-journey-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 14px; padding: 4px; border-radius: 12px; background: #061722; }
+.atlas-journey-tab { min-height: 44px; border: 0; border-radius: 9px; background: none; color: #91acb8; font: inherit; font-weight: 700; cursor: pointer; }
+.atlas-journey-tab.is-active { background: #284650; color: #eef9f5; }
+.atlas-journey-option { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; padding: 14px 16px; border: 1px solid #28404c; border-radius: 15px; background: none; color: #edf7f5; font: inherit; text-align: left; cursor: pointer; }
+.atlas-journey-option.is-active { border-color: #8de5e1; background: #153b40; }
+.atlas-journey-option span { display: grid; gap: 4px; }
+.atlas-journey-option small, .atlas-journey-heading small { color: #a8bfc8; }
+.atlas-journey-option b { color: #8de5e1; }
+.atlas-journey-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 24px 0 12px; }
+.atlas-journey-legs { margin: 0; padding: 0; list-style: none; counter-reset: leg; }
+.atlas-journey-legs li { position: relative; padding: 0 0 18px 46px; counter-increment: leg; }
+.atlas-journey-legs li::before { content: counter(leg); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #8de5e1; color: #153534; font-size: .8rem; font-weight: 800; }
+.atlas-journey-legs li:not(:last-child)::after { content: ''; position: absolute; left: 15px; top: 36px; bottom: 4px; width: 1px; background: #36535a; }
+.atlas-journey-legs summary { display: grid; gap: 4px; min-height: 44px; font-weight: 700; cursor: pointer; list-style: none; }
+.atlas-journey-legs summary::-webkit-details-marker { display: none; }
+.atlas-journey-legs summary small { color: #8eaebc; font-size: .7rem; letter-spacing: .14em; }
+.atlas-journey-legs p { color: #b4c9d2; }
+.atlas-gear-content a.atlas-journey-card { display: grid; gap: 5px; margin: 0 0 10px; color: #edf7f5; text-decoration: none; }
+.atlas-journey-card small { color: #8de5e1; }
+.atlas-journey-card span { color: #a8bfc8; font-size: .9rem; }
+.atlas-journey-card.is-search { border-style: dashed; background: none; }
+.atlas-journey-consider { padding: 12px 0; border-top: 1px solid #1f3843; }
+.atlas-journey-consider h4 { margin: 0 0 6px; }
+.atlas-journey-consider p { margin: 0 0 6px; color: #b4c9d2; }
+.atlas-journey-sources { display: grid; gap: 10px; font-size: .85rem; }
+
+@media (max-width: 640px) {
+  .atlas-gear-header { padding: 16px; }
+  .atlas-gear-content { padding: 16px; }
+  .atlas-gear-grid { grid-template-columns: 1fr; }
+}
+
 
 
 

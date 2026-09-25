@@ -3,12 +3,33 @@
 (() => {
   const map = window.DMZ_TRAVEL_ATLAS_MAP;
   if (!map || !window.L) return;
+  let advicePreferences = {};
+  let origin = null;
   const style = document.createElement('style');
-  style.textContent = '#back, #gear-for-dive { display: none !important; }';
+  style.textContent = '#back { display: none !important; }';
   document.head.append(style);
+  window.addEventListener('atlas-message', (event) => {
+    const engine = window.DMZAtlasGuideEngine;
+    if (!engine) return;
+    const message = event.detail || {};
+    if (!['siteGuide', 'regionGuide', 'quickLook', 'placeAt', 'openPlace'].includes(message.type)) return;
+    queueMicrotask(() => {
+      const response = engine.respond(message, { advicePreferences, origin });
+      if (response) window.atlasReceive?.(response);
+    });
+  });
   const validCoordinate = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon)
     && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
   window.DMZTravelAtlas = {
+    setAdvicePreferences(value) {
+      advicePreferences = value && typeof value === 'object' ? value : {};
+      window.atlasReceive?.({ type: 'adviceChanged' });
+    },
+    setOrigin(value) {
+      if (!value || !Number.isFinite(value.latitude) || !Number.isFinite(value.longitude)) return;
+      origin = { latitude: value.latitude, longitude: value.longitude };
+      window.atlasReceive?.({ type: 'originChanged' });
+    },
     openArea({ regionId = '', areaName = '', query = '', latitude, longitude, zoom = 7 } = {}) {
       // Reuse the Atlas's own curated region/area controls and detail sheets.
       const browse = document.getElementById('browse-toggle');

@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=1.0" />
-  <link rel="stylesheet" href="/css/pages/travel.css?v=20260924-atlas1" />
+  <link rel="stylesheet" href="/css/pages/travel.css?v=20260924-journey1" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 
 </head>
@@ -320,6 +320,22 @@
       <p class="ocean-atlas-note">The Atlas is for exploration, not navigation. Confirm local conditions and access with a dive professional. <a href="/assets/vendor/ocean-atlas/THIRD-PARTY-NOTICES.txt">Software notices</a>.</p>
     </section>
 
+    <dialog id="atlasGearDialog" class="atlas-gear-dialog" aria-labelledby="atlasGearTitle">
+      <div class="atlas-gear-header">
+        <div><p class="travel-section-kicker">Dive planning</p><h2 id="atlasGearTitle">Gear for this dive</h2></div>
+        <button type="button" class="atlas-gear-close" aria-label="Close gear advice">×</button>
+      </div>
+      <div class="atlas-gear-content" data-atlas-gear-content></div>
+    </dialog>
+
+    <dialog id="atlasJourneyDialog" class="atlas-gear-dialog" aria-labelledby="atlasJourneyTitle">
+      <div class="atlas-gear-header">
+        <div><p class="travel-section-kicker">Ocean Atlas / Journey</p><h2 id="atlasJourneyTitle">Get me here.</h2></div>
+        <button type="button" class="atlas-gear-close" aria-label="Close journey planner">×</button>
+      </div>
+      <div class="atlas-gear-content" data-atlas-journey-content></div>
+    </dialog>
+
     <!-- Destination spotlight (the zoom-in target) -->
     <section class="section destination-preview" id="destination" hidden aria-live="polite">
       <div class="destination-shell">
@@ -426,7 +442,8 @@
   <script src="../../js/events.js?v=20260508b" defer></script>
   <script src="../../js/travel-admin.js?v=1.10" defer></script>
   <script src="../../js/globe.js?v=20260924-atlas1" defer></script>
-  <script src="../../js/ocean-atlas-travel.js?v=20260924-atlas1" defer></script>
+  <script src="../../js/ocean-atlas-guide-engine.js?v=20260924-guides1" defer></script>
+  <script src="../../js/ocean-atlas-travel.js?v=20260924-journey1" defer></script>
 
 
 </body>
