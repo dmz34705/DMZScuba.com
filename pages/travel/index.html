@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="/assets/icons/favicon.png" type="image/png" />
   <link rel="icon" href="/assets/icons/favicon.ico" sizes="any" />
-  <title>DMZ Scuba | Dive Travel & Destinations</title>
-    <meta name="description" content="Discover DMZ Scuba dive travel opportunities and plan your next underwater adventure with guided trip support." />
+  <title>Ocean Atlas & Dive Travel | DMZ Scuba</title>
+  <meta name="description" content="Explore DMZ Scuba's Ocean Atlas for dive sites, regional guides, seasonal conditions, and travel inspiration." />
   
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://www.dmzscuba.com/pages/travel/" />
@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/css/components.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/main.css?v=20260728p4" />
   <link rel="stylesheet" href="/css/pages/events.css?v=1.0" />
-  <link rel="stylesheet" href="/css/pages/travel.css?v=20260730t3" />
+  <link rel="stylesheet" href="/css/pages/travel.css?v=20260924-atlas1" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260728p4" />
 
 </head>
@@ -29,7 +29,7 @@
         <div class="page-hero-copy">
           <h1>Dive Travel</h1>
           <p class="page-hero-sub">
-            Spin the globe, pick a destination, and we’ll build a trip around how you want to dive.
+            Explore the Ocean Atlas, discover dive sites, and find a trip that fits how you want to dive.
           </p>
 
           <div class="page-hero-actions">
@@ -44,18 +44,18 @@
       </div>
     </section>
 
-    <!-- Globe -->
+    <!-- Ocean Atlas, adapted from the DMZ Scuba app -->
     <section class="section travel-explorer" id="globe">
       <div class="section-head">
         <p class="travel-section-kicker">Explore destinations</p>
-        <h2>Find Your Next Dive Trip</h2>
-        <p class="section-sub">Rotate the globe, tap a pin, or browse every destination below.</p>
+        <h2>Explore the Ocean Atlas</h2>
+        <p class="section-sub">Explore dive sites, seasonal conditions, and marine life. Use the area shortcuts below to start near familiar DMZ Scuba destinations.</p>
       </div>
 
       <div class="travel-explorer-guide" aria-label="How to explore destinations">
-        <span><strong>1</strong> Rotate the globe</span>
-        <span><strong>2</strong> Tap a destination pin</span>
-        <a href="#destination-list">Browse all destinations <span aria-hidden="true">↓</span></a>
+        <span><strong>1</strong> Explore the map</span>
+        <span><strong>2</strong> Open an Atlas guide</span>
+        <a href="#destination-list">Jump to an area <span aria-hidden="true">↓</span></a>
       </div>
 
       <button class="dest-admin-fab" type="button" aria-expanded="false" aria-controls="destAdminPanel">
@@ -305,49 +305,19 @@
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
             <line x1="10" y1="10" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          <input class="globe-search" id="globeSearch" type="search" placeholder="Search destinations…" autocomplete="off" aria-label="Search destinations" />
+          <input class="globe-search" id="globeSearch" type="search" placeholder="Find an area shortcut…" autocomplete="off" aria-label="Filter Atlas area shortcuts" />
         </div>
         <div class="globe-filter-pills" id="globeFilterPills" role="group" aria-label="Filter by tag"></div>
       </div>
 
       <div class="globe-shell">
         <div class="globe-wrap" id="globeWrap">
-          <canvas id="globeCanvas" width="920" height="520" aria-label="Interactive destination globe"></canvas>
-          <!-- 2.0: Reset view button -->
-          <button class="globe-home-btn" id="globeHomeBtn" type="button" aria-label="Reset globe to default view" title="Reset view">
-            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
-              <circle cx="8" cy="8" r="2" fill="currentColor"/>
-            </svg>
-          </button>
+          <iframe id="oceanAtlasFrame" class="ocean-atlas-frame" src="./ocean-atlas.html" title="Interactive DMZ Scuba Ocean Atlas" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <canvas id="globeCanvas" class="legacy-globe-canvas" width="1" height="1" hidden aria-hidden="true"></canvas>
         </div>
       </div>
 
-      <div class="travel-globe-legend" aria-label="Trip status key">
-        <div class="travel-globe-legend-top">
-          <p class="travel-globe-legend-title">Pin Key</p>
-          <div class="travel-globe-legend-items">
-            <span class="travel-globe-legend-item">
-              <span class="travel-globe-legend-swatch is-none" aria-hidden="true"></span>
-              No trip planned
-            </span>
-            <span class="travel-globe-legend-item">
-              <span class="travel-globe-legend-swatch is-planned" aria-hidden="true"></span>
-              Planned trip 60+ days out
-            </span>
-            <span class="travel-globe-legend-item">
-              <span class="travel-globe-legend-swatch is-soon" aria-hidden="true"></span>
-              Trip within 60 days
-            </span>
-            <span class="travel-globe-legend-item">
-              <span class="travel-globe-legend-swatch is-active" aria-hidden="true"></span>
-              Trip in progress
-            </span>
-          </div>
-        </div>
-        <!-- 2.0: Live stats bar -->
-        <div class="globe-stats-bar" id="globeStatsBar" aria-live="polite"></div>
-      </div>
+      <p class="ocean-atlas-note">The Atlas is for exploration, not navigation. Confirm local conditions and access with a dive professional. <a href="/assets/vendor/ocean-atlas/THIRD-PARTY-NOTICES.txt">Software notices</a>.</p>
     </section>
 
     <!-- Destination spotlight (the zoom-in target) -->
@@ -369,7 +339,7 @@
               <span class="dest-status-badge" id="destStatusBadge"></span>
             </div>
           </div>
-          <p id="destSub" class="section-sub">Click a globe pin to load details here.</p>
+          <p id="destSub" class="section-sub">Select a trip marker on the Ocean Atlas to see details here.</p>
           <!-- 2.0: Tags row -->
           <div class="dest-tags-row" id="destTagsRow" aria-label="Destination tags"></div>
         </div>
@@ -415,9 +385,9 @@
 
     <section class="section travel-browse-section" id="destination-list">
       <div class="section-head">
-        <p class="travel-section-kicker">Browse at your pace</p>
-        <h2>Destination List</h2>
-        <p class="section-sub">Choose a destination to view diving highlights, trip details, and next steps.</p>
+        <p class="travel-section-kicker">A place to start</p>
+        <h2>Jump Into the Atlas</h2>
+        <p class="section-sub">Choose an area to open its Atlas region or explore nearby dive sites. These are shortcuts, not a second set of map pins.</p>
       </div>
       <div class="destination-list" id="destinationList"></div>
       <p class="dest-list-empty muted" id="destinationListEmpty" hidden>No destinations match your current filter. <button class="dest-list-empty-clear" type="button" onclick="document.getElementById('globeFilterPills')?.querySelector('.globe-filter-clear')?.click()">Clear filters</button></p>
@@ -455,8 +425,8 @@
   <script src="../../js/main.js?v=20260728p4" defer></script>
   <script src="../../js/events.js?v=20260508b" defer></script>
   <script src="../../js/travel-admin.js?v=1.10" defer></script>
-  <!-- Globe POC (pure JS, no libraries) -->
-  <script src="../../js/globe.js?v=20260730t2" defer></script>
+  <script src="../../js/globe.js?v=20260924-atlas1" defer></script>
+  <script src="../../js/ocean-atlas-travel.js?v=20260924-atlas1" defer></script>
 
 
 </body>

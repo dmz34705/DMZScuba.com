@@ -1,6 +1,7 @@
 (function () {
   const canvas = document.getElementById("globeCanvas");
   if (!canvas) return;
+  const atlasMode = Boolean(document.getElementById("oceanAtlasFrame"));
   const ctx = canvas.getContext("2d");
 
   // -------------------------
@@ -9,6 +10,7 @@
   const DPR = Math.max(1, Math.floor(window.devicePixelRatio || 1));
 
   function fitCanvas() {
+    if (atlasMode) return;
     const wrap = canvas.parentElement;
     const wrapWidth = wrap ? Math.floor(wrap.getBoundingClientRect().width) : 920;
     const targetW = Math.max(0, wrapWidth);
@@ -406,10 +408,16 @@
     );
 
     sorted.forEach((dest) => {
-      const item = document.createElement("a");
+      const item = document.createElement(atlasMode ? "button" : "a");
       item.className = "destination-item";
-      item.href = `./destination.html?id=${encodeURIComponent(dest.id)}`;
-      item.setAttribute("aria-label", `View details for ${formatDestinationName(dest.name)}`);
+      if (atlasMode) {
+        item.type = 'button';
+        item.setAttribute('aria-label', `Explore ${formatDestinationName(dest.name)} in the Ocean Atlas`);
+        item.addEventListener('click', () => window.dispatchEvent(new CustomEvent('dmz:travel-atlas-focus', { detail: dest })));
+      } else {
+        item.href = `./destination.html?id=${encodeURIComponent(dest.id)}`;
+        item.setAttribute("aria-label", `View details for ${formatDestinationName(dest.name)}`);
+      }
 
       const imageWrap = document.createElement("div");
       imageWrap.className = "destination-item-image";
@@ -662,8 +670,12 @@
       if (e.key !== "Enter") return;
       const visible = getVisibleDestinations();
       if (visible.length === 1) {
-        flyToDestination(visible[0]);
-        autoRotateEnabled = false;
+        if (atlasMode) {
+          window.dispatchEvent(new CustomEvent('dmz:travel-atlas-focus', { detail: visible[0] }));
+        } else {
+          flyToDestination(visible[0]);
+          autoRotateEnabled = false;
+        }
       }
     });
   }
@@ -1936,6 +1948,7 @@
   initDestinations().then(() => {
     initSearchWiring();
     initHomeButton();
+    if (atlasMode) return;
     const globeWrap = document.getElementById("globeWrap");
     let globeStarted = false;
     const startGlobe = () => {

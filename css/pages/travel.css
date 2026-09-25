@@ -483,6 +483,26 @@ body .page .destination-card:hover {
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
+/* Ocean Atlas replaces the legacy canvas while the destination list reuses its data controls. */
+body.travel-page .ocean-atlas-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: #071521;
+}
+
+body.travel-page .legacy-globe-canvas,
+body.travel-page #globeCanvas {
+  display: none !important;
+}
+
+body.travel-page .travel-globe-legend-swatch.is-none { background: #76e4eb; }
+body.travel-page .travel-globe-legend-swatch.is-planned { background: #8d8aff; }
+body.travel-page .travel-globe-legend-swatch.is-soon { background: #ffc36b; }
+body.travel-page .travel-globe-legend-swatch.is-active { background: #78e6a5; }
+
 .destination-item-image {
   min-height: 144px;
   background:
@@ -2314,6 +2334,40 @@ body:not(.dest-authenticated) .travel-inline-add {
   body.travel-page iframe,
   body.travel-page canvas {
     max-width: 100%;
+  }
+}
+
+/* The embedded Ocean Atlas replaces the retired globe canvas at every breakpoint. */
+body.travel-page .globe-wrap {
+  height: min(75vh, 760px) !important;
+  min-height: 580px;
+  aspect-ratio: auto !important;
+  background: #071521 !important;
+}
+
+body.travel-page #oceanAtlasFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+body.travel-page #globeCanvas {
+  display: none !important;
+}
+
+body.travel-page button.destination-item {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  body.travel-page .globe-wrap {
+    height: min(78svh, 760px) !important;
+    min-height: 520px;
   }
 }
 
