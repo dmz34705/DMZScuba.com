@@ -7,13 +7,14 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 const record = (row) => row ? ({ kind: row.kind, id: row.id, revision: row.revision, deleted: !!row.deleted,
   mutationId: row.mutation_id, updatedAt: row.updated_at, data: JSON.parse(row.data) }) : null;
 
-export async function identity(request, fetchImpl = fetch) {
+export async function identity(request, env) {
   const authorization = request.headers.get('Authorization') || '';
   if (!/^Bearer \S+$/.test(authorization)) return { error: json({ ok: false, error: 'Sign in to access your diving data.' }, 401) };
   // Reuse the existing verified JWT + active-account checks. Never trust a client-supplied owner.
-  const response = await fetchImpl('https://dmz-media-api.zacharylisowski55.workers.dev/api/account', {
+  if (!env.ACCOUNT_API) return { error: json({ ok: false, error: 'Account verification is temporarily unavailable.' }, 503) };
+  const response = await env.ACCOUNT_API.fetch(new Request('https://dmz-media-api.internal/api/account', {
     headers: { Authorization: authorization, Accept: 'application/json' }, signal: AbortSignal.timeout(15000),
-  });
+  }));
   if (!response.ok) return { error: json({ ok: false, error: response.status === 403 ? 'This account is inactive.' : 'Your session could not be verified.' }, [401, 403].includes(response.status) ? response.status : 503) };
   const data = await response.json();
   const userId = data?.profile?.userId;
@@ -21,11 +22,11 @@ export async function identity(request, fetchImpl = fetch) {
   return { userId };
 }
 
-export async function handle(request, env, fetchImpl = fetch) {
+export async function handle(request, env) {
   const url = new URL(request.url);
   if (url.pathname === '/health') return json({ ok: true, environment: 'dev', protocol: 1 });
   if (!url.pathname.startsWith('/api/account/sync')) return json({ ok: false, error: 'Not found.' }, 404);
-  const auth = await identity(request, fetchImpl);
+  const auth = await identity(request, env);
   if (auth.error) return auth.error;
   const owner = auth.userId;
   const parts = url.pathname.slice('/api/account/sync'.length).split('/').filter(Boolean);

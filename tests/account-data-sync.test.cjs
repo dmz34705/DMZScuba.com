@@ -10,17 +10,21 @@ const env = { DB: { prepare(query) { return { bind(...args) {
   return { first: async () => db.prepare(query).get(...args), all: async () => ({ results:db.prepare(query).all(...args) }),
     run: async () => ({ meta:{ changes:db.prepare(query).run(...args).changes } }) };
 } }; } } };
-const auth = async (_,options) => {
-  const user = options.headers.Authorization.slice(7);
+let authCalls = 0;
+env.ACCOUNT_API = { async fetch(request) {
+  authCalls++;
+  assert.equal(new URL(request.url).pathname, '/api/account');
+  const user = request.headers.get('Authorization').slice(7);
   return new Response(JSON.stringify({ ok:user !== 'inactive',profile:{ userId:user } }), { status:user === 'inactive' ? 403 : 200 });
-};
+} };
 (async () => {
   const { handle } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   const request = (user,route = '',body) => handle(new Request(`https://dev.test/api/account/sync${route}`, {
     method:body ? 'PUT' : 'GET', headers:user ? { Authorization:`Bearer ${user}` } : {}, ...(body ? { body:JSON.stringify(body) } : {}),
-  }), env,auth);
+  }), env);
   const payload = (revision, mutationId, name = 'Blue Hole', deleted = false) => ({ baseRevision:revision, mutationId,deleted,data:{ id:'dive-1',site:{ name } } });
   assert.equal((await request(null)).status,401);
+  assert.equal(authCalls,0,'requests without a bearer token must not call the account service');
   assert.equal((await request('inactive')).status,403);
   assert.equal((await request('alice','/dive/dive-1',payload(0,'a'))).status,200);
   assert.equal((await request('bob','/dive/dive-1')).status,404);
