@@ -87,27 +87,34 @@
     return response.json();
   }
 
+  // Live records of the given kinds, with their data. The service returns them a page at a time;
+  // a row without data (an older service) is fetched on its own.
+  async function loadAccountRecords(kinds) {
+    const rows = [];
+    let after = '';
+    do {
+      const page = await accountGet(`/api/account/sync?include=${kinds.join(',')}${after ? `&after=${encodeURIComponent(after)}` : ''}`);
+      rows.push(...(page.records || []).filter((row) => kinds.includes(row.kind) && !row.deleted));
+      after = page.next || '';
+    } while (after);
+    const missing = rows.filter((row) => !row.data);
+    let index = 0;
+    await Promise.all(Array.from({ length: Math.min(6, missing.length) }, async () => {
+      while (index < missing.length) {
+        const row = missing[index++];
+        const result = await accountGet(`/api/account/sync/${row.kind}/${encodeURIComponent(row.id)}`);
+        if (result.record && !result.record.deleted) row.data = result.record.data;
+      }
+    }));
+    return rows.filter((row) => row.data);
+  }
+
   async function loadPersonalDives() {
     try {
       token = sessionStorage.getItem(tokenKey) || '';
       if (!token && localStorage.getItem(signedInKey) === '1') token = await refreshToken();
       if (!token) { receive({ type: 'logs', status: 'ready', pins: [], missingCount: 0 }); return; }
-      const metas = [];
-      let after = '';
-      do {
-        const page = await accountGet(`/api/account/sync${after ? `?after=${encodeURIComponent(after)}` : ''}`);
-        metas.push(...(page.records || []).filter((row) => row.kind === 'dive' && !row.deleted));
-        after = page.next || '';
-      } while (after);
-      const dives = [];
-      let index = 0;
-      await Promise.all(Array.from({ length: Math.min(6, metas.length) }, async () => {
-        while (index < metas.length) {
-          const meta = metas[index++];
-          const result = await accountGet(`/api/account/sync/dive/${encodeURIComponent(meta.id)}`);
-          if (result.record && !result.record.deleted) dives.push(result.record.data);
-        }
-      }));
+      const dives = (await loadAccountRecords(['dive'])).map((row) => row.data);
       receive({ type: 'logs', status: 'ready', ...groupDivePins(dives) });
     } catch (error) {
       console.warn('[Ocean Atlas] Personal dives could not load:', error.message);
@@ -119,24 +126,9 @@
     token = sessionStorage.getItem(tokenKey) || token;
     if (!token && localStorage.getItem(signedInKey) === '1') token = await refreshToken();
     if (!token) return { items: [], setups: [], signedIn: false };
-    const metas = [];
-    let after = '';
-    do {
-      const page = await accountGet(`/api/account/sync${after ? `?after=${encodeURIComponent(after)}` : ''}`);
-      metas.push(...(page.records || []).filter((row) => ['gear', 'setup'].includes(row.kind) && !row.deleted));
-      after = page.next || '';
-    } while (after);
     const items = [], setups = [];
-    let index = 0;
-    await Promise.all(Array.from({ length: Math.min(6, metas.length) }, async () => {
-      while (index < metas.length) {
-        const meta = metas[index++];
-        const result = await accountGet(`/api/account/sync/${meta.kind}/${encodeURIComponent(meta.id)}`);
-        const row = result.record;
-        if (!row || row.deleted || !row.data) continue;
-        (meta.kind === 'gear' ? items : setups).push({ ...row.data, id: row.id || meta.id });
-      }
-    }));
+    for (const row of await loadAccountRecords(['gear', 'setup']))
+      (row.kind === 'gear' ? items : setups).push({ ...row.data, id: row.id });
     return { items, setups, signedIn: true };
   }
 

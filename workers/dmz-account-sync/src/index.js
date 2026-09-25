@@ -1,6 +1,8 @@
 const KINDS = new Set(['dive', 'computerLog', 'gear', 'setup', 'preferences']);
 const ID = /^[a-zA-Z0-9_-]{1,120}$/;
 const MAX_BYTES = 1500000;
+const INCLUDE_ROWS = 250;
+const INCLUDE_BYTES = 4000000;
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
 });
@@ -31,6 +33,25 @@ export async function handle(request, env) {
   const owner = auth.userId;
   const parts = url.pathname.slice('/api/account/sync'.length).split('/').filter(Boolean);
   const [kind, id] = parts;
+  if (!kind && request.method === 'GET' && url.searchParams.has('include')) {
+    // Records with their data in one pass (the website's logbook and gear locker), instead of one
+    // request — and one account verification — per record. Pages by row count and response size.
+    const kinds = [...new Set(url.searchParams.get('include').split(','))].filter((k) => KINDS.has(k));
+    if (!kinds.length) return json({ ok: false, error: 'Invalid record kinds.' }, 400);
+    const after = url.searchParams.get('after') || '';
+    const rows = await env.DB.prepare(`SELECT * FROM sync_records WHERE user_id = ? AND kind IN (${kinds.map(() => '?').join(',')})
+      AND (kind || '/' || id) > ? ORDER BY kind,id LIMIT ${INCLUDE_ROWS + 1}`).bind(owner, ...kinds, after).all();
+    const page = []; let bytes = 0;
+    for (const row of rows.results.slice(0, INCLUDE_ROWS)) {
+      bytes += row.deleted ? 0 : row.data.length;
+      if (page.length && bytes > INCLUDE_BYTES) break;
+      page.push(row);
+    }
+    const more = page.length < rows.results.length;
+    return json({ ok: true, protocol: 1, records: page.map((row) => row.deleted
+      ? { kind: row.kind, id: row.id, revision: row.revision, deleted: true, updatedAt: row.updated_at, data: null } : record(row)),
+    next: more ? `${page.at(-1).kind}/${page.at(-1).id}` : null });
+  }
   if (!kind && request.method === 'GET') {
     const after = url.searchParams.get('after') || '';
     const rows = await env.DB.prepare(`SELECT kind,id,revision,deleted,updated_at FROM sync_records

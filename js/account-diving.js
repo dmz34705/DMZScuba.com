@@ -142,9 +142,12 @@
     const ticket = epoch;
     status('Loading your diving records…');
     const task = (async () => {
+      // Records arrive with their data, a page at a time; any row without data (an older service) is fetched on its own.
       let after = ''; const manifest = [];
-      do { const page = await request(`/api/account/sync${after ? `?after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; } while (after);
-      const next = new Map(); const queue = manifest.filter((r) => ['dive','gear','setup'].includes(r.kind) && !r.deleted);
+      do { const page = await request(`/api/account/sync?include=dive,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; } while (after);
+      const next = new Map(); const live = manifest.filter((r) => ['dive','gear','setup'].includes(r.kind) && !r.deleted);
+      for (const row of live) if (row.data) next.set(keyOf(row),row);
+      const queue = live.filter((r) => !r.data);
       let cursor = 0;
       await Promise.all(Array.from({ length:Math.min(5,queue.length) }, async () => {
         while (cursor < queue.length && epoch === ticket) {
