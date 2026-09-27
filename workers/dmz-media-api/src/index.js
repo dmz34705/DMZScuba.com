@@ -6210,6 +6210,31 @@ const cleanItineraryField = (value, pattern, max = 160) => {
   return text && (!pattern || pattern.test(text)) ? text : "";
 };
 
+// The model is asked for YYYY-MM-DD and 24-hour HH:MM but doesn't always oblige ("13 Mar 2026",
+// "2026-03-13T16:00", "4:00 PM"). Convert what's unambiguous rather than dropping it.
+const ITINERARY_MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function coerceItineraryDate(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  const valid = (y, m, d) => (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 2000 && y <= 2100 ? `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}` : "");
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/.exec(text);
+  if (m) return valid(+m[1], +m[2], +m[3]);
+  m = /^(?:[a-z]+,?\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})$/i.exec(text);
+  if (m) return valid(+m[3], ITINERARY_MONTHS.indexOf(m[2].toLowerCase()) + 1, +m[1]);
+  m = /^(?:[a-z]+,?\s+)?([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/i.exec(text);
+  if (m) return valid(+m[3], ITINERARY_MONTHS.indexOf(m[1].toLowerCase()) + 1, +m[2]);
+  return "";
+}
+function coerceItineraryTime(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  const m = /^(?:\d{4}-\d{2}-\d{2}[T\s])?(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*([ap])?\.?\s*m?\.?$/i.exec(text);
+  if (!m || (!m[2] && !m[3])) return "";
+  let hour = Number(m[1]);
+  const minute = m[2] || "00";
+  const suffix = m[3] && m[3].toLowerCase();
+  if (suffix) { if (hour < 1 || hour > 12) return ""; if (suffix === "p" && hour < 12) hour += 12; if (suffix === "a" && hour === 12) hour = 0; }
+  return hour <= 23 && Number(minute) <= 59 ? `${String(hour).padStart(2, "0")}:${minute}` : "";
+}
+
 function validateItineraryImport(value) {
   if (!value || typeof value !== "object" || !Array.isArray(value.items)) throw new Error("Invalid itinerary import");
   const upper = (field) => (typeof field === "string" ? field.toUpperCase() : "");
@@ -6227,8 +6252,8 @@ function validateItineraryImport(value) {
       reference: cleanItineraryField(upper(item.reference), /^[A-Z0-9][A-Z0-9.-]{3,24}$/, 25),
       from: flight ? cleanItineraryField(upper(item.from), /^[A-Z]{3}$/) : cleanItineraryField(item.from, null, 160),
       to: flight ? cleanItineraryField(upper(item.to), /^[A-Z]{3}$/) : cleanItineraryField(item.to, null, 160),
-      startDate: cleanItineraryField(item.startDate, DATE), startTime: cleanItineraryField(item.startTime, TIME),
-      endDate: cleanItineraryField(item.endDate, DATE), endTime: cleanItineraryField(item.endTime, TIME),
+      startDate: cleanItineraryField(coerceItineraryDate(item.startDate), DATE), startTime: cleanItineraryField(coerceItineraryTime(item.startTime), TIME),
+      endDate: cleanItineraryField(coerceItineraryDate(item.endDate), DATE), endTime: cleanItineraryField(coerceItineraryTime(item.endTime), TIME),
       dives,
       seat: flight ? cleanItineraryField(upper(item.seat), /^\d{1,2}[A-K]$/) : "",
       notes: cleanItineraryField(item.notes, null, 300),
