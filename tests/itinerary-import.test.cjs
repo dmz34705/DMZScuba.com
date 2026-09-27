@@ -31,8 +31,10 @@ async function main() {
   assert.deepEqual([partial.title, partial.from, partial.to, partial.startTime], ['UA 1500', '', 'CZM', ''], 'A flight keeps only valid codes and times.');
   assert.throws(() => validateItineraryImport(null));
   assert.throws(() => validateItineraryImport({ items: 'hotel' }));
-  assert.equal(schema.properties.items.maxItems, 20);
-  assert.deepEqual(schema.properties.items.items.properties.type.enum, ['flight', 'stay', 'car', 'liveaboard', 'diving', 'activity', 'transfer', 'ferry', 'other']);
+  assert.equal(validateItineraryImport({ items: Array.from({ length: 30 }, () => ({ kind: 'activity', title: 'Tour' })) }).items.length, 20, 'At most 20 items, enforced here rather than in the answer format.');
+  assert.equal(validateItineraryImport({ items: [{ kind: 'car', title: 'SUV' }] }).items[0].type, 'car', 'Answers name the booking type kind.');
+  assert.deepEqual(schema.properties.items.items.required, ['kind'], 'A small answer format: Gemini refuses ones with too many shapes.');
+  assert.deepEqual(schema.properties.items.items.properties.kind.enum, ['flight', 'stay', 'car', 'liveaboard', 'diving', 'activity', 'transfer', 'ferry', 'other']);
 
   // Signed-in customers only; the model is never called for anyone else.
   const originalFetch = global.fetch;
