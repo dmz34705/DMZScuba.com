@@ -6152,8 +6152,129 @@ async function handleVisionIdentify(request, env) {
   return jsonResponse({ ok: true, schemaVersion: 2, result });
 }
 
+// --- Dive Planner: flight import ---------------------------------------------
+// Reads flights out of an airline confirmation (email text or a PDF receipt) for the app's trip
+// planner. Signed-in customers only. The app tries its own on-device parser first and only sends
+// emails here when that can't read them; the diver reviews every field before anything is saved.
+// Email contents are never logged.
+const FLIGHT_IMPORT_MAX_TEXT = 60000;
+const FLIGHT_IMPORT_MAX_PDF_BASE64 = 8000000; // ~6MB PDF
+
+const flightText = { type: "STRING", nullable: true };
+const FLIGHT_IMPORT_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    confirmation: flightText,
+    flights: {
+      type: "ARRAY",
+      maxItems: 12,
+      items: {
+        type: "OBJECT",
+        properties: {
+          airline: flightText, flightNumber: flightText, from: flightText, to: flightText,
+          departDate: flightText, departTime: flightText, arriveDate: flightText, arriveTime: flightText, seat: flightText,
+        },
+        required: ["airline", "flightNumber", "from", "to", "departDate", "departTime", "arriveDate", "arriveTime", "seat"],
+      },
+    },
+  },
+  required: ["confirmation", "flights"],
+};
+
+function flightImportPrompt(referenceDate) {
+  return `You read airline booking confirmations and return the flights in them as JSON.
+- Include every flight segment of the CURRENT itinerary in travel order: each connection is its own segment, and return flights are included. If the email is a schedule change or cancellation notice, include only the new/current flights, never the cancelled or original ones.
+- flightNumber: the marketing carrier's two-character IATA code, a space, and the number, e.g. "UA 1234". airline: the airline's common name, e.g. "United".
+- from/to: three-letter IATA airport codes in capitals.
+- Dates as YYYY-MM-DD and times as 24-hour HH:MM, exactly as printed (local to each airport). Do not convert time zones. If a year is not printed, use the next occurrence on or after ${referenceDate}. If the arrival is marked as the next day (+1), set arriveDate accordingly.
+- seat: the seat for the first passenger on that segment if printed, e.g. "23C".
+- confirmation: the airline confirmation / record locator (usually 6 characters), not a ticket number or receipt number.
+- Use null for anything not clearly printed. Never guess or invent values. If there are no flights, return an empty flights array.`;
+}
+
+const cleanFlightField = (value, pattern, max = 40) => {
+  const text = typeof value === "string" ? value.trim().slice(0, max) : "";
+  return text && (!pattern || pattern.test(text)) ? text : "";
+};
+
+function validateFlightImport(value) {
+  if (!value || typeof value !== "object" || !Array.isArray(value.flights)) throw new Error("Invalid flight import");
+  const upper = (field) => (typeof field === "string" ? field.toUpperCase() : "");
+  const flights = value.flights.slice(0, 12).map((flight = {}) => ({
+    airline: cleanFlightField(flight.airline, null, 60),
+    flightNumber: cleanFlightField(upper(flight.flightNumber), /^[A-Z0-9]{2}\s?\d{1,4}[A-Z]?$/),
+    from: cleanFlightField(upper(flight.from), /^[A-Z]{3}$/),
+    to: cleanFlightField(upper(flight.to), /^[A-Z]{3}$/),
+    departDate: cleanFlightField(flight.departDate, /^\d{4}-\d{2}-\d{2}$/),
+    departTime: cleanFlightField(flight.departTime, /^([01]\d|2[0-3]):[0-5]\d$/),
+    arriveDate: cleanFlightField(flight.arriveDate, /^\d{4}-\d{2}-\d{2}$/),
+    arriveTime: cleanFlightField(flight.arriveTime, /^([01]\d|2[0-3]):[0-5]\d$/),
+    seat: cleanFlightField(upper(flight.seat), /^\d{1,2}[A-K]$/),
+  })).filter((flight) => flight.flightNumber || (flight.from && flight.to));
+  return { confirmation: cleanFlightField(upper(value.confirmation), /^[A-Z0-9]{5,8}$/), flights };
+}
+
+async function handleFlightImport(request, env) {
+  const apiKey = String(env.GEMINI_API_KEY || "").trim();
+  if (!apiKey) return jsonResponse({ ok: false, error: "Flight import is not configured yet." }, 500);
+  const auth = await requireCustomerIdentity(request, env);
+  if (auth.response) return auth.response;
+
+  const body = await request.json().catch(() => ({}));
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  const pdfBase64 = typeof body.pdfBase64 === "string" ? body.pdfBase64 : "";
+  const referenceDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.referenceDate || "")) ? body.referenceDate : new Date().toISOString().slice(0, 10);
+  if (!text && !pdfBase64) return jsonResponse({ ok: false, error: "Paste an email or choose a file first." }, 400);
+  if (text.length > FLIGHT_IMPORT_MAX_TEXT) return jsonResponse({ ok: false, error: "That email is too long. Paste just the itinerary part." }, 413);
+  if (pdfBase64.length > FLIGHT_IMPORT_MAX_PDF_BASE64) return jsonResponse({ ok: false, error: "That PDF is too large." }, 413);
+
+  const parts = [{ text: flightImportPrompt(referenceDate) }];
+  if (pdfBase64) parts.push({ inlineData: { mimeType: "application/pdf", data: pdfBase64 } });
+  if (text) parts.push({ text: `Email:\n${text}` });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  let geminiResponse;
+  try {
+    geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${VISION_GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ role: "user", parts }],
+          generationConfig: { responseMimeType: "application/json", responseSchema: FLIGHT_IMPORT_SCHEMA, temperature: 0 },
+        }),
+      }
+    );
+  } catch (error) {
+    const timedOut = error && error.name === "AbortError";
+    return jsonResponse({ ok: false, error: timedOut ? "Reading the email took too long. Please try again." : "The import service could not be reached." }, timedOut ? 504 : 502);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!geminiResponse.ok) {
+    console.error("Flight import Gemini error", geminiResponse.status);
+    const status = geminiResponse.status === 429 ? 429 : 502;
+    return jsonResponse({ ok: false, error: status === 429 ? "Import is busy right now. Please try again in a moment." : "That email could not be read." }, status);
+  }
+  const data = await geminiResponse.json().catch(() => null);
+  const output = data && data.candidates && data.candidates[0] && data.candidates[0].content ? data.candidates[0].content.parts?.[0]?.text : null;
+  try {
+    return jsonResponse({ ok: true, ...validateFlightImport(JSON.parse(output)) });
+  } catch (error) {
+    console.error("Flight import unexpected response");
+    return jsonResponse({ ok: false, error: "That email could not be read." }, 502);
+  }
+}
+
 export {
   handleVisionIdentify,
+  handleFlightImport,
+  FLIGHT_IMPORT_SCHEMA,
+  validateFlightImport,
   VISION_RESPONSE_SCHEMA,
   VISION_PROMPT,
   validateVisionResult,
@@ -6363,6 +6484,8 @@ export default {
       }
     } else if (pathname === "/api/vision/identify" && request.method === "POST") {
       response = await handleVisionIdentify(request, env);
+    } else if (pathname === "/api/planner/flights/parse" && request.method === "POST") {
+      response = await handleFlightImport(request, env);
     }
 
     if (!response) {
