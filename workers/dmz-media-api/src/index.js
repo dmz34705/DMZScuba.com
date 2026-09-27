@@ -6187,7 +6187,10 @@ const ITINERARY_IMPORT_SCHEMA = {
 
 function itineraryImportPrompt(referenceDate) {
   return `You read travel booking confirmations for a scuba diver's trip planner and return every booking in them as JSON items, in travel order. One email can hold several bookings (e.g. a package with flights, a hotel and a car); return each.
-Return {"items": [...]}, each item with these keys: kind, title, provider, reference, from, to, startDate, startTime, endDate, endTime, dives, seat, notes.
+Return JSON: {"items": [...]}. EVERY item has ALL of these keys (use null when not printed): kind, title, provider, reference, from, to, startDate, startTime, endDate, endTime, dives, seat, notes.
+Always fill startDate and endDate when the booking prints them — they are the most important fields. startDate/startTime is when the booking begins (departure, check-in, pick-up, embarkation); endDate/endTime is when it ends.
+Example for a liveaboard voucher that prints "Vessel Sea Spirit … Departure date 13 Mar 2026 (Check-in starts at 4:00 pm) … Return date 18 Mar 2026 (Check-out at 5:00 pm)":
+{"items":[{"kind":"liveaboard","title":"Sea Spirit","provider":"Blue Reef Fleet","reference":"LB123456","from":"Port Town","to":"Port Town","startDate":"2026-03-13","startTime":"16:00","endDate":"2026-03-18","endTime":"17:00","dives":null,"seat":null,"notes":"Northern reefs itinerary"}]}
 kind is one of: ${ITINERARY_TYPES.join(", ")}. How to fill each kind:
 - flight: one item per flight segment (each connection separately; include return flights). title = marketing carrier's two-character IATA code, a space, and the number ("UA 1234"). provider = airline name. from/to = three-letter IATA airport codes. startDate/startTime = departure, endDate/endTime = arrival. seat = first passenger's seat if printed.
 - stay (hotel, resort, villa, rental home): title = property name. provider = booking site or chain if different. from = address. startDate/startTime = check-in, endDate/endTime = check-out. notes = room type.
@@ -6235,12 +6238,33 @@ function coerceItineraryTime(value) {
   return hour <= 23 && Number(minute) <= 59 ? `${String(hour).padStart(2, "0")}:${minute}` : "";
 }
 
+const ITINERARY_ALIASES = {
+  startDate: ["start_date", "departureDate", "departure_date", "checkIn", "check_in", "checkInDate", "pickupDate", "embarkDate", "embarkationDate", "date", "start"],
+  startTime: ["start_time", "departureTime", "departure_time", "checkInTime", "pickupTime", "embarkTime", "time"],
+  endDate: ["end_date", "arrivalDate", "arrival_date", "returnDate", "return_date", "checkOut", "check_out", "checkOutDate", "dropoffDate", "disembarkDate", "disembarkationDate", "end"],
+  endTime: ["end_time", "arrivalTime", "arrival_time", "returnTime", "checkOutTime", "dropoffTime", "disembarkTime"],
+  title: ["name", "flightNumber", "flight_number", "vessel", "hotel", "property"],
+  reference: ["confirmation", "confirmationNumber", "bookingReference", "booking_reference", "reservationNumber"],
+  provider: ["company", "operator", "airline", "vendor"],
+};
+function withItineraryAliases(item) {
+  const out = { ...item };
+  for (const [key, aliases] of Object.entries(ITINERARY_ALIASES)) {
+    if (out[key] == null || out[key] === "") {
+      const alias = aliases.find((name) => item[name] != null && item[name] !== "");
+      if (alias) out[key] = item[alias];
+    }
+  }
+  return out;
+}
+
 function validateItineraryImport(value) {
   if (!value || typeof value !== "object" || !Array.isArray(value.items)) throw new Error("Invalid itinerary import");
   const upper = (field) => (typeof field === "string" ? field.toUpperCase() : "");
   const DATE = /^\d{4}-\d{2}-\d{2}$/;
   const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
-  const items = value.items.slice(0, 20).map((item = {}) => {
+  const items = value.items.slice(0, 20).map((raw = {}) => {
+    const item = withItineraryAliases(raw || {});
     const given = item.kind || item.type;
     const type = ITINERARY_TYPES.includes(given) ? given : "other";
     const flight = type === "flight";
@@ -6311,7 +6335,7 @@ async function handleItineraryImport(request, env) {
   const PAUSES = [2000, 5000, 9000];
   let geminiResponse;
   try {
-    let withSchema = true;
+    let withSchema = false;
     for (let attempt = 0; ; attempt++) {
       geminiResponse = await ask(withSchema);
       if (geminiResponse.status === 400 && withSchema) {
@@ -6341,7 +6365,9 @@ async function handleItineraryImport(request, env) {
   const data = await geminiResponse.json().catch(() => null);
   const output = data && data.candidates && data.candidates[0] && data.candidates[0].content ? data.candidates[0].content.parts?.[0]?.text : null;
   try {
-    return jsonResponse({ ok: true, ...validateItineraryImport(JSON.parse(output)) });
+    const result = validateItineraryImport(JSON.parse(output));
+    console.log("Booking import read", result.items.length, "items", result.items.map((item) => `${item.type}[missing: ${["title", "startDate", "startTime", "endDate", "endTime", "from", "reference"].filter((key) => !item[key]).join(",") || "none"}]`).join(" "));
+    return jsonResponse({ ok: true, ...result });
   } catch (error) {
     const candidate = data && data.candidates && data.candidates[0];
     console.error("Booking import unusable answer", candidate && candidate.finishReason, output ? output.length : 0);

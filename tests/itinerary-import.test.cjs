@@ -29,8 +29,10 @@ async function main() {
   assert.equal(items[5].type, 'other', 'Unknown types become other.');
   const partial = validateItineraryImport({ items: [{ ...blank, type: 'flight', title: 'UA 1500', from: 'Houston', to: 'CZM', startTime: '10:05 AM' }] }).items[0];
   assert.deepEqual([partial.title, partial.from, partial.to, partial.startTime], ['UA 1500', '', 'CZM', '10:05'], 'A flight keeps only valid codes; a 12-hour time is converted.');
-  const loose = validateItineraryImport({ items: [{ kind: 'liveaboard', title: 'Manta Queen 3', startDate: '13 Mar 2026', startTime: '4:00 PM', endDate: 'Wed, March 18, 2026', endTime: '2026-03-18T17:00:00' }] }).items[0];
+  const loose = validateItineraryImport({ items: [{ kind: 'liveaboard', title: 'Sea Spirit', startDate: '13 Mar 2026', startTime: '4:00 PM', endDate: 'Wed, March 18, 2026', endTime: '2026-03-18T17:00:00' }] }).items[0];
   assert.deepEqual([loose.startDate, loose.startTime, loose.endDate, loose.endTime], ['2026-03-13', '16:00', '2026-03-18', '17:00'], 'Dates and times in other formats are converted, not dropped.');
+  const aliased = validateItineraryImport({ items: [{ kind: 'stay', name: 'Casa Azul', checkIn: '2026-11-07', checkOut: '14 Nov 2026', confirmationNumber: 'ab1234' }] }).items[0];
+  assert.deepEqual([aliased.title, aliased.startDate, aliased.endDate, aliased.reference], ['Casa Azul', '2026-11-07', '2026-11-14', 'AB1234'], 'Other names for the same fields are accepted, not dropped.');
   const nonsense = validateItineraryImport({ items: [{ kind: 'stay', title: 'Hotel', startDate: '31 Foo 2026', startTime: '25:00', endDate: '03/04/2026', endTime: '4' }] }).items[0];
   assert.deepEqual([nonsense.startDate, nonsense.startTime, nonsense.endDate, nonsense.endTime], ['', '', '', ''], 'Ambiguous or invalid values are still blank.');
   assert.throws(() => validateItineraryImport(null));
