@@ -4,7 +4,7 @@ const path = require('node:path');
 
 async function main() {
   const source = fs.readFileSync(path.join(__dirname, '../workers/dmz-media-api/src/index.js'), 'utf8');
-  const { handleItineraryImport, validateItineraryImport, ITINERARY_IMPORT_SCHEMA: schema } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+  const { handleItineraryImport, readItineraryParts, uploadGeminiFile, validateItineraryImport, ITINERARY_IMPORT_SCHEMA: schema } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   const blank = { title: null, provider: null, reference: null, from: null, to: null, startDate: null, startTime: null, endDate: null, endTime: null, dives: null, seat: null, notes: null };
 
   // Every kind of booking is cleaned field by field: bad codes, dates and times become blanks, never guesses.
@@ -56,6 +56,39 @@ async function main() {
     assert.equal(modelCalls.length, 0, 'The model is never called without a valid sign-in.');
   } finally {
     global.fetch = originalFetch;
+  }
+  // Large PDFs: uploaded to Gemini's Files API, read from there. And overload is retried.
+  {
+    const saved = global.fetch;
+    try {
+      global.fetch = async (url, options = {}) => {
+        const u = String(url);
+        if (u.includes('/upload/v1beta/files')) return new Response('{}', { status: 200, headers: { 'x-goog-upload-url': 'https://upload.example/session' } });
+        if (u === 'https://upload.example/session') {
+          assert.equal(options.body.length, 5, 'The PDF bytes are uploaded, decoded from base64.');
+          return Response.json({ file: { name: 'files/abc', uri: 'https://gemini.example/files/abc', state: 'ACTIVE' } });
+        }
+        throw new Error('unexpected ' + u);
+      };
+      const uploaded = await uploadGeminiFile('test-only', Buffer.from('%PDF-').toString('base64'), 'application/pdf', Date.now() + 30000);
+      assert.deepEqual(uploaded, { uri: 'https://gemini.example/files/abc', name: 'files/abc', mimeType: 'application/pdf' });
+
+      let attempt = 0;
+      global.fetch = async (url, options) => {
+        attempt++;
+        if (attempt === 1) return Response.json({ error: { message: 'This model is currently experiencing high demand.' } }, { status: 503 });
+        const payload = JSON.parse(options.body);
+        assert.equal(payload.generationConfig.responseSchema, undefined, 'No strict answer format.');
+        assert.equal(payload.contents[0].parts[1].fileData.fileUri, 'https://gemini.example/files/abc');
+        return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [{ kind: 'liveaboard', title: 'Sea Spirit', startDate: '13 Mar 2026', endDate: '2026-03-18' }] }) }] } }] });
+      };
+      const response = await readItineraryParts('test-only', [{ text: 'prompt' }, { fileData: { mimeType: 'application/pdf', fileUri: uploaded.uri } }], Date.now() + 30000);
+      const data = await response.json();
+      assert.equal(attempt, 2, 'A busy answer is retried.');
+      assert.deepEqual([data.items[0].title, data.items[0].startDate, data.items[0].endDate], ['Sea Spirit', '2026-03-13', '2026-03-18']);
+    } finally {
+      global.fetch = saved;
+    }
   }
   console.log('Itinerary import endpoint checks passed: all booking types validated, junk dropped, sign-in required.');
 }
