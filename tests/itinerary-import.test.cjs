@@ -86,6 +86,14 @@ async function main() {
       const data = await response.json();
       assert.equal(attempt, 2, 'A busy answer is retried.');
       assert.deepEqual([data.items[0].title, data.items[0].startDate, data.items[0].endDate], ['Sea Spirit', '2026-03-13', '2026-03-18']);
+
+      // Quota used up (429): reported at once, not retried — retries would spend more quota.
+      let quotaCalls = 0;
+      global.fetch = async () => { quotaCalls++; return Response.json({ error: { message: 'You exceeded your current quota' } }, { status: 429 }); };
+      const quota = await readItineraryParts('test-only', [{ text: 'prompt' }], Date.now() + 30000);
+      assert.equal(quotaCalls, 1, 'A quota error is not retried.');
+      assert.equal(quota.status, 429);
+      assert.equal((await quota.json()).code, 'AI_QUOTA');
     } finally {
       global.fetch = saved;
     }

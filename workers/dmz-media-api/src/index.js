@@ -6395,7 +6395,8 @@ async function readItineraryParts(apiKey, parts, deadline) {
     return String(body && body.error && body.error.message || "").slice(0, 300);
   };
 
-  const BUSY = [429, 500, 503];
+  // 503/500: Google overloaded (retry). 429: this key's quota is used up (don't — retries count too).
+  const BUSY = [500, 503];
   const PAUSES = [2000, 5000, 9000];
   let geminiResponse;
   try {
@@ -6420,11 +6421,13 @@ async function readItineraryParts(apiKey, parts, deadline) {
   if (!geminiResponse.ok) {
     console.error("Booking import Gemini error", geminiResponse.status, await refusal(geminiResponse));
     const busy = BUSY.includes(geminiResponse.status);
+    const quota = geminiResponse.status === 429;
     return jsonResponse({
       ok: false,
-      code: busy ? "AI_BUSY" : "AI_FAILED",
-      error: busy ? "Google’s AI service is overloaded right now. Try again in a few minutes." : "Smart import couldn’t read that file.",
-    }, busy ? 503 : 502);
+      code: quota ? "AI_QUOTA" : busy ? "AI_BUSY" : "AI_FAILED",
+      error: quota ? "Smart import has reached its Google usage limit for now. Try again later, or paste the email text so the phone can read it."
+        : busy ? "Google’s AI service is overloaded right now. Try again in a few minutes." : "Smart import couldn’t read that file.",
+    }, quota ? 429 : busy ? 503 : 502);
   }
   const data = await geminiResponse.json().catch(() => null);
   const output = data && data.candidates && data.candidates[0] && data.candidates[0].content ? data.candidates[0].content.parts?.[0]?.text : null;
