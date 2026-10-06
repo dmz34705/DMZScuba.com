@@ -1,3 +1,5 @@
+import { normalizeCustomerLayout } from "./app-layout.js";
+
 function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -1728,6 +1730,7 @@ function normalizeCustomerAppSettings(value = {}) {
     gasVolumeUnit: settings.gasVolumeUnit === "L" ? "L" : "ft³",
     temperatureUnit: settings.temperatureUnit === "C" ? "C" : "F",
     trimixMode: settings.trimixMode === true,
+    layout: normalizeCustomerLayout(settings.layout),
   };
 }
 
@@ -1739,13 +1742,14 @@ function mapCustomerAppSettings(row) {
     gasVolumeUnit: String(row.gas_volume_unit || "ft³") === "L" ? "L" : "ft³",
     temperatureUnit: String(row.temperature_unit || "F") === "C" ? "C" : "F",
     trimixMode: Number(row.trimix_mode) === 1,
+    ...(row.layout_json ? { layout: normalizeCustomerLayout(parseJsonSafe(row.layout_json, null)) } : {}),
     updatedAt: String(row.updated_at || ""),
   };
 }
 
 async function getCustomerAppSettings(env, userId) {
   const row = await env.DB.prepare(
-    `SELECT depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, updated_at
+    `SELECT depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, layout_json, updated_at
      FROM customer_app_settings WHERE user_id = ? LIMIT 1`
   ).bind(userId).first();
   return mapCustomerAppSettings(row);
@@ -2358,14 +2362,15 @@ async function handleUpdateCustomerAppSettings(request, env) {
   const now = new Date().toISOString();
   await env.DB.prepare(
     `INSERT INTO customer_app_settings
-     (user_id, depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     (user_id, depth_unit, pressure_unit, gas_volume_unit, temperature_unit, trimix_mode, layout_json, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id) DO UPDATE SET
        depth_unit = excluded.depth_unit,
        pressure_unit = excluded.pressure_unit,
        gas_volume_unit = excluded.gas_volume_unit,
        temperature_unit = excluded.temperature_unit,
        trimix_mode = excluded.trimix_mode,
+       layout_json = COALESCE(excluded.layout_json, customer_app_settings.layout_json),
        updated_at = excluded.updated_at`
   )
     .bind(
@@ -2375,12 +2380,13 @@ async function handleUpdateCustomerAppSettings(request, env) {
       settings.gasVolumeUnit,
       settings.temperatureUnit,
       settings.trimixMode ? 1 : 0,
+      settings.layout ? JSON.stringify(settings.layout) : null,
       now,
       now
     )
     .run();
   return jsonResponse(
-    { ok: true, appSettings: { ...settings, updatedAt: now } },
+    { ok: true, appSettings: await getCustomerAppSettings(env, auth.identity.userId) },
     200,
     { "Cache-Control": "no-store" }
   );

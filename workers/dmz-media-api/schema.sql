@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS customer_app_settings (
     CHECK (temperature_unit IN ('F', 'C')),
   trimix_mode INTEGER NOT NULL DEFAULT 0
     CHECK (trimix_mode IN (0, 1)),
+  layout_json TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
