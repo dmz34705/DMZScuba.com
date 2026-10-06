@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "version": "bab55f03c1b3ead263c39b029f795deb60447ce6a152163974448eca0bcf25b3",
+  "publishedAt": "2026-10-06T20:27:49.675Z",
+  "files": {
+    "airports": {
+      "path": "/assets/atlas/v1/files/airports-f6dd50c976ad84748c6c2cc3e227d8bbcad468540f25c7211556d407e7c45c28.json",
+      "bytes": 244311,
+      "sha256": "f6dd50c976ad84748c6c2cc3e227d8bbcad468540f25c7211556d407e7c45c28"
+    },
+    "curatedSites": {
+      "path": "/assets/atlas/v1/files/curatedSites-b7818442a63a026f4749409f801e648ae41883268542cbfa4fe303b9a97ce460.json",
+      "bytes": 13164,
+      "sha256": "b7818442a63a026f4749409f801e648ae41883268542cbfa4fe303b9a97ce460"
+    },
+    "diveOperators": {
+      "path": "/assets/atlas/v1/files/diveOperators-9b2d29f6b872ed180839ba485daf40ec19ec064f027fc9965bf613ec70ebe588.json",
+      "bytes": 335890,
+      "sha256": "9b2d29f6b872ed180839ba485daf40ec19ec064f027fc9965bf613ec70ebe588"
+    },
+    "extraSites": {
+      "path": "/assets/atlas/v1/files/extraSites-9b559fbd9213e6d5e31c000b8843fa21c2905b1ebe394baccfb01def3a68296a.json",
+      "bytes": 254355,
+      "sha256": "9b559fbd9213e6d5e31c000b8843fa21c2905b1ebe394baccfb01def3a68296a"
+    },
+    "freshwaterLife": {
+      "path": "/assets/atlas/v1/files/freshwaterLife-e01da01bd9f63c35f45f5d83b3144d6f98be49a5008e2d9b0ac948510f69df24.json",
+      "bytes": 223047,
+      "sha256": "e01da01bd9f63c35f45f5d83b3144d6f98be49a5008e2d9b0ac948510f69df24"
+    },
+    "globalSites": {
+      "path": "/assets/atlas/v1/files/globalSites-2a03fbae520f64322347fae9fb43d95ffabec18614991cde783e27de5c2f77fd.json",
+      "bytes": 122135,
+      "sha256": "2a03fbae520f64322347fae9fb43d95ffabec18614991cde783e27de5c2f77fd"
+    },
+    "inlandConditions": {
+      "path": "/assets/atlas/v1/files/inlandConditions-9753c99156b38ccf4556b1d8e8d05815086c4372263de7e901d9f79ba3a2275e.json",
+      "bytes": 93780,
+      "sha256": "9753c99156b38ccf4556b1d8e8d05815086c4372263de7e901d9f79ba3a2275e"
+    },
+    "land": {
+      "path": "/assets/atlas/v1/files/land-50cd0852df3300b93067573a5b855d8864f50a4df7336ba3bb50c67ae361957a.json",
+      "bytes": 815626,
+      "sha256": "50cd0852df3300b93067573a5b855d8864f50a4df7336ba3bb50c67ae361957a"
+    },
+    "marineLife": {
+      "path": "/assets/atlas/v1/files/marineLife-618e071f7a57a6b7fd9d5e7a30190e18b3a0f6074cd69a57c3d18229e139c454.json",
+      "bytes": 482270,
+      "sha256": "618e071f7a57a6b7fd9d5e7a30190e18b3a0f6074cd69a57c3d18229e139c454"
+    },
+    "marineLifeObis": {
+      "path": "/assets/atlas/v1/files/marineLifeObis-00a102c217ba0189578f409f447805b9938001e64c6053b9fbcd6ac2490d730a.json",
+      "bytes": 138530,
+      "sha256": "00a102c217ba0189578f409f447805b9938001e64c6053b9fbcd6ac2490d730a"
+    },
+    "osmSites": {
+      "path": "/assets/atlas/v1/files/osmSites-9b0429639e535b56bdc80a269c870f92c5f2203174f63d6eaf3c6d5cc942d748.json",
+      "bytes": 163658,
+      "sha256": "9b0429639e535b56bdc80a269c870f92c5f2203174f63d6eaf3c6d5cc942d748"
+    },
+    "places": {
+      "path": "/assets/atlas/v1/files/places-4a0b92ebf1b6cb5a32677515a159d083191e131e14da7f466af03acc9bdcf863.json",
+      "bytes": 280126,
+      "sha256": "4a0b92ebf1b6cb5a32677515a159d083191e131e14da7f466af03acc9bdcf863"
+    },
+    "publishedDepths": {
+      "path": "/assets/atlas/v1/files/publishedDepths-ff0a6eab1995166177c4d9f06e824372e991df5f95404c51bdc025a694918244.json",
+      "bytes": 24880,
+      "sha256": "ff0a6eab1995166177c4d9f06e824372e991df5f95404c51bdc025a694918244"
+    },
+    "siteBathymetry": {
+      "path": "/assets/atlas/v1/files/siteBathymetry-f38de84227a3d69840914b1efc8b86921e71d41eb554fc6ead534b69f722de16.json",
+      "bytes": 26731,
+      "sha256": "f38de84227a3d69840914b1efc8b86921e71d41eb554fc6ead534b69f722de16"
+    },
+    "siteFacts": {
+      "path": "/assets/atlas/v1/files/siteFacts-99ea6250b2e4330216e4c5e3709df55b63149f5a893878970f3afcb4c811f5ad.json",
+      "bytes": 427986,
+      "sha256": "99ea6250b2e4330216e4c5e3709df55b63149f5a893878970f3afcb4c811f5ad"
+    },
+    "siteImages": {
+      "path": "/assets/atlas/v1/files/siteImages-5e793b30723a86060319d76ff83a303cf72c8bd1b2d7cd691b294b69e6ff528f.json",
+      "bytes": 282680,
+      "sha256": "5e793b30723a86060319d76ff83a303cf72c8bd1b2d7cd691b294b69e6ff528f"
+    },
+    "siteLakeDepths": {
+      "path": "/assets/atlas/v1/files/siteLakeDepths-f6d990ff636bd84f249e4c8ae5bfd60aaa46d207df2d7b0ae4bb64530f884279.json",
+      "bytes": 40109,
+      "sha256": "f6d990ff636bd84f249e4c8ae5bfd60aaa46d207df2d7b0ae4bb64530f884279"
+    },
+    "siteMerges": {
+      "path": "/assets/atlas/v1/files/siteMerges-f00b36b30a5efabdc621bbc098048e5e21672fb3ecfadfdeb6e5a1b2f481c396.json",
+      "bytes": 5174,
+      "sha256": "f00b36b30a5efabdc621bbc098048e5e21672fb3ecfadfdeb6e5a1b2f481c396"
+    },
+    "siteProtection": {
+      "path": "/assets/atlas/v1/files/siteProtection-a8f3462f1632de252386f6035605bdb650ac1a40ca6747f7cf8f2f8555b49e8c.json",
+      "bytes": 107026,
+      "sha256": "a8f3462f1632de252386f6035605bdb650ac1a40ca6747f7cf8f2f8555b49e8c"
+    },
+    "siteSeafloor": {
+      "path": "/assets/atlas/v1/files/siteSeafloor-7aca6fcfaf6c139805b88f71722f104df0ac225c56db877931b6c0a8a264f3c7.json",
+      "bytes": 144150,
+      "sha256": "7aca6fcfaf6c139805b88f71722f104df0ac225c56db877931b6c0a8a264f3c7"
+    },
+    "siteShore": {
+      "path": "/assets/atlas/v1/files/siteShore-e7d03c5cd599c0935809e36185b3671e4519f2a92604a8b68f6522f6465a293c.json",
+      "bytes": 56923,
+      "sha256": "e7d03c5cd599c0935809e36185b3671e4519f2a92604a8b68f6522f6465a293c"
+    },
+    "sites": {
+      "path": "/assets/atlas/v1/files/sites-93656b263cc4d72b05c3eadb4ef2e7d34efc0409614455a809b02620f23d8104.json",
+      "bytes": 36545,
+      "sha256": "93656b263cc4d72b05c3eadb4ef2e7d34efc0409614455a809b02620f23d8104"
+    },
+    "temperature": {
+      "path": "/assets/atlas/v1/files/temperature-45987d9a0edc3d85d55fc7279f96cba307264b8665fb96a336bd3c8c25962242.json",
+      "bytes": 325342,
+      "sha256": "45987d9a0edc3d85d55fc7279f96cba307264b8665fb96a336bd3c8c25962242"
+    },
+    "visibility": {
+      "path": "/assets/atlas/v1/files/visibility-ac14c18cd9844131b757360a5251c8e893ca257fa1600277b5ac63653a92b43e.json",
+      "bytes": 25674,
+      "sha256": "ac14c18cd9844131b757360a5251c8e893ca257fa1600277b5ac63653a92b43e"
+    }
+  }
+}
