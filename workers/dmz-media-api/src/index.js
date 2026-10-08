@@ -1,4 +1,5 @@
 import { normalizeCustomerLayout } from "./app-layout.js";
+import { handleAtlasWeather } from "./atlas-weather.js";
 
 function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -6481,7 +6482,9 @@ export default {
     const { pathname } = url;
     let response = null;
 
-    if (pathname === "/api/media" && request.method === "GET") {
+    if (pathname === "/api/atlas/weather" && request.method === "GET") {
+      response = await handleAtlasWeather(request, context);
+    } else if (pathname === "/api/media" && request.method === "GET") {
       response = await handleGetMedia(env);
     } else if (pathname === "/api/contact" && request.method === "POST") {
       response = await handleContact(request, env);
