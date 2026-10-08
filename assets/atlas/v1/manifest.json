@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "bab55f03c1b3ead263c39b029f795deb60447ce6a152163974448eca0bcf25b3",
-  "publishedAt": "2026-10-06T20:27:49.675Z",
+  "version": "da5c36039fb0817b4521e2a7e76e72168f72b052aac60b0ae9d0312d3dc79b52",
+  "publishedAt": "2026-10-08T05:45:08.163Z",
   "files": {
     "airports": {
       "path": "/assets/atlas/v1/files/airports-f6dd50c976ad84748c6c2cc3e227d8bbcad468540f25c7211556d407e7c45c28.json",
@@ -29,9 +29,9 @@
       "sha256": "e01da01bd9f63c35f45f5d83b3144d6f98be49a5008e2d9b0ac948510f69df24"
     },
     "globalSites": {
-      "path": "/assets/atlas/v1/files/globalSites-2a03fbae520f64322347fae9fb43d95ffabec18614991cde783e27de5c2f77fd.json",
-      "bytes": 122135,
-      "sha256": "2a03fbae520f64322347fae9fb43d95ffabec18614991cde783e27de5c2f77fd"
+      "path": "/assets/atlas/v1/files/globalSites-d5b4923f5c792c9e6e5cfa670a5487119468e976c4ee3c7e22e12365b0a99d36.json",
+      "bytes": 176564,
+      "sha256": "d5b4923f5c792c9e6e5cfa670a5487119468e976c4ee3c7e22e12365b0a99d36"
     },
     "inlandConditions": {
       "path": "/assets/atlas/v1/files/inlandConditions-9753c99156b38ccf4556b1d8e8d05815086c4372263de7e901d9f79ba3a2275e.json",
@@ -54,9 +54,9 @@
       "sha256": "00a102c217ba0189578f409f447805b9938001e64c6053b9fbcd6ac2490d730a"
     },
     "osmSites": {
-      "path": "/assets/atlas/v1/files/osmSites-9b0429639e535b56bdc80a269c870f92c5f2203174f63d6eaf3c6d5cc942d748.json",
-      "bytes": 163658,
-      "sha256": "9b0429639e535b56bdc80a269c870f92c5f2203174f63d6eaf3c6d5cc942d748"
+      "path": "/assets/atlas/v1/files/osmSites-4864ec28c711d4b662ba90a0d481b04bc584c606a0a30f10969ec24d3843489b.json",
+      "bytes": 201002,
+      "sha256": "4864ec28c711d4b662ba90a0d481b04bc584c606a0a30f10969ec24d3843489b"
     },
     "places": {
       "path": "/assets/atlas/v1/files/places-4a0b92ebf1b6cb5a32677515a159d083191e131e14da7f466af03acc9bdcf863.json",
@@ -92,6 +92,11 @@
       "path": "/assets/atlas/v1/files/siteMerges-f00b36b30a5efabdc621bbc098048e5e21672fb3ecfadfdeb6e5a1b2f481c396.json",
       "bytes": 5174,
       "sha256": "f00b36b30a5efabdc621bbc098048e5e21672fb3ecfadfdeb6e5a1b2f481c396"
+    },
+    "siteProfiles": {
+      "path": "/assets/atlas/v1/files/siteProfiles-3b19194bff13e5b02eb70e31a93e7cf802017a63148944468172048c00bf5ee4.json",
+      "bytes": 406509,
+      "sha256": "3b19194bff13e5b02eb70e31a93e7cf802017a63148944468172048c00bf5ee4"
     },
     "siteProtection": {
       "path": "/assets/atlas/v1/files/siteProtection-a8f3462f1632de252386f6035605bdb650ac1a40ca6747f7cf8f2f8555b49e8c.json",
