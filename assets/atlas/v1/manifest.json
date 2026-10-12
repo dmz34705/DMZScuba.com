@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "da5c36039fb0817b4521e2a7e76e72168f72b052aac60b0ae9d0312d3dc79b52",
-  "publishedAt": "2026-10-08T05:45:08.163Z",
+  "version": "8c708443abb1501f6511fefeabd09366940a786af5df25911cde19484cbb09db",
+  "publishedAt": "2026-10-12T04:52:46.688Z",
   "files": {
     "airports": {
       "path": "/assets/atlas/v1/files/airports-f6dd50c976ad84748c6c2cc3e227d8bbcad468540f25c7211556d407e7c45c28.json",
@@ -94,9 +94,9 @@
       "sha256": "f00b36b30a5efabdc621bbc098048e5e21672fb3ecfadfdeb6e5a1b2f481c396"
     },
     "siteProfiles": {
-      "path": "/assets/atlas/v1/files/siteProfiles-3b19194bff13e5b02eb70e31a93e7cf802017a63148944468172048c00bf5ee4.json",
-      "bytes": 406509,
-      "sha256": "3b19194bff13e5b02eb70e31a93e7cf802017a63148944468172048c00bf5ee4"
+      "path": "/assets/atlas/v1/files/siteProfiles-89207d4b9773f7aec5ed7f3f9ee292e05672456d96468753a693c7ef6e1086bc.json",
+      "bytes": 1049784,
+      "sha256": "89207d4b9773f7aec5ed7f3f9ee292e05672456d96468753a693c7ef6e1086bc"
     },
     "siteProtection": {
       "path": "/assets/atlas/v1/files/siteProtection-a8f3462f1632de252386f6035605bdb650ac1a40ca6747f7cf8f2f8555b49e8c.json",
