@@ -38,6 +38,7 @@ const records = [
         document.querySelector('[data-account-view-panel="planner"]').hidden=false;
       },records);
       await page.waitForSelector('text=Cozumel week');
+      await page.waitForSelector('text=Atlas + Gear Locker suggestion');
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Atlas \+ Gear Locker suggestion/);
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Two-tank boat dives/);
       await page.click('[data-plan-new]');
