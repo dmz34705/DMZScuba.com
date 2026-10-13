@@ -4,7 +4,7 @@ The app and website use the existing Supabase identity. The new records live in 
 
 ## Deployment
 
-- Website: `https://dmzscuba-com.pages.dev/pages/account/#logbook` and `#gear`.
+- Website: `https://dmzscuba-com.pages.dev/pages/account/#logbook`, `#gear`, and `#planner`.
 - Service: `workers/dmz-account-sync/`, deployed as `dmz-account-sync-dev`.
 - Pages forwards `/api/account/sync/*` to that service. The mobile sync client uses the Pages origin; the existing profile/sign-in API keeps its existing origin.
 - Apply `schema.sql` only to `dmz-account-sync-dev`, then deploy that Worker, then push the dev website. Do not run this schema against `dmz_media`.
@@ -13,7 +13,7 @@ The app and website use the existing Supabase identity. The new records live in 
 
 - Guest use and offline edits remain available. First sign-in adopts the existing local records. Later account switches save and restore separate local account vaults, including device-only attachment references. Sign-out retains the last account's records on the device for offline use; they cannot upload to a different account.
 - While signed in, the app syncs on login, foreground, manual **Sync now**, and every 30 seconds while active. There is no promise of background iOS execution. Network failures leave the records and pending changes on the device.
-- Record kinds: `dive`, `computerLog`, `gear`, `setup`, `preferences`. Computer depth profiles and downloaded metadata are preserved. Gear components, assignments, and setup details travel as native JSON. Gear device dismissals and computer priority are included; existing profile and supported settings sync remains in place.
+- Record kinds: `dive`, `computerLog`, `gear`, `setup`, `plan`, `preferences`. Computer depth profiles and downloaded metadata are preserved. Gear components, assignments, setup details, trip itineraries, operator requirements, tasks, and plan-specific packing state travel as native JSON. Gear device dismissals and computer priority are included; existing profile and supported settings sync remains in place.
 - Photos and gear documents are intentionally excluded from cloud records. Downloading record updates preserves the receiving device's attachments. Attachments do not appear on another device or the website.
 - Each mutation names the server revision it was based on. SQL compares that revision atomically. Conflicting updates return HTTP 409 and never silently replace a different revision. Retry mutation IDs are persisted before uploading. Deletions leave server tombstones so other devices learn about them.
 - The app retains both versions of a conflict and lets the diver choose in **Account → Review changed records**. Resolved originals remain in a local recovery archive. Website conflicts leave the editor draft open and ask the diver to review the newer record before retrying.

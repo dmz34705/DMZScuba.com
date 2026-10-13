@@ -417,6 +417,12 @@
         latitude: position.coords.latitude, longitude: position.coords.longitude }), () => {}, { maximumAge: 7 * 24 * 3600 * 1000, timeout: 15000 });
     }).catch(() => {});
     loadPersonalDives();
+    const query = new URLSearchParams(window.location.search);
+    const latitude = Number(query.get('lat')), longitude = Number(query.get('lon'));
+    if (validCoordinate(latitude, longitude)) {
+      atlas().DMZTravelAtlas?.openArea({ latitude, longitude, query:query.get('name') || '', zoom:11 });
+      receive({ type:'focus', siteId:query.get('siteId') || '', name:query.get('name') || 'Planned dive', latitude, longitude });
+    }
   }
 
   window.addEventListener('message', (event) => {

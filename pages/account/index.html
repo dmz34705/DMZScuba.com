@@ -87,6 +87,7 @@
             <button type="button" data-account-view="home" aria-current="page"><span aria-hidden="true">&#8962;</span>Account Home</button>
             <button type="button" data-account-view="logbook"><span aria-hidden="true">&#8779;</span>My Logbook</button>
             <button type="button" data-account-view="gear"><span aria-hidden="true">&#9671;</span>Gear Locker</button>
+            <button type="button" data-account-view="planner"><span aria-hidden="true">&#9992;</span>Trip Planner</button>
             <button type="button" data-account-view="profile"><span aria-hidden="true">&#9786;</span>My Profile</button>
             <button type="button" data-account-view="certifications"><span aria-hidden="true">&#9733;</span>Certifications</button>
             <button type="button" data-account-view="activity"><span aria-hidden="true">&#128197;</span>Bookings &amp; Activity</button>
@@ -107,6 +108,7 @@
               <div class="account-home-actions">
                 <button class="btn primary" type="button" data-account-view="logbook">Open My Logbook</button>
                 <button class="btn secondary" type="button" data-account-view="gear">Open Gear Locker</button>
+                <button class="btn secondary" type="button" data-account-view="planner">Plan a Trip</button>
               </div>
             </div>
 
@@ -128,6 +130,7 @@
 
           <section class="account-view" data-account-view-panel="logbook" hidden aria-labelledby="logbook-title"><div data-diving-logbook></div></section>
           <section class="account-view" data-account-view-panel="gear" hidden aria-labelledby="gear-title"><div data-diving-gear></div></section>
+          <section class="account-view" data-account-view-panel="planner" hidden aria-labelledby="planner-title"><div data-diving-planner></div></section>
           <section class="account-view" data-account-view-panel="profile" hidden aria-labelledby="profile-title">
             <div class="account-section-head">
               <p class="account-eyebrow">Personal information</p>
@@ -317,7 +320,9 @@
 
   <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account-diving.js?v=20260924b-bulk"></script>
-  <script src="/js/account.js?v=20260924sync"></script>
+  <script src="/js/ocean-atlas-guide-engine.js?v=20261013-guides3"></script>
+  <script src="/js/account-diving.js?v=20261013-desktop"></script>
+  <script src="/js/account-planner.js?v=20261013a"></script>
+  <script src="/js/account.js?v=20261013-planner"></script>
 </body>
 </html>

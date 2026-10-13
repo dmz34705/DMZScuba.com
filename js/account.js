@@ -138,6 +138,7 @@
     const requestedView = accountViewPanels.some((panel) => panel.dataset.accountViewPanel === name) ? name : "home";
     activeAccountView = requestedView;
     if (['logbook', 'gear'].includes(requestedView)) window.DMZDiving?.open(requestedView);
+    if (requestedView === 'planner') window.DMZPlanner?.open();
     accountViewPanels.forEach((panel) => {
       panel.hidden = panel.dataset.accountViewPanel !== requestedView;
     });
@@ -520,6 +521,7 @@
   function renderAccount(data) {
     account = data;
     window.DMZDiving?.connect({ request: apiRequest, account: data });
+    window.DMZPlanner?.connect({ request: apiRequest, account: data });
     const profile = data.profile || {};
     const certifications = Array.isArray(data.certifications) ? data.certifications : [];
     const eventRegistrations = Array.isArray(data.eventRegistrations) ? data.eventRegistrations : [];
@@ -605,6 +607,7 @@
 
   function showSignedOut() {
     window.DMZDiving?.disconnect();
+    window.DMZPlanner?.disconnect();
     account = null;
     pendingEmailChange = null;
     activeAccountView = "home";
@@ -622,7 +625,7 @@
       renderAccount(await apiRequest("/api/account", { method: "GET" }));
       if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
       else if (options.signedIn) showLoginSuccess(options.entryMode || "");
-      else showDashboard(options.view || (['#logbook', '#gear'].includes(window.location.hash) ? window.location.hash.slice(1) : activeAccountView));
+      else showDashboard(options.view || (['#logbook', '#gear', '#planner'].includes(window.location.hash) ? window.location.hash.slice(1) : activeAccountView));
       return true;
     } catch (error) {
       if (Number(error && error.status) === 401 || Number(error && error.status) === 403) {

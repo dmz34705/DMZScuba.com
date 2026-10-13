@@ -29,7 +29,7 @@
       <select aria-label="${log ? 'Dive source' : 'Gear category'}" data-filter><option value="">${log ? 'All dives' : 'All categories'}</option>${(log ? ['manual','computer','import','mixed'] : categories).map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select>
       <select aria-label="Sort records" data-sort>${(log ? [['newest','Newest first'],['oldest','Oldest first'],['deepest','Deepest first']] : [['name','Name A–Z'],['service','Service due'],['newest','Recently added']]).map(([v,t]) => `<option value="${v}">${t}</option>`).join('')}</select>
       ${log ? '<select aria-label="Display units" data-units><option value="metric">Meters / °C</option><option value="imperial">Feet / °F</option></select>' : ''}
-      <button class="btn secondary" data-refresh>Refresh</button><button class="btn secondary" data-export>Export</button></div>
+      <button class="btn secondary" data-refresh>Refresh</button><button class="btn secondary" data-export>Export JSON</button>${log ? '<button class="btn secondary" data-export-csv>Export CSV</button>' : ''}</div>
       <div class="diving-layout"><div class="diving-list" data-list aria-label="${log ? 'Dives' : 'Equipment'}"></div><div class="diving-detail" data-detail></div></div>
       <p class="diving-footnote">App changes appear after sync succeeds. Photos and documents remain on your device in this version.</p>`;
     const panel = panels[view];
@@ -45,6 +45,7 @@
       if (button.hasAttribute('data-delete')) remove(button.dataset.delete, button.dataset.id);
       if (button.hasAttribute('data-setup')) { ui.gear.setup = button.dataset.setup; ui.gear.selected = null; render('gear'); }
       if (button.hasAttribute('data-export')) exportData(view).catch((error) => status(error.message,true));
+      if (button.hasAttribute('data-export-csv')) exportCsv().catch((error) => status(error.message,true));
     });
     panel.addEventListener('change', async (e) => {
       if (!e.target.matches('[data-pack]') || !userId) return;
@@ -78,6 +79,9 @@
     const values = all(log ? 'dive' : 'gear');
     panel.querySelector('[data-stats]').innerHTML = log
       ? stat(values.length, 'Logged dives') + stat(`${(values.reduce((n,r) => n + number(r.data.durationSeconds),0) / 3600).toFixed(1)} h`, 'Time underwater') + stat(values.length ? depth(Math.max(...values.map((r) => number(r.data.water?.maxDepthMeters)))) : '—', 'Deepest dive')
+        + stat(values.length ? duration(values.reduce((n,r) => n + number(r.data.durationSeconds),0) / values.length) : '—', 'Average dive')
+        + stat(new Set(values.map((r) => r.data.site?.name).filter(Boolean)).size, 'Dive sites')
+        + stat(new Set(values.map((r) => r.data.site?.country).filter(Boolean)).size, 'Countries')
       : stat(values.length, 'Items in your locker') + stat(all('setup').length, 'Saved setups') + stat(values.filter((r) => gearStatus(r.data).tone).length, 'Need attention');
     if (!log) panel.querySelector('[data-setups]').innerHTML = `<button data-setup="" aria-pressed="${!state.setup}">All equipment</button>` + all('setup').map((r) => `<button data-setup="${esc(r.id)}" aria-pressed="${r.id === state.setup}">${esc(r.data.name)}</button>`).join('') + '<button data-add="setup">+ New setup</button>';
     let shown = values.filter((r) => {
@@ -111,9 +115,10 @@
     const d = record.data, log = view === 'logbook', container = panels[view].querySelector('[data-detail]');
     container.innerHTML = `<span class="diving-badge">${esc(log ? (d.source || 'manual') + ' dive' : d.category)}</span><h3>${esc(log ? d.site?.name || 'Untitled dive' : d.name)}</h3><p>${esc(log ? [d.site?.location,d.site?.country].filter(Boolean).join(', ') : [d.manufacturer,d.model].filter(Boolean).join(' · '))}</p>
       <div class="diving-actions"><button class="btn secondary" data-edit="${record.kind}" data-id="${esc(record.id)}">Edit ${log ? 'dive' : 'item'}</button><button class="btn secondary diving-danger" data-delete="${record.kind}" data-id="${esc(record.id)}">Delete</button></div>
-      <dl>${log ? pair('Date',date(d.startTime)) + pair('Dive time',duration(d.durationSeconds)) + pair('Maximum depth',depth(d.water?.maxDepthMeters)) + pair('Average depth',depth(d.water?.avgDepthMeters)) + pair('Water temperature',temp(d.water?.tempMinC)) + pair('Gas',(d.gas?.mixes || []).map((m) => m.label).join(', ')) + pair('Buddies',(d.buddies || []).join(', ')) + pair('Rating',d.rating ? `${d.rating} / 5` : '') : pair('Condition',d.condition) + pair('Serial number',d.serialNumber) + pair('Next service',dueFor(d) ? date(dueFor(d)) : 'Not set') + pair('Last service',d.lastServiceDate ? date(d.lastServiceDate) : '') + pair('Configuration',d.configuration) + pair('Purchased',d.purchaseDate ? date(d.purchaseDate) : '')}</dl>
+      <dl>${log ? pair('Date',date(d.startTime)) + pair('Dive time',duration(d.durationSeconds)) + pair('Maximum depth',depth(d.water?.maxDepthMeters)) + pair('Average depth',depth(d.water?.avgDepthMeters)) + pair('Surface interval',d.surfaceIntervalSeconds ? duration(d.surfaceIntervalSeconds) : '') + pair('Dive mode',d.diveMode) + pair('Water temperature',temp(d.water?.tempMinC)) + pair('Visibility',d.water?.visibilityMeters != null ? depth(d.water.visibilityMeters) : '') + pair('Water type',d.water?.type) + pair('Gas',(d.gas?.mixes || []).map((m) => m.label || `${Math.round(number(m.o2) * 100)}% O₂`).join(', ')) + pair('Buddies',(d.buddies || []).join(', ')) + pair('Operator',d.operator) + pair('Rating',d.rating ? `${d.rating} / 5` : '') + pair('Tags',(d.tags || []).join(', ')) + pair('Coordinates',Number.isFinite(Number(d.site?.latitude)) ? `${Number(d.site.latitude).toFixed(5)}, ${Number(d.site.longitude).toFixed(5)}` : '') : pair('Condition',d.condition) + pair('Serial number',d.serialNumber) + pair('Next service',dueFor(d) ? date(dueFor(d)) : 'Not set') + pair('Last service',d.lastServiceDate ? date(d.lastServiceDate) : '') + pair('Configuration',d.configuration) + pair('Purchased',d.purchaseDate ? date(d.purchaseDate) : '')}</dl>
       ${log ? '<div data-profile-chart></div>' : (d.components?.length ? `<h4>Assembly components</h4><ul class="diving-components">${d.components.map((c) => `<li><strong>${esc(c.name || c.type)}</strong><small>${esc([c.manufacturer,c.model,c.serialNumber].filter(Boolean).join(' · '))}</small><small>${esc(c.condition || 'Ready')}${dueFor(c) ? ` · Due ${esc(date(dueFor(c)))}` : ''}</small></li>`).join('')}</ul>` : '')}
       ${d.notes ? `<h4>${log ? 'Dive notes' : 'Equipment notes'}</h4><p class="diving-notes">${esc(d.notes)}</p>` : ''}
+      ${log ? `<details class="diving-raw"><summary>Pop the hood · inspect the complete dive record</summary><pre>${esc(JSON.stringify(d,null,2))}</pre></details>` : ''}
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
       ${!log && ui.gear.setup ? setupDetail(records.get(`setup/${ui.gear.setup}`)) : ''}`;
     if (log) {
@@ -135,7 +140,10 @@
     const maxT = Math.max(1,...points.map((p) => p.t)), maxD = Math.max(1,...points.map((p) => p.depth));
     const step = Math.max(1, Math.ceil(points.length / 600));
     const xy = points.filter((_,i) => i % step === 0 || i === points.length - 1).map((p) => `${(45 + p.t / maxT * 470).toFixed(1)},${(24 + p.depth / maxD * 145).toFixed(1)}`).join(' ');
-    return `<h4>Computer depth profile</h4><svg class="diving-chart" viewBox="0 0 550 215" role="img" aria-label="Dive depth profile, maximum ${esc(depth(maxD))}, duration ${esc(duration(maxT))}"><path d="M45 24H520M45 96H520M45 169H520" stroke="#294357" fill="none"/><polygon points="45,24 ${xy} 515,24" fill="#205563" opacity=".6"/><polyline points="${xy}" fill="none" stroke="#78e3d7" stroke-width="2"/><g fill="#a5bfd2" font-size="10" font-family="sans-serif"><text x="8" y="28">0</text><text x="3" y="174">${esc(depth(maxD))}</text><text x="45" y="198">0 min</text><text x="460" y="198">${esc(duration(maxT))}</text></g></svg>`;
+    const temperatures = points.map((p) => p.tempC).filter(Number.isFinite), pressures = points.map((p) => p.pressureBar).filter((v) => Number.isFinite(v) && v > 0);
+    let fastest = 0;
+    for (let i=1;i<points.length;i++) { const seconds=points[i].t-points[i-1].t; if(seconds>0&&points[i].depth<points[i-1].depth) fastest=Math.max(fastest,(points[i-1].depth-points[i].depth)/seconds*60); }
+    return `<h4>Computer depth profile</h4><dl class="diving-profile-metrics">${pair('Samples',points.length.toLocaleString())}${pair('Minimum recorded temperature',temperatures.length?temp(Math.min(...temperatures)):'')}${pair('Cylinder pressure range',pressures.length?`${Math.round(Math.max(...pressures))} → ${Math.round(Math.min(...pressures))} bar`:'')}${pair('Fastest sampled ascent',fastest?`${fastest.toFixed(1)} m/min`:'')}</dl><svg class="diving-chart" viewBox="0 0 550 215" role="img" aria-label="Dive depth profile, maximum ${esc(depth(maxD))}, duration ${esc(duration(maxT))}"><path d="M45 24H520M45 96H520M45 169H520" stroke="#294357" fill="none"/><polygon points="45,24 ${xy} 515,24" fill="#205563" opacity=".6"/><polyline points="${xy}" fill="none" stroke="#78e3d7" stroke-width="2"/><g fill="#a5bfd2" font-size="10" font-family="sans-serif"><text x="8" y="28">0</text><text x="3" y="174">${esc(depth(maxD))}</text><text x="45" y="198">0 min</text><text x="460" y="198">${esc(duration(maxT))}</text></g></svg><p class="diving-footnote">Sample-derived values help inspect the log; use your dive computer and training for safety decisions.</p>`;
   }
   async function load(force = false) {
     if (!request || !userId || loading || (loaded && !force)) return;
@@ -225,6 +233,14 @@
     const row = records.get(`${kind}/${id}`); if (!row || !window.confirm('Delete this record from your account and synced devices?')) return;
     try { await save({ ...row,deleted:true }); render('logbook'); render('gear'); status('Record deleted. The deletion will sync to your app.'); }
     catch (error) { status(error.message,true); }
+  }
+  async function exportCsv() {
+    if (!loaded) return;
+    const columns = ['id','number','start_time','site','location','country','latitude','longitude','duration_minutes','max_depth_m','avg_depth_m','min_temp_c','visibility_m','dive_mode','gas','buddies','operator','rating','tags','notes'];
+    const quote = (value) => `"${String(value ?? '').replace(/"/g,'""')}"`;
+    const rows = all('dive').map(({ data:d }) => [d.id,d.number,d.startTime,d.site?.name,d.site?.location,d.site?.country,d.site?.latitude,d.site?.longitude,number(d.durationSeconds)/60,d.water?.maxDepthMeters,d.water?.avgDepthMeters,d.water?.tempMinC,d.water?.visibilityMeters,d.diveMode,(d.gas?.mixes||[]).map((m)=>m.label).join('; '),(d.buddies||[]).join('; '),d.operator,d.rating,(d.tags||[]).join('; '),d.notes]);
+    const blob = new Blob([[columns,...rows].map((row)=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
+    link.href=url; link.download=`dmz-logbook-${new Date().toISOString().slice(0,10)}.csv`; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); status('Your spreadsheet-ready CSV export is ready.');
   }
   async function exportData(view) {
     if (!loaded) return;

@@ -46,6 +46,7 @@ env.ACCOUNT_API = { async fetch(request) {
   const put = (user, kind, id, data) => request(user, `/${kind}/${id}`, { baseRevision:0, mutationId:`m-${kind}-${id}`, deleted:false, data:{ id, ...data } });
   for (let i = 0; i < 260; i++) await put('carol', 'dive', `d${String(i).padStart(3, '0')}`, { site:{ name:`Site ${i}` } });
   await put('carol', 'gear', 'bcd', { name:'BCD' });
+  assert.equal((await put('carol', 'plan', 'plan-1', { title:'Cozumel', kind:'trip' })).status, 200);
   await put('carol', 'computerLog', 'log-1', { profile:{ samples:[] } });
   await put('carol', 'dive', 'gone', { site:{ name:'Deleted' } });
   await request('carol', '/dive/gone', { baseRevision:1, mutationId:'m-gone-del', deleted:true, data:{ id:'gone' } });
@@ -53,13 +54,14 @@ env.ACCOUNT_API = { async fetch(request) {
   const bulk = []; let after = '', pages = 0;
   const before = authCalls;
   do {
-    const page = await (await request('carol', `?include=dive,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`)).json();
+    const page = await (await request('carol', `?include=dive,gear,setup,plan${after ? `&after=${encodeURIComponent(after)}` : ''}`)).json();
     bulk.push(...page.records); after = page.next; pages++;
   } while (after);
   assert.equal(authCalls - before, pages, 'one account verification per page, not per record');
   assert.equal(pages, 2);
-  assert.equal(bulk.length, 262, 'every dive (including the tombstone) and gear item, no computer logs');
+  assert.equal(bulk.length, 263, 'every dive (including the tombstone), gear item, and plan, with no computer logs');
   assert.ok(bulk.every((row) => row.kind !== 'computerLog'));
+  assert.equal(bulk.find((row) => row.kind === 'plan').data.title, 'Cozumel');
   assert.equal(bulk.find((row) => row.id === 'd123').data.site.name, 'Site 123');
   assert.deepEqual(bulk.filter((row) => row.deleted).map((row) => [row.id, row.data]), [['gone', null]]);
   assert.equal(new Set(bulk.map((row) => `${row.kind}/${row.id}`)).size, bulk.length, 'pages never overlap');

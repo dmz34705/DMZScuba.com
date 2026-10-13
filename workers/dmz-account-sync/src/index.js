@@ -1,4 +1,4 @@
-const KINDS = new Set(['dive', 'computerLog', 'gear', 'setup', 'preferences']);
+const KINDS = new Set(['dive', 'computerLog', 'gear', 'setup', 'plan', 'preferences']);
 const ID = /^[a-zA-Z0-9_-]{1,120}$/;
 const MAX_BYTES = 1500000;
 const INCLUDE_ROWS = 250;

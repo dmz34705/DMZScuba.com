@@ -1,7 +1,7 @@
 -- Dedicated development database. Never apply to dmz_media.
 CREATE TABLE IF NOT EXISTS sync_records (
   user_id TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK(kind IN ('dive','computerLog','gear','setup','preferences')),
+  kind TEXT NOT NULL CHECK(kind IN ('dive','computerLog','gear','setup','plan','preferences')),
   id TEXT NOT NULL,
   revision INTEGER NOT NULL DEFAULT 1,
   mutation_id TEXT NOT NULL,
