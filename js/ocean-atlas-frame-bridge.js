@@ -5,6 +5,7 @@
   if (!map || !window.L) return;
   let advicePreferences = {};
   let origin = null;
+  let gearMode = 'recreational';
   const style = document.createElement('style');
   style.textContent = '#back { display: none !important; }';
   document.head.append(style);
@@ -12,9 +13,11 @@
     const engine = window.DMZAtlasGuideEngine;
     if (!engine) return;
     const message = event.detail || {};
-    if (!['siteGuide', 'regionGuide', 'quickLook', 'placeAt', 'openPlace'].includes(message.type)) return;
+    if (!['siteGuide', 'gearMode', 'regionGuide', 'quickLook', 'placeAt', 'openPlace',
+      'speciesIndex', 'speciesGuide', 'discover'].includes(message.type)) return;
     queueMicrotask(() => {
-      const response = engine.respond(message, { advicePreferences, origin });
+      if (message.type === 'gearMode') gearMode = message.value;
+      const response = engine.respond(message, { advicePreferences, origin, gearMode });
       if (response) window.atlasReceive?.(response);
     });
   });

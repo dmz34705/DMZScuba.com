@@ -13,77 +13,36 @@ if (!process.argv[2] || !process.argv[3] || !fs.existsSync(path.join(appRoot, 's
 
 const entry = `
 import { catalogSite } from './src/features/oceanAtlas/catalog.js';
-import { placeAt, placeById, placeGuide, placesForSite, quickLook, regionGuide } from './src/features/oceanAtlas/places.js';
+import { placeAt, placeById, placeGuide, quickLook, regionGuide } from './src/features/oceanAtlas/places.js';
 import { seasonGuide } from './src/features/oceanAtlas/seasons.js';
-import { siteRatings } from './src/features/oceanAtlas/ratings.js';
-import { freshwaterLife, inlandProfile, isInland } from './src/features/oceanAtlas/inland.js';
-import { exposureAdvice } from './src/features/oceanAtlas/exposure.js';
-import { nearbyDepths } from './src/features/oceanAtlas/nearbyDepths.js';
+import { inlandProfile, isInland } from './src/features/oceanAtlas/inland.js';
+import { buildSiteGuide } from './src/features/oceanAtlas/siteGuide.js';
+import { discoverSpecies, speciesGuide, speciesIndex } from './src/features/oceanAtlas/species.js';
+import { buildAtlasGearSuggestion, normalizeAtlasDiveMode } from './src/features/oceanAtlas/atlasGear.js';
+import { fetchSiteWeather } from './src/features/oceanAtlas/weather.js';
 import { normalizeGearState } from './src/features/gearChecklist/model.js';
 import { normalizeAdvicePreferences, recommendDiveGear } from './src/features/gearChecklist/diveAdvice.js';
-import SITE_IMAGES from './src/features/oceanAtlas/data/siteImages.json';
-import SITE_FACTS from './src/features/oceanAtlas/data/siteFacts.json';
-import SITE_PROTECTION from './src/features/oceanAtlas/data/siteProtection.json';
-import SITE_SEAFLOOR from './src/features/oceanAtlas/data/siteSeafloor.json';
-import SITE_SHORE from './src/features/oceanAtlas/data/siteShore.json';
-import SITE_BATHYMETRY from './src/features/oceanAtlas/data/siteBathymetry.json';
-import SITE_LAKE_DEPTHS from './src/features/oceanAtlas/data/siteLakeDepths.json';
 
 const validCoordinate = (latitude, longitude) => Number.isFinite(latitude) && Number.isFinite(longitude)
   && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
 const units = (options) => options?.depthUnit === 'm' ? 'metric' : 'imperial';
 const prefs = (options) => normalizeAdvicePreferences(options?.advicePreferences || {});
 
-export function siteGuideMessage(message, options = {}) {
+function siteGuideMessage(message, options = {}) {
   const key = String(message.key || '').slice(0, 120);
   if (!validCoordinate(message.latitude, message.longitude)) return { type: 'siteGuide', key, guide: null, places: [] };
   try {
+    const preference = prefs(options);
+    const payload = buildSiteGuide(message, { origin: options.origin || null, units: units(options),
+      advicePrefs: preference, diver: options.diver || { signedIn: false } });
     const record = typeof message.id === 'string' ? catalogSite(message.id.slice(0, 80)) : null;
     const site = record || { latitude: message.latitude, longitude: message.longitude, topologies: [] };
-    const guide = seasonGuide(site);
-    const inland = isInland(site);
-    const profile = inland ? inlandProfile(site) : null;
-    const life = inland ? freshwaterLife(site) : null;
-    if (inland) Object.assign(guide, { temps: null, highlights: [], animals: life, hasObservations: life.length > 0 });
-    const preference = prefs(options);
-    const offset = { cold: 2, typical: 0, warm: -2 }[preference.thermalTendency] || 0;
-    const wear = Array.from({ length: 12 }, (_, month) => {
-      const temperatureC = profile ? profile.surface?.[month] ?? null : guide.temps?.[month] ?? null;
-      const advice = exposureAdvice({ site, inland: profile, temperatureC,
-        comfortOffsetC: offset, drysuitBelowC: preference.drysuitBelowC + offset });
-      const deepSite = !profile && !advice.dry && site.maxDepthMeters >= 30 && !site.depthIsWholeLake;
-      const reason = advice.deepInland ? 'Cold below the thermocline — plan a drysuit until the bottom temperature is confirmed.'
-        : deepSite ? 'Deep site — the bottom can be much colder than the surface. Confirm it before you choose.'
-          : advice.dry ? 'Cold water — a drysuit with suitable insulation.'
-            : advice.fullCoverage ? 'Full-length suit — protection from wreckage and rock.' : null;
-      return { label: advice.label, temperatureC, reason, personal: Boolean(offset) };
-    });
-    return { type: 'siteGuide', key,
-      guide: { temps: guide.temps, highlights: guide.highlights, animals: guide.animals,
-        hasObservations: guide.hasObservations, inland: profile }, wear,
-      ratings: { ...siteRatings(site, guide, { originPoint: options.origin || null,
-        inland: profile, life, units: units(options) }), inland: profile },
-      photo: record && SITE_IMAGES.images[record.id]
-        ? (([url, attribution, license, page]) => ({ url, attribution, license, page }))(SITE_IMAGES.images[record.id]) : null,
-      facts: record && SITE_FACTS.facts[record.id]
-        ? (([summary, article, ship]) => ({ summary, article, ship: ship && {
-          type: ship[0], builder: ship[1], flag: ship[2], length: ship[3], beam: ship[4],
-          tonnage: ship[5], events: ship[6] || [], wikidata: ship[7] } }))(SITE_FACTS.facts[record.id]) : null,
-      protection: record ? (SITE_PROTECTION.sites[record.id] || []).map((i) =>
-        (([name, kind, url]) => ({ name, kind, url }))(SITE_PROTECTION.areas[i])) : [],
-      seafloor: record && SITE_SEAFLOOR.sites[record.id]
-        ? (([atPin, shallowest, deepest]) => ({ atPin, shallowest, deepest }))(SITE_SEAFLOOR.sites[record.id]) : null,
-      bathymetry: record && SITE_BATHYMETRY.sites[record.id]
-        ? (([atPin, shallowest, deepest, source]) => ({ atPin, shallowest, deepest,
-          source: SITE_BATHYMETRY.sources[source] }))(SITE_BATHYMETRY.sites[record.id]) : null,
-      lakeDepth: record && SITE_LAKE_DEPTHS.sites[record.id]
-        ? (([maxMeters, meanMeters, lakeName, source, url]) => ({ maxMeters, meanMeters,
-          lakeName, published: source === 'wikidata', url: url || SITE_LAKE_DEPTHS.source.url }))(SITE_LAKE_DEPTHS.sites[record.id]) : null,
-      nearbyDepths: record && !record.maxDepthMeters ? nearbyDepths(record) : null,
-      shore: record && SITE_SHORE.sites[record.id]
-        ? Object.fromEntries(SITE_SHORE.fields.map((kind, i) => [kind, SITE_SHORE.sites[record.id][i]])
-          .filter(([, meters]) => meters != null)) : null,
-      places: typeof message.id === 'string' ? placesForSite(message.id.slice(0, 80)) : [] };
+    const month = Number.isInteger(message.month) && message.month >= 0 && message.month < 12
+      ? message.month : new Date().getMonth();
+    const gear = buildAtlasGearSuggestion(normalizeGearState(null), preference, {
+      mode: normalizeAtlasDiveMode(options.gearMode), site, profile: payload.profile || null,
+      inland: payload.guide?.inland || null, temperatureC: payload.wear?.[month]?.temperatureC ?? null });
+    return { type: 'siteGuide', ...payload, gear };
   } catch {
     return { type: 'siteGuide', key, guide: null, places: [] };
   }
@@ -92,6 +51,24 @@ export function siteGuideMessage(message, options = {}) {
 export function respond(message, options = {}) {
   if (!message || typeof message !== 'object') return null;
   if (message.type === 'siteGuide') return siteGuideMessage(message, options);
+  if (message.type === 'gearMode') {
+    const response = siteGuideMessage(message, { ...options, gearMode: message.value });
+    return { type: 'siteGear', key: response.key,
+      gear: response.gear || { mode: normalizeAtlasDiveMode(message.value), setup: null } };
+  }
+  if (message.type === 'speciesIndex') {
+    try { return { type: 'speciesIndex', species: speciesIndex() }; }
+    catch { return { type: 'speciesIndex', species: [] }; }
+  }
+  if (message.type === 'speciesGuide' && typeof message.key === 'string') {
+    const key = message.key.slice(0, 120);
+    try { return { type: 'speciesGuide', key, guide: speciesGuide(key) }; }
+    catch { return { type: 'speciesGuide', key, guide: null }; }
+  }
+  if (message.type === 'discover' && Number.isInteger(message.month) && message.month >= 0 && message.month < 12) {
+    try { return { type: 'discover', month: message.month, discover: discoverSpecies(message.month) }; }
+    catch { return { type: 'discover', month: message.month, discover: null }; }
+  }
   if (message.type === 'regionGuide' && ['province', 'diveRegion'].includes(message.kind)
     && typeof message.id === 'string') {
     const id = message.id.slice(0, 60);
@@ -117,6 +94,18 @@ export function respond(message, options = {}) {
   return null;
 }
 
+export async function siteWeather(message) {
+  const key = String(message?.key || '').slice(0, 120);
+  if (!validCoordinate(message?.latitude, message?.longitude)) return { type: 'siteWeather', key, status: 'error' };
+  try {
+    const record = typeof message.id === 'string' ? catalogSite(message.id.slice(0, 80)) : null;
+    const point = record || { latitude: message.latitude, longitude: message.longitude, topologies: [] };
+    const marine = !isInland(point) && point.environment !== 'fresh';
+    return { type: 'siteWeather', key, status: 'ready',
+      weather: await fetchSiteWeather(message.latitude, message.longitude, { marine }) };
+  } catch { return { type: 'siteWeather', key, status: 'error' }; }
+}
+
 export function gearContext(message) {
   if (!validCoordinate(message?.latitude, message?.longitude)) return null;
   const month = Number.isInteger(message.month) && message.month >= 0 && message.month < 12
@@ -138,4 +127,5 @@ export function recommend(gearRecords, setupRecords, preferences, context) {
 esbuild.buildSync({ stdin: { contents: entry, resolveDir: appRoot, sourcefile: 'ocean-atlas-guide-entry.js',
   loader: 'js' }, bundle: true, platform: 'browser', format: 'iife', globalName: 'DMZAtlasGuideEngine',
   minify: true, target: ['es2020'], outfile: output, legalComments: 'inline' });
+fs.writeFileSync(output, `${fs.readFileSync(output, 'utf8').trimEnd()}\n`);
 console.log(`Built ${output} (${fs.statSync(output).size.toLocaleString()} bytes).`);

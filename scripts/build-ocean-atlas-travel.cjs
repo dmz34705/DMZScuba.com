@@ -12,9 +12,9 @@ const bridge = fs.readFileSync(path.join(root, 'js/ocean-atlas-frame-bridge.js')
 if (!fs.existsSync(path.join(root, 'js/ocean-atlas-guide-engine.js')))
   throw new Error('Build the Ocean Atlas guide engine before building the Atlas document.');
 let html = fs.readFileSync(path.resolve(input), 'utf8');
-const call = '\natlasRuntime(';
+const call = 'atlasRuntime(';
 const at = html.lastIndexOf(call);
-if (at < 0 || html.indexOf(call) !== at || !html.includes('</body></html>')) {
+if (at < 0 || html.slice(Math.max(0, at - 12), at).includes('function ') || !html.includes('</body></html>')) {
   throw new Error('App Ocean Atlas document format changed; update this adapter before rebuilding.');
 }
 // Capture the Leaflet map and provide the app's native message channel in-browser.
@@ -29,7 +29,7 @@ html = html.replace('<head>', '<head><title>Ocean Atlas | DMZ Scuba</title><meta
 html = html.replace("script-src 'unsafe-inline'", "script-src 'unsafe-inline' 'self'");
 const runtimeScript = html.lastIndexOf('<script>');
 if (runtimeScript < 0) throw new Error('Atlas runtime script not found.');
-html = html.slice(0, runtimeScript) + '<script src="../../js/ocean-atlas-guide-engine.js?v=20260924-guides1"></script>' + html.slice(runtimeScript);
+html = html.slice(0, runtimeScript) + '<script src="../../js/ocean-atlas-guide-engine.js?v=20261013-guides2"></script>' + html.slice(runtimeScript);
 html = html.replace('</body></html>', `<script>${bridge.replace(/<\/script/gi, '<\\/script')}</script></body></html>`);
 fs.writeFileSync(output, html);
 console.log(`Built ${path.relative(root, output)} (${Buffer.byteLength(html).toLocaleString()} bytes).`);

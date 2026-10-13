@@ -11,7 +11,7 @@
   const originKey = 'dmzOceanAtlasOriginV1';
   const journeyDialog = document.getElementById('atlasJourneyDialog');
   const journeyContent = journeyDialog?.querySelector('[data-atlas-journey-content]');
-  const journeyEngineUrl = '/js/ocean-atlas-journey-engine.js?v=20260924-journey1';
+  const journeyEngineUrl = '/js/ocean-atlas-journey-engine.js?v=20261013-journey2';
   const areaShortcuts = {
     cozumel: { regionId: 'caribbean-gulf', areaName: 'Cozumel' },
     floridakey: { regionId: 'caribbean-gulf', areaName: 'Florida Keys' },
@@ -377,7 +377,10 @@
 
   function handleAtlasMessage(event) {
     const message = event.detail || {};
-    if (message.type === 'preferences') {
+    if (message.type === 'siteGuide') {
+      receive({ type: 'siteWeather', key: String(message.key || '').slice(0, 120), status: 'loading' });
+      window.DMZAtlasGuideEngine?.siteWeather(message)?.then(receive);
+    } else if (message.type === 'preferences') {
       try { localStorage.setItem(preferencesKey, JSON.stringify(message.value)); } catch (_) { /* optional */ }
     } else if (message.type === 'locate') {
       if (!navigator.geolocation) { receive({ type: 'notice', text: 'Location is not available in this browser.' }); return; }
