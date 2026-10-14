@@ -21,6 +21,7 @@
   let account = null;
   let pendingEmailChange = null;
   let activeAccountView = "home";
+  window.DMZWorkspace?.register('account',()=>({owner:account?.profile?.userId,value:{view:activeAccountView}}));
   let authEnabled = false;
   let turnstileSiteKey = "";
   let certificationCatalog = { agencies: [], certifications: [] };
@@ -619,6 +620,7 @@
   }
 
   function showSignedOut() {
+    if (!accessToken) window.DMZWorkspace?.clear();
     window.DMZDiving?.disconnect();
     window.DMZPlanner?.disconnect();
     account = null;
@@ -640,7 +642,7 @@
       renderAccount(await apiRequest("/api/account", { method: "GET" }));
       if (options.created) showAccountCreated(Math.max(0, Number(options.linkedCount) || 0));
       else if (options.signedIn) showLoginSuccess(options.entryMode || "");
-      else showDashboard(options.view || (['#logbook', '#gear', '#planner'].includes(window.location.hash) ? window.location.hash.slice(1) : activeAccountView));
+      else showDashboard(options.view || window.DMZWorkspace?.read(account?.profile?.userId,'account')?.view || (['#logbook', '#gear', '#planner'].includes(window.location.hash) ? window.location.hash.slice(1) : activeAccountView));
       return true;
     } catch (error) {
       if (Number(error && error.status) === 401 || Number(error && error.status) === 403) {

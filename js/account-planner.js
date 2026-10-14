@@ -13,6 +13,8 @@
   const TYPES = { flight:'Flight',transfer:'Transfer',ferry:'Ferry',stay:'Stay',liveaboard:'Liveaboard',diving:'Dive day',car:'Rental car',activity:'Activity',other:'Other' };
   const CERTS = { 'open-water':'Open Water','advanced':'Advanced Open Water','rescue':'Rescue Diver','divemaster':'Divemaster or pro',nitrox:'Nitrox (EANx)',deep:'Deep diver',wreck:'Wreck diver',drysuit:'Drysuit',night:'Night diver',sidemount:'Sidemount',cavern:'Cavern',cave:'Full cave',rebreather:'Rebreather' };
   let request, userId, account, records = new Map(), loaded = false, loading, epoch = 0, selected = null, mobileDetail = false, detailTab = 'overview', filter = 'all', atlasSites = null, atlasEnginePromise = null, draft = null;
+  let pendingWorkspace=null;
+  window.DMZWorkspace?.register('planner',()=>({owner:userId,value:pendingWorkspace||{selected,mobileDetail,detailTab,search:host.querySelector('[data-plan-search]')?.value||'',filter:host.querySelector('[data-plan-filter]')?.value||'all',scrolls:window.DMZWorkspace.scrolls(host)}}));
   const dialog = document.createElement('dialog'); dialog.className = 'diving-dialog planner-dialog'; dialog.setAttribute('aria-labelledby','planner-editor-title'); document.body.append(dialog);
   const key = (row) => `${row.kind}/${row.id}`;
   const all = (kind) => [...records.values()].filter((row) => row.kind === kind && !row.deleted);
@@ -197,7 +199,11 @@
         if(ticket!==epoch)return;
         rows.push(...page.records);after=page.next;status(`Loading planner · ${rows.length} records received…`);
       }while(after);
-      records=new Map(rows.filter((r)=>r.data&&!r.deleted).map((r)=>[key(r),r]));loaded=true;render();
+      records=new Map(rows.filter((r)=>r.data&&!r.deleted).map((r)=>[key(r),r]));loaded=true;
+      const previousScrolls=window.DMZWorkspace?.scrolls(host),restored=pendingWorkspace;pendingWorkspace=null;
+      if(restored){selected=restored.selected;mobileDetail=!!restored.mobileDetail;detailTab=restored.detailTab||'overview';host.querySelector('[data-plan-search]').value=restored.search||'';host.querySelector('[data-plan-filter]').value=['all','upcoming','past'].includes(restored.filter)?restored.filter:'all';}
+      render();
+      window.DMZWorkspace?.restoreScrolls(host,restored?.scrolls||previousScrolls);
       status(`Planner refreshed at ${new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}.`);
     })().catch((error)=>{if(ticket===epoch)status(error.message||'Planner data could not load.',true);}).finally(()=>{if(loading===task)loading=null;});
     loading=task;return task;
@@ -228,5 +234,5 @@
   shell();render();
   document.addEventListener('dmz-diving-record-changed',()=>{loaded=false;});
   window.addEventListener('resize', () => host.querySelector('.diving-layout')?.classList.toggle('is-mobile-detail', mobileDetail && window.matchMedia('(max-width: 760px)').matches), { passive:true });
-  window.DMZPlanner={connect(options){request=options.request;account=options.account;const next=account?.profile?.userId;if(next!==userId){epoch++;loading=null;userId=next;records.clear();loaded=false;selected=null;render();}},open(){load();},disconnect(){epoch++;loading=null;userId=null;request=null;account=null;records.clear();loaded=false;dialog.close();render();status('Sign in to load your plans.');}};
+  window.DMZPlanner={connect(options){request=options.request;account=options.account;const next=account?.profile?.userId;if(next!==userId){epoch++;loading=null;userId=next;pendingWorkspace=window.DMZWorkspace?.read(userId,'planner');records.clear();loaded=false;selected=null;mobileDetail=false;detailTab='overview';host.querySelector('[data-plan-search]').value='';host.querySelector('[data-plan-filter]').value='all';render();}},open(){load();},disconnect(){epoch++;loading=null;userId=null;pendingWorkspace=null;request=null;account=null;records.clear();loaded=false;dialog.close();render();status('Sign in to load your plans.');}};
 })();

@@ -1,6 +1,41 @@
 (() => {
   'use strict';
   let serial = 0;
+  // Keep navigation-only state on this browser history entry, never account records
+  // or credentials. Back/reload can restore it even without the back-forward cache.
+  const workspaceReaders = new Map();
+  const workspace = window.DMZWorkspace = {
+    register(key, reader) { workspaceReaders.set(key,reader); },
+    read(owner,key) {
+      const saved=history.state?.dmzWorkspace;
+      return owner && saved?.owner===owner ? saved.values?.[key] : null;
+    },
+    save() {
+      const values={}; let owner;
+      for(const [key,reader] of workspaceReaders) {
+        const entry=reader();
+        if(!entry?.owner)continue;
+        if(owner && owner!==entry.owner)continue;
+        owner=entry.owner; values[key]=entry.value;
+      }
+      if(!owner)return;
+      try { history.replaceState({...history.state,dmzWorkspace:{owner,values}},''); } catch { /* Navigation still works if history storage is unavailable. */ }
+    },
+    clear() {
+      try { const state={...history.state};delete state.dmzWorkspace;history.replaceState(state,''); } catch { /* Optional navigation memory. */ }
+    },
+    scrolls(root) { return [...root.querySelectorAll('.diving-list,.diving-detail,.tool-pane')].map((el)=>el.scrollTop); },
+    restoreScrolls(root,values=[]) { requestAnimationFrame(()=>[...root.querySelectorAll('.diving-list,.diving-detail,.tool-pane')].forEach((el,index)=>{el.scrollTop=Number(values[index])||0;})); }
+  };
+  window.addEventListener('pagehide',()=>workspace.save());
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)workspace.save();});
+  document.addEventListener('click',(event)=>{if(event.target.closest('a[href]'))workspace.save();},true);
+  // Save after tool handlers run too: reload may snapshot history before pagehide.
+  for(const event of ['click','change'])document.addEventListener(event,()=>workspace.save());
+  let deferredSave;
+  const scheduleSave=()=>{clearTimeout(deferredSave);deferredSave=setTimeout(()=>workspace.save(),150);};
+  for(const event of ['input','keyup'])document.addEventListener(event,scheduleSave);
+  document.addEventListener('scroll',scheduleSave,true);
   // Shared keyboard-accessible sections. Moving existing nodes preserves form values
   // and event handlers; hidden panels remain part of their forms when saved.
   function tabs(container, sections, selected, onSelect) {

@@ -10,6 +10,24 @@
   const keyOf = (r) => `${r.kind}/${r.id}`;
   let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
   const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'profile', page:'dives', from:'', to:'', mode:'' }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview' } };
+  const defaultUi=structuredClone(ui);
+  let pendingWorkspace=null;
+  window.DMZWorkspace?.register('diving',()=>({owner:userId,value:pendingWorkspace||{
+    ui:Object.fromEntries(Object.entries(ui).map(([view,state])=>[view,Object.fromEntries(['search','filter','sort','selected','setup','mobileDetail','tab','page','from','to','mode','pageIndex'].map((key)=>[key,state[key]]))])),
+    imperial,scrolls:Object.fromEntries(Object.entries(panels).map(([view,panel])=>[view,window.DMZWorkspace.scrolls(panel)]))
+  }}));
+  function restoreWorkspace() {
+    if(!pendingWorkspace)return null;
+    const saved=pendingWorkspace;pendingWorkspace=null;
+    for(const view of Object.keys(ui)){
+      Object.assign(ui[view],saved.ui?.[view]);
+      for(const [attr,prop] of [['search','search'],['filter','filter'],['sort','sort'],['date-from','from'],['date-to','to'],['mode','mode']]) {
+        const input=panels[view].querySelector(`[data-${attr}]`);if(input)input.value=ui[view][prop]||'';
+      }
+    }
+    imperial=!!saved.imperial;panels.logbook.querySelector('[data-units]').value=imperial?'imperial':'metric';
+    return saved;
+  }
   let imperial = false, dialogRecord = null, disposeProfile = null;
   const dialog = document.createElement('dialog');
   dialog.className = 'diving-dialog'; dialog.setAttribute('aria-labelledby', 'diving-editor-title');
@@ -268,7 +286,9 @@
       }));
       if (epoch !== ticket) return;
       records = next; loaded = true;
+      const restored=restoreWorkspace()||{scrolls:Object.fromEntries(Object.entries(panels).map(([view,panel])=>[view,window.DMZWorkspace?.scrolls(panel)]))};
       render('logbook'); render('gear'); status(`Account records refreshed at ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}.`);
+      if(restored)for(const view of Object.keys(panels))window.DMZWorkspace.restoreScrolls(panels[view],restored.scrolls?.[view]);
     })().catch((error) => {
       if (epoch !== ticket) return;
       const message = error?.message || 'Records could not load. Try Refresh.';
@@ -390,7 +410,7 @@
     connect(options) {
       request = options.request;
       const next = options.account?.profile?.userId;
-      if (next !== userId) { epoch++; userId = next; records.clear(); loaded = false; loading = null; imperial = options.account?.appSettings?.depthUnit === 'ft'; panels.logbook.querySelector('[data-units]').value = imperial ? 'imperial' : 'metric'; render('logbook'); render('gear'); }
+      if (next !== userId) { epoch++; userId = next; pendingWorkspace=window.DMZWorkspace?.read(userId,'diving'); for(const view of Object.keys(ui))ui[view]=structuredClone(defaultUi[view]); records.clear(); loaded = false; loading = null; imperial = options.account?.appSettings?.depthUnit === 'ft'; panels.logbook.querySelector('[data-units]').value = imperial ? 'imperial' : 'metric'; render('logbook'); render('gear'); }
     },
     open(view) { active = view; load(); },
     disconnect() { disposeProfile?.(); disposeProfile=null; epoch++; userId = null; request = null; loaded = false; loading = null; records.clear(); dialog.close(); dialog.innerHTML = ''; dialogRecord = null; render('logbook'); render('gear'); status('Sign in to load your records.'); },
