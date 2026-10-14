@@ -93,8 +93,13 @@ function fixtures(){return [
       await page.locator('.diving-components button').first().click();await page.fill('[name="serialNumber"]','PART-123');await page.click('.diving-dialog [type="submit"]');await page.waitForFunction(()=>!document.querySelector('.diving-dialog').open);
       assert.equal(rows.find((row)=>row.id==='reg').data.components[0].serialNumber,'PART-123','component edits preserve the original component ID and packing key');
       await page.click('.account-nav-menu [data-account-view="planner"]');await page.waitForSelector('[data-plan-select="p1"]');
+      const tripRow=await page.locator('[data-plan-select="p1"]').boundingBox();
+      assert.ok(tripRow.height<170,'trip selector uses a compact row rather than stacked metric boxes');
+      assert.match(await page.locator('[data-plan-select="p1"]').innerText(),/Feb 10.*12, 2027/);
       if(width<760)await page.click('[data-plan-select="p1"]');
       await page.click('[data-tool-tab="itinerary"]');assert.equal(await page.locator('.trip-day').count(),3);
+      assert.ok((await page.locator('.trip-leg').first().boundingBox()).height<100,'booking rows remain compact on desktop and phones');
+      assert.equal(await page.locator('[data-plan-detail]').evaluate((el)=>el.scrollWidth<=el.clientWidth+1),true,'agenda fits horizontally');
       assert.equal(await page.locator('.trip-day').nth(1).locator('[data-leg-edit="stay"]').count(),1,'stay continues across each occupied day');
       await page.locator('[data-leg-edit="dive"]').first().click();await page.fill('[name="title"]','Updated charter');await page.click('.planner-dialog [type="submit"]');await page.waitForSelector('text=Updated charter');
       await page.screenshot({path:path.join(process.env.TEMP,`dmz-app-trip-${width}.png`),fullPage:true});
