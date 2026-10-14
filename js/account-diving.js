@@ -182,7 +182,13 @@
       if (epoch !== ticket) return;
       records = next; loaded = true;
       render('logbook'); render('gear'); status(`Account records refreshed at ${new Date().toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}.`);
-    })().catch((error) => { if (epoch === ticket) status(error.message || 'Records could not load. Try Refresh.', true); }).finally(() => { if (loading === task) loading = null; });
+    })().catch((error) => {
+      if (epoch !== ticket) return;
+      const message = error?.message || 'Records could not load. Try Refresh.';
+      const code = Number(error?.status);
+      status(code ? `${message} (HTTP ${code})` : message, true);
+      console.error('[DMZ Logbook] Record load failed', { status:code || null, code:error?.code || null, message });
+    }).finally(() => { if (loading === task) loading = null; });
     loading = task; return task;
   }
   async function save(record) {
