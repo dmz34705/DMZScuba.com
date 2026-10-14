@@ -78,6 +78,16 @@ function fixtures(){return [
       await page.selectOption('[data-profile-computer]','0');
       assert.match(await page.locator('[data-profile-readout]').innerText(),/No-deco limit\s+20m 0s/,'NDL time is labeled in minutes and seconds');
       assert.doesNotMatch(await page.locator('[data-profile-readout]').innerText(),/0\.0 m · 0:00/,'NDL mode is not rendered as a zero-depth stop');
+      await page.click('.profile-all-readings');
+      assert.equal(await page.locator('.profile-recorded-dialog').evaluate((el)=>el.open),true);
+      assert.match(await page.locator('.profile-recorded-dialog tbody').innerText(),/extraSensor.raw/,'all synced fields are available, not only the curated cards');
+      await page.locator('[data-recorded-time]').evaluate((el)=>{el.value=150;el.dispatchEvent(new Event('input'));});
+      assert.match(await page.locator('[data-recorded-position]').innerText(),/25:00.*151 of 301/);
+      await page.screenshot({path:path.join(process.env.TEMP,`dmz-recorded-readings-${width}.png`),fullPage:true});
+      assert.equal(await page.locator('.profile-recorded-dialog').evaluate((el)=>el.scrollWidth<=el.clientWidth+1),true,'complete-reading view has no horizontal overflow');
+      await page.selectOption('[data-recorded-computer]','1');
+      assert.doesNotMatch(await page.locator('.profile-recorded-dialog tbody').innerText(),/CNS oxygen exposure/,'complete-reading view is scoped to the selected computer');
+      await page.click('[data-recorded-close]');
       await page.screenshot({path:path.join(process.env.TEMP,`dmz-app-profile-${width}.png`),fullPage:true});
       await page.click('[data-tool-tab="data"]');
       assert.match(await page.locator('[data-samples-count]').innerText(),/1–100 of 602 samples/);

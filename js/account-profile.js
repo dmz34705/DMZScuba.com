@@ -6,7 +6,7 @@
   const name = (log,index) => [log.device?.vendor,log.device?.product||log.device?.model].filter(Boolean).join(' ')||log.computer?.model||`Computer ${index+1}`;
   const nonnegative=(n)=>valid(n)&&n>=0;
   const statusTime=(n)=>nonnegative(n)?`${Math.floor(Math.round(n)/60)}m ${Math.round(n)%60}s`:'—';
-  function statusReader(rawSamples) {
+  function statusReader(rawSamples,log={}) {
     // Status must come from this computer at this exact recorded timestamp.
     // Do not use schema defaults, interpolation, or another computer's value.
     const ndl=(row)=>nonnegative(row?.ndl)?row.ndl:row?.deco?.type==='ndl'&&nonnegative(row.deco.seconds)?row.deco.seconds:null;
@@ -18,15 +18,16 @@
     const fields=[];
     if(has.ndl)fields.push({label:'No-deco limit',value:statusTime(ndl(at)),title:'NDL · recorded no-decompression limit (minutes and seconds)'});
     if(has.cns)fields.push({label:'CNS exposure',value:nonnegative(at.cns)?`${Number(at.cns.toFixed(1))}%`:'—',title:'CNS oxygen exposure · recorded percentage; not recalculated'});
-    if(has.rbt)fields.push({label:'Gas time (RBT)',value:statusTime(at.rbt),title:'Remaining bottom time · recorded by this computer (minutes and seconds)'});
+    if(has.rbt){const gas=window.DMZRecordedReadings.gasTime(at.rbt,log);fields.push({label:gas.label,value:gas.value,title:gas.description});}
     if(has.stop){
       const stop=at.deco,label=stops[stop?.type];
-      fields.push({label:label||'Stop',stop:label?stop:null,value:label?'':ndl(at)!==null?'NDL mode':'—',title:'Recorded stop type, depth, and duration; a dash means no stop reading at this sample'});
+      const ceiling=stop?.type==='decostop'&&window.DMZRecordedReadings.isEon(log);
+      fields.push({label:ceiling?'Deco ceiling':label||'Stop',stop:label?stop:null,ceiling,value:label?'':ndl(at)!==null?'NDL mode':'—',title:ceiling?'EON decompression ceiling. The download parser does not supply stop duration; its zero placeholder is not shown as a real stop time.':'Recorded stop type, depth, and duration; a dash means no stop reading at this sample'});
     }
     return fields;
     };
   }
-  const computerStatus=(rawSamples,time)=>statusReader(rawSamples)(time);
+  const computerStatus=(rawSamples,time,log={})=>statusReader(rawSamples,log)(time);
   function flatten(value,prefix='',result={}) {
     for(const [key,entry] of Object.entries(value||{})) {
       const path=prefix?`${prefix}.${key}`:key;
@@ -49,7 +50,7 @@
     const depth=(n)=>valid(n)?`${(n*(imperial?3.28084:1)).toFixed(1)} ${imperial?'ft':'m'}`:'—';
     const temp=(n)=>valid(n)?`${(imperial?n*1.8+32:n).toFixed(1)} °${imperial?'F':'C'}`:'—';
     const pressure=(n)=>valid(n)?`${(n*(imperial?14.5038:1)).toFixed(0)} ${imperial?'psi':'bar'}`:'—';
-    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,statusAt:statusReader(rawSamples),samples:window.DMZProfileSamples.cleanProfileSamples(rawSamples.filter((s)=>s&&valid(s.t)))};});
+    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,statusAt:statusReader(rawSamples,log),recordedAt:window.DMZRecordedReadings.reader(log,{imperial}),samples:window.DMZProfileSamples.cleanProfileSamples(rawSamples.filter((s)=>s&&valid(s.t)))};});
     const fallback=data.find((entry)=>entry.samples.length>1);
     let selected=data.findIndex((entry)=>entry.log.id===dive.primaryLogId&&entry.samples.length>1);
     if(selected<0)selected=fallback?.index||0;
@@ -58,14 +59,34 @@
     const colors=['#b9a1ff','#ff8fbe','#70bfff','#a9e589','#ffbc78'];
     const dialog=document.createElement('dialog');dialog.className='profile-fullscreen';dialog.setAttribute('aria-label','Expanded dive profile');
     document.body.append(dialog);
+    const recordedDialog=document.createElement('dialog');recordedDialog.className='profile-recorded-dialog';recordedDialog.setAttribute('aria-label','All recorded computer readings');document.body.append(recordedDialog);
+    let inspectorComputer=selected,inspectorIndex=0;
+    function updateInspector(){
+      const entry=data[inspectorComputer],rows=entry.rawSamples.filter((row)=>row&&valid(row.t)).slice().sort((a,b)=>a.t-b.t);
+      inspectorIndex=Math.max(0,Math.min(inspectorIndex,rows.length-1));const time=rows[inspectorIndex]?.t;
+      const slider=recordedDialog.querySelector('[data-recorded-time]');slider.max=Math.max(0,rows.length-1);slider.value=inspectorIndex;slider.disabled=!rows.length;
+      recordedDialog.querySelector('[data-recorded-position]').textContent=rows.length?`${clock(time)} · original sample ${inspectorIndex+1} of ${rows.length}`:'No recorded samples';
+      recordedDialog.querySelector('tbody').innerHTML=entry.recordedAt(time).map((field)=>`<tr><th scope="row"><strong>${esc(field.label)}</strong><code>${esc(field.key)}</code><small>${esc(field.description)}</small></th><td><strong>${esc(field.display)}</strong><small>${esc(field.state)}</small></td><td><code>${esc(field.raw)}</code><small>${esc(field.unit==='unverified'?'Unit unverified':field.unit)}</small></td></tr>`).join('');
+      const events=(entry.log.profile?.events||[]).filter((event)=>event.t===time);
+      recordedDialog.querySelector('[data-recorded-events]').innerHTML=events.length?`<h4>Events at this timestamp</h4>${events.map((event)=>`<dl>${Object.entries(flatten(event)).map(([key,value])=>`<div><dt>${esc(key)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`).join('')}`:'<p>No event recorded at this timestamp.</p>';
+    }
+    function openInspector(){
+      inspectorComputer=selected;const rows=primary.rawSamples.filter((row)=>row&&valid(row.t)).slice().sort((a,b)=>a.t-b.t);inspectorIndex=Math.max(0,rows.indexOf(nearest(rows,primary.samples[index]?.t)));
+      recordedDialog.innerHTML=`<header><div><p class="diving-kicker">COMPUTER RECORD</p><h3>All recorded readings</h3></div><button type="button" class="btn secondary" data-recorded-close>Close</button></header><p>Every synced sample field from the selected computer. Missing values are not interpolated. Unmapped fields retain their original names; unknown units are not guessed.</p><div class="recorded-controls"><label>Source computer<select data-recorded-computer>${data.map((entry)=>`<option value="${entry.index}" ${entry.index===selected?'selected':''}>${esc(entry.label)}</option>`).join('')}</select></label><label>Original sample<input type="range" data-recorded-time min="0" step="1"></label><output data-recorded-position></output></div><div class="recorded-table-scroll" tabindex="0" aria-label="All recorded sample fields"><table><thead><tr><th>Reading</th><th>Display value</th><th>Stored value / unit</th></tr></thead><tbody></tbody></table><section data-recorded-events></section></div><footer>NDL and stop times use seconds in the synced schema. CNS is already a percentage. EON gas-time units require verification. Full sample CSV and source JSON remain available in Sample Explorer.</footer>`;
+      recordedDialog.querySelector('[data-recorded-close]').onclick=()=>recordedDialog.close();
+      recordedDialog.querySelector('[data-recorded-computer]').onchange=(event)=>{inspectorComputer=Number(event.target.value);inspectorIndex=0;updateInspector();};
+      recordedDialog.querySelector('[data-recorded-time]').oninput=(event)=>{inspectorIndex=Number(event.target.value);updateInspector();};
+      updateInspector();recordedDialog.showModal();
+    }
     const marker=document.createComment('profile explorer position');
     let board,geometry,series,primary,origin,fullEnd,visibleRows,readers,plotWidth,plotHeight,resizeObserver,lastSize='';
     const samples=data.flatMap((entry)=>entry.rawSamples.map((sample,i)=>({computer:entry.label,computerId:entry.log.id,sampleIndex:i,...flatten(sample)})));
     const allKeys=[...new Set(samples.flatMap((row)=>Object.keys(row)))];
     const priorities=['computer','sampleIndex','t','depth','tempC','pressureBar','ppo2','setpoint','ndl','cns','rbt'];
     const keys=[...priorities.filter((key)=>allKeys.includes(key)),...allKeys.filter((key)=>!priorities.includes(key))];
-    const labels={computer:'Computer',computerId:'Computer ID',sampleIndex:'Sample #',t:'Time (s)',depth:'Depth (m)',tempC:'Temp (°C)',pressureBar:'Pressure (bar)',ppo2:'ppO₂ (bar)',setpoint:'Setpoint (bar)',ndl:'NDL (s)',cns:'CNS (%)',rbt:'RBT (s)','deco.depth':'Stop depth (m)','deco.seconds':'Stop time (s)','deco.type':'Stop type'};
+    const labels={computer:'Computer',computerId:'Computer ID',sampleIndex:'Sample #',t:'Time (s)',depth:'Depth (m)',tempC:'Temp (°C)',pressureBar:'Pressure (bar)',ppo2:'ppO₂ (bar)',setpoint:'Setpoint (bar)',ndl:'NDL (s)',cns:'CNS (%)',rbt:'RBT (stored source units)','deco.depth':'Recorded ceiling / stop depth (m)','deco.seconds':'Stop / legacy NDL time (s)','deco.type':'Decompression mode'};
     tableHost.innerHTML=`<header class="sample-heading"><div><p class="diving-kicker">SAMPLE EXPLORER</p><h4>Every recorded reading</h4><p>${samples.length.toLocaleString()} samples across ${data.length} computer record${data.length===1?'':'s'}. Original values in SI units; no samples are discarded.</p></div><button type="button" class="btn secondary" data-samples-export>Download sample CSV</button></header><div class="sample-controls"><label>Computer<select data-samples-computer><option value="all">All computers</option>${data.map((entry)=>`<option value="${entry.index}">${esc(entry.label)}</option>`).join('')}</select></label><label class="sample-toggle"><input type="checkbox" data-samples-fields> Show only columns with readings</label></div><div class="sample-navigation"><span data-samples-count></span><button type="button" data-samples-page="-1" aria-label="Previous samples">Previous</button><button type="button" data-samples-page="1" aria-label="Next samples">Next</button></div><div class="sample-table-scroll" tabindex="0" aria-label="Complete recorded samples"><table class="sample-table"><thead></thead><tbody></tbody></table></div><section class="profile-events"><h4>Recorded events</h4><div data-profile-events></div></section><details class="diving-raw"><summary>Source record · complete JSON download</summary><button type="button" class="btn secondary" data-source-export>Download full dive record</button><pre data-full-record></pre></details>`;
+    tableHost.querySelector('.sample-heading p:last-child').textContent=`${samples.length.toLocaleString()} samples across ${data.length} computer record${data.length===1?'':'s'}. Original stored values; no samples are discarded. RBT source units can require verification for EON logs. Use All readings for field meanings and interpreted units.`;
     tableHost.querySelector('[data-full-record]').textContent=JSON.stringify({dive,computerLogs:logs},null,2);
     tableHost.querySelector('[data-source-export]').onclick=()=>download(`dmz-dive-${dive.id}.json`,JSON.stringify({dive,computerLogs:logs},null,2),'application/json');
     const events=data.flatMap((entry)=>(entry.log.profile?.events||[]).map((event)=>({label:entry.label,event})));
@@ -113,7 +134,7 @@
       for(const entry of data){
         const sensors=[...new Set(entry.samples.flatMap((s)=>Object.keys(s.pressuresByTank||{})))];
         const device=entry.log.device?.product||entry.log.device?.model||entry.log.computer?.model||entry.label;
-        const add=(label,values,shortLabel)=>{const readings=values.filter((s)=>valid(s.pressureBar)&&s.pressureBar>0);if(readings.length>1)series.push({label,shortLabel,samples:readings,color:colors[series.length%colors.length]});};
+        const add=(label,values,shortLabel)=>{const readings=values.filter((s)=>valid(s.pressureBar)&&s.pressureBar>=0);if(readings.length>1)series.push({label,shortLabel,samples:readings,color:colors[series.length%colors.length]});};
         if(sensors.length)sensors.forEach((sensor)=>add(`${entry.label} · Tank ${sensor}`,entry.samples.map((s)=>({t:s.t,pressureBar:s.pressuresByTank?.[sensor]})),`${device} · Tank ${sensor}`));
         else add(entry.label,entry.samples,device);
       }
@@ -133,6 +154,7 @@
       const summary=document.createElement('section');summary.className='profile-static';summary.innerHTML='<h5>Dive summary</h5>';summary.append(board.querySelector('.profile-summary'));
       const live=document.createElement('section');live.className='profile-live';live.innerHTML='<h5><span class="profile-live-dot" aria-hidden="true"></span>Selected moment<span data-profile-sample-number></span></h5>';live.append(board.querySelector('[data-profile-readout]'));
       rail.append(summary,live,board.querySelector('.profile-source'));
+      const allReadings=document.createElement('button');allReadings.type='button';allReadings.className='profile-all-readings';allReadings.textContent='All readings ↗';allReadings.setAttribute('aria-label','Explore all recorded computer readings');allReadings.onclick=openInspector;live.querySelector('[data-profile-sample-number]').hidden=true;live.querySelector('h5').append(allReadings);
       rail.querySelector('.profile-source').textContent=`${rows.length.toLocaleString()} profile points · ${primary.label}`;
       rail.querySelector('.profile-source').title='Profile points use the app’s missing-depth repair. Original samples remain in Sample Explorer and CSV. The temperature curve uses the app’s smoothing.';
       board.replaceChildren(controls,chart,rail);
@@ -164,7 +186,7 @@
       if(overlays.temperature)readings.push(metric('Temperature',temp(nearest(readers.temperature,point.t)?.tempC),'#ffc771','is-temperature'));
       if(overlays.pressure)series.forEach((s)=>gas.push(metric(s.shortLabel,pressure(nearest(s.samples,point.t)?.pressureBar),s.color,'',s.label)));
       if(overlays.oxygen&&geometry.hasOxygen){readings.push(metric('ppO₂',nearest(readers.oxygen,point.t)?.ppo2?.toFixed(2)??'—','#ff8f94'));readings.push(metric('Setpoint',nearest(readers.setpoint,point.t)?.setpoint?.toFixed(2)??'—','#ff8f94'));}
-      for(const field of primary.statusAt(point.t))extras.push(metric(field.label,field.stop?`${depth(field.stop.depth)} · ${statusTime(field.stop.seconds)}`:field.value,null,'',field.title));
+      for(const field of primary.statusAt(point.t))extras.push(metric(field.label,field.stop?field.ceiling?depth(field.stop.depth):`${depth(field.stop.depth)} · ${statusTime(field.stop.seconds)}`:field.value,null,'',field.title));
       host.querySelector('[data-profile-readout]').innerHTML=readings.join('')+(gas.length?'<h6 class="profile-reading-group">Tank pressures</h6>'+gas.join(''):'')+(extras.length?'<h6 class="profile-reading-group">Computer status</h6>'+extras.join(''):'');
       host.querySelector('[data-profile-sample-number]').textContent=`#${index+1}`;
       host.querySelector('[data-profile-scrub]').value=index;
@@ -174,7 +196,7 @@
     draw();
     resizeObserver=new ResizeObserver(()=>{const size=`${host.clientWidth}/${host.clientHeight}`;if(size!==lastSize&&host.clientWidth&&host.clientHeight){lastSize=size;requestAnimationFrame(()=>{if(!disposed)draw();});}});resizeObserver.observe(host);
     requestAnimationFrame(()=>{if(!disposed&&host.isConnected)draw();});
-    return ()=>{disposed=true;resizeObserver?.disconnect();if(dialog.open)dialog.close();if(marker.isConnected)marker.replaceWith(host);dialog.remove();};
+    return ()=>{disposed=true;resizeObserver?.disconnect();if(recordedDialog.open)recordedDialog.close();recordedDialog.remove();if(dialog.open)dialog.close();if(marker.isConnected)marker.replaceWith(host);dialog.remove();};
   }
   window.DMZProfileExplorer={mount,flatten,nearest,computerStatus};
 })();
