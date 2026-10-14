@@ -58,7 +58,7 @@ function fixtures(){return [
       assert.equal(await page.locator('[data-curve="pressure"]').count(),3,'two tanks plus a second computer');
       assert.equal(await page.locator('[data-curve="oxygen"]').count(),1);
       const fit=await page.evaluate(()=>{
-        const selectors=['[data-profile-plot]','[data-profile-readout]','.profile-static','.profile-timeline'];
+        const selectors=['[data-profile-plot]','[data-profile-readout]','.profile-static','.profile-timeline',...Array.from(document.querySelectorAll('[data-profile-readout] .profile-metric'),(_,i)=>`[data-profile-readout] .profile-metric:nth-of-type(${i+1})`)];
         return selectors.map((selector)=>{const el=document.querySelector(selector),box=el.getBoundingClientRect();return {selector,top:box.top,bottom:box.bottom,left:box.left,right:box.right,viewportWidth:innerWidth,viewportHeight:innerHeight};});
       });
       await page.screenshot({path:path.join(process.env.TEMP,`dmz-fit-${width}-${height}.png`),fullPage:true});
@@ -79,6 +79,20 @@ function fixtures(){return [
       assert.match(await page.locator('.sample-table thead').innerText(),/extraSensor.raw/);
       await page.click('[data-samples-page="1"]');assert.match(await page.locator('[data-samples-count]').innerText(),/101–200/);
       const downloaded=page.waitForEvent('download');await page.click('[data-samples-export]');const file=await (await downloaded).path();const csv=fs.readFileSync(file,'utf8');assert.equal(csv.split('\r\n').length,603,'every sample exported without decimation');
+      const repaired=await page.evaluate(()=>{
+        const host=document.createElement('div'),table=document.createElement('div');
+        const raw=[{t:0,depth:0,tempC:24},{t:10,depth:20,tempC:23},{t:12,depth:0},{t:15,pressureBar:190},{t:17},{t:20,depth:24,tempC:22},{t:30,depth:0,tempC:24},{t:40,depth:0}];
+        const dispose=window.DMZProfileExplorer.mount(host,table,{dive:{id:'suunto-test'},logs:[{id:'eon',device:{vendor:'Suunto',product:'EON Steel'},profile:{samples:raw}}]});
+        const scrub=host.querySelector('[data-profile-scrub]');scrub.value=2;scrub.dispatchEvent(new Event('input'));
+        const interpolated=host.querySelector('[data-profile-readout]').innerText||host.querySelector('[data-profile-readout]').textContent;
+        table.querySelector('[data-sample-time="12"]').click();
+        const marker=host.querySelector('[data-profile-readout]').textContent;
+        const result={interpolated,marker,rawRows:table.querySelectorAll('tbody tr').length,points:host.querySelector('[data-profile-scrub]').max};dispose();return result;
+      });
+      assert.match(repaired.interpolated,/22\.0 m/,'Suunto pressure-only point uses interpolated depth in the live panel');
+      assert.match(repaired.marker,/20\.0 m/,'raw event marker opens the nearest retained profile point, not the surface');
+      assert.equal(repaired.points,'5','bare event rows excluded only from plotted profile');
+      assert.equal(repaired.rawRows,8,'Sample Explorer retains original Suunto rows');
       await page.locator('[data-sample-index="100"]').first().click();assert.equal(await page.locator('[data-profile-scrub]').inputValue(),'100');
       await page.click('.account-nav-menu [data-account-view="gear"]');await page.click('[data-gear-page="setups"]');
       if(width<760)await page.click('[data-setup="s1"]');

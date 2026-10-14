@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const context=vm.createContext({window:{}});
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/account-profile-samples.js'),'utf8'),context);
+const clean=(rows)=>JSON.parse(JSON.stringify(context.window.DMZProfileSamples.cleanProfileSamples(rows)));
+const original=[{t:0,depth:0,tempC:24},{t:10,depth:20,tempC:23},{t:12,depth:0},{t:15,pressureBar:190},{t:17},{t:20,depth:24,tempC:22},{t:30,depth:0,tempC:24},{t:40,depth:0}];
+const before=JSON.stringify(original),result=clean(original);
+assert.deepEqual(result.map((row)=>row.t),[0,10,15,20,30,40],'legacy bare zero-depth and depth-less event markers do not create surface spikes');
+assert.equal(result.find((row)=>row.t===15).depth,22,'pressure-only depth is time-interpolated, not defaulted to zero');
+assert.equal(result.find((row)=>row.t===30).depth,0,'real mid-dive surfacing with sensor data is retained');
+assert.equal(result[0].depth,0);assert.equal(result.at(-1).depth,0,'real endpoints retained');
+assert.equal(JSON.stringify(original),before,'raw downloaded samples remain unchanged');
+assert.deepEqual(clean([{t:0,depth:0},{t:10,depth:20},{t:20,depth:0},{t:30,depth:20},{t:40,depth:0}]).map((row)=>row.depth),[0,20,0,20,0],'depth-only profiles retain legitimate surface readings');
+assert.deepEqual(clean([{t:20,depth:20,tempC:22},{t:10,tempC:23},{t:0,depth:10,tempC:24}]).map((row)=>row.depth),[10,15,20],'repair sorts timestamps and retains temperature-only samples');
+assert.deepEqual(clean([]),[]);
+console.log('PASS: app sample repair, legacy event spikes, missing-depth interpolation, real surfacing, depth-only dives, and immutable raw samples.');

@@ -26,7 +26,7 @@
     const depth=(n)=>valid(n)?`${(n*(imperial?3.28084:1)).toFixed(1)} ${imperial?'ft':'m'}`:'—';
     const temp=(n)=>valid(n)?`${(imperial?n*1.8+32:n).toFixed(1)} °${imperial?'F':'C'}`:'—';
     const pressure=(n)=>valid(n)?`${(n*(imperial?14.5038:1)).toFixed(0)} ${imperial?'psi':'bar'}`:'—';
-    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,samples:rawSamples.filter((s)=>s&&valid(s.t)).slice().sort((a,b)=>a.t-b.t)};});
+    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,samples:window.DMZProfileSamples.cleanProfileSamples(rawSamples.filter((s)=>s&&valid(s.t)))};});
     const fallback=data.find((entry)=>entry.samples.length>1);
     let selected=data.findIndex((entry)=>entry.log.id===dive.primaryLogId&&entry.samples.length>1);
     if(selected<0)selected=fallback?.index||0;
@@ -66,14 +66,14 @@
     };
     function chooseSample(row) {
       if(!Number.isFinite(Number(row.dataset.sampleTime)))return;
-      selected=data.findIndex((entry)=>entry.log.id===row.dataset.sampleComputer);windowRange=null;index=Math.max(0,data[selected].samples.indexOf(data[selected].rawSamples[Number(row.dataset.sampleIndex)]));draw();
+      selected=data.findIndex((entry)=>entry.log.id===row.dataset.sampleComputer);windowRange=null;index=Math.max(0,data[selected].samples.indexOf(nearest(data[selected].samples,Number(row.dataset.sampleTime))));draw();
       host.closest('[role="tabpanel"]')?.parentElement.querySelector('[data-tool-tab="profile"]')?.click();
       host.querySelector('[data-profile-plot]')?.focus();
     }
     tableHost.querySelector('tbody').onclick=(event)=>{const row=event.target.closest('[data-sample-time]');if(row)chooseSample(row);};
     tableHost.querySelector('tbody').onkeydown=(event)=>{if(['Enter',' '].includes(event.key)){const row=event.target.closest('[data-sample-time]');if(row){event.preventDefault();chooseSample(row);}}};
     renderTable();
-    const metric=(label,value,color)=>`<div style="--reading-color:${color||'#d7eef4'}"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`;
+    const metric=(label,value,color,kind='',title=label)=>`<div class="profile-metric ${kind}" style="--reading-color:${color||'#d7eef4'}" title="${esc(title)}"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`;
     function draw() {
       if(disposed)return;
       primary=data[selected];
@@ -89,9 +89,10 @@
       series=[];
       for(const entry of data){
         const sensors=[...new Set(entry.samples.flatMap((s)=>Object.keys(s.pressuresByTank||{})))];
-        const add=(label,values)=>{const readings=values.filter((s)=>valid(s.pressureBar)&&s.pressureBar>0);if(readings.length>1)series.push({label,samples:readings,color:colors[series.length%colors.length]});};
-        if(sensors.length)sensors.forEach((sensor)=>add(`${entry.label} · Tank ${sensor}`,entry.samples.map((s)=>({t:s.t,pressureBar:s.pressuresByTank?.[sensor]}))));
-        else add(entry.label,entry.samples);
+        const device=entry.log.device?.product||entry.log.device?.model||entry.log.computer?.model||entry.label;
+        const add=(label,values,shortLabel)=>{const readings=values.filter((s)=>valid(s.pressureBar)&&s.pressureBar>0);if(readings.length>1)series.push({label,shortLabel,samples:readings,color:colors[series.length%colors.length]});};
+        if(sensors.length)sensors.forEach((sensor)=>add(`${entry.label} · Tank ${sensor}`,entry.samples.map((s)=>({t:s.t,pressureBar:s.pressuresByTank?.[sensor]})),`${device} · Tank ${sensor}`));
+        else add(entry.label,entry.samples,device);
       }
       const maxBar=series.reduce((n,s)=>s.samples.reduce((m,p)=>Math.max(m,p.pressureBar),n),1);
       const clippedSeries=series.map((s)=>({...s,samples:s.samples.filter((p)=>p.t>=visibleRows[0].t&&p.t<=visibleRows.at(-1).t)}));
@@ -107,8 +108,10 @@
       chart.append(graph,board.querySelector('.profile-legend'),board.querySelector('.profile-timeline'));
       const rail=document.createElement('aside');rail.className='profile-sensor-rail';
       const summary=document.createElement('section');summary.className='profile-static';summary.innerHTML='<h5>Dive summary</h5>';summary.append(board.querySelector('.profile-summary'));
-      const live=document.createElement('section');live.className='profile-live';live.innerHTML='<h5>At cursor</h5>';live.append(board.querySelector('[data-profile-readout]'));
+      const live=document.createElement('section');live.className='profile-live';live.innerHTML='<h5><span class="profile-live-dot" aria-hidden="true"></span>Selected moment<span data-profile-sample-number></span></h5>';live.append(board.querySelector('[data-profile-readout]'));
       rail.append(summary,live,board.querySelector('.profile-source'));
+      rail.querySelector('.profile-source').textContent=`${rows.length.toLocaleString()} profile points · ${primary.label}`;
+      rail.querySelector('.profile-source').title='Profile points use the app’s missing-depth repair. Original samples remain in Sample Explorer and CSV. The temperature curve uses the app’s smoothing.';
       board.replaceChildren(controls,chart,rail);
       const plot=host.querySelector('[data-profile-plot]');
       function atPointer(event){const point=plot.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const matrix=plot.getScreenCTM();if(!matrix)return;const x=Math.max(0,Math.min(plotWidth,point.matrixTransform(matrix.inverse()).x)),time=visibleRows[0].t+x/plotWidth*(visibleRows.at(-1).t-visibleRows[0].t);const closest=nearest(rows,time);index=rows.indexOf(closest);update();}
@@ -134,13 +137,14 @@
       const nearestPoint=nearest(geometry.points,point.t);
       const cursor=host.querySelector('[data-profile-cursor]');cursor.style.display=x<0||x>plotWidth?'none':'';
       cursor.setAttribute('transform',`translate(${x} 0)`);cursor.querySelector('circle').setAttribute('cy',nearestPoint?.y||0);
-      const extras=[],readings=[metric('Time',clock(point.t-origin)),metric('Depth',depth(point.depth),'#64d6cb')];
-      if(overlays.temperature)readings.push(metric('Temperature',temp(nearest(readers.temperature,point.t)?.tempC),'#ffc771'));
-      if(overlays.pressure)series.forEach((s,i)=>(i===0?readings:extras).push(metric(s.label,pressure(nearest(s.samples,point.t)?.pressureBar),s.color)));
-      if(overlays.oxygen&&geometry.hasOxygen){readings.push(metric('ppO₂',nearest(readers.oxygen,point.t)?.ppo2?.toFixed(2)??'—','#ff8f94'));extras.push(metric('Setpoint',nearest(readers.setpoint,point.t)?.setpoint?.toFixed(2)??'—','#ff8f94'));}
+      const extras=[],gas=[],readings=[metric('Elapsed time',clock(point.t-origin),null,'is-primary'),metric('Depth',depth(point.depth),'#64d6cb','is-primary')];
+      if(overlays.temperature)readings.push(metric('Temperature',temp(nearest(readers.temperature,point.t)?.tempC),'#ffc771','is-temperature'));
+      if(overlays.pressure)series.forEach((s)=>gas.push(metric(s.shortLabel,pressure(nearest(s.samples,point.t)?.pressureBar),s.color,'',s.label)));
+      if(overlays.oxygen&&geometry.hasOxygen){readings.push(metric('ppO₂',nearest(readers.oxygen,point.t)?.ppo2?.toFixed(2)??'—','#ff8f94'));readings.push(metric('Setpoint',nearest(readers.setpoint,point.t)?.setpoint?.toFixed(2)??'—','#ff8f94'));}
       for(const [key,label]of [['ndl','NDL'],['cns','CNS'],['rbt','RBT']])if(valid(point[key]))extras.push(metric(label,key==='cns'?`${point[key]}%`:clock(point[key])));
-      if(point.deco)extras.push(metric(point.deco.type||'Stop',`${depth(point.deco.depth)} · ${clock(point.deco.seconds||0)}`));
-      host.querySelector('[data-profile-readout]').innerHTML=[...readings,...extras].join('');
+      if(point.deco)extras.push(metric(`Stop · ${point.deco.type||'recorded'}`,`${depth(point.deco.depth)} · ${clock(point.deco.seconds||0)}`));
+      host.querySelector('[data-profile-readout]').innerHTML=readings.join('')+(gas.length?'<h6 class="profile-reading-group">Tank pressures</h6>'+gas.join(''):'')+(extras.length?'<h6 class="profile-reading-group">Computer status</h6>'+extras.join(''):'');
+      host.querySelector('[data-profile-sample-number]').textContent=`#${index+1}`;
       host.querySelector('[data-profile-scrub]').value=index;
       const plot=host.querySelector('[data-profile-plot]');plot.setAttribute('aria-valuenow',index);plot.setAttribute('aria-valuetext',`${clock(point.t-origin)}, ${depth(point.depth)}`);
     }

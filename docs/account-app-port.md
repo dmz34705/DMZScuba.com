@@ -10,6 +10,8 @@ node scripts/build-account-app-port.cjs C:/path/to/dmzscuba-app --check
 
 The script pins the reviewed revision. Update that pin deliberately before regenerating for a newer app version. Browser UI and persistence stay in `account-profile.js`, `account-packing.js`, `account-diving.js`, and `account-planner.js`.
 
+The profile sample cleanup is separately pinned to app revision `48f7707` in `js/account-profile-samples.js`. It reuses the exact schema cleanup and normalization functions: remove missing-depth event markers and legacy bare zero-depth rows in rich profiles, retain genuine surfacing and endpoints, and interpolate depth for sensor-only rows. This addresses Suunto EON event-marker spikes without a blanket spike filter. It applies to the displayed profile only; Sample Explorer, original JSON, and CSV still use every untouched synced sample. Selecting a raw marker in Sample Explorer opens the nearest retained profile point. Verify with `node tests/account-profile-samples.cjs` and the same generation check above.
+
 ## Workflows
 
 - **Logbook:** interactive depth, temperature, multi-computer/multi-tank pressure, ppO₂ and setpoint traces; pointer scrubbing, keyboard navigation, zoom, computer selection, and expanded view. Readouts use nearest original sensor samples. Events are marked on the plot and listed separately. Sample Explorer displays every synced sample, including dynamically discovered nested fields, with paging and a complete sample CSV. JSON remains available as a source-record download, rather than the main inspection experience. Display-unit conversion never changes stored values; sample CSV/table use explicitly labeled SI units.
