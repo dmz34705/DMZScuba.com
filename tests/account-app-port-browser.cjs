@@ -49,6 +49,10 @@ function fixtures(){return [
       await page.waitForSelector('[data-select="d1"]');
       if(width<760)await page.click('[data-select="d1"]');
       await page.waitForSelector('[data-profile-plot]');
+      await page.click('[data-diving-logbook] .tool-record-menu > summary');
+      assert.equal(await page.locator('[data-diving-logbook] [data-delete]').isVisible(),true);
+      await page.click('[data-diving-logbook] [data-detail] > h3');
+      assert.equal(await page.locator('[data-diving-logbook] [data-delete]').isVisible(),false,'secondary actions close when focus returns to the record');
       assert.equal(await page.locator('[data-curve="temperature"]').count(),1);
       assert.equal(await page.locator('[data-curve="pressure"]').count(),3,'two tanks plus a second computer');
       assert.equal(await page.locator('[data-curve="oxygen"]').count(),1);
@@ -95,6 +99,9 @@ function fixtures(){return [
       await page.click('[data-tool-tab="itinerary"]');await page.click('[data-booking-import]');
       await page.fill('[data-booking-text]','Booking confirmation HOTEL789\nHilton Hotel\nCheck-in: February 10, 2027\nCheck-out: February 12, 2027');await page.click('[data-import-read]');await page.waitForSelector('[data-import-save]');await page.click('[data-import-save]');await page.waitForFunction(()=>!document.querySelector('.planner-dialog').open);
       assert.ok(rows.find((row)=>row.kind==='plan').data.segments.some((leg)=>leg.provider.includes('Hilton')),'reviewed email booking saved through app parser');
+      await page.click('.account-more > summary');await page.click('.account-more [data-account-view="profile"]');
+      assert.equal(await page.locator('[data-account-view-panel="profile"]').isVisible(),true,'account settings remain accessible in the compact navigation');
+      assert.equal(await page.locator('.account-more').evaluate((el)=>el.open),false);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no page overflow');
       assert.deepEqual(errors,[],'no browser runtime errors');await page.close();
     }

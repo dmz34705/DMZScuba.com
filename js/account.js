@@ -137,6 +137,7 @@
   function showAccountView(name, focusHeading = false) {
     const requestedView = accountViewPanels.some((panel) => panel.dataset.accountViewPanel === name) ? name : "home";
     activeAccountView = requestedView;
+    const accountMenu=app.querySelector('.account-more');if(accountMenu)accountMenu.open=false;
     app.classList.toggle('account-workspace-tools',['logbook','gear','planner'].includes(requestedView));
     if (['logbook', 'gear'].includes(requestedView)) window.DMZDiving?.open(requestedView);
     if (requestedView === 'planner') window.DMZPlanner?.open();

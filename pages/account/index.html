@@ -10,9 +10,9 @@
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="/css/base.css" />
   <link rel="stylesheet" href="/css/components.css?v=20260823a" />
-  <link rel="stylesheet" href="/css/pages/account.css?v=20261014-app-port3" />
-  <link rel="stylesheet" href="/css/pages/account-diving.css?v=20261014-app-port3" />
-  <link rel="stylesheet" href="/css/pages/account-workbenches.css?v=20261014-app-port3" />
+  <link rel="stylesheet" href="/css/pages/account.css?v=20261014-polish1" />
+  <link rel="stylesheet" href="/css/pages/account-diving.css?v=20261014-polish1" />
+  <link rel="stylesheet" href="/css/pages/account-workbenches.css?v=20261014-polish1" />
   <link rel="stylesheet" href="/css/responsive.css?v=20260823a" />
 </head>
 
@@ -85,18 +85,23 @@
             </div>
           </div>
           <nav class="account-nav-menu" aria-label="Account sections">
-            <button type="button" data-account-view="home" aria-current="page"><span aria-hidden="true">&#8962;</span>Account Home</button>
-            <button type="button" data-account-view="logbook"><span aria-hidden="true">&#8779;</span>My Logbook</button>
+            <button type="button" data-account-view="logbook"><span aria-hidden="true">&#8779;</span>Logbook</button>
             <button type="button" data-account-view="gear"><span aria-hidden="true">&#9671;</span>Gear Locker</button>
-            <button type="button" data-account-view="planner"><span aria-hidden="true">&#9992;</span>Trip Planner</button>
+            <button type="button" data-account-view="planner"><span aria-hidden="true">&#9992;</span>Trips</button>
             <a href="/pages/travel/#globe"><span aria-hidden="true">&#9678;</span>Dive Atlas</a>
+            <details class="account-more">
+              <summary>Account <span aria-hidden="true">⌄</span></summary>
+              <div>
+            <button type="button" data-account-view="home" aria-current="page"><span aria-hidden="true">&#8962;</span>Account Home</button>
             <button type="button" data-account-view="profile"><span aria-hidden="true">&#9786;</span>My Profile</button>
             <button type="button" data-account-view="certifications"><span aria-hidden="true">&#9733;</span>Certifications</button>
             <button type="button" data-account-view="activity"><span aria-hidden="true">&#128197;</span>Bookings &amp; Activity</button>
             <a href="/management/" data-management-access hidden><span aria-hidden="true">&#9881;</span>Management Console</a>
             <button type="button" data-account-view="security"><span aria-hidden="true">&#128274;</span>Login &amp; Security</button>
+            <button class="account-signout-button" type="button" data-logout>Sign Out</button>
+              </div>
+            </details>
           </nav>
-          <button class="account-signout-button" type="button" data-logout>Sign Out</button>
         </aside>
 
         <div class="account-portal-content">
@@ -322,13 +327,13 @@
 
   <script src="/js/main.js?v=20260824f"></script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="/js/account-tools.js?v=20261014-app-port3"></script>
-  <script src="/js/account-app-models.js?v=20261014-app-port3"></script>
-  <script src="/js/account-packing.js?v=20261014-app-port3"></script>
-  <script src="/js/dive-profile-geometry.js?v=20261014-app-port3"></script>
-  <script src="/js/account-profile.js?v=20261014-app-port3"></script>
-  <script src="/js/account-diving.js?v=20261014-app-port3"></script>
-  <script src="/js/account-planner.js?v=20261014-app-port3"></script>
-  <script src="/js/account.js?v=20261014-app-port3"></script>
+  <script src="/js/account-tools.js?v=20261014-polish1"></script>
+  <script src="/js/account-app-models.js?v=20261014-polish1"></script>
+  <script src="/js/account-packing.js?v=20261014-polish1"></script>
+  <script src="/js/dive-profile-geometry.js?v=20261014-polish1"></script>
+  <script src="/js/account-profile.js?v=20261014-polish1"></script>
+  <script src="/js/account-diving.js?v=20261014-polish1"></script>
+  <script src="/js/account-planner.js?v=20261014-polish1"></script>
+  <script src="/js/account.js?v=20261014-polish1"></script>
 </body>
 </html>

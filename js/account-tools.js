@@ -62,5 +62,16 @@
     }, true);
     footer?.classList.add('tool-editor-footer');
   }
-  window.DMZTools = { tabs, editor };
+  function tidyActions(container) {
+    const actions=container.querySelector(':scope > .diving-actions');if(!actions)return;
+    const secondary=[...actions.querySelectorAll('[data-delete],[data-plan-delete]')];if(!secondary.length)return;
+    const menu=document.createElement('details');menu.className='tool-record-menu';
+    const summary=document.createElement('summary');summary.textContent='More';summary.setAttribute('aria-label','More record actions');
+    const content=document.createElement('div');content.append(...secondary);menu.append(summary,content);actions.append(menu);
+  }
+  document.addEventListener('click',(event)=>{
+    document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open]').forEach((menu)=>{if(!menu.contains(event.target))menu.open=false;});
+  });
+  document.addEventListener('keydown',(event)=>{if(event.key==='Escape')document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open]').forEach((menu)=>{menu.open=false;menu.querySelector('summary').focus();});});
+  window.DMZTools = { tabs, editor, tidyActions };
 })();

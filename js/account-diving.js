@@ -224,6 +224,7 @@
       window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview,section]},{key:'service',label:'Service & parts',nodes:[schedule,components,...service]},{key:'setups',label:'Setups',nodes:[setupContent]}],ui[view].tab,(key)=>{ui[view].tab=key;});
     }
     container.append(tabHost);
+    window.DMZTools.tidyActions(container);
     if (log) {
       const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-sample-explorer]');
       const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];

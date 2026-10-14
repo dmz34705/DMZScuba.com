@@ -93,6 +93,7 @@
     window.DMZTools.tabs(tabHost,Object.entries(panes).map(([key,nodes])=>({key,label:{overview:'Overview',itinerary:'Itinerary',packing:'Packing',readiness:'Readiness',travel:'Travel & contacts'}[key],nodes})),detailTab,(key)=>{detailTab=key;});
     overview.querySelectorAll('[data-trip-jump]').forEach((button)=>button.onclick=()=>tabHost.querySelector(`[data-tool-tab="${button.dataset.tripJump}"]`).click());
     enhancePlan(el,plan,panes,tabHost);
+    window.DMZTools.tidyActions(el);
     atlasGear(plan,advice);
   }
   const info=(label,value)=>`<div><dt>${esc(label)}</dt><dd>${esc(value||'—')}</dd></div>`;
