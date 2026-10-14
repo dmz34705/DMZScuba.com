@@ -1,4 +1,4 @@
-// Pure domain logic ported from dmzscuba-app at 6cccd64.
+// Pure domain logic ported from dmzscuba-app at 48f7707.
 // UI adapters use the same packing keys, component rules, readiness checks, timeline,
 // and deterministic booking parsers as the app. See docs/account-app-port.md.
 
@@ -952,6 +952,15 @@ const INSURANCE_TYPES = Object.freeze([
 ]);
 const insuranceTypeLabel = (key) => INSURANCE_TYPES.find((type) => type.key === key)?.label || 'Insurance';
 
+const RENEWAL_PERIODS = Object.freeze([
+  { key: 1, label: 'Monthly' },
+  { key: 3, label: 'Every 3 months' },
+  { key: 6, label: 'Every 6 months' },
+  { key: 12, label: 'Yearly' },
+  { key: 24, label: 'Every 2 years' },
+]);
+const renewalPeriodLabel = (months) => RENEWAL_PERIODS.find((period) => period.key === months)?.label || 'Yearly';
+
 // Within this many days of its end date a policy shows as expiring soon.
 const EXPIRING_DAYS = 30;
 
@@ -959,6 +968,20 @@ const clean = (value, max = 200) => String(value ?? '').trim().slice(0, max);
 const day = (value) => (/^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : '');
 const id = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 const daysBetween = (from, to) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86400000);
+const addDays = (value, amount) => {
+  const date = new Date(`${value}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + amount);
+  return date.toISOString().slice(0, 10);
+};
+const addMonths = (value, amount) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+  if (!match) return '';
+  const sourceYear = Number(match[1]), sourceMonth = Number(match[2]) - 1, sourceDay = Number(match[3]);
+  const monthIndex = sourceYear * 12 + sourceMonth + amount;
+  const year = Math.floor(monthIndex / 12), month = ((monthIndex % 12) + 12) % 12;
+  const lastDay = new Date(Date.UTC(year, month + 1, 0, 12)).getUTCDate();
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(Math.min(sourceDay, lastDay)).padStart(2, '0')}`;
+};
 const createPolicyId = () => id('policy');
 const createDocumentId = () => id('doc');
 
@@ -979,6 +1002,9 @@ function normalizePolicy(value = {}, now = new Date()) {
     id: clean(value.id, 80) || createPolicyId(), type,
     provider: clean(value.provider, 120), policyNumber: clean(value.policyNumber, 80), memberNumber: clean(value.memberNumber, 80),
     startDate, endDate, autoRenews: value.autoRenews === true,
+    // Older auto-renewing records did not store a cadence. They migrate to annual renewal,
+    // which matches the common DAN membership/policy cycle and the old UI's implied behavior.
+    renewalMonths: RENEWAL_PERIODS.some((period) => period.key === Number(value.renewalMonths)) ? Number(value.renewalMonths) : 12,
     emergencyPhone: clean(value.emergencyPhone, 60), covered: clean(value.covered, 200), notes: clean(value.notes, 2000),
     documents: (Array.isArray(value.documents) ? value.documents : []).map(normalizeDocument).filter(Boolean).slice(0, 30),
     createdAt: clean(value.createdAt, 40) || now.toISOString(), updatedAt: now.toISOString(),
@@ -992,11 +1018,27 @@ function normalizeInsuranceState(value) {
 
 const policyTitle = (policy) => [policy.provider, insuranceTypeLabel(policy.type)].filter(Boolean).join(' · ') || 'Insurance policy';
 
+// The renewal term containing `onDate`. The entered dates remain the first known term, while
+// every consumer gets an up-to-date window without silently rewriting the user's source data.
+function policyTermForDate(policy, onDate) {
+  const startDate = day(policy?.startDate), endDate = day(policy?.endDate), target = day(onDate);
+  if (!policy?.autoRenews || !endDate || !target || target <= endDate) return { startDate, endDate, cycle: 0 };
+  const months = RENEWAL_PERIODS.some((period) => period.key === Number(policy.renewalMonths)) ? Number(policy.renewalMonths) : 12;
+  const endParts = endDate.split('-').map(Number), targetParts = target.split('-').map(Number);
+  const elapsedMonths = (targetParts[0] - endParts[0]) * 12 + targetParts[1] - endParts[1];
+  let cycle = Math.max(1, Math.floor(elapsedMonths / months));
+  while (addMonths(endDate, cycle * months) < target) cycle += 1;
+  while (cycle > 1 && addMonths(endDate, (cycle - 1) * months) >= target) cycle -= 1;
+  const previousEnd = addMonths(endDate, (cycle - 1) * months);
+  return { startDate: addDays(previousEnd, 1), endDate: addMonths(endDate, cycle * months), cycle };
+}
+
 // Where a policy stands today: not started yet, active, expiring soon, expired, or no end date.
 // An auto-renewing policy never shows as expired or expiring.
 function policyStatus(policy, today) {
   if (policy.startDate && policy.startDate > today) return { key: 'upcoming', label: 'Starts later', tone: 'info' };
-  if (!policy.endDate || policy.autoRenews) return { key: 'active', label: policy.autoRenews ? 'Active · renews' : 'Active', tone: 'good' };
+  if (policy.autoRenews) return { key: 'active', label: 'Active · auto-renews', tone: 'good', term: policyTermForDate(policy, today) };
+  if (!policy.endDate) return { key: 'active', label: 'Active', tone: 'good' };
   if (policy.endDate < today) return { key: 'expired', label: 'Expired', tone: 'danger' };
   const left = daysBetween(today, policy.endDate);
   if (left <= EXPIRING_DAYS) return { key: 'expiring', label: left === 0 ? 'Expires today' : `Expires in ${left} ${left === 1 ? 'day' : 'days'}`, tone: 'warning' };
@@ -1007,7 +1049,8 @@ function policyStatus(policy, today) {
 function coversDates(policy, start, end) {
   if (!start) return false;
   const last = end || start;
-  return (!policy.startDate || policy.startDate <= start) && (policy.autoRenews || !policy.endDate || policy.endDate >= last);
+  const effectiveEnd = policy.autoRenews ? policyTermForDate(policy, last).endDate : policy.endDate;
+  return (!policy.startDate || policy.startDate <= start) && (!effectiveEnd || effectiveEnd >= last);
 }
 
 // The policies that go with a plan: dive-accident cover found automatically (any dive policy in
@@ -1016,14 +1059,17 @@ function coversDates(policy, start, end) {
 // start late or end before the plan does.
 function policiesForPlan(plan, policies) {
   const start = plan.startDate, end = plan.endDate || plan.startDate;
-  const overlaps = (policy) => start && (!policy.startDate || policy.startDate <= end) && (policy.autoRenews || !policy.endDate || policy.endDate >= start);
+  const overlaps = (policy) => {
+    const effectiveEnd = policy.autoRenews ? policyTermForDate(policy, start).endDate : policy.endDate;
+    return start && (!policy.startDate || policy.startDate <= end) && (!effectiveEnd || effectiveEnd >= start);
+  };
   const auto = policies.filter((policy) => policy.type === 'dive' && overlaps(policy));
   const covering = auto.find((policy) => coversDates(policy, start, end)) || null;
   const attachedIds = new Set(plan.insuranceIds || []);
   const attached = policies.filter((policy) => attachedIds.has(policy.id) && !auto.includes(policy));
   return { auto, attached, covering, gaps: covering ? [] : auto.filter((policy) => !coversDates(policy, start, end)) };
 }
-window.DMZInsuranceModel = { INSURANCE_TYPES, insuranceTypeLabel, EXPIRING_DAYS, createPolicyId, createDocumentId, normalizeDocument, normalizePolicy, normalizeInsuranceState, policyTitle, policyStatus, coversDates, policiesForPlan };
+window.DMZInsuranceModel = { INSURANCE_TYPES, insuranceTypeLabel, RENEWAL_PERIODS, renewalPeriodLabel, EXPIRING_DAYS, createPolicyId, createDocumentId, normalizeDocument, normalizePolicy, normalizeInsuranceState, policyTitle, policyTermForDate, policyStatus, coversDates, policiesForPlan };
 })();
 
 // src/features/planner/model.js
@@ -1042,6 +1088,7 @@ const STATUS_LABELS = Object.freeze({ idea: 'Idea', planned: 'Planning', booked:
 
 const SEGMENT_TYPES = Object.freeze({
   flight: { label: 'Flight', from: 'From (airport)', to: 'To (airport)', provider: 'Airline & flight', ends: true },
+  drive: { label: 'Drive', from: 'From', to: 'To', provider: 'Driver or parking', ends: true },
   transfer: { label: 'Transfer', from: 'Pick-up', to: 'Drop-off', provider: 'Company', ends: true },
   ferry: { label: 'Ferry', from: 'Departs', to: 'Arrives', provider: 'Operator', ends: true },
   stay: { label: 'Stay', from: 'Address', to: '', provider: 'Hotel or resort', ends: true, overnight: true },
@@ -1147,7 +1194,7 @@ function normalizeSegment(value = {}) {
   return {
     id: clean(value.id, 80) || createSegmentId(), type, title: clean(value.title, 160),
     startDate, startTime: validTime(value.startTime), endDate, endTime: validTime(value.endTime),
-    from: clean(value.from, 160), to: clean(value.to, 160), provider: clean(value.provider, 160), reference: clean(value.reference, 80),
+    from: clean(value.from, 160), to: clean(value.to, 160), provider: clean(value.provider, 160), reference: clean(value.reference, 80), phone: clean(value.phone, 60),
     dives: Math.max(0, Math.min(12, Number.parseInt(value.dives, 10) || 0)), notes: clean(value.notes, 2000),
     // Flights bought together (one confirmation: outbound connections and the return) share a booking id.
     booking: type === 'flight' ? clean(value.booking, 80) : '',
@@ -1223,6 +1270,11 @@ function normalizePlan(value = {}, now = new Date()) {
   const operator = value.operator || {};
   const destination = value.destination || {};
   const lat = Number(destination.latitude), lon = Number(destination.longitude);
+  const profile = value.diveProfile || {};
+  const optionalPositive = (entry, max) => {
+    const parsed = Number(entry);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.min(max, parsed) : null;
+  };
   return {
     id: clean(value.id, 80) || createPlanId(), kind, status: PLAN_STATUSES.includes(value.status) ? value.status : 'planned',
     title: clean(value.title, 120), startDate, endDate, startTime: kind === 'day' ? validTime(value.startTime) : '',
@@ -1233,6 +1285,15 @@ function normalizePlan(value = {}, now = new Date()) {
     operator: { name: clean(operator.name, 160), phone: clean(operator.phone, 60), email: clean(operator.email, 160), website: clean(operator.website, 300),
       meetingPoint: clean(operator.meetingPoint, 200), confirmation: clean(operator.confirmation, 80) },
     dives: Math.max(0, Math.min(12, Number.parseInt(value.dives, 10) || 0)),
+    // Optional planning assumptions. Stored in SI so personal gas estimates
+    // remain stable when the diver changes display units.
+    diveProfile: {
+      targetDepthMeters: optionalPositive(profile.targetDepthMeters, 200),
+      bottomTimeMinutes: optionalPositive(profile.bottomTimeMinutes, 1440),
+      startPressureBar: optionalPositive(profile.startPressureBar, 500),
+      reservePressureBar: optionalPositive(profile.reservePressureBar, 500),
+      cylinderVolumeLiters: optionalPositive(profile.cylinderVolumeLiters, 100),
+    },
     setupId: clean(value.setupId, 80),
     // This plan's own packing ticks (Gear Locker checklist keys) — two trips on one setup pack separately.
     packedIds: [...new Set((Array.isArray(value.packedIds) ? value.packedIds : []).map((key) => clean(key, 200)).filter(Boolean))].slice(0, 1000),
@@ -1341,6 +1402,42 @@ function dayEntries(starts, ends, continuing) {
       // Stable: at the same minute, endings still come first.
       .sort((a, b) => a.key - b.key || (a.variant === 'end' ? -1 : 0) - (b.variant === 'end' ? -1 : 0)),
   ].map(({ leg, variant }) => ({ leg, variant }));
+}
+
+// The active trip day, with the item underway now and the next scheduled item.
+// Itinerary dates and times are intentionally interpreted as local trip-wall
+// time; they are not converted through UTC or a guessed destination timezone.
+function currentTripDay(plan, now = new Date()) {
+  if (plan?.kind !== 'trip') return null;
+  const today = todayString(now);
+  const day = planTimeline(plan).days.find((entry) => entry.date === today);
+  if (!day) return null;
+  const nowMoment = moment(today, `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, null);
+  const entryMoment = ({ leg, variant }) => variant === 'continuing' ? null
+    : moment(variant === 'end' ? leg.endDate : leg.startDate, variant === 'end' ? leg.endTime : leg.startTime, null);
+  const current = day.entries.find(({ leg, variant }) => {
+    if (variant !== 'start' || !leg.startTime || !leg.endTime) return false;
+    const starts = moment(leg.startDate, leg.startTime, null);
+    const ends = moment(leg.endDate || leg.startDate, leg.endTime, null);
+    return starts != null && ends != null && starts <= nowMoment && nowMoment < ends;
+  }) || null;
+  const next = day.entries.find((entry) => {
+    const when = entryMoment(entry);
+    return when != null && when >= nowMoment;
+  }) || day.entries.find((entry) => entry.variant === 'start' && !entry.leg.startTime) || null;
+  const types = new Set(day.entries.map((entry) => entry.leg.type));
+  const diving = types.has('diving') || types.has('liveaboard');
+  const travel = ['flight', 'drive', 'transfer', 'ferry', 'car'].some((type) => types.has(type));
+  const label = diving && travel ? 'Dive + travel day' : diving ? 'Dive day' : travel ? 'Travel day' : 'Trip day';
+  return { ...day, current, next, label };
+}
+
+// Seed the general editor on an empty first day; flights remain an explicit
+// shortcut. Middle days lean toward diving and a later final day toward travel.
+function suggestedSegmentType(day, lastDay) {
+  if (day?.index === 1 && !day.starts?.length) return 'other';
+  if (day?.date === lastDay && day?.index > 1) return 'flight';
+  return 'diving';
 }
 
 // --- readiness --------------------------------------------------------------
@@ -1529,7 +1626,7 @@ function readinessSummary(alerts) {
   if (alerts.length) return { tone: 'info', label: 'On track', headline: alerts[0].title };
   return { tone: 'good', label: 'Ready', headline: 'Everything checks out.' };
 }
-window.DMZPlannerModel = { PLAN_KINDS, PLAN_STATUSES, STATUS_LABELS, SEGMENT_TYPES, spansDays, CERT_REQUIREMENTS, SERVICE_LEAD_DAYS, NO_FLY_MIN_HOURS, NO_FLY_HOURS, MIN_CONNECTION_MINUTES, PASSPORT_VALIDITY_MONTHS, REFRESHER_MONTHS, createPlanId, createSegmentId, createBookingId, parseDay, dayString, addDays, todayString, daysBetween, formatDay, formatRange, shortRange, formatTime, emptyPlan, normalizeSegment, airportKey, formatDuration, layoverMinutes, flightConnections, bookingFlights, connectingFlight, returnFlight, replaceFlights, normalizePlan, normalizePlannerState, planTitle, planPhase, withPlanPacking, packPlan, nextPlanForSetup, sortPlans, planTimeline, dayEntries, certLabel, cardsFor, planAlerts, readinessSummary };
+window.DMZPlannerModel = { PLAN_KINDS, PLAN_STATUSES, STATUS_LABELS, SEGMENT_TYPES, spansDays, CERT_REQUIREMENTS, SERVICE_LEAD_DAYS, NO_FLY_MIN_HOURS, NO_FLY_HOURS, MIN_CONNECTION_MINUTES, PASSPORT_VALIDITY_MONTHS, REFRESHER_MONTHS, createPlanId, createSegmentId, createBookingId, parseDay, dayString, addDays, todayString, daysBetween, formatDay, formatRange, shortRange, formatTime, emptyPlan, normalizeSegment, airportKey, formatDuration, layoverMinutes, flightConnections, bookingFlights, connectingFlight, returnFlight, replaceFlights, normalizePlan, normalizePlannerState, planTitle, planPhase, withPlanPacking, packPlan, nextPlanForSetup, sortPlans, planTimeline, dayEntries, currentTripDay, suggestedSegmentType, certLabel, cardsFor, planAlerts, readinessSummary };
 })();
 
 // src/features/planner/bookingImport/parseFlightText.js

@@ -33,10 +33,12 @@
   const monthName = (index) => new Date(2026, index, 1).toLocaleString('en-US', { month: 'long' });
   const fahrenheit = (celsius) => celsius == null ? null : Math.round(celsius * 9 / 5 + 32);
   function advicePreferences() {
+    if(window.DMZGearAdvice)return window.DMZGearAdvice.preferences();
     try { return JSON.parse(localStorage.getItem(adviceKey) || '{}') || {}; }
     catch { return {}; }
   }
   function updateAdvicePreferences(value) {
+    if(window.DMZGearAdvice){window.DMZGearAdvice.store(value);atlas()?.DMZTravelAtlas?.setAdvicePreferences(value);return;}
     try { localStorage.setItem(adviceKey, JSON.stringify(value)); } catch (_) { /* optional */ }
     atlas()?.DMZTravelAtlas?.setAdvicePreferences(value);
   }
@@ -123,12 +125,14 @@
   }
 
   async function loadGearRecords() {
-    token = sessionStorage.getItem(tokenKey) || token;
+    token = sessionStorage.getItem(tokenKey) || '';
     if (!token && localStorage.getItem(signedInKey) === '1') token = await refreshToken();
-    if (!token) return { items: [], setups: [], signedIn: false };
+    if (!token) {window.DMZGearAdvice?.connect('');atlas()?.DMZTravelAtlas?.setGearRecords([],[]);return { items: [], setups: [], signedIn: false };}
+    const account=await accountGet('/api/account');window.DMZGearAdvice?.connect(account.profile?.userId);
     const items = [], setups = [];
     for (const row of await loadAccountRecords(['gear', 'setup']))
       (row.kind === 'gear' ? items : setups).push({ ...row.data, id: row.id });
+    atlas()?.DMZTravelAtlas?.setGearRecords(items,setups);atlas()?.DMZTravelAtlas?.setAdvicePreferences(advicePreferences());
     return { items, setups, signedIn: true };
   }
 
@@ -147,6 +151,7 @@
       bottomTemperatureC: bottom == null || invalid ? null : (bottom - 32) * 5 / 9,
       longDive: gearPlan.longDive };
     const result = !invalid && engine ? engine.recommend(data?.items || [], data?.setups || [], preferences, plan) : null;
+    const personalized=result&&gearPlan.use&&gearPlan.use!=='Overhead'?engine.suggest(data?.items||[],data?.setups||[],preferences,{...plan,mode:gearPlan.use==='Technical'?'technical':gearPlan.use==='Freedive'?'freedive':'recreational'}):null;
     const explanation = result?.advice?.reasons || [];
     gearContent.innerHTML = `
       <p class="atlas-gear-intro"><strong>${escapeHtml(context.name)}</strong> · ${monthName(context.month)} · ${context.temperatureC == null
@@ -160,21 +165,22 @@
       </div>
       <p class="atlas-gear-note">Depth and bottom temperature refine the starting point. Check actual conditions with your dive operator.</p>
       <div class="atlas-gear-card"><span class="travel-section-kicker">Exposure starting point</span>
-        <h3>${escapeHtml(result?.advice?.label || (invalid ? 'Check your planned conditions' : 'Planning…'))}</h3>
+        <h3>${escapeHtml(personalized?.exposureLabel || result?.advice?.label || (invalid ? 'Check your planned conditions' : 'Planning…'))}</h3>
         <p>${escapeHtml(result?.advice?.temperatureBasis || '')}</p>
         ${explanation.map((reason) => `<p>${escapeHtml(reason)}</p>`).join('')}</div>
       <details class="atlas-gear-preferences"><summary>Your comfort preferences</summary>
         <p>These browser preferences stay on this device. The app’s separate preferences do not sync to your account yet.</p>
+        <p><a href="/pages/account/#gear">Manage personal exposure ranges, combinations, and setup uses in Gear Locker.</a></p>
         <label>How you feel in the water<select data-gear-field="tendency">${[['cold', 'I run cold'], ['typical', 'Typical'], ['warm', 'I run warm']]
           .map(([value, label]) => `<option value="${value}" ${(preferences.thermalTendency || 'typical') === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
-        <label>Prefer a drysuit below · °F<input data-gear-field="threshold" type="number" min="28" max="104" value="${threshold}"></label>
+        <label>Prefer a drysuit below · °F<input data-gear-field="threshold" type="number" min="32" max="86" value="${threshold}"></label>
       </details>
       <div class="atlas-gear-locker"><h3>From your Gear Locker</h3>
         ${data == null && !error ? '<p>Loading your saved equipment and setups…</p>' : ''}
         ${error ? `<p class="atlas-gear-warning">${escapeHtml(error)}</p>` : ''}
         ${data && !data.signedIn ? '<p><a href="/pages/account/#gear">Sign in</a> to match this dive to your saved equipment. The exposure starting point above works without an account.</p>' : ''}
         ${data?.signedIn && !gearPlan.use ? '<p>Choose your planned dive type to see matching setups.</p>' : ''}
-        ${data?.signedIn && gearPlan.use && !invalid && !result?.ranked?.length ? '<p>No matching saved setup yet. Review your Gear Locker and its dive-use preferences. Technical and overhead matches require your explicit designation in the app.</p>' : ''}
+        ${data?.signedIn && gearPlan.use && !invalid && !result?.ranked?.length ? '<p>No matching saved setup yet. Review your Gear Locker and its dive-use preferences. Technical and overhead matches require your explicit designation.</p>' : ''}
         ${data?.signedIn && gearPlan.use && !invalid ? (result?.ranked || []).map((entry, index) => `
           <div class="atlas-gear-card"><span class="travel-section-kicker">${index === 0 ? 'Closest starting point' : 'Alternative'} · ${escapeHtml(entry.setup.type)}</span>
             <h4>${escapeHtml(entry.setup.name)}</h4><p>${entry.suit ? `Exposure: ${escapeHtml([entry.suit, ...entry.layers].map((item) => item.name).join(' + '))}` : 'Exposure protection still needed'}</p>
@@ -188,15 +194,16 @@
       <p class="atlas-gear-note">Planning aid only. Confirm training, current conditions, gas planning, redundancy, and equipment compatibility. Nothing here changes your saved setups.</p>`;
     gearContent.querySelectorAll('[data-gear-field]').forEach((field) => field.addEventListener('change', () => {
       const name = field.dataset.gearField;
+      field.setCustomValidity('');
       if (name === 'tendency' || name === 'threshold') {
         const next = { ...advicePreferences() };
         if (name === 'tendency') next.thermalTendency = field.value;
         else {
           const number = Number(field.value);
-          if (!Number.isFinite(number) || number < 28 || number > 104) { field.setCustomValidity('Enter 28–104°F.'); field.reportValidity(); return; }
+          if (!Number.isFinite(number) || number < 32 || number > 86) { field.setCustomValidity('Enter 32–86°F.'); field.reportValidity(); return; }
           next.drysuitBelowC = (number - 32) * 5 / 9;
         }
-        updateAdvicePreferences(next);
+        try{updateAdvicePreferences(next);}catch(error){field.setCustomValidity(error.message);field.reportValidity();return;}
       } else gearPlan[name] = name === 'longDive' ? field.checked : field.value;
       renderGearPlan();
     }));
@@ -417,6 +424,7 @@
         latitude: position.coords.latitude, longitude: position.coords.longitude }), () => {}, { maximumAge: 7 * 24 * 3600 * 1000, timeout: 15000 });
     }).catch(() => {});
     loadPersonalDives();
+    loadGearRecords().catch(()=>atlas()?.DMZTravelAtlas?.setGearRecords([],[]));
     const query = new URLSearchParams(window.location.search);
     const latitude = Number(query.get('lat')), longitude = Number(query.get('lon'));
     if (validCoordinate(latitude, longitude)) {
@@ -430,6 +438,7 @@
     if (event.data.type === 'ready') initializeFrame();
   });
   frame.addEventListener('load', initializeFrame);
+  window.addEventListener('pageshow',(event)=>{if(event.persisted&&ready)loadGearRecords().catch(()=>atlas()?.DMZTravelAtlas?.setGearRecords([],[]));});
   window.addEventListener('dmz:travel-atlas-focus', (event) => {
     const item = event.detail || {};
     if (!ready) return;

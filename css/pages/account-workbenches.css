@@ -28,6 +28,18 @@
 .profile-actions label { display:grid; gap:4px; color:#9bb7c7; font-size:11px; }
 .profile-actions select,.sample-controls select,.trip-gear-selector select { min-height:40px; min-width:0; max-width:100%; padding:8px; color:#e4f5fb; background:#0b2031; border:1px solid #3a596d; border-radius:8px; font:inherit; }
 .profile-summary,.profile-readings { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:16px 0; }
+.gear-full-editor fieldset,.gear-editor-part { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-width:0; }
+.gear-full-editor fieldset > p,.gear-part-actions,.gear-editor-part,.gear-assignment-grid,.gear-comfort-row { grid-column:1/-1; }
+.gear-editor-part,.gear-comfort-row { padding:12px; border:1px solid #315364; border-radius:8px; margin:8px 0; }
+.gear-part-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.gear-part-actions button,.gear-editor-part > button,.gear-advice-dialog button { min-height:34px; padding:6px 10px; border:1px solid #36596b; border-radius:7px; background:#102c3b; color:#b7e5df; font:inherit; font-size:11px; cursor:pointer; }
+.gear-assignment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.gear-assignment-grid section { min-width:0; }
+.gear-assignment-grid h4,.gear-comfort-row h4 { margin:3px 0 8px; font-size:13px; }
+.gear-full-editor fieldset > p,.gear-advice-dialog > p,.gear-advice-dialog fieldset > p { font-size:11px; line-height:1.5; color:#98b7c6; }
+.gear-comfort-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.gear-comfort-row h4 { grid-column:1/-1; }
+@media(max-width:600px) { .gear-full-editor fieldset,.gear-editor-part,.gear-assignment-grid,.gear-comfort-row { grid-template-columns:minmax(0,1fr); } }
 .profile-summary > div,.profile-readings > div { min-width:0; padding:11px; border:1px solid #294554; border-radius:10px; background:#0b1d2c; }
 .profile-summary small,.profile-readings small { display:block; font-size:10px; color:#9bb7c7; }
 .profile-summary strong,.profile-readings strong { display:block; margin-top:5px; color:var(--reading-color); font:600 18px/1.3 ui-monospace,Consolas,monospace; overflow-wrap:anywhere; }

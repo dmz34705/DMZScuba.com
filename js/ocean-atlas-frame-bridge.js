@@ -6,6 +6,7 @@
   let advicePreferences = {};
   let origin = null;
   let gearMode = 'recreational';
+  let gearState = null;
   const style = document.createElement('style');
   style.textContent = '#back { display: none !important; }';
   document.head.append(style);
@@ -17,13 +18,17 @@
       'speciesIndex', 'speciesGuide', 'discover'].includes(message.type)) return;
     queueMicrotask(() => {
       if (message.type === 'gearMode') gearMode = message.value;
-      const response = engine.respond(message, { advicePreferences, origin, gearMode });
+      const response = engine.respond(message, { advicePreferences, origin, gearMode, gearState });
       if (response) window.atlasReceive?.(response);
     });
   });
   const validCoordinate = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon)
     && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
   window.DMZTravelAtlas = {
+    setGearRecords(items, setups) {
+      gearState={items:Array.isArray(items)?items:[],setups:Array.isArray(setups)?setups:[]};
+      window.atlasReceive?.({type:'adviceChanged'});
+    },
     setAdvicePreferences(value) {
       advicePreferences = value && typeof value === 'object' ? value : {};
       window.atlasReceive?.({ type: 'adviceChanged' });

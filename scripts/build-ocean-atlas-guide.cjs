@@ -21,7 +21,7 @@ import { discoverSpecies, speciesGuide, speciesIndex } from './src/features/ocea
 import { buildAtlasGearSuggestion, normalizeAtlasDiveMode } from './src/features/oceanAtlas/atlasGear.js';
 import { fetchSiteWeather } from './src/features/oceanAtlas/weather.js';
 import { normalizeGearState } from './src/features/gearChecklist/model.js';
-import { normalizeAdvicePreferences, recommendDiveGear } from './src/features/gearChecklist/diveAdvice.js';
+import { normalizeAdvicePreferences, recommendDiveGear, advicePreferenceError, coldDiverTemplate } from './src/features/gearChecklist/diveAdvice.js';
 
 const validCoordinate = (latitude, longitude) => Number.isFinite(latitude) && Number.isFinite(longitude)
   && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
@@ -39,7 +39,7 @@ function siteGuideMessage(message, options = {}) {
     const site = record || { latitude: message.latitude, longitude: message.longitude, topologies: [] };
     const month = Number.isInteger(message.month) && message.month >= 0 && message.month < 12
       ? message.month : new Date().getMonth();
-    const gear = buildAtlasGearSuggestion(normalizeGearState(null), preference, {
+    const gear = buildAtlasGearSuggestion(normalizeGearState(options.gearState || null), preference, {
       mode: normalizeAtlasDiveMode(options.gearMode), site, profile: payload.profile || null,
       inland: payload.guide?.inland || null, temperatureC: payload.wear?.[month]?.temperatureC ?? null });
     return { type: 'siteGuide', ...payload, gear };
@@ -122,10 +122,17 @@ export function recommend(gearRecords, setupRecords, preferences, context) {
   const state = normalizeGearState({ items: gearRecords || [], setups: setupRecords || [] });
   return recommendDiveGear(state, normalizeAdvicePreferences(preferences || {}), context);
 }
+export const normalizePreferences = normalizeAdvicePreferences;
+export const preferenceError = advicePreferenceError;
+export const comfortTemplate = coldDiverTemplate;
+export function suggest(gearRecords, setupRecords, preferences, context) {
+  return buildAtlasGearSuggestion(normalizeGearState({items:gearRecords||[],setups:setupRecords||[]}),preferences,context);
+}
 `;
 
 esbuild.buildSync({ stdin: { contents: entry, resolveDir: appRoot, sourcefile: 'ocean-atlas-guide-entry.js',
   loader: 'js' }, bundle: true, platform: 'browser', format: 'iife', globalName: 'DMZAtlasGuideEngine',
   minify: true, target: ['es2020'], outfile: output, legalComments: 'inline' });
-fs.writeFileSync(output, `${fs.readFileSync(output, 'utf8').trimEnd()}\n`);
+const sourceRef=require('node:child_process').execFileSync('git',['-C',appRoot,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+fs.writeFileSync(output, `// Generated from dmzscuba-app ${sourceRef}; see scripts/build-ocean-atlas-guide.cjs.\n${fs.readFileSync(output, 'utf8').replace(/[ \t]+$/gm,'').trimEnd()}\n`);
 console.log(`Built ${output} (${fs.statSync(output).size.toLocaleString()} bytes).`);

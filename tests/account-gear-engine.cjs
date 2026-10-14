@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict');
+const context=vm.createContext({console,URL,Date,Math,fetch:()=>{throw new Error('No network expected for gear proposals');}});
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/ocean-atlas-guide-engine.js'),'utf8'),context);
+const engine=context.DMZAtlasGuideEngine;
+const items=[{id:'suit',name:'Personal full suit',category:'Exposure suit',configuration:'Wetsuit',thickness:'7',condition:'Ready'},{id:'reg',name:'Regulator',category:'Regulator',condition:'Ready',components:[{id:'first',type:'First stage',name:'First stage',condition:'Ready'}]}];
+const setups=[{id:'rig',name:'My rig',type:'Single tank',itemIds:['suit','reg'],checkedIds:['reg'],accessoryChoices:{}}];
+const prefs={suits:{suit:{minC:-2,maxC:40,coverage:'Full'}},setups:{rig:['Open water','Technical']}};
+const before=JSON.stringify({items,setups,prefs});
+const result=engine.respond({type:'siteGuide',key:'test',name:'Caribbean dive',latitude:20,longitude:-87,month:7},{gearState:{items,setups},advicePreferences:prefs,gearMode:'recreational'});
+assert.equal(result.gear.setup.id,'rig','Atlas persistent gear card uses the account locker, not an empty inventory');
+assert.equal(result.gear.exposureLabel,'Personal full suit','Atlas uses the latest app personalized exposure label');
+assert.equal(result.gear.personalizedExposure,true);
+assert.equal(JSON.stringify({items,setups,prefs}),before,'recommendations never mutate gear, location, or packing checks');
+assert.equal(engine.recommend(items,setups,prefs,{use:'Overhead',temperatureC:24}).ranked.length,0,'overhead eligibility must be explicit');
+const blocked=structuredClone(items);blocked[1].components[0].condition='Out of service';
+assert.equal(engine.recommend(blocked,setups,prefs,{use:'Technical',temperatureC:24}).ranked.length,0,'component condition excludes an unusable rig');
+assert.ok(engine.preferenceError(engine.normalizePreferences({suits:{suit:{minC:30,maxC:10}}})),'reversed comfort ranges are rejected');
+console.log('PASS: shared app recommendation engine, persistent Atlas locker matches, personal ranges, explicit dive-use eligibility, component exclusions, and read-only proposals.');

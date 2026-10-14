@@ -534,6 +534,7 @@
 
   function renderAccount(data) {
     account = data;
+    window.DMZGearAdvice?.connect(data.profile?.userId);
     window.DMZDiving?.connect({ request: apiRequest, account: data });
     window.DMZPlanner?.connect({ request: apiRequest, account: data });
     const profile = data.profile || {};
@@ -620,6 +621,7 @@
   }
 
   function showSignedOut() {
+    window.DMZGearAdvice?.connect('');
     if (!accessToken) window.DMZWorkspace?.clear();
     window.DMZDiving?.disconnect();
     window.DMZPlanner?.disconnect();

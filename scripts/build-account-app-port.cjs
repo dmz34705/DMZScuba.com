@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {execFileSync}=require('node:child_process');
 const app=process.argv[2];if(!app)throw new Error('Supply the dmzscuba-app checkout path.');
-const ref='6cccd64',root=path.resolve(__dirname,'..');
+const ref='48f7707',root=path.resolve(__dirname,'..');
 const modules=[['DMZGearModel','src/features/gearChecklist/model.js'],['DMZInsuranceModel','src/features/insurance/model.js'],['DMZPlannerModel','src/features/planner/model.js'],['DMZFlightParser','src/features/planner/bookingImport/parseFlightText.js'],['DMZBookingParser','src/features/planner/bookingImport/parseBookingText.js'],['DMZBookingImport','src/features/planner/bookingImport/planImport.js']];
 const aliases={'../gearChecklist/model':'DMZGearModel','../insurance/model':'DMZInsuranceModel','./parseFlightText':'DMZFlightParser','../model':'DMZPlannerModel'};
 const read=(file,revision=ref)=>execFileSync('git',['-C',app,'show',`${revision}:${file}`],{encoding:'utf8',maxBuffer:5e6}).replace(/\r\n/g,'\n').trimEnd();

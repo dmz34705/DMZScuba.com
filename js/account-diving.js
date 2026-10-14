@@ -62,7 +62,7 @@
     window.DMZTools.browser(panel);
     const organization=document.createElement('label');organization.textContent='List organization';organization.innerHTML+='<select data-organization><option value="grouped">Expandable groups</option><option value="flat">Flat list</option></select>';panel.querySelector('.browser-filters > div').append(organization);
     const groupTools=document.createElement('div');groupTools.className='browser-group-tools';groupTools.innerHTML='<button type="button" data-groups-action="expand">Expand all</button><button type="button" data-groups-action="collapse">Collapse all</button>';panel.querySelector('.browser-search').after(groupTools);
-    if(!log){const order=document.createElement('details');order.className='browser-category-order';order.innerHTML='<summary>Category order</summary><div data-category-order></div>';panel.querySelector('.browser-more > div').append(order);}
+    if(!log){const advice=document.createElement('button');advice.type='button';advice.dataset.gearAdvice='';advice.textContent='Gear matching preferences';panel.querySelector('.browser-more > div').append(advice);const order=document.createElement('details');order.className='browser-category-order';order.innerHTML='<summary>Category order</summary><div data-category-order></div>';panel.querySelector('.browser-more > div').append(order);}
     panel.querySelector('[data-organization]').onchange=(event)=>{ui[view].organization=event.target.value;if(view==='logbook'&&event.target.value==='grouped'&&ui.logbook.sort==='deepest')ui.logbook.sort='newest';render(view);};
     panel.addEventListener('toggle',(event)=>{
       const group=event.target;if(!group.matches('[data-browser-group]'))return;
@@ -82,6 +82,7 @@
     panel.querySelector('[data-units]')?.addEventListener('change', (e) => { imperial = e.target.value === 'imperial'; render(view); });
     panel.addEventListener('click', (e) => {
       const button = e.target.closest('button'); if (!button || !userId) return;
+      if(button.hasAttribute('data-gear-advice')){panel.querySelector('.browser-more').open=false;window.DMZGearAdvice.open({items:all('gear').map((row)=>row.data),setups:all('setup').map((row)=>row.data)}).catch((error)=>status(error.message,true));return;}
       if(button.hasAttribute('data-groups-action')){const close=button.dataset.groupsAction==='collapse';for(const key of panel._allGroupKeys||[])ui[view].closed[key]=close;render(view);return;}
       if(button.hasAttribute('data-group-more')){const key=button.dataset.groupMore;ui[view].limits[key]=(ui[view].limits[key]||24)+24;const content=button.closest('.browser-group-content');content.innerHTML=panel._groupRenderers.get(key)();return;}
       if(button.hasAttribute('data-order-move')){e.stopPropagation();const index=ui.gear.order.indexOf(button.dataset.orderKey),next=index+Number(button.dataset.orderMove);if(next>=0&&next<ui.gear.order.length)[ui.gear.order[index],ui.gear.order[next]]=[ui.gear.order[next],ui.gear.order[index]];saveCategoryOrder();render('gear');const replacements=[...panel.querySelectorAll('[data-order-key]')].filter((el)=>el.dataset.orderKey===button.dataset.orderKey&&!el.disabled);(replacements.find((el)=>el.dataset.orderMove===button.dataset.orderMove)||replacements[0])?.focus();window.DMZWorkspace?.save();return;}
@@ -219,7 +220,7 @@
     else panel.querySelector('[data-detail]').innerHTML = !log && state.setup ? setupDetail(records.get(`setup/${state.setup}`)) : `<div class="diving-empty"><h3>${loaded ? 'Ready when you are' : 'Loading your account'}</h3><p>${loaded ? 'Select a record to explore its details.' : 'Your records will appear here after loading.'}</p></div>`;
   }
   const pair = (label, value) => `<div><dt>${esc(label)}</dt><dd>${esc(value == null || value === '' ? '—' : value)}</dd></div>`;
-  function gearState(){return {items:all('gear').map((row)=>row.data),setups:all('setup').map((row)=>({checkedIds:[],itemIds:[],...row.data}))};}
+  function gearState(){return window.DMZGearModel.clearStalePacking({items:all('gear').map((row)=>row.data),setups:all('setup').map((row)=>({...row.data,checkedIds:row.data.checkedIds||[],itemIds:row.data.itemIds||[]}))});}
   async function persistGearState(next,setupId){
     for(const [kind,values]of [['gear',next.items],['setup',next.setups]])for(const data of values){
       const row=records.get(`${kind}/${data.id}`);if(row&&JSON.stringify(row.data)!==JSON.stringify(data))await save({...row,data});
@@ -231,7 +232,7 @@
   }
   function renderSetups(panel){
     panel.querySelector('[data-browser-pagination]').innerHTML='';
-    const state=ui.gear,model=window.DMZGearModel,current=gearState(),setups=all('setup');
+    const state=ui.gear,model=window.DMZGearModel,current=gearState(),setups=all('setup').map((row)=>({...row,data:current.setups.find((setup)=>setup.id===row.id)||row.data}));
     const wanted=setups.filter((row)=>row.data.name?.toLowerCase().includes(state.search.toLowerCase()));
     if(!wanted.some((row)=>row.id===state.setup))state.setup=wanted[0]?.id||'';
     panel.querySelector('.diving-layout').hidden=false;
@@ -240,7 +241,7 @@
       const progress=model.setupProgress(row.data,current.items);
       return `<button type="button" class="diving-entry setup-entry" data-setup="${esc(row.id)}" aria-pressed="${row.id===state.setup}"><span class="entry-gear-icon">◇</span><span><strong>${esc(row.data.name)}</strong><small>${esc(row.data.type)} · ${progress.checked}/${progress.total} pieces packed</small><progress max="${progress.total||1}" value="${progress.checked}"></progress></span><span class="entry-chevron">›</span></button>`;
     }).join('');
-    const container=panel.querySelector('[data-detail]'),row=records.get(`setup/${state.setup}`);
+    const container=panel.querySelector('[data-detail]'),row=setups.find((row)=>row.id===state.setup);
     if(!row){container.innerHTML='<div class="diving-empty"><h3>Build your first setup</h3><p>Group the equipment you take diving and pack every component.</p><button class="btn primary" data-add="setup">Create a setup</button></div>';return;}
     container.innerHTML=`<button class="diving-mobile-back" data-mobile-back>Back to setups</button><div class="workbench-title"><div><p class="diving-kicker">${esc(row.data.type)}</p><h3>${esc(row.data.name)}</h3></div><button class="btn secondary" data-edit="setup" data-id="${esc(row.id)}">Edit setup</button></div><div data-setup-packing></div>`;
     window.DMZPacking.mount(container.querySelector('[data-setup-packing]'),{setup:row.data,items:current.items,setups:current.setups,
@@ -280,6 +281,7 @@
       ${log ? '<div data-sample-explorer></div>' : ''}
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
       `;
+    if(!log){const specs=[['Size',d.size],['Quantity',d.quantity],['Thickness / insulation',d.thickness],['Material / insulation',d.material],['Color',d.color],['Weight',d.weight],['Capacity',d.capacity],['Working pressure',d.workingPressure],['Valve',d.valveType],['Floating location',d.floating?(window.DMZGearModel.floatingLocation(d,all('setup').map((row)=>row.data))?.name||'Not assigned'):''],['Linked accessories',(d.accessoryItemIds||[]).map((id)=>records.get(`gear/${id}`)?.data.name).filter(Boolean).join(', ')],['Included in setups',all('setup').filter((row)=>window.DMZGearModel.packedItems(row.data,all('gear').map((item)=>item.data)).some((item)=>item.id===d.id)).map((row)=>row.data.name).join(', ')],['Warranty',d.warrantyUntil?date(d.warrantyUntil):'']];container.querySelector('.record-section dl').insertAdjacentHTML('beforeend',specs.filter(([,value])=>value).map(([label,value])=>pair(label,value)).join(''));}
     const overview = document.createElement('div'); overview.className = 'tool-record-overview';
     overview.innerHTML = log
       ? `<div class="tool-key-metrics">${stat(depth(d.water?.maxDepthMeters),'Max depth')}${stat(duration(d.durationSeconds),'Dive time')}${stat(temp(d.water?.tempMinC),'Water temp')}${stat((d.gas?.mixes||[]).map((mix)=>mix.label||`${Math.round(number(mix.o2)*100)}% O₂`).join(' / ')||'—','Gas')}</div><dl>${pair('Date',date(d.startTime))}${pair('Dive mode',d.diveMode||'Not recorded')}${pair('Buddies',(d.buddies||[]).join(', '))}${pair('Rating',d.rating?`${d.rating} / 5`:'Not rated')}</dl>`
@@ -382,6 +384,18 @@
     const record = id ? records.get(`${kind}/${id}`) : { kind,id:crypto.randomUUID(),revision:0,data:{ createdAt:new Date().toISOString() } };
     if (!record) return;
     dialogRecord = structuredClone(record);
+    if(kind==='gear'){
+      window.DMZGearEditor.mount(dialog,{record,items:all('gear').map((row)=>row.data),setups:all('setup').map((row)=>row.data),onSave:async(data,memberships)=>{
+        const model=window.DMZGearModel,current=gearState();
+        let next={...current,items:[...current.items.filter((item)=>item.id!==data.id),data],setups:model.assignItemToSetups(current.setups,data.id,memberships)};
+        if(data.floating)next=model.moveFloatingItem(next,data.id,data.currentSetupId);
+        next.setups=next.setups.map((setup)=>{const entry=model.checklistEntriesForItem(data,next.items,setup),valid=new Set([entry.itemKey,...entry.parts.map((part)=>part.key)]);return {...setup,checkedIds:(setup.checkedIds||[]).filter((key)=>model.checklistItemIdForKey(key)!==data.id||(setup.itemIds.includes(data.id)&&valid.has(key)))};});
+        await save({...record,data:next.items.find((item)=>item.id===data.id)});
+        try{for(const setup of next.setups){const old=records.get(`setup/${setup.id}`);if(old&&JSON.stringify(old.data)!==JSON.stringify(setup))await save({...old,data:setup});}}
+        catch(error){throw new Error(`Equipment was saved, but some setup changes could not be saved. Refresh the locker before retrying. ${error.message}`);}
+        ui.gear.selected=data.id;ui.gear.page='inventory';ui.gear.closed[gearGroup(data.category)]=false;ui.gear.mobileDetail=true;render('gear');document.dispatchEvent(new CustomEvent('dmz-diving-record-changed'));status('Equipment and setup assignments saved.');
+      }});dialog.showModal();return;
+    }
     const d = record.data, log = kind === 'dive', setup = kind === 'setup';
     let fields;
     if (log) {
@@ -409,7 +423,10 @@
       if (n('avgDepth') != null && n('avgDepth') > n('maxDepth')) { form.querySelector('[data-editor-status]').textContent = 'Average depth cannot exceed maximum depth.'; return; }
       data = { ...data, schemaVersion:2, source:data.source || 'manual', site:{ ...data.site,name:v('site'),location:v('location') }, number:n('number'), startTime:new Date(v('startTime')).toISOString(), durationSeconds:n('duration') * 60,
         water:{ ...data.water,maxDepthMeters:n('maxDepth'),avgDepthMeters:n('avgDepth'),tempMinC:n('temperature') }, buddies:v('buddies').split(',').map((s) => s.trim()).filter(Boolean), rating:n('rating'),notes:v('notes') };
-    } else if (record.kind === 'setup') data = { ...data,name:v('name'),type:v('type'),description:v('description'),itemIds:values.getAll('itemIds') };
+    } else if (record.kind === 'setup') {
+      const itemIds=values.getAll('itemIds'),type=v('type');
+      data={...data,name:v('name'),type,description:v('description'),itemIds,checkedIds:(data.checkedIds||[]).filter((key)=>itemIds.includes(window.DMZGearModel.checklistItemIdForKey(key))),accessoryChoices:Object.fromEntries(Object.entries(data.accessoryChoices||{}).filter(([id])=>itemIds.includes(id))),completeness:data.type===type?data.completeness:{type,done:false,skipped:[]}};
+    }
     else for (const field of ['name','category','manufacturer','model','serialNumber','condition','lastServiceDate','nextServiceDate','visualInspectionDue','hydrostaticTestDue','serviceNotes','notes']) data[field] = v(field);
     const controls = [...form.querySelectorAll('button,input,select,textarea')]; controls.forEach((c) => { c.disabled = true; });
     const message = form.querySelector('[data-editor-status]'); message.textContent = 'Saving…';
