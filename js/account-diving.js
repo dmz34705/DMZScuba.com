@@ -36,6 +36,8 @@
       <div class="diving-layout"><div class="diving-list" data-list aria-label="${log ? 'Dives' : 'Equipment'}"></div><div class="diving-detail" data-detail></div></div>
       <p class="diving-footnote">App changes appear after sync succeeds. Photos and documents remain on your device in this version.</p>`;
     const panel = panels[view];
+    window.DMZTools.browser(panel);
+    if(log){const statistics=document.createElement('section');statistics.dataset.statisticsPane='';statistics.className='diving-statistics';statistics.hidden=true;statistics.innerHTML='<button type="button" class="btn secondary" data-log-page="dives">‹ Back to dives</button>';statistics.append(panel.querySelector('[data-stats]'),panel.querySelector('[data-log-analytics]'));panel.querySelector('.diving-layout').append(statistics);}
     for (const [attr, prop] of [['date-from','from'],['date-to','to'],['mode','mode']]) panel.querySelector(`[data-${attr}]`)?.addEventListener('change', (event) => { ui.logbook[prop] = event.target.value; ui.logbook.pageIndex=0; render(view); });
     panel.querySelector('[data-search]').addEventListener('input', (e) => { ui[view].search = e.target.value; ui[view].pageIndex=0; render(view); });
     for (const prop of ['filter','sort']) panel.querySelector(`[data-${prop}]`).addEventListener('change', (e) => { ui[view][prop] = e.target.value; ui[view].pageIndex=0; render(view); });
@@ -117,7 +119,8 @@
       const statsPage = state.page === 'stats';
       panel.classList.toggle('is-stats-view',statsPage);
       panel.querySelector('[data-log-analytics]').hidden = !statsPage;
-      panel.querySelector('.diving-layout').hidden = statsPage;
+      panel.querySelector('[data-detail]').hidden = statsPage;
+      panel.querySelector('[data-statistics-pane]').hidden = !statsPage;
       panel.querySelectorAll('[data-log-page]').forEach((button) => button.setAttribute('aria-pressed',String(button.dataset.logPage === state.page)));
       analytics(shown, panel.querySelector('[data-log-analytics]'));
     }
@@ -212,7 +215,7 @@
     const tabHost=document.createElement('div'); tabHost.className='tool-record-tabs';
     if(log) {
       const sections=container.querySelector('.record-sections'), profile=container.querySelector('[data-computer-profiles]'), raw=container.querySelector('[data-sample-explorer]');
-      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview]},{key:'profile',label:'Profile',nodes:[profile]},{key:'details',label:'Dive record',nodes:[sections]},{key:'data',label:'Sample Explorer',nodes:[raw]}],ui[view].tab,(key)=>{ui[view].tab=key;});
+      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview]},{key:'profile',label:'Profile',nodes:[profile]},{key:'details',label:'Dive record',nodes:[sections]},{key:'data',label:'Sample Explorer',nodes:[raw]}],ui[view].tab,(key)=>{ui[view].tab=key;container.classList.toggle('is-profile-view',key==='profile');});
     } else {
       const section=container.querySelector('.record-section'), components=container.querySelector('.diving-components'), service=container.querySelectorAll('.diving-notes');
       const schedule=document.createElement('section'); schedule.className='record-section';
@@ -225,6 +228,7 @@
     }
     container.append(tabHost);
     window.DMZTools.tidyActions(container);
+    window.DMZTools.recordHeader(container);
     if (log) {
       const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-sample-explorer]');
       const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];

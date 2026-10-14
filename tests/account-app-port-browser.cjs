@@ -26,9 +26,9 @@ function fixtures(){return [
   await new Promise((resolve)=>server.listen(0,'127.0.0.1',resolve));
   const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROME?{executablePath:process.env.PLAYWRIGHT_CHROME}:{})});
   try{
-    for(const width of [1440,390]){
+    for(const {width,height} of [{width:1440,height:900},{width:1366,height:768},{width:1024,height:768},{width:390,height:844},{width:390,height:667}]){
       const rows=fixtures(),errors=[],writes=[];
-      const page=await browser.newPage({viewport:{width,height:1000},acceptDownloads:true});
+      const page=await browser.newPage({viewport:{width,height},acceptDownloads:true});
       page.on('pageerror',(error)=>errors.push(error.message));
       await page.addInitScript(()=>sessionStorage.setItem('dmzCustomerAccessToken','app-port-test'));
       await page.route('**/api/**',async(route)=>{
@@ -51,11 +51,18 @@ function fixtures(){return [
       await page.waitForSelector('[data-profile-plot]');
       await page.click('[data-diving-logbook] .tool-record-menu > summary');
       assert.equal(await page.locator('[data-diving-logbook] [data-delete]').isVisible(),true);
-      await page.click('[data-diving-logbook] [data-detail] > h3');
+      await page.click('[data-diving-logbook] .record-workspace-title h3');
       assert.equal(await page.locator('[data-diving-logbook] [data-delete]').isVisible(),false,'secondary actions close when focus returns to the record');
       assert.equal(await page.locator('[data-curve="temperature"]').count(),1);
       assert.equal(await page.locator('[data-curve="pressure"]').count(),3,'two tanks plus a second computer');
       assert.equal(await page.locator('[data-curve="oxygen"]').count(),1);
+      const fit=await page.evaluate(()=>{
+        const selectors=['[data-profile-plot]','[data-profile-readout]','.profile-static','.profile-timeline'];
+        return selectors.map((selector)=>{const el=document.querySelector(selector),box=el.getBoundingClientRect();return {selector,top:box.top,bottom:box.bottom,left:box.left,right:box.right,viewportWidth:innerWidth,viewportHeight:innerHeight};});
+      });
+      await page.screenshot({path:path.join(process.env.TEMP,`dmz-fit-${width}-${height}.png`),fullPage:true});
+      for(const box of fit)assert.ok(box.top>=0&&box.bottom<=height+1&&box.left>=0&&box.right<=width+1,`Full profile and readings must fit without scrolling at ${width}x${height}: ${JSON.stringify(box)}`);
+      assert.equal(await page.evaluate(()=>document.scrollingElement.scrollHeight<=innerHeight+1),true,'tool view has no document scroll');
       const plot=page.locator('[data-profile-plot]');await plot.scrollIntoViewIfNeeded();const box=await plot.boundingBox();
       await page.mouse.move(box.x+box.width*.3,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.7,box.y+box.height*.5,{steps:8});await page.mouse.up();
       const first=Number(await page.locator('[data-profile-scrub]').inputValue());await page.screenshot({path:path.join(process.env.TEMP,`dmz-app-drag-${width}.png`),fullPage:true});assert.ok(first>120&&first<280,`drag inspects a recorded sample (index ${first}, box ${JSON.stringify(box)})`);
@@ -102,6 +109,10 @@ function fixtures(){return [
       await page.click('.account-more > summary');await page.click('.account-more [data-account-view="profile"]');
       assert.equal(await page.locator('[data-account-view-panel="profile"]').isVisible(),true,'account settings remain accessible in the compact navigation');
       assert.equal(await page.locator('.account-more').evaluate((el)=>el.open),false);
+      assert.equal(await page.evaluate(()=>document.body.classList.contains('is-account-tools')),false,'account forms restore normal page scrolling');
+      await page.click('.account-more > summary');await page.click('[data-logout]');
+      await page.waitForSelector('[data-account-auth]:not([hidden])');
+      assert.equal(await page.evaluate(()=>document.body.classList.contains('is-account-tools')),false,'sign out clears the viewport layout');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no page overflow');
       assert.deepEqual(errors,[],'no browser runtime errors');await page.close();
     }

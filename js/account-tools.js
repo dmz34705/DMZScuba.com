@@ -69,9 +69,36 @@
     const summary=document.createElement('summary');summary.textContent='More';summary.setAttribute('aria-label','More record actions');
     const content=document.createElement('div');content.append(...secondary);menu.append(summary,content);actions.append(menu);
   }
+  function browser(panel) {
+    const layout=panel.querySelector('.diving-layout'),list=layout?.querySelector('[data-list],[data-plan-list]');if(!list)return;
+    const aside=document.createElement('aside');aside.className='diving-browser';
+    const header=document.createElement('header');header.className='browser-heading';
+    const original=panel.querySelector('.diving-header'),title=original?.querySelector('h2'),add=original?.querySelector('[data-add],[data-plan-new]');
+    const more=document.createElement('details');more.className='browser-more';more.innerHTML='<summary aria-label="Browser actions">⋯</summary><div></div>';
+    if(title)header.append(title);
+    if(add){add.title=add.textContent;add.setAttribute('aria-label',add.textContent);add.textContent='+';header.append(add);}
+    header.append(more);original?.remove();aside.append(header);
+    const switcher=panel.querySelector('.tool-view-switch,.diving-setups');if(switcher)aside.append(switcher);
+    const toolbar=panel.querySelector('.diving-toolbar'),search=toolbar?.querySelector('input[type="search"]');
+    const searchRow=document.createElement('div');searchRow.className='browser-search';if(search)searchRow.append(search);
+    const filters=document.createElement('details');filters.className='browser-filters';filters.innerHTML='<summary aria-label="Search filters and sorting">Filters</summary><div></div>';
+    toolbar?.querySelectorAll('select').forEach((select)=>{const label=document.createElement('label');label.textContent=select.getAttribute('aria-label')||'Filter';label.append(select);filters.lastElementChild.append(label);});
+    const dates=panel.querySelector('.tool-filters');if(dates){filters.lastElementChild.append(...dates.querySelector('div').children);dates.remove();}
+    searchRow.append(filters);aside.append(searchRow);
+    toolbar?.querySelectorAll('button').forEach((button)=>more.lastElementChild.append(button));toolbar?.remove();
+    list.before(aside);aside.append(list);
+    const status=panel.querySelector('[data-sync-status],[data-planner-status]');if(status)aside.append(status);
+  }
+  function recordHeader(container){
+    const header=document.createElement('header');header.className='record-workspace-header';
+    const back=container.querySelector(':scope > .diving-mobile-back');if(back){back.textContent='‹';header.append(back);}
+    const title=document.createElement('div');title.className='record-workspace-title';
+    const h3=container.querySelector(':scope > h3'),meta=container.querySelector(':scope > p');if(h3)title.append(h3);if(meta)title.append(meta);header.append(title);
+    const actions=container.querySelector(':scope > .diving-actions');if(actions)header.append(actions);container.prepend(header);
+  }
   document.addEventListener('click',(event)=>{
-    document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open]').forEach((menu)=>{if(!menu.contains(event.target))menu.open=false;});
+    document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open],.browser-filters[open],.browser-more[open]').forEach((menu)=>{if(!menu.contains(event.target))menu.open=false;});
   });
-  document.addEventListener('keydown',(event)=>{if(event.key==='Escape')document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open]').forEach((menu)=>{menu.open=false;menu.querySelector('summary').focus();});});
-  window.DMZTools = { tabs, editor, tidyActions };
+  document.addEventListener('keydown',(event)=>{if(event.key==='Escape')document.querySelectorAll('.account-more[open],.tool-record-menu[open],.tool-export[open],.browser-filters[open],.browser-more[open]').forEach((menu)=>{menu.open=false;menu.querySelector('summary').focus();});});
+  window.DMZTools = { tabs, editor, tidyActions, browser, recordHeader };
 })();

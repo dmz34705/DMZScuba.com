@@ -36,7 +36,7 @@
     const dialog=document.createElement('dialog');dialog.className='profile-fullscreen';dialog.setAttribute('aria-label','Expanded dive profile');
     document.body.append(dialog);
     const marker=document.createComment('profile explorer position');
-    let board,geometry,series,primary,origin,fullEnd,visibleRows,readers,plotWidth,plotHeight;
+    let board,geometry,series,primary,origin,fullEnd,visibleRows,readers,plotWidth,plotHeight,resizeObserver,lastSize='';
     const samples=data.flatMap((entry)=>entry.rawSamples.map((sample,i)=>({computer:entry.label,computerId:entry.log.id,sampleIndex:i,...flatten(sample)})));
     const allKeys=[...new Set(samples.flatMap((row)=>Object.keys(row)))];
     const priorities=['computer','sampleIndex','t','depth','tempC','pressureBar','ppo2','setpoint','ndl','cns','rbt'];
@@ -83,7 +83,8 @@
       const [start,end]=windowRange||[origin,fullEnd];
       visibleRows=rows.filter((sample)=>sample.t>=start&&sample.t<=end);
       if(visibleRows.length<2){windowRange=null;visibleRows=rows;}
-      plotWidth=host.getBoundingClientRect().width<500?320:800;plotHeight=plotWidth===320?210:260;
+      const oldPlot=host.querySelector('[data-profile-plot]')?.getBoundingClientRect();
+      plotWidth=Math.max(180,(oldPlot?.width||Math.max(320,host.clientWidth-250))-125);plotHeight=Math.max(85,(oldPlot?.height||270)-62);
       geometry=window.DMZProfileGeometry.buildLogProfileGeometry(visibleRows,plotWidth,plotHeight,{maxDepthMeters:primary.log.water?.maxDepthMeters??dive.water?.maxDepthMeters});
       series=[];
       for(const entry of data){
@@ -99,6 +100,16 @@
       const temps=readers.temperature.map((p)=>p.tempC),firstPressure=series[0]?.samples[0]?.pressureBar,lastPressure=series[0]?.samples.at(-1)?.pressureBar;
       host.innerHTML=`<div class="profile-workbench"><header class="profile-heading"><div><p class="diving-kicker">DIVE PROFILE</p><h4>Explore your dive</h4></div><div class="profile-actions"><label>Depth source<select data-profile-computer aria-label="Profile computer">${data.map((entry)=>`<option value="${entry.index}" ${entry.index===selected?'selected':''}>${esc(entry.label)}</option>`).join('')}</select></label><button type="button" class="btn secondary" data-profile-expand>${dialog.open?'Close expanded view':'Expand profile'}</button></div></header><div class="profile-summary">${metric('Max depth',depth(water.maxDepthMeters??geometry.maxDepthMeters))}${metric('Dive time',clock(primary.log.durationSeconds??dive.durationSeconds??(fullEnd-origin)))}${metric('Min temperature',temp(water.tempMinC??(temps.length?Math.min(...temps):null)),'#ffc771')}${metric('Tank pressure',firstPressure!=null?`${pressure(firstPressure)} → ${pressure(lastPressure)}`:'Not recorded','#b9a1ff')}</div><div class="profile-toolbar"><span>Overlays</span><button type="button" data-overlay="temperature" aria-pressed="${overlays.temperature}" ${geometry.hasTemp?'':'disabled'}>Temperature</button><button type="button" data-overlay="pressure" aria-pressed="${overlays.pressure}" ${series.length?'':'disabled'}>Tank pressure</button><button type="button" data-overlay="oxygen" aria-pressed="${overlays.oxygen}" ${geometry.hasOxygen?'':'disabled'}>ppO₂ / setpoint</button><div class="profile-zoom"><button type="button" data-profile-zoom="in" aria-label="Zoom in on selected time">+</button><button type="button" data-profile-zoom="out" aria-label="Zoom out">−</button><button type="button" data-profile-reset>Full dive</button></div></div><div class="profile-readings" data-profile-readout aria-live="off"></div><p class="profile-instruction">Click or drag across the graph to inspect recorded readings. Arrow keys move between samples.</p><svg class="profile-plot" data-profile-plot viewBox="-55 -18 ${plotWidth+125} ${plotHeight+62}" tabindex="0" role="slider" aria-label="Dive profile time cursor" aria-valuemin="0" aria-valuemax="${rows.length-1}" aria-valuenow="${index}"><defs><clipPath id="profile-clip-${dive.id}"><rect x="0" y="0" width="${plotWidth}" height="${plotHeight}"/></clipPath></defs><g class="profile-grid">${geometry.depthTicks.map((tick)=>`<path d="M0 ${tick.y}H${plotWidth}"/><text x="-7" y="${tick.y+4}" text-anchor="end">${esc(depth(tick.meters))}</text>`).join('')}${geometry.timeTicks.map((tick)=>`<path d="M${tick.x} 0V${plotHeight}"/><text x="${tick.x}" y="${plotHeight+23}" text-anchor="middle">${clock(tick.seconds+visibleRows[0].t-origin)}</text>`).join('')}<text x="-7" y="4" text-anchor="end">0</text><text x="0" y="${plotHeight+23}">${clock(visibleRows[0].t-origin)}</text><text x="${plotWidth}" y="${plotHeight+23}" text-anchor="end">${clock(visibleRows.at(-1).t-origin)}</text></g><g clip-path="url(#profile-clip-${dive.id})"><path d="${geometry.areaPath}" fill="#64d6cb" opacity=".12"/><path data-curve="depth" d="${geometry.linePath}" stroke="#64d6cb"/>${geometry.hasTemp&&overlays.temperature?`<path data-curve="temperature" d="${geometry.tempPath}" stroke="#ffc771"/>`:''}${overlays.pressure?clippedSeries.map((s)=>`<path data-curve="pressure" d="${geometry.pressureOverlay(s.samples,maxBar)}" stroke="${s.color}"/>`).join(''):''}${overlays.oxygen&&geometry.hasOxygen?`<path data-curve="oxygen" d="${geometry.ppo2Path}" stroke="#ff8f94"/><path data-curve="setpoint" d="${geometry.setpointPath}" stroke="#ff8f94" stroke-dasharray="6 5"/>`:''}<g data-profile-cursor><path d="M0 0V${plotHeight}" stroke="#e8faff" stroke-dasharray="4 4"/><circle r="5" fill="#071725" stroke="#e8faff" stroke-width="2"/></g>${(primary.log.profile?.events||[]).filter((event)=>event.t>=visibleRows[0].t&&event.t<=visibleRows.at(-1).t).map((event)=>`<g transform="translate(${(event.t-visibleRows[0].t)/Math.max(1,visibleRows.at(-1).t-visibleRows[0].t)*plotWidth} ${plotHeight-10})"><title>${esc(`${clock(event.t-origin)} ${event.type} ${event.note||''}`)}</title><path d="M-4 0L0 -8L4 0Z" fill="#ffc771"/></g>`).join('')}</g></svg><div class="profile-legend"><span style="--legend:#64d6cb">Depth</span>${geometry.hasTemp&&overlays.temperature?`<span style="--legend:#ffc771">Temperature · ${temp(geometry.tempRange.min)} to ${temp(geometry.tempRange.max)}</span>`:''}${overlays.pressure?series.map((s)=>`<span style="--legend:${s.color}">${esc(s.label)} · 0–${pressure(maxBar)}</span>`).join(''):''}${geometry.hasOxygen&&overlays.oxygen?'<span style="--legend:#ff8f94">ppO₂ · dashed setpoint</span>':''}</div><label class="profile-timeline">Profile time<input type="range" data-profile-scrub min="0" max="${rows.length-1}" value="${index}" aria-label="Profile time sample"></label><p class="profile-source">${rows.length.toLocaleString()} recorded samples · ${esc(primary.label)} · selected readings are original samples. Temperature curve uses the app’s smoothing.</p></div>`;
       board=host.firstElementChild;
+      const controls=document.createElement('header');controls.className='profile-controlbar';
+      controls.append(board.querySelector('.profile-toolbar'),board.querySelector('.profile-actions'));
+      const chart=document.createElement('section');chart.className='profile-chart-stage';
+      const graph=board.querySelector('[data-profile-plot]');graph.setAttribute('preserveAspectRatio','xMidYMid meet');graph.setAttribute('aria-description','Click and drag to inspect readings. Arrow keys move between recorded samples.');
+      chart.append(graph,board.querySelector('.profile-legend'),board.querySelector('.profile-timeline'));
+      const rail=document.createElement('aside');rail.className='profile-sensor-rail';
+      const summary=document.createElement('section');summary.className='profile-static';summary.innerHTML='<h5>Dive summary</h5>';summary.append(board.querySelector('.profile-summary'));
+      const live=document.createElement('section');live.className='profile-live';live.innerHTML='<h5>At cursor</h5>';live.append(board.querySelector('[data-profile-readout]'));
+      rail.append(summary,live,board.querySelector('.profile-source'));
+      board.replaceChildren(controls,chart,rail);
       const plot=host.querySelector('[data-profile-plot]');
       function atPointer(event){const point=plot.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const matrix=plot.getScreenCTM();if(!matrix)return;const x=Math.max(0,Math.min(plotWidth,point.matrixTransform(matrix.inverse()).x)),time=visibleRows[0].t+x/plotWidth*(visibleRows.at(-1).t-visibleRows[0].t);const closest=nearest(rows,time);index=rows.indexOf(closest);update();}
       plot.onpointerdown=(event)=>{if(event.button!==0)return;plot.focus();plot.setPointerCapture(event.pointerId);atPointer(event);};
@@ -129,14 +140,15 @@
       if(overlays.oxygen&&geometry.hasOxygen){readings.push(metric('ppO₂',nearest(readers.oxygen,point.t)?.ppo2?.toFixed(2)??'—','#ff8f94'));extras.push(metric('Setpoint',nearest(readers.setpoint,point.t)?.setpoint?.toFixed(2)??'—','#ff8f94'));}
       for(const [key,label]of [['ndl','NDL'],['cns','CNS'],['rbt','RBT']])if(valid(point[key]))extras.push(metric(label,key==='cns'?`${point[key]}%`:clock(point[key])));
       if(point.deco)extras.push(metric(point.deco.type||'Stop',`${depth(point.deco.depth)} · ${clock(point.deco.seconds||0)}`));
-      const expanded=host.querySelector('[data-extra-readings]')?.open;
-      host.querySelector('[data-profile-readout]').innerHTML=readings.join('')+(extras.length?`<details class="profile-extra-readings" data-extra-readings ${expanded?'open':''}><summary>Additional sensors · ${extras.length} readings</summary><div>${extras.join('')}</div></details>`:'');
+      host.querySelector('[data-profile-readout]').innerHTML=[...readings,...extras].join('');
       host.querySelector('[data-profile-scrub]').value=index;
       const plot=host.querySelector('[data-profile-plot]');plot.setAttribute('aria-valuenow',index);plot.setAttribute('aria-valuetext',`${clock(point.t-origin)}, ${depth(point.depth)}`);
     }
     dialog.addEventListener('close',()=>{if(marker.isConnected){marker.replaceWith(host);if(!disposed)draw();}});
     draw();
-    return ()=>{disposed=true;if(dialog.open)dialog.close();if(marker.isConnected)marker.replaceWith(host);dialog.remove();};
+    resizeObserver=new ResizeObserver(()=>{const size=`${host.clientWidth}/${host.clientHeight}`;if(size!==lastSize&&host.clientWidth&&host.clientHeight){lastSize=size;requestAnimationFrame(()=>{if(!disposed)draw();});}});resizeObserver.observe(host);
+    requestAnimationFrame(()=>{if(!disposed&&host.isConnected)draw();});
+    return ()=>{disposed=true;resizeObserver?.disconnect();if(dialog.open)dialog.close();if(marker.isConnected)marker.replaceWith(host);dialog.remove();};
   }
   window.DMZProfileExplorer={mount,flatten,nearest};
 })();

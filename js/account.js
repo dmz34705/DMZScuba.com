@@ -139,6 +139,7 @@
     activeAccountView = requestedView;
     const accountMenu=app.querySelector('.account-more');if(accountMenu)accountMenu.open=false;
     app.classList.toggle('account-workspace-tools',['logbook','gear','planner'].includes(requestedView));
+    document.body.classList.toggle('is-account-tools',['logbook','gear','planner'].includes(requestedView));
     if (['logbook', 'gear'].includes(requestedView)) window.DMZDiving?.open(requestedView);
     if (requestedView === 'planner') window.DMZPlanner?.open();
     accountViewPanels.forEach((panel) => {
@@ -623,6 +624,8 @@
     account = null;
     pendingEmailChange = null;
     activeAccountView = "home";
+    document.body.classList.remove('is-account-tools');
+    app.classList.remove('account-workspace-tools');
     accountIntro.hidden = false;
     accountCreated.hidden = true;
     accountSignedIn.hidden = true;

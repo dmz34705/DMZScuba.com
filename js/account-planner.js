@@ -34,6 +34,7 @@
     <div class="diving-toolbar"><input type="search" data-plan-search aria-label="Search plans" placeholder="Search destinations, operators, notes…"><select data-plan-filter aria-label="Plan period"><option value="upcoming">Upcoming</option><option value="all" selected>All plans</option><option value="past">Past</option></select><button class="btn secondary" data-plan-refresh>Refresh</button><button class="btn secondary" data-plan-export>Export</button></div>
     <div class="diving-layout"><div class="diving-list" data-plan-list aria-label="Dive and travel plans"></div><div class="diving-detail planner-detail" data-plan-detail></div></div>
     <p class="diving-footnote">Planning guidance is not a dive plan, weather forecast, navigation chart, or substitute for operator and training requirements.</p>`;
+    window.DMZTools.browser(host);
     host.addEventListener('click', (event) => {
       if (event.target.closest('[data-plan-mobile-back]')) {
         mobileDetail = false; render();
@@ -94,6 +95,7 @@
     overview.querySelectorAll('[data-trip-jump]').forEach((button)=>button.onclick=()=>tabHost.querySelector(`[data-tool-tab="${button.dataset.tripJump}"]`).click());
     enhancePlan(el,plan,panes,tabHost);
     window.DMZTools.tidyActions(el);
+    window.DMZTools.recordHeader(el);
     atlasGear(plan,advice);
   }
   const info=(label,value)=>`<div><dt>${esc(label)}</dt><dd>${esc(value||'—')}</dd></div>`;

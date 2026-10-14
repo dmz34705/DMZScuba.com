@@ -18,6 +18,8 @@ The script pins the reviewed revision. Update that pin deliberately before regen
 
 ## Verification and current boundary
 
+The account tools use a fixed viewport while open. Browser search, filters, view switching, creation, refresh, and export belong to the left record browser. The profile canvas and its sensor rail share the remaining area; all current sensor readings are visible rather than expanding a disclosure above the plot. On phones, the rail becomes a compact grid below the canvas. Other record tabs and forms retain their own scrolling. Leaving the tools or signing out restores normal page scrolling. Layout tests assert bounds for the complete plot, summary, readings, and time slider at 1440×900, 1366×768, 1024×768, 390×844, and 390×667.
+
 Run `tests/account-app-port-browser.cjs` with Playwright to exercise desktop and phone interactions, all-sample export, packing persistence, itinerary edits, readiness inheritance, and reviewed booking imports. Existing account/sync tests continue to cover authentication and record isolation.
 
 Photos, attachment files, and insurance-policy records are not part of the current sync protocol. The website does not pretend these local-only records are available. Booking text is parsed locally in the browser; smart/AI booking import and native file ingestion are not included. Profile inspection can show only the samples that the app has uploaded; it cannot reconstruct readings absent from the synced record. No live-site promotion is included.
