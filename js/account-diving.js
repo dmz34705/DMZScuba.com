@@ -9,7 +9,7 @@
   const dateTile = (v) => { const d=v?new Date(v.length===10?`${v}T12:00:00`:v):null; return d&&!Number.isNaN(d.getTime())?{month:d.toLocaleDateString('en-US',{month:'short'}),day:d.toLocaleDateString('en-US',{day:'2-digit'}),year:d.getFullYear()}: {month:'—',day:'—',year:''}; };
   const keyOf = (r) => `${r.kind}/${r.id}`;
   let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
-  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false } };
+  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'overview', page:'dives', from:'', to:'', mode:'' }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview' } };
   let imperial = false, dialogRecord = null;
   const dialog = document.createElement('dialog');
   dialog.className = 'diving-dialog'; dialog.setAttribute('aria-labelledby', 'diving-editor-title');
@@ -24,28 +24,33 @@
   function shell(view) {
     const log = view === 'logbook';
     panels[view].innerHTML = `<div class="diving-header"><div><p class="diving-kicker">${log ? 'Your time beneath the surface' : 'Prepared for the next dive'}</p><h2 id="${log ? 'logbook' : 'gear'}-title">${log ? 'My logbook' : 'Gear locker'}</h2><p>${log ? 'Every dive, every detail. Your app and account, connected.' : 'Your equipment, setups, and service records in one place.'}</p></div><button class="btn primary" data-add="${log ? 'dive' : 'gear'}">${log ? '+ Log a dive' : '+ Add gear'}</button></div>
+      ${log ? '<div class="tool-view-switch" aria-label="Logbook view"><button type="button" data-log-page="dives" aria-pressed="true">Dives</button><button type="button" data-log-page="stats" aria-pressed="false">Statistics</button></div>' : ''}
       <div class="diving-stats" data-stats></div><p class="diving-status" role="status" data-sync-status>Sign in to load your records.</p>
       ${log ? '' : '<div class="diving-setups" data-setups aria-label="Gear setups"></div>'}
       <div class="diving-toolbar"><input type="search" aria-label="${log ? 'Search dives' : 'Search gear'}" placeholder="${log ? 'Search sites, buddies, notes…' : 'Search equipment, model, serial…'}" data-search>
       <select aria-label="${log ? 'Dive source' : 'Gear category'}" data-filter><option value="">${log ? 'All dives' : 'All categories'}</option>${(log ? ['manual','computer','import','mixed'] : categories).map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select>
       <select aria-label="Sort records" data-sort>${(log ? [['newest','Newest first'],['oldest','Oldest first'],['deepest','Deepest first']] : [['name','Name A–Z'],['service','Service due'],['newest','Recently added']]).map(([v,t]) => `<option value="${v}">${t}</option>`).join('')}</select>
       ${log ? '<select aria-label="Display units" data-units><option value="metric">Meters / °C</option><option value="imperial">Feet / °F</option></select>' : ''}
-      <button class="btn secondary" data-refresh>Refresh</button><button class="btn secondary" data-export>Export JSON</button>${log ? '<button class="btn secondary" data-export-csv>Export CSV</button>' : ''}</div>
+      <button class="btn secondary" data-refresh>Refresh</button><details class="tool-export"><summary>Export</summary><div><button class="btn secondary" data-export>Complete JSON</button>${log ? '<button class="btn secondary" data-export-csv>Spreadsheet CSV</button>' : ''}</div></details></div>
+      ${log ? '<details class="tool-filters"><summary>More filters</summary><div><label>From<input type="date" data-date-from></label><label>Through<input type="date" data-date-to></label><label>Dive mode<select data-mode><option value="">All modes</option><option value="oc">Open circuit</option><option value="ccr">CCR</option><option value="scr">SCR</option><option value="gauge">Gauge</option><option value="freedive">Freedive</option></select></label></div></details><section data-log-analytics hidden></section>' : ''}
       <div class="diving-layout"><div class="diving-list" data-list aria-label="${log ? 'Dives' : 'Equipment'}"></div><div class="diving-detail" data-detail></div></div>
       <p class="diving-footnote">App changes appear after sync succeeds. Photos and documents remain on your device in this version.</p>`;
     const panel = panels[view];
-    panel.querySelector('[data-search]').addEventListener('input', (e) => { ui[view].search = e.target.value; render(view); });
-    for (const prop of ['filter','sort']) panel.querySelector(`[data-${prop}]`).addEventListener('change', (e) => { ui[view][prop] = e.target.value; render(view); });
+    for (const [attr, prop] of [['date-from','from'],['date-to','to'],['mode','mode']]) panel.querySelector(`[data-${attr}]`)?.addEventListener('change', (event) => { ui.logbook[prop] = event.target.value; ui.logbook.pageIndex=0; render(view); });
+    panel.querySelector('[data-search]').addEventListener('input', (e) => { ui[view].search = e.target.value; ui[view].pageIndex=0; render(view); });
+    for (const prop of ['filter','sort']) panel.querySelector(`[data-${prop}]`).addEventListener('change', (e) => { ui[view][prop] = e.target.value; ui[view].pageIndex=0; render(view); });
     panel.querySelector('[data-units]')?.addEventListener('change', (e) => { imperial = e.target.value === 'imperial'; render(view); });
     panel.addEventListener('click', (e) => {
       const button = e.target.closest('button'); if (!button || !userId) return;
+      if (button.hasAttribute('data-log-page')) { ui.logbook.page = button.dataset.logPage; render(view); }
+      if (button.hasAttribute('data-list-page')) { ui[view].pageIndex=(ui[view].pageIndex||0)+Number(button.dataset.listPage); ui[view].mobileDetail=false; render(view); panels[view].querySelector('[data-list]').scrollTop=0; }
       if (button.hasAttribute('data-refresh')) load(true);
       if (button.hasAttribute('data-add')) edit(button.dataset.add);
       if (button.hasAttribute('data-mobile-back')) {
         ui[view].mobileDetail = false; render(view);
         [...panel.querySelectorAll('[data-select]')].find((entry) => entry.dataset.select === ui[view].selected)?.focus();
       }
-      if (button.hasAttribute('data-select')) { ui[view].selected = button.dataset.select; ui[view].mobileDetail = true; render(view); }
+      if (button.hasAttribute('data-select')) { if(ui[view].selected !== button.dataset.select) ui[view].tab='overview'; ui[view].selected = button.dataset.select; ui[view].mobileDetail = true; render(view); }
       if (button.hasAttribute('data-edit')) edit(button.dataset.edit, button.dataset.id);
       if (button.hasAttribute('data-delete')) remove(button.dataset.delete, button.dataset.id);
       if (button.hasAttribute('data-setup')) { ui.gear.setup = button.dataset.setup; ui.gear.selected = null; render('gear'); }
@@ -54,7 +59,7 @@
     });
     panel.addEventListener('change', async (e) => {
       if (!e.target.matches('[data-pack]') || !userId) return;
-      const setup = records.get(`setup/${ui.gear.setup}`); if (!setup) return;
+      const setup = records.get(`setup/${e.target.dataset.packSetup || ui.gear.setup}`); if (!setup) return;
       const ids = new Set(setup.data.checkedIds || []);
       if (e.target.checked) ids.add(e.target.dataset.pack); else ids.delete(e.target.dataset.pack);
       e.target.disabled = true;
@@ -81,6 +86,7 @@
   }
   function render(view) {
     const panel = panels[view], log = view === 'logbook', state = ui[view];
+    panel.classList.toggle('has-tool-detail',state.mobileDetail && window.matchMedia('(max-width: 760px)').matches && state.page !== 'stats');
     const values = all(log ? 'dive' : 'gear');
     panel.querySelector('[data-stats]').innerHTML = log
       ? stat(values.length, 'Logged dives') + stat(`${(values.reduce((n,r) => n + number(r.data.durationSeconds),0) / 3600).toFixed(1)} h`, 'Time underwater') + stat(values.length ? depth(Math.max(...values.map((r) => number(r.data.water?.maxDepthMeters)))) : '—', 'Deepest dive')
@@ -93,11 +99,25 @@
       const d = r.data;
       const text = log ? [d.site?.name,d.site?.location,d.notes,...(d.buddies || [])] : [d.name,d.category,d.manufacturer,d.model,d.serialNumber];
       const setup = records.get(`setup/${state.setup}`);
-      return (!state.filter || (log ? d.source : d.category) === state.filter) && text.join(' ').toLowerCase().includes(state.search.toLowerCase()) && (log || !setup || (setup.data.itemIds || []).includes(r.id));
+      const stamp = String(d.startTime || '').slice(0,10);
+      return (!log || ((!state.from || stamp >= state.from) && (!state.to || stamp <= state.to) && (!state.mode || d.diveMode === state.mode)))
+        && (!state.filter || (log ? d.source : d.category) === state.filter) && text.join(' ').toLowerCase().includes(state.search.toLowerCase()) && (log || !setup || (setup.data.itemIds || []).includes(r.id));
     });
     shown.sort((a,b) => log
       ? state.sort === 'deepest' ? number(b.data.water?.maxDepthMeters) - number(a.data.water?.maxDepthMeters) : String(a.data.startTime || '').localeCompare(String(b.data.startTime || '')) * (state.sort === 'oldest' ? 1 : -1)
       : state.sort === 'service' ? (dueFor(a.data) || '9999').localeCompare(dueFor(b.data) || '9999') : state.sort === 'newest' ? String(b.data.createdAt || '').localeCompare(String(a.data.createdAt || '')) : String(a.data.name || '').localeCompare(String(b.data.name || '')));
+    state.visibleIds=shown.map((r)=>r.id);
+    if (log) {
+      const statsPage = state.page === 'stats';
+      panel.classList.toggle('is-stats-view',statsPage);
+      panel.querySelector('[data-log-analytics]').hidden = !statsPage;
+      panel.querySelector('.diving-layout').hidden = statsPage;
+      panel.querySelectorAll('[data-log-page]').forEach((button) => button.setAttribute('aria-pressed',String(button.dataset.logPage === state.page)));
+      analytics(shown, panel.querySelector('[data-log-analytics]'));
+    }
+    const total=shown.length, pageSize=24;
+    state.pageIndex=Math.max(0,Math.min(state.pageIndex||0,Math.ceil(total/pageSize)-1));
+    shown=shown.slice(state.pageIndex*pageSize,(state.pageIndex+1)*pageSize);
     if (!shown.some((r) => r.id === state.selected)) state.selected = shown[0]?.id || null;
     panel.querySelector('.diving-layout').classList.toggle('is-mobile-detail', state.mobileDetail && window.matchMedia('(max-width: 760px)').matches);
     const entryMarkup = (r) => {
@@ -110,19 +130,29 @@
       const groups=new Map();for(const row of shown){const stamp=dateTile(row.data.startTime),label=stamp.year||'Date not set';groups.set(label,[...(groups.get(label)||[]),row]);}
       listMarkup=[...groups].map(([year,rows])=>`<section class="diving-entry-group"><h3>${esc(year)} <small>${rows.length} ${rows.length===1?'dive':'dives'}</small></h3>${rows.map(entryMarkup).join('')}</section>`).join('');
     }else listMarkup=shown.map(entryMarkup).join('');
-    panel.querySelector('[data-list]').innerHTML = listMarkup || `<div class="diving-empty"><h3>${values.length ? 'No matching records' : log ? 'Your next chapter starts here' : 'Build your gear locker'}</h3><p>${values.length ? 'Try a different search or filter.' : log ? 'Sign in on the app to sync your dives, or log your first dive here.' : 'Sync equipment from the app, or add your first item here.'}</p></div>`;
+    const pager=total?`<div class="tool-list-pagination"><span>${state.pageIndex*pageSize+1}–${Math.min(total,(state.pageIndex+1)*pageSize)} of ${total}</span><button type="button" data-list-page="-1" ${state.pageIndex===0?'disabled':''} aria-label="Previous records">‹</button><button type="button" data-list-page="1" ${(state.pageIndex+1)*pageSize>=total?'disabled':''} aria-label="Next records">›</button></div>`:'';
+    panel.querySelector('[data-list]').innerHTML = pager+(listMarkup || `<div class="diving-empty"><h3>${values.length ? 'No matching records' : log ? 'Your next chapter starts here' : 'Build your gear locker'}</h3><p>${values.length ? 'Try a different search or filter.' : log ? 'Sign in on the app to sync your dives, or log your first dive here.' : 'Sync equipment from the app, or add your first item here.'}</p></div>`);
     const selected = shown.find((r) => r.id === state.selected);
     if (selected) detail(view, selected);
     else panel.querySelector('[data-detail]').innerHTML = !log && state.setup ? setupDetail(records.get(`setup/${state.setup}`)) : `<div class="diving-empty"><h3>${loaded ? 'Ready when you are' : 'Loading your account'}</h3><p>${loaded ? 'Select a record to explore its details.' : 'Your records will appear here after loading.'}</p></div>`;
   }
-  const pair = (label, value) => `<div><dt>${esc(label)}</dt><dd>${esc(value || '—')}</dd></div>`;
+  const pair = (label, value) => `<div><dt>${esc(label)}</dt><dd>${esc(value == null || value === '' ? '—' : value)}</dd></div>`;
+  function analytics(rows, host) {
+    const sites = new Map(), years = new Map();
+    for (const {data:d} of rows) {
+      const name=d.site?.name||'Unspecified site', year=String(d.startTime||'').slice(0,4)||'Undated';
+      sites.set(name,(sites.get(name)||0)+1); years.set(year,(years.get(year)||0)+1);
+    }
+    const bars = (entries) => { const max=Math.max(1,...entries.map(([,n])=>n)); return entries.map(([label,n])=>`<div class="tool-bar-row"><span>${esc(label)}</span><meter min="0" max="${max}" value="${n}">${n}</meter><b>${n}</b></div>`).join(''); };
+    host.innerHTML=`<div class="tool-analytics-grid"><article class="tool-card"><h3>Diving by year</h3>${bars([...years].sort((a,b)=>b[0].localeCompare(a[0])))||'<p>No dated dives yet.</p>'}</article><article class="tool-card"><h3>Most visited sites</h3>${bars([...sites].sort((a,b)=>b[1]-a[1]).slice(0,8))||'<p>No sites yet.</p>'}</article><article class="tool-card"><h3>Your filtered logbook</h3><dl>${pair('Dives',String(rows.length))}${pair('Underwater time',`${(rows.reduce((n,r)=>n+number(r.data.durationSeconds),0)/3600).toFixed(1)} hours`)}${pair('Average depth',rows.length?depth(rows.reduce((n,r)=>n+number(r.data.water?.avgDepthMeters),0)/rows.length):'—')}${pair('Countries',String(new Set(rows.map((r)=>r.data.site?.country).filter(Boolean)).size))}</dl><p>Search and filters apply to these statistics and the CSV export.</p></article></div>`;
+  }
   function diveSections(d,gasMixes,tanks){const timestamp=d.startTime?new Date(d.startTime):null;return `<div class="record-sections"><section class="record-section"><h4>Time &amp; dive</h4><dl>${pair('Dive number',d.number)}${pair('Date',date(d.startTime))}${pair('Start time',timestamp?timestamp.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',timeZoneName:'short'}):'')}${pair('Timezone offset',d.timezoneOffsetMinutes!=null?`${d.timezoneOffsetMinutes} minutes`:'')}${pair('Dive time',duration(d.durationSeconds))}${pair('Surface interval',d.surfaceIntervalSeconds!=null?duration(d.surfaceIntervalSeconds):'')}${pair('Dive mode',d.diveMode)}${pair('Dive types',(d.types||[]).join(', '))}${pair('Decompression model',d.decoModel?.type?`${d.decoModel.type}${d.decoModel.gfLow!=null?` · GF ${d.decoModel.gfLow}/${d.decoModel.gfHigh}`:''}`:'')}</dl></section><section class="record-section"><h4>Site &amp; conditions</h4><dl>${pair('Maximum depth',depth(d.water?.maxDepthMeters))}${pair('Average depth',depth(d.water?.avgDepthMeters))}${pair('Surface temperature',temp(d.water?.tempSurfaceC))}${pair('Minimum temperature',temp(d.water?.tempMinC))}${pair('Maximum temperature',temp(d.water?.tempMaxC))}${pair('Visibility',d.water?.visibilityMeters!=null?depth(d.water.visibilityMeters):'')}${pair('Water type',d.water?.type)}${pair('Coordinates',Number.isFinite(Number(d.site?.latitude))?`${Number(d.site.latitude).toFixed(5)}, ${Number(d.site.longitude).toFixed(5)}`:'')}${pair('Atlas link',d.site?.siteId?`${d.site.siteSource||'linked'} · ${d.site.siteId}`:'')}${pair('Atmospheric pressure',d.atmosphericBar!=null?`${d.atmosphericBar} bar`:'')}</dl></section><section class="record-section"><h4>Gas &amp; exposure</h4><dl>${pair('Gas mixes',gasMixes)}${pair('Cylinder details',tanks)}${pair('Exposure weight',d.gear?.weightKg!=null?`${d.gear.weightKg} kg`:'')}${pair('Exposure suit',d.gear?.exposureSuit)}</dl></section><section class="record-section"><h4>People &amp; notes</h4><dl>${pair('Buddies',(d.buddies||[]).join(', '))}${pair('Operator',d.operator)}${pair('Rating',d.rating?`${d.rating} / 5`:'')}${pair('Tags',(d.tags||[]).join(', '))}</dl></section></div>`;}
   function setupDetail(record) {
     if (!record) return '';
     const d = record.data;
     return `<h4>${esc(d.name)} · ${esc(d.type)}</h4><p>${esc(d.description)}</p><div class="diving-actions"><button class="btn secondary" data-edit="setup" data-id="${esc(record.id)}">Edit setup</button><button class="btn secondary diving-danger" data-delete="setup" data-id="${esc(record.id)}">Delete setup</button></div>` + (d.itemIds || []).map((id) => {
       const gear = records.get(`gear/${id}`); if (!gear || gear.deleted) return '';
-      return `<label class="diving-check"><input type="checkbox" data-pack="${esc(id)}" ${(d.checkedIds || []).includes(id) ? 'checked' : ''}>${esc(gear.data.name)}</label>`;
+      return `<label class="diving-check"><input type="checkbox" data-pack="${esc(id)}" data-pack-setup="${esc(record.id)}" ${(d.checkedIds || []).includes(id) ? 'checked' : ''}>${esc(gear.data.name)}</label>`;
     }).join('');
   }
   async function detail(view, record) {
@@ -136,19 +166,33 @@
       ${d.notes ? `<h4>${log ? 'Dive notes' : 'Equipment notes'}</h4><p class="diving-notes">${esc(d.notes)}</p>` : ''}
       ${log ? `<details class="diving-raw"><summary>Pop the hood · inspect the complete dive and computer records</summary><pre data-full-record>${esc(JSON.stringify({ dive:d, computerLogs:[] },null,2))}</pre></details>` : ''}
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
-      ${!log && ui.gear.setup ? setupDetail(records.get(`setup/${ui.gear.setup}`)) : ''}`;
+      `;
+    const overview = document.createElement('div'); overview.className = 'tool-record-overview';
+    overview.innerHTML = log
+      ? `<div class="tool-key-metrics">${stat(depth(d.water?.maxDepthMeters),'Max depth')}${stat(duration(d.durationSeconds),'Dive time')}${stat(temp(d.water?.tempMinC),'Water temp')}${stat((d.gas?.mixes||[]).map((mix)=>mix.label||`${Math.round(number(mix.o2)*100)}% O₂`).join(' / ')||'—','Gas')}</div><dl>${pair('Date',date(d.startTime))}${pair('Dive mode',d.diveMode||'Not recorded')}${pair('Buddies',(d.buddies||[]).join(', '))}${pair('Rating',d.rating?`${d.rating} / 5`:'Not rated')}</dl>`
+      : `<div class="tool-key-metrics">${stat(gearStatus(d).label,'Condition')}${stat(dueFor(d)?date(dueFor(d)):'Not scheduled','Next service')}</div>`;
+    const notes = container.querySelector('.diving-notes');
+    if (notes) { const heading=notes.previousElementSibling; if(heading?.tagName==='H4') heading.remove(); overview.append(notes); }
+    const tabHost=document.createElement('div'); tabHost.className='tool-record-tabs';
+    if(log) {
+      const sections=container.querySelector('.record-sections'), profile=container.querySelector('[data-computer-profiles]'), raw=container.querySelector('.diving-raw');
+      raw.open=true;
+      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview]},{key:'profile',label:'Profile',nodes:[profile]},{key:'details',label:'Dive record',nodes:[sections]},{key:'data',label:'Raw data',nodes:[raw]}],ui[view].tab,(key)=>{ui[view].tab=key;});
+    } else {
+      const section=container.querySelector('.record-section'), components=container.querySelector('.diving-components'), service=container.querySelectorAll('.diving-notes');
+      const schedule=document.createElement('section'); schedule.className='record-section';
+      schedule.innerHTML=`<h4>Service schedule</h4><dl>${pair('Last service',d.lastServiceDate?date(d.lastServiceDate):'Not recorded')}${pair('Next service',dueFor(d)?date(dueFor(d)):'Not scheduled')}${pair('Service interval',d.serviceIntervalMonths?`${d.serviceIntervalMonths} months`:'Not set')}${pair('Visual inspection due',d.visualInspectionDue?date(d.visualInspectionDue):'Not set')}${pair('Hydrostatic test due',d.hydrostaticTestDue?date(d.hydrostaticTestDue):'Not set')}</dl>`;
+      if(components?.previousElementSibling?.tagName==='H4')components.previousElementSibling.remove();
+      service.forEach((note)=>{if(note.previousElementSibling?.tagName==='H4')note.previousElementSibling.remove();});
+      const setupContent=document.createElement('div');setupContent.innerHTML=all('setup').filter((row)=>(row.data.itemIds||[]).includes(record.id)).map((row)=>setupDetail(row)).join('')||'<p>This item is not assigned to a saved setup yet.</p>';
+      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview,section]},{key:'service',label:'Service & parts',nodes:[schedule,components,...service]},{key:'setups',label:'Setups',nodes:[setupContent]}],ui[view].tab,(key)=>{ui[view].tab=key;});
+    }
+    container.append(tabHost);
     if (log) {
-      container.querySelectorAll('.record-section').forEach((section,index) => {
-        const heading = section.querySelector('h4'), fields = section.querySelector('dl');
-        if (!heading || !fields) return;
-        const disclosure = document.createElement('details'), summary = document.createElement('summary');
-        disclosure.className = section.className; disclosure.open = index === 0; summary.textContent = heading.textContent;
-        disclosure.append(summary, fields); section.replaceWith(disclosure);
-      });
       const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-full-record]');
       const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];
       if (!logIds.length) { chart.innerHTML = '<p>No computer profile is linked to this dive.</p>'; return; }
-      chart.textContent = 'Loading all linked computer profiles…';
+      chart.textContent = 'Loading linked computer profiles…';
       try {
         const computers = await Promise.all(logIds.map(async (logId) => {
           let computer = records.get(`computerLog/${logId}`);
@@ -156,12 +200,23 @@
           return computer;
         }));
         if (!chart.isConnected || ticket !== detailEpoch || epoch !== accountTicket) return;
-        chart.innerHTML = computers.map((computer,index) => `<section><h4>Computer profile${computers.length>1?` ${index+1}`:''}</h4>${profileChart(computer.data.profile?.samples || [])}</section>`).join('');
+        chart.innerHTML = computers.map((computer,index) => `<section><h4>${esc(computer.data.device?.model||computer.data.computer?.model||`Computer profile${computers.length>1?` ${index+1}`:''}`)}</h4>${profileChart(computer.data.profile?.samples || [])}</section>`).join('');
+        chart.querySelectorAll('[data-profile-scrub]').forEach((input) => {
+          const samples = computers[[...chart.querySelectorAll('[data-profile-scrub]')].indexOf(input)]?.data.profile?.samples || [];
+          input.addEventListener('input', () => {
+            const point=samples[Number(input.value)]; if(!point)return;
+            input.closest('section').querySelector('[data-profile-readout]').textContent=`${duration(point.t)} · ${depth(point.depth)} · ${temp(point.tempC)}${point.pressureBar!=null?` · ${point.pressureBar} bar`:''}${point.setpoint!=null?` · ppO₂ ${point.setpoint}`:''}${point.ndl!=null?` · NDL ${point.ndl}`:''}`;
+          });
+          input.dispatchEvent(new Event('input'));
+        });
         raw.textContent = JSON.stringify({ dive:d, computerLogs:computers.map((row)=>row.data) },null,2);
       } catch { if (chart.isConnected && ticket === detailEpoch) chart.textContent = 'A linked computer profile could not load. Refresh to try again.'; }
     }
   }
   function profileChart(samples) {
+    return depthChart(samples) + (samples.length > 1 ? `<label class="tool-profile-scrub">Inspect a point<input type="range" min="0" max="${samples.length-1}" value="0" data-profile-scrub aria-label="Inspect computer profile sample"><output data-profile-readout aria-live="polite"></output></label>` : '');
+  }
+  function depthChart(samples) {
     const points = samples.filter((p) => Number.isFinite(p.t) && Number.isFinite(p.depth) && p.t >= 0 && p.depth >= 0);
     if (points.length < 2) return '<p>No depth samples available.</p>';
     const maxT = Math.max(1,...points.map((p) => p.t)), maxD = Math.max(1,...points.map((p) => p.depth));
@@ -179,7 +234,7 @@
     const task = (async () => {
       // Records arrive with their data, a page at a time; any row without data (an older service) is fetched on its own.
       let after = ''; const manifest = [];
-      do { const page = await request(`/api/account/sync?include=dive,computerLog,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; } while (after);
+      do { const page = await request(`/api/account/sync?include=dive,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; status(`Loading your records · ${manifest.length} received…`); } while (after);
       const next = new Map(); const live = manifest.filter((r) => ['dive','computerLog','gear','setup'].includes(r.kind) && !r.deleted);
       for (const row of live) if (row.data) next.set(keyOf(row),row);
       const queue = live.filter((r) => !r.data);
@@ -209,6 +264,7 @@
     const response = await request(`/api/account/sync/${record.kind}/${encodeURIComponent(record.id)}`, { method:'PUT', body:JSON.stringify({ baseRevision:record.revision || 0, mutationId:crypto.randomUUID(), deleted:!!record.deleted, data:payload }) });
     if (epoch !== ticket) throw new Error('The account changed. Please sign in again.');
     records.set(keyOf(response.record),response.record);
+    document.dispatchEvent(new CustomEvent('dmz-diving-record-changed',{detail:{kind:record.kind}}));
     return response.record;
   }
   function field(label,name,value = '',type = 'text',extra = '') {
@@ -271,7 +327,7 @@
     if (!loaded) return;
     const columns = ['id','number','start_time','site','location','country','latitude','longitude','duration_minutes','max_depth_m','avg_depth_m','min_temp_c','visibility_m','dive_mode','gas','buddies','operator','rating','tags','notes'];
     const quote = (value) => `"${String(value ?? '').replace(/"/g,'""')}"`;
-    const rows = all('dive').map(({ data:d }) => [d.id,d.number,d.startTime,d.site?.name,d.site?.location,d.site?.country,d.site?.latitude,d.site?.longitude,number(d.durationSeconds)/60,d.water?.maxDepthMeters,d.water?.avgDepthMeters,d.water?.tempMinC,d.water?.visibilityMeters,d.diveMode,(d.gas?.mixes||[]).map((m)=>m.label).join('; '),(d.buddies||[]).join('; '),d.operator,d.rating,(d.tags||[]).join('; '),d.notes]);
+    const rows = (ui.logbook.visibleIds||[]).map((id)=>records.get(`dive/${id}`)).filter(Boolean).map(({ data:d }) => [d.id,d.number,d.startTime,d.site?.name,d.site?.location,d.site?.country,d.site?.latitude,d.site?.longitude,number(d.durationSeconds)/60,d.water?.maxDepthMeters,d.water?.avgDepthMeters,d.water?.tempMinC,d.water?.visibilityMeters,d.diveMode,(d.gas?.mixes||[]).map((m)=>m.label).join('; '),(d.buddies||[]).join('; '),d.operator,d.rating,(d.tags||[]).join('; '),d.notes]);
     const blob = new Blob([[columns,...rows].map((row)=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}), url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url; link.download=`dmz-logbook-${new Date().toISOString().slice(0,10)}.csv`; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000); status('Your spreadsheet-ready CSV export is ready.');
   }
@@ -280,7 +336,7 @@
     const ticket = epoch;
     if (view === 'logbook') {
       status('Preparing your logbook export…');
-      const ids = [...new Set(all('dive').flatMap((r) => r.data.logIds || []))];
+      const ids = [...new Set(all('dive').flatMap((r) => [...(r.data.logIds || []),r.data.primaryLogId].filter(Boolean)))];
       for (const id of ids) {
         if (epoch !== ticket) return;
         if (!records.has(`computerLog/${id}`)) {
@@ -312,5 +368,5 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden && userId && loaded && !dialog.open) load(true); });
   window.setInterval(() => {
     if (!document.hidden && userId && loaded && !dialog.open && !panels[active].closest('[data-account-view-panel]').hidden) load(true);
-  }, 30000);
+  }, 120000);
 })();

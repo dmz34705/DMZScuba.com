@@ -282,6 +282,7 @@
     if (!response.ok || !data || data.ok === false) {
       const error = new Error(String(data && data.error || "The request could not be completed."));
       error.status = response.status;
+      error.code = data.code || 'REQUEST_FAILED';
       throw error;
     }
     return data;
@@ -322,7 +323,7 @@
     }
   }
 
-  async function apiRequest(path, options = {}, retry = true) {
+  async function apiRequest(path, options = {}, retry = true, transientAttempt = 0) {
     const headers = options.headers ? { ...options.headers } : {};
     headers.Accept = "application/json";
     if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
@@ -338,6 +339,15 @@
         credentials: "same-origin",
         signal: controller.signal,
       });
+      // Retry only safe sync reads. Never replay an account edit or refresh a session
+      // just because infrastructure briefly returned a gateway error.
+      if (path.startsWith('/api/account/sync') && (!options.method || options.method === 'GET')
+          && [502, 503, 504].includes(response.status) && transientAttempt < 2) {
+        await response.body?.cancel();
+        window.clearTimeout(timeoutId);
+        await new Promise((resolve) => window.setTimeout(resolve, 400 * (transientAttempt + 1)));
+        return apiRequest(path, options, retry, transientAttempt + 1);
+      }
       console.info("[DMZ Account] API response received", {
         path,
         status: response.status,

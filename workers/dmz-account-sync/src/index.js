@@ -2,7 +2,7 @@ const KINDS = new Set(['dive', 'computerLog', 'gear', 'setup', 'plan', 'preferen
 const ID = /^[a-zA-Z0-9_-]{1,120}$/;
 const MAX_BYTES = 1500000;
 const INCLUDE_ROWS = 250;
-const INCLUDE_BYTES = 4000000;
+const INCLUDE_BYTES = 500000;
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
 });
@@ -14,12 +14,20 @@ export async function identity(request, env) {
   if (!/^Bearer \S+$/.test(authorization)) return { error: json({ ok: false, error: 'Sign in to access your diving data.' }, 401) };
   // Reuse the existing verified JWT + active-account checks. Never trust a client-supplied owner.
   if (!env.ACCOUNT_API) return { error: json({ ok: false, error: 'Account verification is temporarily unavailable.' }, 503) };
-  const response = await env.ACCOUNT_API.fetch(new Request('https://dmz-media-api.internal/api/account', {
-    headers: { Authorization: authorization, Accept: 'application/json' }, signal: AbortSignal.timeout(15000),
-  }));
+  let response;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      response = await env.ACCOUNT_API.fetch(new Request('https://dmz-media-api.internal/api/account', {
+        headers: { Authorization: authorization, Accept: 'application/json' }, signal: AbortSignal.timeout(8000),
+      }));
+      if (![502, 503, 504].includes(response.status) || attempt === 1) break;
+      await response.body?.cancel();
+    } catch (error) { if (attempt === 1) throw error; }
+  }
   if (!response.ok) {
     if (![401, 403].includes(response.status)) console.warn('[Account Sync] account verification returned an unexpected status', { status: response.status });
-    return { error: json({ ok: false, error: response.status === 403 ? 'This account is inactive.' : 'Your session could not be verified.' }, [401, 403].includes(response.status) ? response.status : 503) };
+    const status = [401, 403].includes(response.status) ? response.status : 503;
+    return { error: json({ ok: false, code:status === 503 ? 'ACCOUNT_VERIFICATION_UNAVAILABLE' : 'SESSION_REJECTED', error:status === 503 ? 'Account verification is temporarily unavailable. Please try again.' : status === 403 ? 'This account is inactive.' : 'Your session could not be verified.' }, status) };
   }
   const data = await response.json();
   const userId = data?.profile?.userId;
@@ -42,16 +50,24 @@ export async function handle(request, env) {
     const kinds = [...new Set(url.searchParams.get('include').split(','))].filter((k) => KINDS.has(k));
     if (!kinds.length) return json({ ok: false, error: 'Invalid record kinds.' }, 400);
     const after = url.searchParams.get('after') || '';
-    const rows = await env.DB.prepare(`SELECT * FROM sync_records WHERE user_id = ? AND kind IN (${kinds.map(() => '?').join(',')})
+    // Choose the page using metadata BEFORE materializing JSON. A row-count limit alone can
+    // read hundreds of large computer profiles even when the response later discards most.
+    const rows = await env.DB.prepare(`SELECT kind,id,deleted,length(CAST(data AS BLOB)) AS bytes FROM sync_records WHERE user_id = ? AND kind IN (${kinds.map(() => '?').join(',')})
       AND (kind || '/' || id) > ? ORDER BY kind,id LIMIT ${INCLUDE_ROWS + 1}`).bind(owner, ...kinds, after).all();
     const page = []; let bytes = 0;
     for (const row of rows.results.slice(0, INCLUDE_ROWS)) {
-      bytes += row.deleted ? 0 : row.data.length;
-      if (page.length && bytes > INCLUDE_BYTES) break;
+      const size = row.deleted ? 0 : row.bytes;
+      if (page.length && bytes + size > INCLUDE_BYTES) break;
+      bytes += size;
       page.push(row);
     }
     const more = page.length < rows.results.length;
-    return json({ ok: true, protocol: 1, records: page.map((row) => row.deleted
+    const end = page.length ? `${page.at(-1).kind}/${page.at(-1).id}` : after;
+    const selected = page.length ? await env.DB.prepare(`SELECT kind,id,revision,deleted,mutation_id,updated_at,
+      CASE WHEN deleted = 1 THEN '{}' ELSE data END AS data FROM sync_records
+      WHERE user_id = ? AND kind IN (${kinds.map(() => '?').join(',')})
+      AND (kind || '/' || id) > ? AND (kind || '/' || id) <= ? ORDER BY kind,id`).bind(owner, ...kinds, after, end).all() : { results:[] };
+    return json({ ok: true, protocol: 1, records: selected.results.map((row) => row.deleted
       ? { kind: row.kind, id: row.id, revision: row.revision, deleted: true, updatedAt: row.updated_at, data: null } : record(row)),
     next: more ? `${page.at(-1).kind}/${page.at(-1).id}` : null });
   }
@@ -112,7 +128,10 @@ export default { async fetch(request, env) {
   try { return await handle(request, env); }
   catch (error) {
     const url = new URL(request.url);
-    console.error('[Account Sync] request failed unexpectedly', { path: url.pathname, method: request.method, name: error?.name || 'Error' });
-    return json({ ok: false, error: 'Sync is temporarily unavailable. Your device data is safe.' }, 503);
+    const message = String(error?.message || '');
+    const reason = /timeout|abort/i.test(`${error?.name} ${message}`) ? 'UPSTREAM_TIMEOUT'
+      : /D1|SQLITE/i.test(message) ? 'DATABASE_UNAVAILABLE' : 'SYNC_UNAVAILABLE';
+    console.error('[Account Sync] request failed unexpectedly', { path: url.pathname, method: request.method, name: error?.name || 'Error', reason });
+    return json({ ok: false, code:reason, error: 'Sync is temporarily unavailable. Your device data is safe.' }, 503);
   }
 } };

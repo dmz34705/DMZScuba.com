@@ -22,7 +22,7 @@ const records = [
   await new Promise((resolve)=>server.listen(0,'127.0.0.1',resolve));
   const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROME ? { executablePath:process.env.PLAYWRIGHT_CHROME } : {})});
   try {
-    for (const viewport of [{width:1440,height:1000},{width:390,height:844}]) {
+    for (const viewport of [{width:1440,height:1000},{width:1000,height:800},{width:390,height:844}]) {
       const page=await browser.newPage({viewport});
       await page.goto(`http://127.0.0.1:${server.address().port}/pages/account/`,{waitUntil:'domcontentloaded'});
       await page.evaluate((rows)=>{
@@ -35,6 +35,10 @@ const records = [
         window.DMZPlanner.connect({request:mock,account});window.DMZPlanner.open();
         window.DMZDiving.connect({request:mock,account});window.DMZDiving.open('logbook');
         document.querySelector('[data-account-dashboard]').hidden=false;
+        document.querySelector('[data-account-intro]').hidden=true;
+        document.querySelector('[data-account-auth]').hidden=true;
+        document.querySelector('[data-account-view-panel="home"]').hidden=true;
+        document.querySelector('[data-dashboard-status]').textContent='';
         document.querySelector('[data-account-view-panel="planner"]').hidden=false;
       },records);
       await page.waitForSelector('text=Cozumel week');
@@ -45,13 +49,17 @@ const records = [
         assert.equal(await page.locator('.planner-detail').evaluate((el) => el.closest('.diving-layout').classList.contains('is-mobile-detail')), false);
         await page.click('[data-plan-select="plan-1"]');
       }
+      await page.click('[data-plan-detail] [data-tool-tab="readiness"]');
       await page.waitForSelector('text=Atlas + Gear Locker suggestion');
-      await page.locator('[data-plan-detail] .planner-disclosure').nth(1).locator('summary').click();
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Atlas \+ Gear Locker suggestion/);
+      await page.click('[data-plan-detail] [data-tool-tab="itinerary"]');
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Two-tank boat dives/);
       await page.click('[data-plan-new]');
+      await page.fill('[name="title"]','Draft that must survive');
+      await page.click('.planner-dialog [data-tool-tab="section-3"]');
       await page.click('[data-add-segment]');
       assert.equal(await page.locator('.planner-segment').count(),1);
+      assert.equal(await page.locator('[name="title"]').inputValue(),'Draft that must survive');
       await page.click('[data-cancel]');
       await page.evaluate(()=>{document.querySelector('[data-account-view-panel="planner"]').hidden=true;document.querySelector('[data-account-view-panel="logbook"]').hidden=false;});
       await page.click('[data-diving-logbook] [data-select="dive-1"]');
@@ -61,14 +69,75 @@ const records = [
         assert.equal(await page.locator('[data-diving-logbook] .diving-layout').evaluate((el) => el.classList.contains('is-mobile-detail')), false);
         await page.click('[data-diving-logbook] [data-select="dive-1"]');
       }
-      await page.waitForSelector('[data-diving-logbook] .diving-raw');
-      assert.equal(await page.locator('[data-diving-logbook] .diving-stat').count(),6);
-      assert.equal(await page.locator('[data-diving-logbook] .record-sections details').count(),4);
-      assert.equal(await page.locator('[data-diving-logbook] .record-sections details[open]').count(),1);
+      await page.click('[data-diving-logbook] [data-tool-tab="details"]');
+      assert.equal(await page.locator('[data-diving-logbook] .record-sections .record-section').count(),4);
       assert.match(await page.locator('[data-diving-logbook] [data-detail]').innerText(),/Visibility/);
+      await page.click('[data-diving-logbook] [data-tool-tab="data"]');
+      await page.waitForSelector('[data-diving-logbook] .diving-raw');
+      assert.match(await page.locator('[data-full-record]').innerText(),/"maxDepthMeters": 28/);
       assert.equal(await page.locator('[data-diving-logbook] [data-export-csv]').count(),1);
+      await page.screenshot({path:path.join(process.env.TEMP||root,`dmz-detail-${viewport.width}.png`),fullPage:true});
+      const overflow=await page.evaluate(()=>[...document.querySelectorAll('body *')].filter((el)=>el.getBoundingClientRect().right>innerWidth+1&&el.getBoundingClientRect().width).map((el)=>({tag:el.tagName,class:el.className,width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right})).slice(0,8));
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true,`no horizontal page overflow at ${viewport.width}: ${JSON.stringify(overflow)}`);
+      if(viewport.width>760){
+        assert.equal(await page.locator('[data-diving-logbook] .diving-layout').evaluate((el)=>getComputedStyle(el).gridTemplateColumns.split(' ').length),2,'tablet and desktop keep two columns');
+      }else{
+        assert.equal(await page.locator('[data-diving-logbook] .diving-toolbar').isVisible(),false,'mobile details hide list controls');
+        await page.click('[data-diving-logbook] [data-mobile-back]');
+      }
+      await page.click('[data-log-page="stats"]');
+      assert.equal(await page.locator('[data-log-analytics]').isVisible(),true);
+      await page.screenshot({path:path.join(process.env.TEMP||root,`dmz-tools-${viewport.width}.png`),fullPage:true});
       await page.close();
     }
+    // Exercise the real account request path (rather than the UI-only mock above).
+    // A temporary 503 must recover without clearing the session or reloading the page.
+    const page=await browser.newPage({viewport:{width:1440,height:1000}});
+    let syncAttempts=0,profileFetches=0,savedPlan;
+    const samplePlan=structuredClone(records[0]);
+    samplePlan.data.appOnlyField={preserve:true};
+    samplePlan.data.segments[0].appOnlyFlightField='Keep this';
+    const dive=structuredClone(records.find((row)=>row.kind==='dive'));
+    dive.data.primaryLogId='computer-1';
+    const computer={kind:'computerLog',id:'computer-1',revision:1,deleted:false,data:{id:'computer-1',profile:{samples:[{t:0,depth:0,tempC:20},{t:60,depth:28,tempC:8,pressureBar:180}]}}};
+    await page.addInitScript(()=>sessionStorage.setItem('dmzCustomerAccessToken','test-session'));
+    await page.route('**/api/**',async(route)=>{
+      const url=new URL(route.request().url());
+      let data={ok:true},status=200;
+      if(url.pathname==='/api/account/auth/status')data={ok:true,enabled:true};
+      else if(url.pathname==='/api/account')data={ok:true,profile:{userId:'real-path-test',firstName:'Test',email:'test@example.com'},certifications:[]};
+      else if(url.pathname==='/api/account/sync'){
+        syncAttempts++;
+        assert.ok(!url.searchParams.get('include').split(',').includes('computerLog'),'initial list never downloads every profile');
+        if(syncAttempts<=2){status=503;data={ok:false,error:'Temporary upstream failure'};}
+        else data={ok:true,records:[samplePlan,dive,...Array.from({length:60},(_,i)=>({kind:'dive',id:`old-${i}`,revision:1,data:{id:`old-${i}`,site:{name:`Older dive ${i}`},startTime:'2010-01-01T12:00:00Z',durationSeconds:1200}})),...records.filter((row)=>['gear','setup'].includes(row.kind))],next:null};
+      }else if(url.pathname.endsWith('/computerLog/computer-1')){profileFetches++;data={ok:true,record:computer};}
+      else if(route.request().method()==='PUT'){
+        savedPlan=route.request().postDataJSON();data={ok:true,record:{...samplePlan,revision:2,data:savedPlan.data}};
+      }
+      await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
+    });
+    await page.goto(`http://127.0.0.1:${server.address().port}/pages/account/`);
+    await page.click('.account-nav-menu [data-account-view="logbook"]');
+    await page.waitForSelector('[data-select="dive-1"]');
+    assert.equal(syncAttempts,3,'real sync reads automatically recover from two transient 503s');
+    assert.equal(await page.locator('[data-diving-logbook] [data-select]').count(),24,'long logbooks show a bounded page');
+    await page.click('[data-diving-logbook] [data-list-page="1"]');
+    assert.match(await page.locator('[data-diving-logbook] .tool-list-pagination').innerText(),/25–48 of 61/);
+    await page.click('[data-diving-logbook] [data-list-page="-1"]');
+    await page.click('[data-tool-tab="profile"]');
+    await page.waitForSelector('[data-profile-scrub]');
+    assert.equal(profileFetches,1,'only the selected computer profile is requested');
+    await page.locator('[data-profile-scrub]').fill('1');
+    assert.match(await page.locator('[data-profile-readout]').innerText(),/28.0 m/);
+    await page.click('.account-nav-menu [data-account-view="planner"]');
+    await page.click('[data-plan-edit="plan-1"]');
+    await page.fill('[name="title"]','Preserved trip');
+    await page.click('.planner-dialog [type="submit"]');
+    await page.waitForFunction(()=>!document.querySelector('.planner-dialog').open);
+    assert.deepEqual(savedPlan.data.appOnlyField,{preserve:true});
+    assert.equal(savedPlan.data.segments[0].appOnlyFlightField,'Keep this','website editing preserves app-only itinerary fields');
+    await page.close();
     console.log('PASS: desktop and mobile planner, Atlas/Gear readiness, itinerary, rich log details, and export controls.');
   } finally { await browser.close();server.close(); }
 })().catch((error)=>{console.error(error);server.close();process.exitCode=1;});

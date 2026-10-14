@@ -27,6 +27,10 @@ This independent dev dataset is not yet integrated into the shared administrator
 
 ## Verification
 
+Website tools use compact record pages, dedicated detail tabs, and a phone list-to-detail flow. The logbook initially downloads only dives, gear, and setups; linked computer profiles load for the selected dive and during a complete JSON export. CSV exports and statistics use the current filters. Trip editing preserves unknown app fields, including itinerary metadata, and separates the form into task sections.
+
+Bulk reads select their page from record lengths before fetching JSON, with a 500 KB data budget and 250-row cap (one larger record is allowed so pagination can advance). Account verification retries once on a temporary upstream failure; website sync GET requests retry gateway failures twice. Edits are never automatically replayed by the website. Authentication failures and inactive accounts remain blocked. Error codes distinguish verification, upstream timeout, and database failures without logging account data or tokens.
+
 - Website backend: `node tests/account-data-sync.test.cjs` (Node 24 with built-in SQLite).
 - Existing account regression checks: `node tests/customer-accounts.test.cjs`.
 - App: `node scripts/verify-account-data-sync.cjs`, `node scripts/verify-account-data-vault.cjs`, and existing auth, account, dive-log, and gear-checklist checks.

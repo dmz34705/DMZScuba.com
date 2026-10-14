@@ -66,5 +66,23 @@ env.ACCOUNT_API = { async fetch(request) {
   assert.deepEqual(bulk.filter((row) => row.deleted).map((row) => [row.id, row.data]), [['gone', null]]);
   assert.equal(new Set(bulk.map((row) => `${row.kind}/${row.id}`)).size, bulk.length, 'pages never overlap');
   assert.deepEqual((await (await request('bob', '?include=dive,gear')).json()).records.map((row) => row.id), ['dive-1'], 'bulk reads stay within the owner');
+  // Profile-heavy pages must select their byte budget before reading record JSON.
+  for(let i=0;i<20;i++)await put('large','computerLog',`profile-${String(i).padStart(2,'0')}`,{notes:'x'.repeat(70000)});
+  let largeAfter='',largeCount=0,largePages=0;
+  do{
+    const page=await (await request('large',`?include=computerLog${largeAfter?`&after=${encodeURIComponent(largeAfter)}`:''}`)).json();
+    assert.ok(JSON.stringify(page.records).length<510000,'bulk profile pages remain bounded');
+    largeCount+=page.records.length;largeAfter=page.next;largePages++;
+  }while(largeAfter);
+  assert.equal(largeCount,20);assert.equal(largePages,3);
+  const originalAuth=env.ACCOUNT_API.fetch;
+  let attempts=0;
+  env.ACCOUNT_API.fetch=async(req)=>++attempts===1?new Response('unavailable',{status:503}):originalAuth(req);
+  assert.equal((await request('carol','?include=plan')).status,200);
+  assert.equal(attempts,2,'transient account verification is retried');
+  attempts=0;
+  env.ACCOUNT_API.fetch=async()=>{attempts++;return new Response('{}',{status:403});};
+  assert.equal((await request('carol')).status,403);assert.equal(attempts,1,'inactive-account failures never retry or bypass verification');
+  env.ACCOUNT_API.fetch=originalAuth;
   console.log('PASS: authentication, inactive accounts, owner isolation, forged owners, atomic conflicts, retries, tombstones, validation, body limits, and bulk paged reads.');
 })().catch((error) => { console.error(error); process.exitCode = 1; });
