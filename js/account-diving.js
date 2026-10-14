@@ -7,7 +7,7 @@
   const number = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
   const date = (v) => !v || Number.isNaN(new Date(v).getTime()) ? 'No date' : new Date(v.length === 10 ? `${v}T12:00:00` : v).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
   const keyOf = (r) => `${r.kind}/${r.id}`;
-  let request, userId, epoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
+  let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
   const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'' } };
   let imperial = false, dialogRecord = null;
   const dialog = document.createElement('dialog');
@@ -113,25 +113,31 @@
   }
   async function detail(view, record) {
     const d = record.data, log = view === 'logbook', container = panels[view].querySelector('[data-detail]');
+    const gasMixes=(d.gas?.mixes||[]).map((mix,index)=>`${index+1}: ${mix.label||'Gas'} (O₂ ${Math.round(number(mix.o2)*100)}%, He ${Math.round(number(mix.he)*100)}%)`).join('; ');
+    const tanks=(d.gas?.tanks||[]).map((tank,index)=>`${index+1}: ${tank.volumeLiters??'?'} L · ${tank.startBar??'?'} → ${tank.endBar??'?'} bar · ${tank.workPressureBar??'?'} bar working pressure`).join('; ');
     container.innerHTML = `<span class="diving-badge">${esc(log ? (d.source || 'manual') + ' dive' : d.category)}</span><h3>${esc(log ? d.site?.name || 'Untitled dive' : d.name)}</h3><p>${esc(log ? [d.site?.location,d.site?.country].filter(Boolean).join(', ') : [d.manufacturer,d.model].filter(Boolean).join(' · '))}</p>
       <div class="diving-actions"><button class="btn secondary" data-edit="${record.kind}" data-id="${esc(record.id)}">Edit ${log ? 'dive' : 'item'}</button><button class="btn secondary diving-danger" data-delete="${record.kind}" data-id="${esc(record.id)}">Delete</button></div>
-      <dl>${log ? pair('Date',date(d.startTime)) + pair('Dive time',duration(d.durationSeconds)) + pair('Maximum depth',depth(d.water?.maxDepthMeters)) + pair('Average depth',depth(d.water?.avgDepthMeters)) + pair('Surface interval',d.surfaceIntervalSeconds ? duration(d.surfaceIntervalSeconds) : '') + pair('Dive mode',d.diveMode) + pair('Water temperature',temp(d.water?.tempMinC)) + pair('Visibility',d.water?.visibilityMeters != null ? depth(d.water.visibilityMeters) : '') + pair('Water type',d.water?.type) + pair('Gas',(d.gas?.mixes || []).map((m) => m.label || `${Math.round(number(m.o2) * 100)}% O₂`).join(', ')) + pair('Buddies',(d.buddies || []).join(', ')) + pair('Operator',d.operator) + pair('Rating',d.rating ? `${d.rating} / 5` : '') + pair('Tags',(d.tags || []).join(', ')) + pair('Coordinates',Number.isFinite(Number(d.site?.latitude)) ? `${Number(d.site.latitude).toFixed(5)}, ${Number(d.site.longitude).toFixed(5)}` : '') : pair('Condition',d.condition) + pair('Serial number',d.serialNumber) + pair('Next service',dueFor(d) ? date(dueFor(d)) : 'Not set') + pair('Last service',d.lastServiceDate ? date(d.lastServiceDate) : '') + pair('Configuration',d.configuration) + pair('Purchased',d.purchaseDate ? date(d.purchaseDate) : '')}</dl>
-      ${log ? '<div data-profile-chart></div>' : (d.components?.length ? `<h4>Assembly components</h4><ul class="diving-components">${d.components.map((c) => `<li><strong>${esc(c.name || c.type)}</strong><small>${esc([c.manufacturer,c.model,c.serialNumber].filter(Boolean).join(' · '))}</small><small>${esc(c.condition || 'Ready')}${dueFor(c) ? ` · Due ${esc(date(dueFor(c)))}` : ''}</small></li>`).join('')}</ul>` : '')}
+      <dl>${log ? pair('Dive number',d.number) + pair('Date',date(d.startTime)) + pair('Start time',d.startTime?new Date(d.startTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit',timeZoneName:'short'}):'') + pair('Timezone offset',d.timezoneOffsetMinutes!=null?`${d.timezoneOffsetMinutes} minutes`: '') + pair('Dive time',duration(d.durationSeconds)) + pair('Maximum depth',depth(d.water?.maxDepthMeters)) + pair('Average depth',depth(d.water?.avgDepthMeters)) + pair('Surface interval',d.surfaceIntervalSeconds!=null?duration(d.surfaceIntervalSeconds):'') + pair('Dive mode',d.diveMode) + pair('Dive types',(d.types||[]).join(', ')) + pair('Surface water temperature',temp(d.water?.tempSurfaceC)) + pair('Minimum water temperature',temp(d.water?.tempMinC)) + pair('Maximum water temperature',temp(d.water?.tempMaxC)) + pair('Visibility',d.water?.visibilityMeters != null ? depth(d.water.visibilityMeters) : '') + pair('Water type',d.water?.type) + pair('Gas mixes',gasMixes) + pair('Cylinder details',tanks) + pair('Buddies',(d.buddies || []).join(', ')) + pair('Operator',d.operator) + pair('Exposure weight',d.gear?.weightKg!=null?`${d.gear.weightKg} kg`:'') + pair('Exposure suit',d.gear?.exposureSuit) + pair('Decompression model',d.decoModel?.type?`${d.decoModel.type}${d.decoModel.gfLow!=null?` · GF ${d.decoModel.gfLow}/${d.decoModel.gfHigh}`:''}`:'') + pair('Atmospheric pressure',d.atmosphericBar!=null?`${d.atmosphericBar} bar`:'') + pair('Rating',d.rating ? `${d.rating} / 5` : '') + pair('Tags',(d.tags || []).join(', ')) + pair('Coordinates',Number.isFinite(Number(d.site?.latitude)) ? `${Number(d.site.latitude).toFixed(5)}, ${Number(d.site.longitude).toFixed(5)}` : '') + pair('Atlas site',d.site?.siteId?`${d.site.siteSource||'linked'} · ${d.site.siteId}`:'') : pair('Condition',d.condition) + pair('Serial number',d.serialNumber) + pair('Next service',dueFor(d) ? date(dueFor(d)) : 'Not set') + pair('Last service',d.lastServiceDate ? date(d.lastServiceDate) : '') + pair('Configuration',d.configuration) + pair('Purchased',d.purchaseDate ? date(d.purchaseDate) : '')}</dl>
+      ${log ? '<div data-computer-profiles></div>' : (d.components?.length ? `<h4>Assembly components</h4><ul class="diving-components">${d.components.map((c) => `<li><strong>${esc(c.name || c.type)}</strong><small>${esc([c.manufacturer,c.model,c.serialNumber].filter(Boolean).join(' · '))}</small><small>${esc(c.condition || 'Ready')}${dueFor(c) ? ` · Due ${esc(date(dueFor(c)))}` : ''}</small></li>`).join('')}</ul>` : '')}
       ${d.notes ? `<h4>${log ? 'Dive notes' : 'Equipment notes'}</h4><p class="diving-notes">${esc(d.notes)}</p>` : ''}
-      ${log ? `<details class="diving-raw"><summary>Pop the hood · inspect the complete dive record</summary><pre>${esc(JSON.stringify(d,null,2))}</pre></details>` : ''}
+      ${log ? `<details class="diving-raw"><summary>Pop the hood · inspect the complete dive and computer records</summary><pre data-full-record>${esc(JSON.stringify({ dive:d, computerLogs:[] },null,2))}</pre></details>` : ''}
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
       ${!log && ui.gear.setup ? setupDetail(records.get(`setup/${ui.gear.setup}`)) : ''}`;
     if (log) {
-      const chart = container.querySelector('[data-profile-chart]'), ticket = epoch;
-      const logId = d.primaryLogId || d.logIds?.[0];
-      if (!logId) { chart.innerHTML = '<p>No computer profile attached to this dive.</p>'; return; }
-      chart.textContent = 'Loading computer profile…';
+      const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-full-record]');
+      const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];
+      if (!logIds.length) { chart.innerHTML = '<p>No computer profile is linked to this dive.</p>'; return; }
+      chart.textContent = 'Loading all linked computer profiles…';
       try {
-        let computer = records.get(`computerLog/${logId}`);
-        if (!computer) { computer = (await request(`/api/account/sync/computerLog/${encodeURIComponent(logId)}`)).record; if (epoch !== ticket) return; records.set(keyOf(computer),computer); }
-        if (!chart.isConnected || epoch !== ticket) return;
-        chart.innerHTML = profileChart(computer.data.profile?.samples || []);
-      } catch { if (chart.isConnected && epoch === ticket) chart.textContent = 'The computer profile could not load. Refresh to try again.'; }
+        const computers = await Promise.all(logIds.map(async (logId) => {
+          let computer = records.get(`computerLog/${logId}`);
+          if (!computer) { computer = (await request(`/api/account/sync/computerLog/${encodeURIComponent(logId)}`)).record; records.set(keyOf(computer), computer); }
+          return computer;
+        }));
+        if (!chart.isConnected || ticket !== detailEpoch || epoch !== accountTicket) return;
+        chart.innerHTML = computers.map((computer,index) => `<section><h4>Computer profile${computers.length>1?` ${index+1}`:''}</h4>${profileChart(computer.data.profile?.samples || [])}</section>`).join('');
+        raw.textContent = JSON.stringify({ dive:d, computerLogs:computers.map((row)=>row.data) },null,2);
+      } catch { if (chart.isConnected && ticket === detailEpoch) chart.textContent = 'A linked computer profile could not load. Refresh to try again.'; }
     }
   }
   function profileChart(samples) {
@@ -152,8 +158,8 @@
     const task = (async () => {
       // Records arrive with their data, a page at a time; any row without data (an older service) is fetched on its own.
       let after = ''; const manifest = [];
-      do { const page = await request(`/api/account/sync?include=dive,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; } while (after);
-      const next = new Map(); const live = manifest.filter((r) => ['dive','gear','setup'].includes(r.kind) && !r.deleted);
+      do { const page = await request(`/api/account/sync?include=dive,computerLog,gear,setup${after ? `&after=${encodeURIComponent(after)}` : ''}`); if (epoch !== ticket) return; manifest.push(...page.records); after = page.next; } while (after);
+      const next = new Map(); const live = manifest.filter((r) => ['dive','computerLog','gear','setup'].includes(r.kind) && !r.deleted);
       for (const row of live) if (row.data) next.set(keyOf(row),row);
       const queue = live.filter((r) => !r.data);
       let cursor = 0;
