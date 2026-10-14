@@ -41,6 +41,38 @@ body.is-account-tools { height:100dvh; min-height:0; display:flex; flex-directio
 .is-account-tools .diving-browser .diving-list { flex:1; height:auto; min-height:0; max-height:none; overflow:auto; border:0; border-top:1px solid #294552; border-radius:0; }
 .is-account-tools .diving-browser > .diving-status { flex:0 0 auto; padding:6px 9px; margin:0; min-height:0; color:#7899aa; font-size:9px; line-height:1.4; }
 .is-account-tools .diving-browser > .diving-status.is-error { color:#ffadb4; }
+.is-account-tools .diving-browser { border-color:#2c4a58; background:linear-gradient(180deg,#0d2533,#081b28 220px); }
+.browser-heading { padding:14px 12px 9px; gap:7px; }
+.browser-heading h2 { font-size:15px; font-weight:650; letter-spacing:-.02em; }
+.browser-heading > .browser-add { color:#9ee8dc; background:#173d46; border:1px solid #38636a; box-shadow:none; }
+.browser-more summary { background:transparent; border-color:transparent; color:#96b5c5; }
+.browser-more summary:hover { background:#173542; }
+.is-account-tools .diving-browser .tool-view-switch,.is-account-tools .diving-browser .diving-setups { margin:0 12px 8px; padding:0; border-bottom:1px solid #2b4554; border-radius:0; background:transparent; gap:12px; }
+.is-account-tools .diving-browser .tool-view-switch button,.is-account-tools .diving-browser .diving-setups button { border-radius:0; background:none; min-height:32px; font-size:11px; color:#8faebf; box-shadow:none; }
+.is-account-tools .diving-browser .tool-view-switch button[aria-pressed="true"],.is-account-tools .diving-browser .diving-setups button[aria-pressed="true"] { background:none; color:#baf2e8; box-shadow:inset 0 -2px #6ed7c9; }
+.browser-search { position:relative; padding:2px 12px 12px; gap:6px; }
+.browser-search > input { min-height:36px; background:#071a27; border-color:#304b59; font-size:12px; padding-left:11px; }
+.browser-filters > summary { min-height:36px; padding:7px 9px; color:#9dbdca; background:#0e2938; border-color:#304b59; font-size:10px; }
+.is-account-tools .diving-browser .diving-list { border-top-color:#213b49; padding:4px 0; scrollbar-width:thin; scrollbar-color:#315361 transparent; }
+.is-account-tools .diving-browser .diving-entry-group h3 { padding:8px 13px 6px; background:#0a202d; font-size:10px; letter-spacing:.08em; }
+.is-account-tools .diving-browser .diving-entry-group h3 small { font-size:9px; color:#6f92a4; }
+.is-account-tools .diving-entry-log { display:grid; grid-template-columns:minmax(0,1fr) 10px; min-height:0; gap:8px; margin:3px 7px; width:calc(100% - 14px); padding:11px 10px; border:1px solid transparent; border-radius:9px; background:transparent; box-shadow:none; }
+.is-account-tools .diving-entry-log:hover { background:#12313e; }
+.is-account-tools .diving-entry-log[aria-pressed="true"] { border-color:#39646a; background:#143640; box-shadow:inset 2px 0 #76dacf; }
+.log-row-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#87aabb; font-size:10px; line-height:1.3; font-variant-numeric:tabular-nums; }
+.log-row-meta > span { color:#6e9ba9; font-size:9px; }
+.is-account-tools .diving-entry-log strong { margin:5px 0 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:650; line-height:1.35; }
+.is-account-tools .diving-entry-log .entry-subtitle { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px!important; color:#8daebf; }
+.log-row-bottom { display:flex; align-items:center; gap:10px; margin-top:9px; color:#c5e7ea; font-size:11px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.log-row-gas { max-width:65px; overflow:hidden; text-overflow:ellipsis; font-size:10px; color:#9acfc7; }
+.log-row-source { margin-left:auto; color:#6d93a4!important; font-size:8px!important; text-transform:capitalize; }
+.is-account-tools .diving-entry-log .entry-chevron { color:#699baa; font-size:18px; }
+[data-browser-pagination] { flex:0 0 auto; border-top:1px solid #223e4c; padding:6px 10px 0; }
+[data-browser-pagination]:empty { display:none; }
+[data-browser-pagination] .tool-list-pagination { position:static; padding:0; border:0; background:transparent; font-size:10px; color:#8daebf; }
+[data-browser-pagination] .tool-list-pagination button { min-width:27px; min-height:27px; padding:2px; border-color:#2e4a58; background:transparent; font-size:18px; }
+.browser-record-count { color:#8daebf; font-size:10px; }
+.is-account-tools .diving-browser > .diving-status { padding-top:4px; font-size:8px; color:#678c9f; }
 .is-account-tools .diving-detail { height:100%; max-height:none; min-height:0; padding:10px 12px; border-radius:10px; overflow:auto; }
 .record-workspace-header { display:flex; align-items:center; gap:8px; min-height:38px; flex:0 0 auto; }
 .record-workspace-title { flex:1; min-width:0; }

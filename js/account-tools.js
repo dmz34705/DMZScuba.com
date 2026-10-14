@@ -75,18 +75,19 @@
     const header=document.createElement('header');header.className='browser-heading';
     const original=panel.querySelector('.diving-header'),title=original?.querySelector('h2'),add=original?.querySelector('[data-add],[data-plan-new]');
     const more=document.createElement('details');more.className='browser-more';more.innerHTML='<summary aria-label="Browser actions">⋯</summary><div></div>';
-    if(title)header.append(title);
-    if(add){add.title=add.textContent;add.setAttribute('aria-label',add.textContent);add.textContent='+';header.append(add);}
+    if(title){if(panel.hasAttribute('data-diving-logbook'))title.textContent='Dive library';header.append(title);}
+    if(add){add.title=add.textContent;add.setAttribute('aria-label',add.textContent);add.textContent='+';add.classList.remove('primary');add.classList.add('browser-add');header.append(add);}
     header.append(more);original?.remove();aside.append(header);
     const switcher=panel.querySelector('.tool-view-switch,.diving-setups');if(switcher)aside.append(switcher);
     const toolbar=panel.querySelector('.diving-toolbar'),search=toolbar?.querySelector('input[type="search"]');
-    const searchRow=document.createElement('div');searchRow.className='browser-search';if(search)searchRow.append(search);
+    const searchRow=document.createElement('div');searchRow.className='browser-search';if(search){search.placeholder=panel.hasAttribute('data-diving-logbook')?'Find a dive…':panel.hasAttribute('data-diving-gear')?'Find equipment…':'Find a trip…';searchRow.append(search);}
     const filters=document.createElement('details');filters.className='browser-filters';filters.innerHTML='<summary aria-label="Search filters and sorting">Filters</summary><div></div>';
     toolbar?.querySelectorAll('select').forEach((select)=>{const label=document.createElement('label');label.textContent=select.getAttribute('aria-label')||'Filter';label.append(select);filters.lastElementChild.append(label);});
     const dates=panel.querySelector('.tool-filters');if(dates){filters.lastElementChild.append(...dates.querySelector('div').children);dates.remove();}
     searchRow.append(filters);aside.append(searchRow);
     toolbar?.querySelectorAll('button').forEach((button)=>more.lastElementChild.append(button));toolbar?.remove();
     list.before(aside);aside.append(list);
+    const pagination=document.createElement('div');pagination.dataset.browserPagination='';aside.append(pagination);
     const status=panel.querySelector('[data-sync-status],[data-planner-status]');if(status)aside.append(status);
   }
   function recordHeader(container){
