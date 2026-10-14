@@ -117,3 +117,84 @@
 @media(max-width:1050px) { .diving-layout { grid-template-columns:1fr; } .diving-list { max-height:430px; } .diving-detail { position:static; max-height:none; } }
 @media(max-width:760px) { .planner-field-grid,.planner-cert-grid,.planner-segment { grid-template-columns:1fr; } }
 @media(max-width:600px) { .diving-header { display:block; } .diving-stats { gap:7px; } .diving-stat { padding:13px 10px; } .diving-stat strong { font-size:23px; } .diving-form { grid-template-columns:1fr; } .diving-toolbar select { max-width:100%; flex:1; } .diving-entry { grid-template-columns:48px minmax(0,1fr) auto; gap:10px; padding:12px; border-radius:14px; } .entry-date { min-height:58px; } .entry-date b { font-size:20px; } .entry-metrics { gap:10px; } .entry-metrics b { font-size:10px; } .entry-review { font-size:9px; } .diving-detail dl { grid-template-columns:1fr; gap:12px; } }
+
+/* Dive tools workspace refresh */
+.diving-header { align-items:center; margin:2px 0 16px; }
+.diving-header h2 { color:#f1fbff; font-size:clamp(30px,3.5vw,42px); letter-spacing:-.045em; }
+.diving-header p:not(.diving-kicker) { margin:7px 0 0; font-size:14px; }
+.diving-kicker { margin:0 0 8px; color:#79ddd2!important; font-size:10px; letter-spacing:.14em; }
+.diving-header > .btn { flex:0 0 auto; border-radius:11px; box-shadow:0 8px 22px rgba(22, 154, 146, .17); }
+.diving-stats { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+.account-view[data-account-view-panel="logbook"] .diving-stats .diving-stat:nth-child(n+4) { display:none; }
+.diving-stat { position:relative; overflow:hidden; min-height:84px; padding:14px 16px; border-color:rgba(125, 195, 206, .17); border-radius:14px; background:linear-gradient(140deg, rgba(14, 47, 62, .98), rgba(8, 26, 41, .98)); }
+.diving-stat::after { content:""; position:absolute; right:-22px; bottom:-35px; width:86px; height:86px; border:1px solid rgba(114, 218, 207, .1); border-radius:50%; box-shadow:0 0 0 12px rgba(114, 218, 207, .025), 0 0 0 24px rgba(114, 218, 207, .02); }
+.diving-stat strong { position:relative; z-index:1; font-size:25px; }
+.diving-stat span { position:relative; z-index:1; font-size:11px; }
+.diving-status { min-height:18px; margin:8px 0 10px; font-size:11px; }
+.diving-toolbar { position:sticky; z-index:5; top:8px; display:flex; gap:8px; margin:10px 0 12px; padding:9px; border:1px solid rgba(133, 192, 203, .14); border-radius:14px; background:rgba(7, 22, 35, .9); box-shadow:0 10px 28px rgba(0,0,0,.16); backdrop-filter:blur(16px); }
+.diving-toolbar input, .diving-toolbar select { min-height:40px; padding:9px 11px; border-color:#304d60; border-radius:9px; background:#0b1d2d; font-size:12px; }
+.diving-toolbar input { min-width:200px; }
+.diving-toolbar button { min-height:40px; padding:8px 11px; border-radius:9px; font-size:11px; white-space:nowrap; }
+.diving-layout { grid-template-columns:minmax(320px,.9fr) minmax(0,1.2fr); gap:13px; }
+.diving-list { max-height:clamp(420px,calc(100vh - 430px),760px); gap:10px; padding:3px 5px 3px 2px; scrollbar-color:#315366 transparent; }
+.diving-entry-group { gap:7px; }
+.diving-entry-group h3 { position:sticky; top:0; z-index:2; padding:7px 8px; border-radius:8px; background:rgba(8, 25, 39, .95); backdrop-filter:blur(10px); color:#91b7c2; font-size:10px; }
+.diving-entry { grid-template-columns:50px minmax(0,1fr) auto; gap:11px; padding:11px; border-color:rgba(103, 155, 174, .2); border-radius:13px; background:linear-gradient(125deg,#102a3d,#0b1d2c); }
+.diving-entry:hover { transform:translateY(-1px); }
+.diving-entry[aria-pressed="true"] { border-color:#62cfc5; box-shadow:inset 3px 0 #62cfc5,0 8px 20px #020b1340; background:linear-gradient(125deg,#123746,#0c2231); }
+.entry-date { min-height:55px; border-color:#2d4b5e; border-radius:11px; }
+.entry-date b { font-size:21px; }
+.entry-content { overflow:hidden; }
+.diving-entry strong { margin:4px 0 3px; font-size:14px; }
+.entry-subtitle { font-size:10px!important; }
+.entry-metrics { gap:10px; margin-top:8px; }
+.entry-metrics b { font-size:10px; }
+.entry-metrics small { font-size:8px; }
+.diving-badge { padding:4px 7px; border-radius:999px; font-size:9px; }
+.entry-kicker > small { font-size:8px; }
+.entry-chevron { font-size:20px; }
+.diving-detail { top:12px; max-height:calc(100vh - 24px); min-height:0; padding:20px; border-color:rgba(117, 186, 197, .2); border-radius:16px; background:linear-gradient(155deg,#102a3a,#081827); box-shadow:0 14px 36px rgba(0,0,0,.16); }
+.diving-detail h3 { margin:9px 0 4px; font-size:24px; }
+.diving-detail h4 { margin:18px 0 9px; }
+.diving-detail dl { gap:13px 12px; margin:15px 0; }
+.record-sections { gap:7px; margin:13px 0; }
+.record-section { padding:11px 13px; border-color:rgba(101, 155, 173, .2); border-radius:11px; background:rgba(5, 19, 31, .72); }
+.record-section h4 { margin:0 0 9px; font-size:10px; }
+.record-section dl { gap:11px 14px; }
+.record-section dt { font-size:10px; }
+.record-section dd { font-size:12px; }
+.diving-notes { padding:12px; border:1px solid rgba(113, 165, 179, .14); border-radius:10px; font-size:13px; }
+.diving-raw { margin-top:16px; border-radius:11px; }
+.diving-raw summary { padding:12px; }
+.diving-footnote { margin:13px 0 0; font-size:10px; }
+.planner-alert { border-radius:10px; padding:10px 12px; }
+.planner-alert strong { font-size:12px; }
+.planner-alert p { font-size:11px; }
+.diving-empty { padding:28px 18px; border-radius:14px; }
+
+@media(max-width:1050px) {
+  .diving-layout { grid-template-columns:minmax(0,1fr); }
+  .diving-list { max-height:440px; }
+  .diving-detail { position:relative; top:auto; max-height:none; }
+}
+@media(max-width:700px) {
+  .diving-toolbar { top:66px; flex-wrap:wrap; }
+  .diving-toolbar input { flex:1 1 100%; }
+  .diving-toolbar select { flex:1 1 130px; max-width:none; }
+  .diving-toolbar button { flex:1 1 auto; }
+  .diving-list { max-height:380px; }
+  .diving-stats { gap:6px; }
+  .diving-stat { min-height:72px; padding:11px 10px; }
+  .diving-stat strong { font-size:21px; }
+  .diving-stat span { font-size:9px; }
+  .diving-header > .btn { margin-top:10px; }
+}
+@media(max-width:480px) {
+  .diving-layout { gap:9px; }
+  .diving-entry { grid-template-columns:43px minmax(0,1fr) auto; gap:8px; padding:9px; }
+  .entry-date { min-height:50px; }
+  .entry-date b { font-size:19px; }
+  .entry-metrics { gap:8px; }
+  .entry-metrics b { font-size:9px; }
+  .diving-detail { padding:15px; }
+}

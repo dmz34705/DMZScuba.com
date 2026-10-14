@@ -913,3 +913,41 @@
     width: 100%;
   }
 }
+
+/* Account workspace refresh: tighter navigation and a calmer, more useful canvas. */
+.account-shell { width: min(100% - 40px, 1480px); padding-top: 32px; }
+.account-portal-shell { grid-template-columns: 216px minmax(0, 1fr); gap: 18px; }
+.account-portal-nav { top: 86px; gap: 16px; padding: 16px; border-radius: 18px; background: linear-gradient(160deg, rgba(11, 34, 50, .98), rgba(6, 20, 33, .98)); }
+.account-portal-identity { gap: 10px; padding-bottom: 14px; }
+.account-avatar { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
+.account-nav-menu { gap: 3px; }
+.account-nav-menu button, .account-nav-menu a { min-height: 40px; padding: 8px 10px; border-radius: 9px; font-size: 13px; }
+.account-nav-menu button > span, .account-nav-menu a > span { color: #74d8d0; }
+.account-nav-menu button[aria-current="page"] { box-shadow: inset 3px 0 #70d7cd; background: rgba(91, 205, 193, .12); }
+.account-dashboard-status { min-height: 0; }
+.account-home-hero { padding: clamp(26px, 4vw, 42px); border-radius: 22px; background: radial-gradient(circle at 88% 8%, rgba(80, 191, 184, .18), transparent 32%), linear-gradient(140deg, #103a4a, #0a1d2c 72%); }
+.account-home-hero h2, .account-section-head h2 { font-size: clamp(32px, 4vw, 48px); }
+.account-home-hero > p:last-of-type, .account-section-head > p:last-child, .account-section-head div > p:last-child { margin-top: 10px; font-size: 15px; }
+.account-summary-grid { gap: 10px; margin-top: 12px; }
+.account-summary-grid article { padding: 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(13, 37, 53, .94), rgba(7, 23, 37, .96)); }
+.account-summary-grid strong { font-size: 19px; }
+.account-home-next { margin-top: 12px; border-radius: 16px; }
+.account-view:not([hidden]) { animation: account-view-in .22s ease-out both; }
+@keyframes account-view-in { from { opacity: .45; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 820px) {
+  .account-shell { width: min(100% - 28px, 1480px); padding-top: 24px; }
+  .account-portal-shell { gap: 12px; }
+  .account-portal-nav { position: sticky; z-index: 20; top: 8px; gap: 10px; padding: 11px 12px; backdrop-filter: blur(18px); }
+  .account-portal-identity { padding: 0 2px 9px; }
+  .account-nav-menu { margin: 0 -3px; padding: 0 3px 3px; }
+  .account-nav-menu button, .account-nav-menu a { min-height: 38px; }
+}
+
+@media (max-width: 560px) {
+  .account-shell { width: min(100% - 20px, 1480px); padding-top: 16px; }
+  .account-portal-nav { border-radius: 15px; }
+  .account-portal-identity div > span { font-size: 11px; }
+  .account-home-hero { padding: 24px 18px; }
+  .account-summary-grid article { padding: 14px; }
+}
