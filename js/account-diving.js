@@ -9,7 +9,7 @@
   const dateTile = (v) => { const d=v?new Date(v.length===10?`${v}T12:00:00`:v):null; return d&&!Number.isNaN(d.getTime())?{month:d.toLocaleDateString('en-US',{month:'short'}),day:d.toLocaleDateString('en-US',{day:'2-digit'}),year:d.getFullYear()}: {month:'—',day:'—',year:''}; };
   const keyOf = (r) => `${r.kind}/${r.id}`;
   let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
-  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'' } };
+  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false } };
   let imperial = false, dialogRecord = null;
   const dialog = document.createElement('dialog');
   dialog.className = 'diving-dialog'; dialog.setAttribute('aria-labelledby', 'diving-editor-title');
@@ -41,7 +41,11 @@
       const button = e.target.closest('button'); if (!button || !userId) return;
       if (button.hasAttribute('data-refresh')) load(true);
       if (button.hasAttribute('data-add')) edit(button.dataset.add);
-      if (button.hasAttribute('data-select')) { ui[view].selected = button.dataset.select; render(view); }
+      if (button.hasAttribute('data-mobile-back')) {
+        ui[view].mobileDetail = false; render(view);
+        [...panel.querySelectorAll('[data-select]')].find((entry) => entry.dataset.select === ui[view].selected)?.focus();
+      }
+      if (button.hasAttribute('data-select')) { ui[view].selected = button.dataset.select; ui[view].mobileDetail = true; render(view); }
       if (button.hasAttribute('data-edit')) edit(button.dataset.edit, button.dataset.id);
       if (button.hasAttribute('data-delete')) remove(button.dataset.delete, button.dataset.id);
       if (button.hasAttribute('data-setup')) { ui.gear.setup = button.dataset.setup; ui.gear.selected = null; render('gear'); }
@@ -95,6 +99,7 @@
       ? state.sort === 'deepest' ? number(b.data.water?.maxDepthMeters) - number(a.data.water?.maxDepthMeters) : String(a.data.startTime || '').localeCompare(String(b.data.startTime || '')) * (state.sort === 'oldest' ? 1 : -1)
       : state.sort === 'service' ? (dueFor(a.data) || '9999').localeCompare(dueFor(b.data) || '9999') : state.sort === 'newest' ? String(b.data.createdAt || '').localeCompare(String(a.data.createdAt || '')) : String(a.data.name || '').localeCompare(String(b.data.name || '')));
     if (!shown.some((r) => r.id === state.selected)) state.selected = shown[0]?.id || null;
+    panel.querySelector('.diving-layout').classList.toggle('is-mobile-detail', state.mobileDetail && window.matchMedia('(max-width: 760px)').matches);
     const entryMarkup = (r) => {
       const d=r.data;
       if(log){const stamp=dateTile(d.startTime), mixes=(d.gas?.mixes||[]).map((mix)=>mix.label||`${Math.round(number(mix.o2)*100)}%`).join(' / '),buddy=(d.buddies||[]).slice(0,2).join(', ');return `<button class="diving-entry diving-entry-log" data-select="${esc(r.id)}" aria-pressed="${r.id===state.selected}"><span class="entry-date"><b>${esc(stamp.day)}</b><span>${esc(stamp.month)}</span><small>${esc(stamp.year)}</small></span><span class="entry-content"><span class="entry-kicker"><span class="diving-badge">${esc(d.source||'manual')}</span>${d.number!=null?`<small>DIVE #${esc(d.number)}</small>`:''}</span><strong>${esc(d.site?.name||'Untitled dive')}</strong><small class="entry-subtitle">${esc([d.site?.location,d.site?.country].filter(Boolean).join(' · ')||'Location not set')}${buddy?` · with ${esc(buddy)}`:''}</small><span class="entry-metrics"><span><b>${esc(depth(d.water?.maxDepthMeters))}</b><small>max depth</small></span><span><b>${esc(duration(d.durationSeconds))}</b><small>bottom time</small></span><span><b>${esc(mixes||'—')}</b><small>gas</small></span></span></span><span class="entry-chevron" aria-hidden="true">›</span></button>`;}
@@ -124,7 +129,7 @@
     const d = record.data, log = view === 'logbook', container = panels[view].querySelector('[data-detail]');
     const gasMixes=(d.gas?.mixes||[]).map((mix,index)=>`${index+1}: ${mix.label||'Gas'} (O₂ ${Math.round(number(mix.o2)*100)}%, He ${Math.round(number(mix.he)*100)}%)`).join('; ');
     const tanks=(d.gas?.tanks||[]).map((tank,index)=>`${index+1}: ${tank.volumeLiters??'?'} L · ${tank.startBar??'?'} → ${tank.endBar??'?'} bar · ${tank.workPressureBar??'?'} bar working pressure`).join('; ');
-    container.innerHTML = `<span class="diving-badge">${esc(log ? (d.source || 'manual') + ' dive' : d.category)}</span><h3>${esc(log ? d.site?.name || 'Untitled dive' : d.name)}</h3><p>${esc(log ? [d.site?.location,d.site?.country].filter(Boolean).join(', ') : [d.manufacturer,d.model].filter(Boolean).join(' · '))}</p>
+    container.innerHTML = `<button type="button" class="diving-mobile-back" data-mobile-back aria-label="Back to ${log ? 'dives' : 'gear list'}">Back to ${log ? 'dive list' : 'gear list'}</button><span class="diving-badge">${esc(log ? (d.source || 'manual') + ' dive' : d.category)}</span><h3>${esc(log ? d.site?.name || 'Untitled dive' : d.name)}</h3><p>${esc(log ? [d.site?.location,d.site?.country].filter(Boolean).join(', ') : [d.manufacturer,d.model].filter(Boolean).join(' · '))}</p>
       <div class="diving-actions"><button class="btn secondary" data-edit="${record.kind}" data-id="${esc(record.id)}">Edit ${log ? 'dive' : 'item'}</button><button class="btn secondary diving-danger" data-delete="${record.kind}" data-id="${esc(record.id)}">Delete</button></div>
       ${log ? diveSections(d,gasMixes,tanks) : `<section class="record-section"><h4>Equipment details</h4><dl>${pair('Condition',d.condition)}${pair('Serial number',d.serialNumber)}${pair('Next service',dueFor(d)?date(dueFor(d)):'Not set')}${pair('Last service',d.lastServiceDate?date(d.lastServiceDate):'')}${pair('Configuration',d.configuration)}${pair('Purchased',d.purchaseDate?date(d.purchaseDate):'')}</dl></section>`}
       ${log ? '<div data-computer-profiles></div>' : (d.components?.length ? `<h4>Assembly components</h4><ul class="diving-components">${d.components.map((c) => `<li><strong>${esc(c.name || c.type)}</strong><small>${esc([c.manufacturer,c.model,c.serialNumber].filter(Boolean).join(' · '))}</small><small>${esc(c.condition || 'Ready')}${dueFor(c) ? ` · Due ${esc(date(dueFor(c)))}` : ''}</small></li>`).join('')}</ul>` : '')}
@@ -133,6 +138,13 @@
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
       ${!log && ui.gear.setup ? setupDetail(records.get(`setup/${ui.gear.setup}`)) : ''}`;
     if (log) {
+      container.querySelectorAll('.record-section').forEach((section,index) => {
+        const heading = section.querySelector('h4'), fields = section.querySelector('dl');
+        if (!heading || !fields) return;
+        const disclosure = document.createElement('details'), summary = document.createElement('summary');
+        disclosure.className = section.className; disclosure.open = index === 0; summary.textContent = heading.textContent;
+        disclosure.append(summary, fields); section.replaceWith(disclosure);
+      });
       const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-full-record]');
       const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];
       if (!logIds.length) { chart.innerHTML = '<p>No computer profile is linked to this dive.</p>'; return; }
@@ -284,6 +296,10 @@
     status('Your record export is ready.');
   }
   shell('logbook'); shell('gear'); render('logbook'); render('gear');
+  window.addEventListener('resize', () => {
+    const narrow = window.matchMedia('(max-width: 760px)').matches;
+    Object.entries(panels).forEach(([view, panel]) => panel.querySelector('.diving-layout')?.classList.toggle('is-mobile-detail', narrow && ui[view].mobileDetail));
+  }, { passive:true });
   window.DMZDiving = {
     connect(options) {
       request = options.request;

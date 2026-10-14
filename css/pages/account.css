@@ -938,8 +938,10 @@
 @media (max-width: 820px) {
   .account-shell { width: min(100% - 28px, 1480px); padding-top: 24px; }
   .account-portal-shell { gap: 12px; }
-  .account-portal-nav { position: sticky; z-index: 20; top: 8px; gap: 10px; padding: 11px 12px; backdrop-filter: blur(18px); }
-  .account-portal-identity { padding: 0 2px 9px; }
+  .account-portal-nav { position: static; display: grid; grid-template-columns:minmax(0,1fr) auto; gap: 5px 8px; padding: 10px 12px 7px; backdrop-filter: blur(18px); }
+  .account-portal-identity { grid-column: 1; grid-row: 1; padding: 0 2px; border: 0; }
+  .account-signout-button { grid-column: 2; grid-row: 1; justify-self: end; }
+  .account-nav-menu { grid-column: 1 / -1; grid-row: 2; }
   .account-nav-menu { margin: 0 -3px; padding: 0 3px 3px; }
   .account-nav-menu button, .account-nav-menu a { min-height: 38px; }
 }

@@ -38,7 +38,15 @@ const records = [
         document.querySelector('[data-account-view-panel="planner"]').hidden=false;
       },records);
       await page.waitForSelector('text=Cozumel week');
+      await page.click('[data-plan-select="plan-1"]');
+      if (viewport.width <= 760) {
+        assert.equal(await page.locator('.planner-detail').evaluate((el) => el.closest('.diving-layout').classList.contains('is-mobile-detail')), true);
+        await page.click('[data-plan-mobile-back]');
+        assert.equal(await page.locator('.planner-detail').evaluate((el) => el.closest('.diving-layout').classList.contains('is-mobile-detail')), false);
+        await page.click('[data-plan-select="plan-1"]');
+      }
       await page.waitForSelector('text=Atlas + Gear Locker suggestion');
+      await page.locator('[data-plan-detail] .planner-disclosure').nth(1).locator('summary').click();
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Atlas \+ Gear Locker suggestion/);
       assert.match(await page.locator('[data-plan-detail]').innerText(),/Two-tank boat dives/);
       await page.click('[data-plan-new]');
@@ -46,8 +54,17 @@ const records = [
       assert.equal(await page.locator('.planner-segment').count(),1);
       await page.click('[data-cancel]');
       await page.evaluate(()=>{document.querySelector('[data-account-view-panel="planner"]').hidden=true;document.querySelector('[data-account-view-panel="logbook"]').hidden=false;});
+      await page.click('[data-diving-logbook] [data-select="dive-1"]');
+      if (viewport.width <= 760) {
+        assert.equal(await page.locator('[data-diving-logbook] .diving-layout').evaluate((el) => el.classList.contains('is-mobile-detail')), true);
+        await page.click('[data-diving-logbook] [data-mobile-back]');
+        assert.equal(await page.locator('[data-diving-logbook] .diving-layout').evaluate((el) => el.classList.contains('is-mobile-detail')), false);
+        await page.click('[data-diving-logbook] [data-select="dive-1"]');
+      }
       await page.waitForSelector('[data-diving-logbook] .diving-raw');
       assert.equal(await page.locator('[data-diving-logbook] .diving-stat').count(),6);
+      assert.equal(await page.locator('[data-diving-logbook] .record-sections details').count(),4);
+      assert.equal(await page.locator('[data-diving-logbook] .record-sections details[open]').count(),1);
       assert.match(await page.locator('[data-diving-logbook] [data-detail]').innerText(),/Visibility/);
       assert.equal(await page.locator('[data-diving-logbook] [data-export-csv]').count(),1);
       await page.close();
