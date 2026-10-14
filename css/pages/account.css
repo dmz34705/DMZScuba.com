@@ -914,6 +914,20 @@
   }
 }
 
+/* Tool workspaces use the width of a desktop, with account navigation above them. */
+.account-workspace-tools .account-portal-shell { grid-template-columns:minmax(0,1fr); gap:16px; }
+.account-workspace-tools .account-portal-nav { position:static; display:grid; grid-template-columns:160px minmax(0,1fr) auto; align-items:center; gap:14px; padding:10px 14px; }
+.account-workspace-tools .account-portal-identity { padding:0; border:0; }
+.account-workspace-tools .account-portal-identity div > span,.account-workspace-tools .account-portal-identity small { display:none; }
+.account-workspace-tools .account-nav-menu { display:flex; min-width:0; overflow:auto; gap:3px; scrollbar-width:thin; }
+.account-workspace-tools .account-nav-menu > * { flex:0 0 auto; white-space:nowrap; }
+.account-workspace-tools .account-signout-button { margin:0; }
+@media(max-width:820px) {
+ .account-workspace-tools .account-portal-nav { grid-template-columns:minmax(0,1fr) auto; gap:7px; }
+ .account-workspace-tools .account-nav-menu { grid-column:1/-1; grid-row:2; }
+ .account-workspace-tools .account-signout-button { grid-column:2; grid-row:1; }
+}
+
 /* Account workspace refresh: tighter navigation and a calmer, more useful canvas. */
 .account-shell { width: min(100% - 40px, 1480px); padding-top: 32px; }
 .account-portal-shell { grid-template-columns: 216px minmax(0, 1fr); gap: 18px; }

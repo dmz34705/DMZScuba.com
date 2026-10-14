@@ -9,8 +9,8 @@
   const dateTile = (v) => { const d=v?new Date(v.length===10?`${v}T12:00:00`:v):null; return d&&!Number.isNaN(d.getTime())?{month:d.toLocaleDateString('en-US',{month:'short'}),day:d.toLocaleDateString('en-US',{day:'2-digit'}),year:d.getFullYear()}: {month:'—',day:'—',year:''}; };
   const keyOf = (r) => `${r.kind}/${r.id}`;
   let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
-  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'overview', page:'dives', from:'', to:'', mode:'' }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview' } };
-  let imperial = false, dialogRecord = null;
+  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'profile', page:'dives', from:'', to:'', mode:'' }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview' } };
+  let imperial = false, dialogRecord = null, disposeProfile = null;
   const dialog = document.createElement('dialog');
   dialog.className = 'diving-dialog'; dialog.setAttribute('aria-labelledby', 'diving-editor-title');
   document.body.append(dialog);
@@ -43,6 +43,7 @@
     panel.addEventListener('click', (e) => {
       const button = e.target.closest('button'); if (!button || !userId) return;
       if (button.hasAttribute('data-log-page')) { ui.logbook.page = button.dataset.logPage; render(view); }
+      if (button.hasAttribute('data-gear-page')) { ui.gear.page=button.dataset.gearPage;ui.gear.mobileDetail=false;ui.gear.selected=null;render('gear'); }
       if (button.hasAttribute('data-list-page')) { ui[view].pageIndex=(ui[view].pageIndex||0)+Number(button.dataset.listPage); ui[view].mobileDetail=false; render(view); panels[view].querySelector('[data-list]').scrollTop=0; }
       if (button.hasAttribute('data-refresh')) load(true);
       if (button.hasAttribute('data-add')) edit(button.dataset.add);
@@ -50,10 +51,10 @@
         ui[view].mobileDetail = false; render(view);
         [...panel.querySelectorAll('[data-select]')].find((entry) => entry.dataset.select === ui[view].selected)?.focus();
       }
-      if (button.hasAttribute('data-select')) { if(ui[view].selected !== button.dataset.select) ui[view].tab='overview'; ui[view].selected = button.dataset.select; ui[view].mobileDetail = true; render(view); }
+      if (button.hasAttribute('data-select')) { if(ui[view].selected !== button.dataset.select) ui[view].tab=view==='logbook'?'profile':'overview'; ui[view].selected = button.dataset.select; ui[view].mobileDetail = true; render(view); }
       if (button.hasAttribute('data-edit')) edit(button.dataset.edit, button.dataset.id);
       if (button.hasAttribute('data-delete')) remove(button.dataset.delete, button.dataset.id);
-      if (button.hasAttribute('data-setup')) { ui.gear.setup = button.dataset.setup; ui.gear.selected = null; render('gear'); }
+      if (button.hasAttribute('data-setup')) { ui.gear.setup = button.dataset.setup; ui.gear.page='setups';ui.gear.mobileDetail=true;ui.gear.selected=null;render('gear'); }
       if (button.hasAttribute('data-export')) exportData(view).catch((error) => status(error.message,true));
       if (button.hasAttribute('data-export-csv')) exportCsv().catch((error) => status(error.message,true));
     });
@@ -79,6 +80,7 @@
     return [...dates, ...(item.components || []).map(dueFor).filter(Boolean)].sort()[0] || '';
   }
   function gearStatus(item) {
+    if(window.DMZGearModel){const status=window.DMZGearModel.serviceStatusForSet(item,all('gear').map((row)=>row.data));return {label:status.label,tone:status.tone==='danger'?'blocked':status.tone==='warning'?'attention':''};}
     if (['Out of service','Retired'].includes(item.condition)) return { label:item.condition, tone:'blocked' };
     if (item.condition === 'Needs attention' || (item.components || []).some((c) => ['Needs attention','Out of service'].includes(c.condition))) return { label:'Needs attention', tone:'attention' };
     const due = dueFor(item), days = due ? (new Date(`${due}T23:59:59`) - new Date()) / 86400000 : Infinity;
@@ -94,14 +96,18 @@
         + stat(new Set(values.map((r) => r.data.site?.name).filter(Boolean)).size, 'Dive sites')
         + stat(new Set(values.map((r) => r.data.site?.country).filter(Boolean)).size, 'Countries')
       : stat(values.length, 'Items in your locker') + stat(all('setup').length, 'Saved setups') + stat(values.filter((r) => gearStatus(r.data).tone).length, 'Need attention');
-    if (!log) panel.querySelector('[data-setups]').innerHTML = `<button data-setup="" aria-pressed="${!state.setup}">All equipment</button>` + all('setup').map((r) => `<button data-setup="${esc(r.id)}" aria-pressed="${r.id === state.setup}">${esc(r.data.name)}</button>`).join('') + '<button data-add="setup">+ New setup</button>';
+    if (!log) {
+      panel.querySelector('[data-setups]').innerHTML = [['inventory','Equipment'],['setups','Setups & packing'],['service','Service center']].map(([page,label])=>`<button type="button" data-gear-page="${page}" aria-pressed="${(state.page||'inventory')===page}">${label}</button>`).join('');
+      if(state.page==='setups'){renderSetups(panel);return;}
+    }
     let shown = values.filter((r) => {
       const d = r.data;
+      if(!log&&state.page==='service'&&!gearStatus(d).tone)return false;
       const text = log ? [d.site?.name,d.site?.location,d.notes,...(d.buddies || [])] : [d.name,d.category,d.manufacturer,d.model,d.serialNumber];
       const setup = records.get(`setup/${state.setup}`);
       const stamp = String(d.startTime || '').slice(0,10);
       return (!log || ((!state.from || stamp >= state.from) && (!state.to || stamp <= state.to) && (!state.mode || d.diveMode === state.mode)))
-        && (!state.filter || (log ? d.source : d.category) === state.filter) && text.join(' ').toLowerCase().includes(state.search.toLowerCase()) && (log || !setup || (setup.data.itemIds || []).includes(r.id));
+        && (!state.filter || (log ? d.source : d.category) === state.filter) && text.join(' ').toLowerCase().includes(state.search.toLowerCase());
     });
     shown.sort((a,b) => log
       ? state.sort === 'deepest' ? number(b.data.water?.maxDepthMeters) - number(a.data.water?.maxDepthMeters) : String(a.data.startTime || '').localeCompare(String(b.data.startTime || '')) * (state.sort === 'oldest' ? 1 : -1)
@@ -137,6 +143,35 @@
     else panel.querySelector('[data-detail]').innerHTML = !log && state.setup ? setupDetail(records.get(`setup/${state.setup}`)) : `<div class="diving-empty"><h3>${loaded ? 'Ready when you are' : 'Loading your account'}</h3><p>${loaded ? 'Select a record to explore its details.' : 'Your records will appear here after loading.'}</p></div>`;
   }
   const pair = (label, value) => `<div><dt>${esc(label)}</dt><dd>${esc(value == null || value === '' ? '—' : value)}</dd></div>`;
+  function gearState(){return {items:all('gear').map((row)=>row.data),setups:all('setup').map((row)=>({checkedIds:[],itemIds:[],...row.data}))};}
+  async function persistGearState(next,setupId){
+    for(const [kind,values]of [['gear',next.items],['setup',next.setups]])for(const data of values){
+      const row=records.get(`${kind}/${data.id}`);if(row&&JSON.stringify(row.data)!==JSON.stringify(data))await save({...row,data});
+    }
+    const result=records.get(`setup/${setupId}`)?.data;
+    const button=[...panels.gear.querySelectorAll('[data-setup]')].find((el)=>el.dataset.setup===setupId);
+    if(result&&button){const progress=window.DMZGearModel.setupProgress(result,all('gear').map((row)=>row.data));button.querySelector('small').textContent=`${result.type} · ${progress.checked}/${progress.total} pieces packed`;button.querySelector('progress').value=progress.checked;}
+    return result;
+  }
+  function renderSetups(panel){
+    const state=ui.gear,model=window.DMZGearModel,current=gearState(),setups=all('setup');
+    const wanted=setups.filter((row)=>row.data.name?.toLowerCase().includes(state.search.toLowerCase()));
+    if(!wanted.some((row)=>row.id===state.setup))state.setup=wanted[0]?.id||'';
+    panel.querySelector('.diving-layout').hidden=false;
+    panel.querySelector('.diving-layout').classList.toggle('is-mobile-detail',state.mobileDetail&&window.matchMedia('(max-width:760px)').matches);
+    panel.querySelector('[data-list]').innerHTML=`<div class="tool-list-pagination"><span>${wanted.length} saved setups</span><button type="button" data-add="setup" aria-label="Create a gear setup">+</button></div>`+wanted.map((row)=>{
+      const progress=model.setupProgress(row.data,current.items);
+      return `<button type="button" class="diving-entry setup-entry" data-setup="${esc(row.id)}" aria-pressed="${row.id===state.setup}"><span class="entry-gear-icon">◇</span><span><strong>${esc(row.data.name)}</strong><small>${esc(row.data.type)} · ${progress.checked}/${progress.total} pieces packed</small><progress max="${progress.total||1}" value="${progress.checked}"></progress></span><span class="entry-chevron">›</span></button>`;
+    }).join('');
+    const container=panel.querySelector('[data-detail]'),row=records.get(`setup/${state.setup}`);
+    if(!row){container.innerHTML='<div class="diving-empty"><h3>Build your first setup</h3><p>Group the equipment you take diving and pack every component.</p><button class="btn primary" data-add="setup">Create a setup</button></div>';return;}
+    container.innerHTML=`<button class="diving-mobile-back" data-mobile-back>Back to setups</button><div class="workbench-title"><div><p class="diving-kicker">${esc(row.data.type)}</p><h3>${esc(row.data.name)}</h3></div><button class="btn secondary" data-edit="setup" data-id="${esc(row.id)}">Edit setup</button></div><div data-setup-packing></div>`;
+    window.DMZPacking.mount(container.querySelector('[data-setup-packing]'),{setup:row.data,items:current.items,setups:current.setups,
+      onChecks:async(keys,checked)=>persistGearState(model.applyChecks(gearState(),row.id,keys,checked),row.id),
+      onSetup:async(data)=>(await save({...records.get(`setup/${row.id}`),data})).data,
+      onMove:async(itemId)=>persistGearState(model.moveFloatingItem(gearState(),itemId,row.id),row.id),
+      onOpen:(id)=>{state.page='inventory';state.selected=id;state.mobileDetail=true;render('gear');},onAdd:()=>edit('setup',row.id)});
+  }
   function analytics(rows, host) {
     const sites = new Map(), years = new Map();
     for (const {data:d} of rows) {
@@ -156,6 +191,7 @@
     }).join('');
   }
   async function detail(view, record) {
+    if(view==='logbook'){disposeProfile?.();disposeProfile=null;}
     const d = record.data, log = view === 'logbook', container = panels[view].querySelector('[data-detail]');
     const gasMixes=(d.gas?.mixes||[]).map((mix,index)=>`${index+1}: ${mix.label||'Gas'} (O₂ ${Math.round(number(mix.o2)*100)}%, He ${Math.round(number(mix.he)*100)}%)`).join('; ');
     const tanks=(d.gas?.tanks||[]).map((tank,index)=>`${index+1}: ${tank.volumeLiters??'?'} L · ${tank.startBar??'?'} → ${tank.endBar??'?'} bar · ${tank.workPressureBar??'?'} bar working pressure`).join('; ');
@@ -164,7 +200,7 @@
       ${log ? diveSections(d,gasMixes,tanks) : `<section class="record-section"><h4>Equipment details</h4><dl>${pair('Condition',d.condition)}${pair('Serial number',d.serialNumber)}${pair('Next service',dueFor(d)?date(dueFor(d)):'Not set')}${pair('Last service',d.lastServiceDate?date(d.lastServiceDate):'')}${pair('Configuration',d.configuration)}${pair('Purchased',d.purchaseDate?date(d.purchaseDate):'')}</dl></section>`}
       ${log ? '<div data-computer-profiles></div>' : (d.components?.length ? `<h4>Assembly components</h4><ul class="diving-components">${d.components.map((c) => `<li><strong>${esc(c.name || c.type)}</strong><small>${esc([c.manufacturer,c.model,c.serialNumber].filter(Boolean).join(' · '))}</small><small>${esc(c.condition || 'Ready')}${dueFor(c) ? ` · Due ${esc(date(dueFor(c)))}` : ''}</small></li>`).join('')}</ul>` : '')}
       ${d.notes ? `<h4>${log ? 'Dive notes' : 'Equipment notes'}</h4><p class="diving-notes">${esc(d.notes)}</p>` : ''}
-      ${log ? `<details class="diving-raw"><summary>Pop the hood · inspect the complete dive and computer records</summary><pre data-full-record>${esc(JSON.stringify({ dive:d, computerLogs:[] },null,2))}</pre></details>` : ''}
+      ${log ? '<div data-sample-explorer></div>' : ''}
       ${!log && d.serviceNotes ? `<h4>Service notes</h4><p class="diving-notes">${esc(d.serviceNotes)}</p>` : ''}
       `;
     const overview = document.createElement('div'); overview.className = 'tool-record-overview';
@@ -175,23 +211,23 @@
     if (notes) { const heading=notes.previousElementSibling; if(heading?.tagName==='H4') heading.remove(); overview.append(notes); }
     const tabHost=document.createElement('div'); tabHost.className='tool-record-tabs';
     if(log) {
-      const sections=container.querySelector('.record-sections'), profile=container.querySelector('[data-computer-profiles]'), raw=container.querySelector('.diving-raw');
-      raw.open=true;
-      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview]},{key:'profile',label:'Profile',nodes:[profile]},{key:'details',label:'Dive record',nodes:[sections]},{key:'data',label:'Raw data',nodes:[raw]}],ui[view].tab,(key)=>{ui[view].tab=key;});
+      const sections=container.querySelector('.record-sections'), profile=container.querySelector('[data-computer-profiles]'), raw=container.querySelector('[data-sample-explorer]');
+      window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview]},{key:'profile',label:'Profile',nodes:[profile]},{key:'details',label:'Dive record',nodes:[sections]},{key:'data',label:'Sample Explorer',nodes:[raw]}],ui[view].tab,(key)=>{ui[view].tab=key;});
     } else {
       const section=container.querySelector('.record-section'), components=container.querySelector('.diving-components'), service=container.querySelectorAll('.diving-notes');
       const schedule=document.createElement('section'); schedule.className='record-section';
       schedule.innerHTML=`<h4>Service schedule</h4><dl>${pair('Last service',d.lastServiceDate?date(d.lastServiceDate):'Not recorded')}${pair('Next service',dueFor(d)?date(dueFor(d)):'Not scheduled')}${pair('Service interval',d.serviceIntervalMonths?`${d.serviceIntervalMonths} months`:'Not set')}${pair('Visual inspection due',d.visualInspectionDue?date(d.visualInspectionDue):'Not set')}${pair('Hydrostatic test due',d.hydrostaticTestDue?date(d.hydrostaticTestDue):'Not set')}</dl>`;
       if(components?.previousElementSibling?.tagName==='H4')components.previousElementSibling.remove();
       service.forEach((note)=>{if(note.previousElementSibling?.tagName==='H4')note.previousElementSibling.remove();});
-      const setupContent=document.createElement('div');setupContent.innerHTML=all('setup').filter((row)=>(row.data.itemIds||[]).includes(record.id)).map((row)=>setupDetail(row)).join('')||'<p>This item is not assigned to a saved setup yet.</p>';
+      const setupContent=document.createElement('div');setupContent.innerHTML=all('setup').filter((row)=>(row.data.itemIds||[]).includes(record.id)).map((row)=>`<button class="btn secondary" data-setup="${esc(row.id)}">Open ${esc(row.data.name)} checklist →</button>`).join('')||'<p>This item is not assigned to a saved setup yet.</p>';
+      if(components){components.querySelectorAll('li').forEach((node,index)=>{const button=document.createElement('button');button.type='button';button.className='btn secondary';button.textContent='Edit part / service';button.onclick=()=>editComponent(record.id,index);node.append(button);});}
       window.DMZTools.tabs(tabHost,[{key:'overview',label:'Overview',nodes:[overview,section]},{key:'service',label:'Service & parts',nodes:[schedule,components,...service]},{key:'setups',label:'Setups',nodes:[setupContent]}],ui[view].tab,(key)=>{ui[view].tab=key;});
     }
     container.append(tabHost);
     if (log) {
-      const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-full-record]');
+      const ticket = ++detailEpoch, accountTicket = epoch, chart = container.querySelector('[data-computer-profiles]'), raw = container.querySelector('[data-sample-explorer]');
       const logIds = [...new Set([...(d.logIds || []), d.primaryLogId].filter(Boolean))];
-      if (!logIds.length) { chart.innerHTML = '<p>No computer profile is linked to this dive.</p>'; return; }
+      if (!logIds.length) { disposeProfile=window.DMZProfileExplorer.mount(chart,raw,{dive:d,logs:d.profile?.samples?.length?[d]:[],imperial}); return; }
       chart.textContent = 'Loading linked computer profiles…';
       try {
         const computers = await Promise.all(logIds.map(async (logId) => {
@@ -200,32 +236,9 @@
           return computer;
         }));
         if (!chart.isConnected || ticket !== detailEpoch || epoch !== accountTicket) return;
-        chart.innerHTML = computers.map((computer,index) => `<section><h4>${esc(computer.data.device?.model||computer.data.computer?.model||`Computer profile${computers.length>1?` ${index+1}`:''}`)}</h4>${profileChart(computer.data.profile?.samples || [])}</section>`).join('');
-        chart.querySelectorAll('[data-profile-scrub]').forEach((input) => {
-          const samples = computers[[...chart.querySelectorAll('[data-profile-scrub]')].indexOf(input)]?.data.profile?.samples || [];
-          input.addEventListener('input', () => {
-            const point=samples[Number(input.value)]; if(!point)return;
-            input.closest('section').querySelector('[data-profile-readout]').textContent=`${duration(point.t)} · ${depth(point.depth)} · ${temp(point.tempC)}${point.pressureBar!=null?` · ${point.pressureBar} bar`:''}${point.setpoint!=null?` · ppO₂ ${point.setpoint}`:''}${point.ndl!=null?` · NDL ${point.ndl}`:''}`;
-          });
-          input.dispatchEvent(new Event('input'));
-        });
-        raw.textContent = JSON.stringify({ dive:d, computerLogs:computers.map((row)=>row.data) },null,2);
+        disposeProfile=window.DMZProfileExplorer.mount(chart,raw,{dive:d,logs:computers.map((row)=>row.data),imperial});
       } catch { if (chart.isConnected && ticket === detailEpoch) chart.textContent = 'A linked computer profile could not load. Refresh to try again.'; }
     }
-  }
-  function profileChart(samples) {
-    return depthChart(samples) + (samples.length > 1 ? `<label class="tool-profile-scrub">Inspect a point<input type="range" min="0" max="${samples.length-1}" value="0" data-profile-scrub aria-label="Inspect computer profile sample"><output data-profile-readout aria-live="polite"></output></label>` : '');
-  }
-  function depthChart(samples) {
-    const points = samples.filter((p) => Number.isFinite(p.t) && Number.isFinite(p.depth) && p.t >= 0 && p.depth >= 0);
-    if (points.length < 2) return '<p>No depth samples available.</p>';
-    const maxT = Math.max(1,...points.map((p) => p.t)), maxD = Math.max(1,...points.map((p) => p.depth));
-    const step = Math.max(1, Math.ceil(points.length / 600));
-    const xy = points.filter((_,i) => i % step === 0 || i === points.length - 1).map((p) => `${(45 + p.t / maxT * 470).toFixed(1)},${(24 + p.depth / maxD * 145).toFixed(1)}`).join(' ');
-    const temperatures = points.map((p) => p.tempC).filter(Number.isFinite), pressures = points.map((p) => p.pressureBar).filter((v) => Number.isFinite(v) && v > 0);
-    let fastest = 0;
-    for (let i=1;i<points.length;i++) { const seconds=points[i].t-points[i-1].t; if(seconds>0&&points[i].depth<points[i-1].depth) fastest=Math.max(fastest,(points[i-1].depth-points[i].depth)/seconds*60); }
-    return `<h4>Computer depth profile</h4><dl class="diving-profile-metrics">${pair('Samples',points.length.toLocaleString())}${pair('Minimum recorded temperature',temperatures.length?temp(Math.min(...temperatures)):'')}${pair('Cylinder pressure range',pressures.length?`${Math.round(Math.max(...pressures))} → ${Math.round(Math.min(...pressures))} bar`:'')}${pair('Fastest sampled ascent',fastest?`${fastest.toFixed(1)} m/min`:'')}</dl><svg class="diving-chart" viewBox="0 0 550 215" role="img" aria-label="Dive depth profile, maximum ${esc(depth(maxD))}, duration ${esc(duration(maxT))}"><path d="M45 24H520M45 96H520M45 169H520" stroke="#294357" fill="none"/><polygon points="45,24 ${xy} 515,24" fill="#205563" opacity=".6"/><polyline points="${xy}" fill="none" stroke="#78e3d7" stroke-width="2"/><g fill="#a5bfd2" font-size="10" font-family="sans-serif"><text x="8" y="28">0</text><text x="3" y="174">${esc(depth(maxD))}</text><text x="45" y="198">0 min</text><text x="460" y="198">${esc(duration(maxT))}</text></g></svg><p class="diving-footnote">Sample-derived values help inspect the log; use your dive computer and training for safety decisions.</p>`;
   }
   async function load(force = false) {
     if (!request || !userId || loading || (loaded && !force)) return;
@@ -269,6 +282,16 @@
   }
   function field(label,name,value = '',type = 'text',extra = '') {
     return `<label>${label}<input aria-label="${esc(label)}" name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
+  }
+  function editComponent(itemId,index){
+    const row=records.get(`gear/${itemId}`),part=row?.data.components?.[index];if(!part)return;
+    dialog.innerHTML=`<h3 id="diving-editor-title">${esc(part.name||'Equipment part')}</h3><form class="diving-form">${field('Part name','name',part.name,'text','required')}${field('Part type','type',part.type)}${field('Manufacturer','manufacturer',part.manufacturer)}${field('Model','model',part.model)}${field('Serial number','serialNumber',part.serialNumber)}${select('Condition','condition',part.condition||'Ready',['Ready','Needs attention','Out of service','Retired'])}${field('Last service','lastServiceDate',part.lastServiceDate,'date')}${field('Next service','nextServiceDate',part.nextServiceDate,'date')}${field('Service interval (months)','serviceIntervalMonths',part.serviceIntervalMonths,'number','min="0" max="120"')}${field('Visual inspection due','visualInspectionDue',part.visualInspectionDue,'date')}${field('Hydrostatic test due','hydrostaticTestDue',part.hydrostaticTestDue,'date')}<p class="diving-status wide" role="status" data-part-status></p><div class="diving-actions wide"><button type="button" class="btn secondary" data-part-cancel>Cancel</button><button type="submit" class="btn primary">Save part</button></div></form>`;
+    dialog.querySelector('[data-part-cancel]').onclick=()=>dialog.close();
+    dialog.querySelector('form').onsubmit=async(event)=>{
+      event.preventDefault();const form=event.currentTarget,values=Object.fromEntries(new FormData(form)),data={...row.data,components:row.data.components.map((entry,i)=>i===index?{...entry,...values,serviceIntervalMonths:values.serviceIntervalMonths||''}:entry)};
+      form.querySelector('[type="submit"]').disabled=true;
+      try{await save({...row,data});dialog.close();render('gear');status('Component and service details saved.');}catch(error){dialog.querySelector('[data-part-status]').textContent=error.status===409?'This item changed elsewhere. Close and refresh before editing this part again.':error.message;form.querySelector('[type="submit"]').disabled=false;}
+    };dialog.showModal();
   }
   function select(label,name,value,choices) {
     return `<label>${label}<select aria-label="${esc(label)}" name="${name}">${choices.map((v) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(v || 'Not set')}</option>`).join('')}</select></label>`;
@@ -363,7 +386,7 @@
       if (next !== userId) { epoch++; userId = next; records.clear(); loaded = false; loading = null; imperial = options.account?.appSettings?.depthUnit === 'ft'; panels.logbook.querySelector('[data-units]').value = imperial ? 'imperial' : 'metric'; render('logbook'); render('gear'); }
     },
     open(view) { active = view; load(); },
-    disconnect() { epoch++; userId = null; request = null; loaded = false; loading = null; records.clear(); dialog.close(); dialog.innerHTML = ''; dialogRecord = null; render('logbook'); render('gear'); status('Sign in to load your records.'); },
+    disconnect() { disposeProfile?.(); disposeProfile=null; epoch++; userId = null; request = null; loaded = false; loading = null; records.clear(); dialog.close(); dialog.innerHTML = ''; dialogRecord = null; render('logbook'); render('gear'); status('Sign in to load your records.'); },
   };
   document.addEventListener('visibilitychange', () => { if (!document.hidden && userId && loaded && !dialog.open) load(true); });
   window.setInterval(() => {

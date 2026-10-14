@@ -74,6 +74,7 @@ const records = [
       assert.match(await page.locator('[data-diving-logbook] [data-detail]').innerText(),/Visibility/);
       await page.click('[data-diving-logbook] [data-tool-tab="data"]');
       await page.waitForSelector('[data-diving-logbook] .diving-raw');
+      await page.click('[data-diving-logbook] .diving-raw > summary');
       assert.match(await page.locator('[data-full-record]').innerText(),/"maxDepthMeters": 28/);
       assert.equal(await page.locator('[data-diving-logbook] [data-export-csv]').count(),1);
       await page.screenshot({path:path.join(process.env.TEMP||root,`dmz-detail-${viewport.width}.png`),fullPage:true});
