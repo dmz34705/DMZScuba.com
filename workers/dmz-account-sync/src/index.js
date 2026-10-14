@@ -17,7 +17,10 @@ export async function identity(request, env) {
   const response = await env.ACCOUNT_API.fetch(new Request('https://dmz-media-api.internal/api/account', {
     headers: { Authorization: authorization, Accept: 'application/json' }, signal: AbortSignal.timeout(15000),
   }));
-  if (!response.ok) return { error: json({ ok: false, error: response.status === 403 ? 'This account is inactive.' : 'Your session could not be verified.' }, [401, 403].includes(response.status) ? response.status : 503) };
+  if (!response.ok) {
+    if (![401, 403].includes(response.status)) console.warn('[Account Sync] account verification returned an unexpected status', { status: response.status });
+    return { error: json({ ok: false, error: response.status === 403 ? 'This account is inactive.' : 'Your session could not be verified.' }, [401, 403].includes(response.status) ? response.status : 503) };
+  }
   const data = await response.json();
   const userId = data?.profile?.userId;
   if (!data.ok || !userId) return { error: json({ ok: false, error: 'Your session could not be verified.' }, 401) };
@@ -107,5 +110,9 @@ export async function handle(request, env) {
 
 export default { async fetch(request, env) {
   try { return await handle(request, env); }
-  catch { return json({ ok: false, error: 'Sync is temporarily unavailable. Your device data is safe.' }, 503); }
+  catch (error) {
+    const url = new URL(request.url);
+    console.error('[Account Sync] request failed unexpectedly', { path: url.pathname, method: request.method, name: error?.name || 'Error' });
+    return json({ ok: false, error: 'Sync is temporarily unavailable. Your device data is safe.' }, 503);
+  }
 } };
