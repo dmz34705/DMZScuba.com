@@ -101,6 +101,37 @@ body.is-account-tools { height:100dvh; min-height:0; display:flex; flex-directio
 [data-browser-pagination] .tool-list-pagination { position:static; padding:0; border:0; background:transparent; font-size:10px; color:#8daebf; }
 [data-browser-pagination] .tool-list-pagination button { min-width:27px; min-height:27px; padding:2px; border-color:#2e4a58; background:transparent; font-size:18px; }
 .browser-record-count { color:#8daebf; font-size:10px; }
+.browser-group-tools { display:flex; justify-content:space-between; gap:8px; padding:0 12px 8px; }
+.browser-group-tools[hidden] { display:none; }
+.browser-group-tools button { padding:3px 0; border:0; background:none; color:#87b9c4; font-family:inherit; font-size:10px; cursor:pointer; }
+.diving-browser .browser-record-group { margin:4px 7px; min-width:0; }
+.browser-record-group > summary { display:flex; align-items:center; gap:7px; min-height:35px; padding:7px 9px; border:1px solid #2d4b58; border-radius:8px; background:#112e3c; color:#c4e2e9; font-size:11px; font-weight:600; cursor:pointer; list-style:none; }
+.browser-record-group > summary::-webkit-details-marker { display:none; }
+.browser-record-group > summary::before { content:'›'; color:#76b8c4; font-size:16px; line-height:1; transition:transform .15s; }
+.browser-record-group[open] > summary::before { transform:rotate(90deg); }
+.browser-record-group > summary > span { flex:1; min-width:0; }
+.browser-record-group > summary > small { padding:2px 6px; border-radius:9px; background:#24414d; color:#9bc0cd; font-size:9px; font-variant-numeric:tabular-nums; }
+.browser-record-group > summary > i { width:5px; height:5px; border-radius:50%; background:#78d7ca; }
+.browser-record-group > summary:hover { background:#193b48; border-color:#3e6974; }
+.browser-record-group > summary:focus-visible,.browser-group-tools button:focus-visible { outline:2px solid #78d7ca; outline-offset:2px; }
+.browser-record-group.is-month { margin:5px 0 5px 7px; }
+.browser-record-group.is-month > summary { min-height:30px; padding:5px 8px; background:#0b2533; border-color:#25434f; font-size:10px; }
+.browser-record-group .browser-group-content { padding-top:2px; }
+.browser-group-more { display:block; width:calc(100% - 14px); margin:5px 7px; padding:8px; border:1px dashed #315260; border-radius:7px; background:none; color:#98cfce; font-family:inherit; font-size:10px; cursor:pointer; }
+.browser-category-order { padding:5px 0; color:#a6c8d5; font-size:11px; }
+.browser-category-order > summary { cursor:pointer; padding:5px 0; }
+[data-category-order] > div { display:grid; grid-template-columns:minmax(0,1fr) 27px 27px; gap:4px; align-items:center; margin:6px 0; }
+.browser-more [data-category-order] button { min-height:27px; padding:3px; text-align:center; font-size:12px; }
+.browser-more [data-order-reset] { font-size:10px!important; }
+.is-account-tools .diving-entry-gear { display:grid; grid-template-columns:minmax(0,1fr) 10px; width:calc(100% - 14px); gap:8px; min-height:0; margin:3px 7px; padding:9px; border:1px solid transparent; border-radius:8px; background:none; box-shadow:none; }
+.is-account-tools .diving-entry-gear:hover { background:#12313e; }
+.is-account-tools .diving-entry-gear[aria-pressed="true"] { border-color:#39646a; background:#143640; box-shadow:inset 2px 0 #76dacf; }
+.is-account-tools .diving-entry-gear strong { margin:0 0 3px; font-size:12px; line-height:1.4; font-weight:600; overflow-wrap:anywhere; }
+.is-account-tools .diving-entry-gear .entry-subtitle { color:#83a6b8; font-size:10px; line-height:1.3; }
+.gear-row-status { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:6px; color:#95c7bd; font-size:9px; line-height:1.3; }
+.gear-row-status small { color:#87aabb; font-size:9px; }
+.gear-row-status.attention { color:#e7c589; }
+.gear-row-status.blocked { color:#ffaab4; }
 .is-account-tools .diving-browser > .diving-status { padding-top:4px; font-size:8px; color:#678c9f; }
 .is-account-tools .diving-detail { height:100%; max-height:none; min-height:0; padding:10px 12px; border-radius:10px; overflow:auto; }
 .record-workspace-header { display:flex; align-items:center; gap:8px; min-height:38px; flex:0 0 auto; }

@@ -29,6 +29,7 @@ function fixtures(){return [
     for(const {width,height} of [{width:1440,height:900},{width:1366,height:768},{width:1024,height:768},{width:390,height:844},{width:390,height:667}]){
       const rows=fixtures(),errors=[],writes=[];
       rows.push(record('plan','p2',{...structuredClone(rows.find((row)=>row.id==='p1').data),id:'p2',title:'Second trip',startDate:'2028-02-10',endDate:'2028-02-12'}));
+      for(const [id,category,name]of [['suit','Exposure suit','7 mm wetsuit'],['bcd','BCD','Travel BCD'],['computer','Dive computer','Perdix'],['fins','Fins','Jet fins'],['misc','Surface safety','DSMB']])rows.push(record('gear',`group-${id}`,{category,name,condition:'Ready',components:[],accessoryItemIds:[]}));
       const page=await browser.newPage({viewport:{width,height},acceptDownloads:true});
       page.on('pageerror',(error)=>errors.push(error.message));
       await page.addInitScript(()=>sessionStorage.setItem('dmzCustomerAccessToken','app-port-test'));
@@ -119,7 +120,18 @@ function fixtures(){return [
       assert.equal(await page.locator('[data-pack-keys]').first().evaluate((el)=>el.indeterminate),true);
       await page.screenshot({path:path.join(process.env.TEMP,`dmz-app-gear-${width}.png`),fullPage:true});
       if(width<760)await page.click('[data-diving-gear] [data-mobile-back]');
-      await page.click('[data-gear-page="inventory"]');await page.click('[data-diving-gear] [data-select="reg"]');await page.click('[data-diving-gear] [data-tool-tab="service"]');
+      await page.click('[data-gear-page="inventory"]');
+      assert.deepEqual(await page.locator('[data-diving-gear] [data-list] > [data-browser-group]').evaluateAll((els)=>els.map((el)=>el.dataset.browserGroup)),['exposure','regulator','bcd','computer','mask','fins','misc'],'gear follows the preferred category sequence');
+      await page.click('[data-diving-gear] [data-groups-action="expand"]');
+      await page.screenshot({path:path.join(process.env.TEMP,`dmz-grouped-gear-${width}.png`),fullPage:true});
+      await page.click('[data-diving-gear] .browser-more > summary');
+      await page.click('[data-diving-gear] .browser-category-order > summary');
+      await page.click('[data-diving-gear] [data-order-key="regulator"][data-order-move="-1"]');
+      assert.equal(await page.locator('[data-diving-gear] [data-list] > [data-browser-group]').first().getAttribute('data-browser-group'),'regulator','category order is editable');
+      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('dmzGearCategoryOrder:test-owner'))[0]),'regulator','category order is saved for this account in this browser');
+      await page.click('[data-diving-gear] .browser-more > summary');
+      await page.click('[data-diving-gear] [data-browser-group="mask"] > summary');
+      await page.click('[data-diving-gear] [data-select="reg"]');await page.click('[data-diving-gear] [data-tool-tab="service"]');
       await page.locator('.diving-components button').first().click();await page.fill('[name="serialNumber"]','PART-123');await page.click('.diving-dialog [type="submit"]');await page.waitForFunction(()=>!document.querySelector('.diving-dialog').open);
       assert.equal(rows.find((row)=>row.id==='reg').data.components[0].serialNumber,'PART-123','component edits preserve the original component ID and packing key');
       await page.click('.account-nav-menu [data-account-view="planner"]');await page.waitForSelector('[data-plan-select="p1"]');
@@ -165,6 +177,8 @@ function fixtures(){return [
       await page.reload();
       await page.waitForSelector('[data-diving-gear] [data-select="reg"][aria-pressed="true"]',{state:'attached'});
       assert.equal(await page.locator('[data-diving-gear] [data-tool-tab="service"]').getAttribute('aria-selected'),'true','gear selection and service tab survive reload');
+      assert.equal(await page.locator('[data-diving-gear] [data-list] > [data-browser-group]').first().getAttribute('data-browser-group'),'regulator','custom group order survives reload');
+      assert.equal(await page.locator('[data-diving-gear] [data-browser-group="mask"]').evaluate((el)=>el.open),false,'collapsed groups survive reload alongside the selected item');
       await page.click('.account-nav-menu [data-account-view="logbook"]');
       await page.waitForSelector('[data-select="d1"]',{state:'attached'});
       if(width<760 && await page.locator('[data-select="d1"]').isVisible())await page.click('[data-select="d1"]');

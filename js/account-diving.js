@@ -3,17 +3,21 @@
   const panels = { logbook: document.querySelector('[data-diving-logbook]'), gear: document.querySelector('[data-diving-gear]') };
   if (!panels.logbook || !panels.gear) return;
   const categories = ['Exposure suit','Undergarment','BCD','Regulator','Cylinder / tank','Fins','Boots','Hood','Gloves','Weights','Mask','Snorkel','Dive computer','Transmitter','Gauges / compass','Lights','Camera','Cutting / signaling','Surface safety','Rebreather','DPV / scooter','Bags / storage','Spare parts','Accessories'];
+  const gearGroups=[['exposure','Exposure protection'],['regulator','Regulators'],['bcd','BCDs'],['computer','Computers & instruments'],['mask','Masks'],['fins','Fins'],['misc','Miscellaneous']];
+  const defaultOrder=gearGroups.map(([key])=>key);
+  const orderedGroups=(order)=>[...new Set([...(Array.isArray(order)?order:[]).filter((key)=>defaultOrder.includes(key)),...defaultOrder])];
+  const gearGroup=(category)=>/^(exposure protection|exposure suit|undergarment|boots|hood|gloves|wetsuit|drysuit)$/i.test(category)?'exposure':/^regulator$/i.test(category)?'regulator':/^bcd$/i.test(category)?'bcd':/^(dive computer|computer|transmitter|gauges \/ compass)$/i.test(category)?'computer':/^mask$/i.test(category)?'mask':/^fins$/i.test(category)?'fins':'misc';
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const number = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
   const date = (v) => !v || Number.isNaN(new Date(v).getTime()) ? 'No date' : new Date(v.length === 10 ? `${v}T12:00:00` : v).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
   const dateTile = (v) => { const d=v?new Date(v.length===10?`${v}T12:00:00`:v):null; return d&&!Number.isNaN(d.getTime())?{month:d.toLocaleDateString('en-US',{month:'short'}),day:d.toLocaleDateString('en-US',{day:'2-digit'}),year:d.getFullYear()}: {month:'—',day:'—',year:''}; };
   const keyOf = (r) => `${r.kind}/${r.id}`;
   let request, userId, epoch = 0, detailEpoch = 0, loaded = false, loading = null, records = new Map(), active = 'logbook';
-  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'profile', page:'dives', from:'', to:'', mode:'' }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview' } };
+  const ui = { logbook: { search:'', filter:'', sort:'newest', selected:null, mobileDetail:false, tab:'profile', page:'dives', from:'', to:'', mode:'',organization:'grouped',closed:{},limits:{} }, gear: { search:'', filter:'', sort:'name', selected:null, setup:'', mobileDetail:false, tab:'overview',organization:'grouped',closed:{},limits:{},order:[...defaultOrder] } };
   const defaultUi=structuredClone(ui);
   let pendingWorkspace=null;
   window.DMZWorkspace?.register('diving',()=>({owner:userId,value:pendingWorkspace||{
-    ui:Object.fromEntries(Object.entries(ui).map(([view,state])=>[view,Object.fromEntries(['search','filter','sort','selected','setup','mobileDetail','tab','page','from','to','mode','pageIndex'].map((key)=>[key,state[key]]))])),
+    ui:Object.fromEntries(Object.entries(ui).map(([view,state])=>[view,Object.fromEntries(['search','filter','sort','selected','setup','mobileDetail','tab','page','from','to','mode','pageIndex','organization','closed','limits','order'].map((key)=>[key,state[key]]))])),
     imperial,scrolls:Object.fromEntries(Object.entries(panels).map(([view,panel])=>[view,window.DMZWorkspace.scrolls(panel)]))
   }}));
   function restoreWorkspace() {
@@ -21,6 +25,7 @@
     const saved=pendingWorkspace;pendingWorkspace=null;
     for(const view of Object.keys(ui)){
       Object.assign(ui[view],saved.ui?.[view]);
+      ui[view].closed||={};ui[view].limits||={};if(view==='gear')ui.gear.order=orderedGroups(ui.gear.order);
       for(const [attr,prop] of [['search','search'],['filter','filter'],['sort','sort'],['date-from','from'],['date-to','to'],['mode','mode']]) {
         const input=panels[view].querySelector(`[data-${attr}]`);if(input)input.value=ui[view][prop]||'';
       }
@@ -55,13 +60,32 @@
       <p class="diving-footnote">App changes appear after sync succeeds. Photos and documents remain on your device in this version.</p>`;
     const panel = panels[view];
     window.DMZTools.browser(panel);
+    const organization=document.createElement('label');organization.textContent='List organization';organization.innerHTML+='<select data-organization><option value="grouped">Expandable groups</option><option value="flat">Flat list</option></select>';panel.querySelector('.browser-filters > div').append(organization);
+    const groupTools=document.createElement('div');groupTools.className='browser-group-tools';groupTools.innerHTML='<button type="button" data-groups-action="expand">Expand all</button><button type="button" data-groups-action="collapse">Collapse all</button>';panel.querySelector('.browser-search').after(groupTools);
+    if(!log){const order=document.createElement('details');order.className='browser-category-order';order.innerHTML='<summary>Category order</summary><div data-category-order></div>';panel.querySelector('.browser-more > div').append(order);}
+    panel.querySelector('[data-organization]').onchange=(event)=>{ui[view].organization=event.target.value;if(view==='logbook'&&event.target.value==='grouped'&&ui.logbook.sort==='deepest')ui.logbook.sort='newest';render(view);};
+    panel.addEventListener('toggle',(event)=>{
+      const group=event.target;if(!group.matches('[data-browser-group]'))return;
+      const content=group.querySelector(':scope > .browser-group-content');
+      // Initial markup can emit toggle too. Search temporarily reveals groups;
+      // those automatic opens must not overwrite the user's collapse preference.
+      if(group.open===!!content.children.length)return;
+      ui[view].closed[group.dataset.browserGroup]=!group.open;
+      if(group.open&&!content.children.length)content.innerHTML=panel._groupRenderers?.get(group.dataset.browserGroup)?.()||'';
+      if(!group.open)content.replaceChildren();
+      window.DMZWorkspace?.save();
+    },true);
     if(log){const statistics=document.createElement('section');statistics.dataset.statisticsPane='';statistics.className='diving-statistics';statistics.hidden=true;statistics.innerHTML='<button type="button" class="btn secondary" data-log-page="dives">‹ Back to dives</button>';statistics.append(panel.querySelector('[data-stats]'),panel.querySelector('[data-log-analytics]'));panel.querySelector('.diving-layout').append(statistics);}
     for (const [attr, prop] of [['date-from','from'],['date-to','to'],['mode','mode']]) panel.querySelector(`[data-${attr}]`)?.addEventListener('change', (event) => { ui.logbook[prop] = event.target.value; ui.logbook.pageIndex=0; render(view); });
     panel.querySelector('[data-search]').addEventListener('input', (e) => { ui[view].search = e.target.value; ui[view].pageIndex=0; render(view); });
-    for (const prop of ['filter','sort']) panel.querySelector(`[data-${prop}]`).addEventListener('change', (e) => { ui[view][prop] = e.target.value; ui[view].pageIndex=0; render(view); });
+    for (const prop of ['filter','sort']) panel.querySelector(`[data-${prop}]`).addEventListener('change', (e) => { ui[view][prop] = e.target.value; ui[view].pageIndex=0;if(view==='logbook'&&prop==='sort'&&e.target.value==='deepest')ui[view].organization='flat';render(view); });
     panel.querySelector('[data-units]')?.addEventListener('change', (e) => { imperial = e.target.value === 'imperial'; render(view); });
     panel.addEventListener('click', (e) => {
       const button = e.target.closest('button'); if (!button || !userId) return;
+      if(button.hasAttribute('data-groups-action')){const close=button.dataset.groupsAction==='collapse';for(const key of panel._allGroupKeys||[])ui[view].closed[key]=close;render(view);return;}
+      if(button.hasAttribute('data-group-more')){const key=button.dataset.groupMore;ui[view].limits[key]=(ui[view].limits[key]||24)+24;const content=button.closest('.browser-group-content');content.innerHTML=panel._groupRenderers.get(key)();return;}
+      if(button.hasAttribute('data-order-move')){e.stopPropagation();const index=ui.gear.order.indexOf(button.dataset.orderKey),next=index+Number(button.dataset.orderMove);if(next>=0&&next<ui.gear.order.length)[ui.gear.order[index],ui.gear.order[next]]=[ui.gear.order[next],ui.gear.order[index]];saveCategoryOrder();render('gear');const replacements=[...panel.querySelectorAll('[data-order-key]')].filter((el)=>el.dataset.orderKey===button.dataset.orderKey&&!el.disabled);(replacements.find((el)=>el.dataset.orderMove===button.dataset.orderMove)||replacements[0])?.focus();window.DMZWorkspace?.save();return;}
+      if(button.hasAttribute('data-order-reset')){e.stopPropagation();ui.gear.order=[...defaultOrder];saveCategoryOrder();render('gear');panel.querySelector('[data-order-reset]').focus();window.DMZWorkspace?.save();return;}
       if (button.hasAttribute('data-log-page')) { ui.logbook.page = button.dataset.logPage; render(view); }
       if (button.hasAttribute('data-gear-page')) { ui.gear.page=button.dataset.gearPage;ui.gear.mobileDetail=false;ui.gear.selected=null;render('gear'); }
       if (button.hasAttribute('data-list-page')) { ui[view].pageIndex=(ui[view].pageIndex||0)+Number(button.dataset.listPage); ui[view].mobileDetail=false; render(view); panels[view].querySelector('[data-list]').scrollTop=0; }
@@ -90,6 +114,30 @@
     });
   }
   const stat = (value, label) => `<div class="diving-stat"><strong>${esc(value)}</strong><span>${label}</span></div>`;
+  function saveCategoryOrder(){try{localStorage.setItem(`dmzGearCategoryOrder:${userId}`,JSON.stringify(ui.gear.order));}catch{/* Optional browser-local preference. */}}
+  function categoryOrder(){try{return orderedGroups(JSON.parse(localStorage.getItem(`dmzGearCategoryOrder:${userId}`)||'null'));}catch{return [...defaultOrder];}}
+  function groupedList(view,rows,entryMarkup){
+    const state=ui[view],panel=panels[view],renderers=new Map(),allKeys=[];panel._groupRenderers=renderers;panel._allGroupKeys=allKeys;
+    const selected=rows.find((row)=>row.id===state.selected),selectedDate=selected?dateTile(selected.data.startTime):{};
+    const searching=!!state.search.trim()||!!state.filter||!!state.from||!!state.to||!!state.mode||state.page==='service';
+    const group=(key,label,items,content,defaultOpen=false,nested=false)=>{
+      if(state.closed[key]===undefined)state.closed[key]=!defaultOpen;
+      const open=searching||!state.closed[key];
+      renderers.set(key,content);
+      return `<details class="browser-record-group ${nested?'is-month':''}" data-browser-group="${esc(key)}" ${open?'open':''}><summary><span>${esc(label)}</span><small>${items.length}</small>${items.some((row)=>row.id===state.selected)?'<i aria-label="Contains selected item"></i>':''}</summary><div class="browser-group-content">${open?content():''}</div></details>`;
+    };
+    const entries=(key,items)=>()=>{
+      let limit=Math.max(24,state.limits[key]||24);const chosen=items.findIndex((row)=>row.id===state.selected);if(chosen>=limit)limit=(Math.floor(chosen/24)+1)*24;state.limits[key]=limit;
+      return items.slice(0,limit).map(entryMarkup).join('')+(items.length>limit?`<button type="button" class="browser-group-more" data-group-more="${esc(key)}">Show ${Math.min(24,items.length-limit)} more · ${items.length-limit} remaining</button>`:'');
+    };
+    if(view==='gear')return ui.gear.order.map((key)=>{const items=rows.filter((row)=>gearGroup(row.data.category||'')===key);if(!items.length)return '';allKeys.push(key);return group(key,gearGroups.find(([id])=>id===key)[1],items,entries(key,items),gearGroup(selected?.data.category||'')===key);}).join('');
+    const years=new Map();for(const row of rows){const stamp=dateTile(row.data.startTime),year=String(stamp.year||'undated'),month=stamp.year?String(new Date(row.data.startTime).getMonth()):'undated';if(!years.has(year))years.set(year,new Map());const months=years.get(year);if(!months.has(month))months.set(month,[]);months.get(month).push(row);}
+    return [...years].map(([year,months])=>{
+      const yearKey=`year:${year}`,yearRows=[...months.values()].flat();allKeys.push(yearKey);
+      const monthGroups=[...months].map(([month,items])=>{const key=`month:${year}:${month}`;allKeys.push(key);return {key,items,label:month==='undated'?'Date not set':new Date(2000,Number(month),1).toLocaleDateString('en-US',{month:'long'})};});
+      return group(yearKey,year==='undated'?'Date not set':year,yearRows,()=>monthGroups.map(({key,items,label})=>group(key,label,items,entries(key,items),items.some((row)=>row.id===state.selected),true)).join(''),String(selectedDate.year||'undated')===year);
+    }).join('');
+  }
   function dueFor(item) {
     const dates = [item.nextServiceDate, item.visualInspectionDue, item.hydrostaticTestDue].filter(Boolean);
     if (!item.nextServiceDate && item.lastServiceDate && Number(item.serviceIntervalMonths) > 0) {
@@ -108,6 +156,10 @@
   }
   function render(view) {
     const panel = panels[view], log = view === 'logbook', state = ui[view];
+    const grouped=state.organization!=='flat';panel.classList.toggle('has-grouped-browser',grouped);
+    panel.querySelector('[data-organization]').value=grouped?'grouped':'flat';panel.querySelector('[data-sort]').value=state.sort;
+    panel.querySelector('.browser-group-tools').hidden=!grouped||(!log&&state.page==='setups');
+    if(!log){ui.gear.order=orderedGroups(ui.gear.order);panel.querySelector('[data-category-order]').innerHTML=ui.gear.order.map((key,index)=>`<div><span>${esc(gearGroups.find(([id])=>id===key)[1])}</span><button type="button" data-order-key="${key}" data-order-move="-1" aria-label="Move ${esc(gearGroups.find(([id])=>id===key)[1])} up" ${index===0?'disabled':''}>↑</button><button type="button" data-order-key="${key}" data-order-move="1" aria-label="Move ${esc(gearGroups.find(([id])=>id===key)[1])} down" ${index===ui.gear.order.length-1?'disabled':''}>↓</button></div>`).join('')+'<button type="button" data-order-reset>Reset category order</button>';}
     panel.classList.toggle('has-tool-detail',state.mobileDetail && window.matchMedia('(max-width: 760px)').matches && state.page !== 'stats');
     const values = all(log ? 'dive' : 'gear');
     panel.querySelector('[data-stats]').innerHTML = log
@@ -133,6 +185,7 @@
       ? state.sort === 'deepest' ? number(b.data.water?.maxDepthMeters) - number(a.data.water?.maxDepthMeters) : String(a.data.startTime || '').localeCompare(String(b.data.startTime || '')) * (state.sort === 'oldest' ? 1 : -1)
       : state.sort === 'service' ? (dueFor(a.data) || '9999').localeCompare(dueFor(b.data) || '9999') : state.sort === 'newest' ? String(b.data.createdAt || '').localeCompare(String(a.data.createdAt || '')) : String(a.data.name || '').localeCompare(String(b.data.name || '')));
     state.visibleIds=shown.map((r)=>r.id);
+    if(grouped&&!log)shown.sort((a,b)=>ui.gear.order.indexOf(gearGroup(a.data.category||''))-ui.gear.order.indexOf(gearGroup(b.data.category||'')));
     if (log) {
       const statsPage = state.page === 'stats';
       panel.classList.toggle('is-stats-view',statsPage);
@@ -144,21 +197,22 @@
     }
     const total=shown.length, pageSize=24;
     state.pageIndex=Math.max(0,Math.min(state.pageIndex||0,Math.ceil(total/pageSize)-1));
-    shown=shown.slice(state.pageIndex*pageSize,(state.pageIndex+1)*pageSize);
+    if(!grouped)shown=shown.slice(state.pageIndex*pageSize,(state.pageIndex+1)*pageSize);
     if (!shown.some((r) => r.id === state.selected)) state.selected = shown[0]?.id || null;
     panel.querySelector('.diving-layout').classList.toggle('is-mobile-detail', state.mobileDetail && window.matchMedia('(max-width: 760px)').matches);
     const entryMarkup = (r) => {
       const d=r.data;
       if(log){const mixes=(d.gas?.mixes||[]).map((mix)=>mix.label||`${Math.round(number(mix.o2)*100)}%`).join(' / ');return `<button class="diving-entry diving-entry-log" data-select="${esc(r.id)}" aria-pressed="${r.id===state.selected}"><span class="entry-content"><span class="log-row-meta"><time>${esc(date(d.startTime))}</time>${d.number!=null?`<span>#${esc(d.number)}</span>`:''}</span><strong>${esc(d.site?.name||'Untitled dive')}</strong><small class="entry-subtitle">${esc([d.site?.location,d.site?.country].filter(Boolean).join(' · ')||'Location not set')}</small><span class="log-row-bottom"><span>${esc(depth(d.water?.maxDepthMeters))}</span><span>${esc(duration(d.durationSeconds))}</span>${mixes?`<span class="log-row-gas">${esc(mixes)}</span>`:''}<small class="log-row-source" title="${esc(d.source||'manual')} dive">${esc(d.source||'manual')}</small></span></span><span class="entry-chevron" aria-hidden="true">›</span></button>`;}
-      const condition=gearStatus(d),due=dueFor(d);return `<button class="diving-entry diving-entry-gear" data-select="${esc(r.id)}" aria-pressed="${r.id===state.selected}"><span class="entry-gear-icon" aria-hidden="true">${esc((d.category||'G').slice(0,1))}</span><span class="entry-content"><span class="entry-kicker"><span class="diving-badge">${esc(d.category||'Equipment')}</span><span class="diving-badge ${condition.tone}">${esc(condition.label)}</span></span><strong>${esc(d.name||'Unnamed gear')}</strong><small class="entry-subtitle">${esc([d.manufacturer,d.model].filter(Boolean).join(' · ')||'Add manufacturer and model')}</small><span class="entry-metrics"><span><b>${esc(d.serialNumber||'—')}</b><small>serial</small></span><span><b>${esc(due?date(due):'Not scheduled')}</b><small>next service</small></span></span></span><span class="entry-chevron" aria-hidden="true">›</span></button>`;
+      const condition=gearStatus(d),due=dueFor(d);return `<button class="diving-entry diving-entry-gear" data-select="${esc(r.id)}" aria-pressed="${r.id===state.selected}"><span class="entry-content"><strong>${esc(d.name||'Unnamed gear')}</strong><small class="entry-subtitle">${esc([d.manufacturer,d.model].filter(Boolean).join(' · ')||d.category||'Equipment')}</small><span class="gear-row-status ${esc(condition.tone)}">${esc(condition.label)}${due?`<small>Service ${esc(date(due))}</small>`:''}</span></span><span class="entry-chevron" aria-hidden="true">›</span></button>`;
     };
     let listMarkup;
-    if(log&&state.sort!=='deepest'){
+    if(grouped)listMarkup=groupedList(view,shown,entryMarkup);
+    else if(log&&state.sort!=='deepest'){
       const groups=new Map();for(const row of shown){const stamp=dateTile(row.data.startTime),label=stamp.year||'Date not set';groups.set(label,[...(groups.get(label)||[]),row]);}
       listMarkup=[...groups].map(([year,rows])=>`<section class="diving-entry-group"><h3>${esc(year)} <small>${rows.length} ${rows.length===1?'dive':'dives'}</small></h3>${rows.map(entryMarkup).join('')}</section>`).join('');
     }else listMarkup=shown.map(entryMarkup).join('');
     const pager=total?`<div class="tool-list-pagination"><span>${state.pageIndex*pageSize+1}–${Math.min(total,(state.pageIndex+1)*pageSize)} of ${total}</span><button type="button" data-list-page="-1" ${state.pageIndex===0?'disabled':''} aria-label="Previous records">‹</button><button type="button" data-list-page="1" ${(state.pageIndex+1)*pageSize>=total?'disabled':''} aria-label="Next records">›</button></div>`:'';
-    panel.querySelector('[data-browser-pagination]').innerHTML=total>24?pager:`<span class="browser-record-count">${total} ${log?(total===1?'dive':'dives'):(total===1?'item':'items')}</span>`;
+    panel.querySelector('[data-browser-pagination]').innerHTML=!grouped&&total>24?pager:`<span class="browser-record-count">${total} ${log?(total===1?'dive':'dives'):(total===1?'item':'items')}</span>`;
     panel.querySelector('[data-list]').innerHTML = (listMarkup || `<div class="diving-empty"><h3>${values.length ? 'No matching records' : log ? 'Your next chapter starts here' : 'Build your gear locker'}</h3><p>${values.length ? 'Try a different search or filter.' : log ? 'Sign in on the app to sync your dives, or log your first dive here.' : 'Sync equipment from the app, or add your first item here.'}</p></div>`);
     const selected = shown.find((r) => r.id === state.selected);
     if (selected) detail(view, selected);
@@ -410,7 +464,7 @@
     connect(options) {
       request = options.request;
       const next = options.account?.profile?.userId;
-      if (next !== userId) { epoch++; userId = next; pendingWorkspace=window.DMZWorkspace?.read(userId,'diving'); for(const view of Object.keys(ui))ui[view]=structuredClone(defaultUi[view]); records.clear(); loaded = false; loading = null; imperial = options.account?.appSettings?.depthUnit === 'ft'; panels.logbook.querySelector('[data-units]').value = imperial ? 'imperial' : 'metric'; render('logbook'); render('gear'); }
+      if (next !== userId) { epoch++; userId = next; pendingWorkspace=window.DMZWorkspace?.read(userId,'diving'); for(const view of Object.keys(ui))ui[view]=structuredClone(defaultUi[view]);ui.gear.order=categoryOrder(); records.clear(); loaded = false; loading = null; imperial = options.account?.appSettings?.depthUnit === 'ft'; panels.logbook.querySelector('[data-units]').value = imperial ? 'imperial' : 'metric'; render('logbook'); render('gear'); }
     },
     open(view) { active = view; load(); },
     disconnect() { disposeProfile?.(); disposeProfile=null; epoch++; userId = null; request = null; loaded = false; loading = null; records.clear(); dialog.close(); dialog.innerHTML = ''; dialogRecord = null; render('logbook'); render('gear'); status('Sign in to load your records.'); },
