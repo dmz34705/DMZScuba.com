@@ -16,3 +16,17 @@ assert.deepEqual(clean([{t:0,depth:0},{t:10,depth:20},{t:20,depth:0},{t:30,depth
 assert.deepEqual(clean([{t:20,depth:20,tempC:22},{t:10,tempC:23},{t:0,depth:10,tempC:24}]).map((row)=>row.depth),[10,15,20],'repair sorts timestamps and retains temperature-only samples');
 assert.deepEqual(clean([]),[]);
 console.log('PASS: app sample repair, legacy event spikes, missing-depth interpolation, real surfacing, depth-only dives, and immutable raw samples.');
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/account-profile.js'),'utf8'),context);
+const status=(rows,t)=>JSON.parse(JSON.stringify(context.window.DMZProfileExplorer.computerStatus(rows,t)));
+const legacy=status([{t:0,deco:{type:'ndl',seconds:1200,depth:0},cns:.30000000000000004,rbt:3000}],0);
+assert.deepEqual(legacy.map((field)=>[field.label,field.value]),[['No-deco limit','20m 0s'],['CNS exposure','0.3%'],['Gas time (RBT)','50m 0s']],'legacy NDL is time, not a fake zero-depth stop; CNS is already a percentage');
+const sparse=[{t:0,ndl:600,cns:12.345,rbt:1800},{t:10,depth:20},{t:20,ndl:0,cns:0,rbt:0}];
+assert.deepEqual(status(sparse,10).map((field)=>field.value),['—','—','—'],'missing status is not guessed, zero-filled, or carried from another sample');
+assert.deepEqual(status(sparse,20).map((field)=>field.value),['0m 0s','0%','0m 0s'],'real zero readings remain distinguishable from missing values');
+assert.equal(status(sparse,0)[1].value,'12.3%');
+assert.equal(status([{t:0,depth:20}],0).length,0,'unsupported status fields are omitted for this computer');
+assert.equal(status([{t:0,ndl:-1,cns:null,rbt:'20'}],0).length,0,'invalid fields are not coerced into plausible readings');
+assert.equal(status([{t:0,ndl:59.9}],0)[0].value,'1m 0s');
+const stop=status([{t:0,deco:{type:'safetystop',depth:5,seconds:180}},{t:10,ndl:300}],0).find((field)=>field.stop);
+assert.equal(stop.label,'Safety stop');assert.deepEqual(stop.stop,{type:'safetystop',depth:5,seconds:180});
+console.log('PASS: raw computer-status units, legacy NDL, CNS precision, sparse readings, zero values, and real stops.');

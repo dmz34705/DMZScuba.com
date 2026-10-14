@@ -4,6 +4,29 @@
   const valid = (value) => typeof value === 'number' && Number.isFinite(value);
   const clock = (seconds) => { const n=Math.max(0,Math.round(seconds));return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`; };
   const name = (log,index) => [log.device?.vendor,log.device?.product||log.device?.model].filter(Boolean).join(' ')||log.computer?.model||`Computer ${index+1}`;
+  const nonnegative=(n)=>valid(n)&&n>=0;
+  const statusTime=(n)=>nonnegative(n)?`${Math.floor(Math.round(n)/60)}m ${Math.round(n)%60}s`:'—';
+  function statusReader(rawSamples) {
+    // Status must come from this computer at this exact recorded timestamp.
+    // Do not use schema defaults, interpolation, or another computer's value.
+    const ndl=(row)=>nonnegative(row?.ndl)?row.ndl:row?.deco?.type==='ndl'&&nonnegative(row.deco.seconds)?row.deco.seconds:null;
+    const stops={safetystop:'Safety stop',decostop:'Deco stop',deepstop:'Deep stop'};
+    const byTime=new Map();for(const row of rawSamples)if(row&&valid(row.t))byTime.set(row.t,{...byTime.get(row.t),...row});
+    const has={ndl:rawSamples.some((row)=>ndl(row)!==null),cns:rawSamples.some((row)=>nonnegative(row?.cns)),rbt:rawSamples.some((row)=>nonnegative(row?.rbt)),stop:rawSamples.some((row)=>stops[row?.deco?.type])};
+    return (time)=>{
+    const at=byTime.get(time)||{};
+    const fields=[];
+    if(has.ndl)fields.push({label:'No-deco limit',value:statusTime(ndl(at)),title:'NDL · recorded no-decompression limit (minutes and seconds)'});
+    if(has.cns)fields.push({label:'CNS exposure',value:nonnegative(at.cns)?`${Number(at.cns.toFixed(1))}%`:'—',title:'CNS oxygen exposure · recorded percentage; not recalculated'});
+    if(has.rbt)fields.push({label:'Gas time (RBT)',value:statusTime(at.rbt),title:'Remaining bottom time · recorded by this computer (minutes and seconds)'});
+    if(has.stop){
+      const stop=at.deco,label=stops[stop?.type];
+      fields.push({label:label||'Stop',stop:label?stop:null,value:label?'':ndl(at)!==null?'NDL mode':'—',title:'Recorded stop type, depth, and duration; a dash means no stop reading at this sample'});
+    }
+    return fields;
+    };
+  }
+  const computerStatus=(rawSamples,time)=>statusReader(rawSamples)(time);
   function flatten(value,prefix='',result={}) {
     for(const [key,entry] of Object.entries(value||{})) {
       const path=prefix?`${prefix}.${key}`:key;
@@ -26,7 +49,7 @@
     const depth=(n)=>valid(n)?`${(n*(imperial?3.28084:1)).toFixed(1)} ${imperial?'ft':'m'}`:'—';
     const temp=(n)=>valid(n)?`${(imperial?n*1.8+32:n).toFixed(1)} °${imperial?'F':'C'}`:'—';
     const pressure=(n)=>valid(n)?`${(n*(imperial?14.5038:1)).toFixed(0)} ${imperial?'psi':'bar'}`:'—';
-    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,samples:window.DMZProfileSamples.cleanProfileSamples(rawSamples.filter((s)=>s&&valid(s.t)))};});
+    const data=logs.map((log,index)=>{const rawSamples=Array.isArray(log.profile?.samples)?log.profile.samples:[];return {log,index,label:name(log,index),rawSamples,statusAt:statusReader(rawSamples),samples:window.DMZProfileSamples.cleanProfileSamples(rawSamples.filter((s)=>s&&valid(s.t)))};});
     const fallback=data.find((entry)=>entry.samples.length>1);
     let selected=data.findIndex((entry)=>entry.log.id===dive.primaryLogId&&entry.samples.length>1);
     if(selected<0)selected=fallback?.index||0;
@@ -141,8 +164,7 @@
       if(overlays.temperature)readings.push(metric('Temperature',temp(nearest(readers.temperature,point.t)?.tempC),'#ffc771','is-temperature'));
       if(overlays.pressure)series.forEach((s)=>gas.push(metric(s.shortLabel,pressure(nearest(s.samples,point.t)?.pressureBar),s.color,'',s.label)));
       if(overlays.oxygen&&geometry.hasOxygen){readings.push(metric('ppO₂',nearest(readers.oxygen,point.t)?.ppo2?.toFixed(2)??'—','#ff8f94'));readings.push(metric('Setpoint',nearest(readers.setpoint,point.t)?.setpoint?.toFixed(2)??'—','#ff8f94'));}
-      for(const [key,label]of [['ndl','NDL'],['cns','CNS'],['rbt','RBT']])if(valid(point[key]))extras.push(metric(label,key==='cns'?`${point[key]}%`:clock(point[key])));
-      if(point.deco)extras.push(metric(`Stop · ${point.deco.type||'recorded'}`,`${depth(point.deco.depth)} · ${clock(point.deco.seconds||0)}`));
+      for(const field of primary.statusAt(point.t))extras.push(metric(field.label,field.stop?`${depth(field.stop.depth)} · ${statusTime(field.stop.seconds)}`:field.value,null,'',field.title));
       host.querySelector('[data-profile-readout]').innerHTML=readings.join('')+(gas.length?'<h6 class="profile-reading-group">Tank pressures</h6>'+gas.join(''):'')+(extras.length?'<h6 class="profile-reading-group">Computer status</h6>'+extras.join(''):'');
       host.querySelector('[data-profile-sample-number]').textContent=`#${index+1}`;
       host.querySelector('[data-profile-scrub]').value=index;
@@ -154,5 +176,5 @@
     requestAnimationFrame(()=>{if(!disposed&&host.isConnected)draw();});
     return ()=>{disposed=true;resizeObserver?.disconnect();if(dialog.open)dialog.close();if(marker.isConnected)marker.replaceWith(host);dialog.remove();};
   }
-  window.DMZProfileExplorer={mount,flatten,nearest};
+  window.DMZProfileExplorer={mount,flatten,nearest,computerStatus};
 })();

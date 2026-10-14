@@ -73,6 +73,11 @@ function fixtures(){return [
       await page.click('[data-profile-zoom="in"]');await page.click('[data-profile-reset]');
       await page.click('[data-profile-expand]');assert.equal(await page.locator('.profile-fullscreen').evaluate((el)=>el.open),true);
       await page.keyboard.press('Escape');assert.equal(await page.locator('.profile-fullscreen').evaluate((el)=>el.open),false);
+      await page.selectOption('[data-profile-computer]','1');
+      assert.doesNotMatch(await page.locator('[data-profile-readout]').innerText(),/CNS exposure|No-deco limit|Gas time/,'switching computers does not leak status values from the other computer');
+      await page.selectOption('[data-profile-computer]','0');
+      assert.match(await page.locator('[data-profile-readout]').innerText(),/No-deco limit\s+20m 0s/,'NDL time is labeled in minutes and seconds');
+      assert.doesNotMatch(await page.locator('[data-profile-readout]').innerText(),/0\.0 m · 0:00/,'NDL mode is not rendered as a zero-depth stop');
       await page.screenshot({path:path.join(process.env.TEMP,`dmz-app-profile-${width}.png`),fullPage:true});
       await page.click('[data-tool-tab="data"]');
       assert.match(await page.locator('[data-samples-count]').innerText(),/1–100 of 602 samples/);
