@@ -534,7 +534,7 @@
 
   function renderAccount(data) {
     account = data;
-    window.DMZGearAdvice?.connect(data.profile?.userId);
+    window.DMZGearAdvice?.connect(data.profile?.userId,apiRequest)?.catch(()=>{});
     window.DMZDiving?.connect({ request: apiRequest, account: data });
     window.DMZPlanner?.connect({ request: apiRequest, account: data });
     const profile = data.profile || {};

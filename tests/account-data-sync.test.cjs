@@ -44,6 +44,13 @@ env.ACCOUNT_API = { async fetch(request) {
   assert.equal((await (await request('alice','/dive/dive-1')).json()).record.deleted,true,'body owner cannot target another account');
   // Bulk read: records with data, paged, one account verification per page, never another owner's rows.
   const put = (user, kind, id, data) => request(user, `/${kind}/${id}`, { baseRevision:0, mutationId:`m-${kind}-${id}`, deleted:false, data:{ id, ...data } });
+  await put('compat','preferences','gear-advice',{value:{drysuitBelowC:22}});
+  await put('compat','preferences','gear',{dismissedDeviceKeys:[]});
+  assert.deepEqual((await (await request('compat')).json()).records.map(r=>r.id),['gear'],'legacy app metadata must hide unfamiliar comfort settings');
+  assert.deepEqual((await (await request('compat','?advice=1')).json()).records.map(r=>r.id),['gear','gear-advice'],'updated apps explicitly opt into comfort sync');
+  assert.equal((await request('bob','/preferences/gear-advice')).status,404,'comfort records are owner-isolated');
+  assert.equal((await (await request('compat','/preferences/gear-advice')).json()).record.data.value.drysuitBelowC,22);
+  assert.equal((await request('compat','/preferences/gear-advice',{baseRevision:1,mutationId:'downgrade',deleted:true,data:{id:'gear-advice'}})).status,409,'downgraded apps cannot tombstone comfort preferences');
   for (let i = 0; i < 260; i++) await put('carol', 'dive', `d${String(i).padStart(3, '0')}`, { site:{ name:`Site ${i}` } });
   await put('carol', 'gear', 'bcd', { name:'BCD' });
   assert.equal((await put('carol', 'plan', 'plan-1', { title:'Cozumel', kind:'trip' })).status, 200);

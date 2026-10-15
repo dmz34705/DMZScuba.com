@@ -45,7 +45,9 @@ function fixtures(){return [
         else if(url.pathname==='/api/account/sync')data={ok:true,records:rows.filter((row)=>url.searchParams.get('include').split(',').includes(row.kind)),next:null};
         else if(url.pathname.startsWith('/api/account/sync/')){
           const [,kind,id]=url.pathname.match(/\/sync\/([^/]+)\/([^/]+)$/)||[];
-          const row=rows.find((entry)=>entry.kind===kind&&entry.id===id);
+          let row=rows.find((entry)=>entry.kind===kind&&entry.id===id);
+          if(!row&&req.method()==='GET'){await route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({ok:false,error:'Not found'})});return;}
+          if(!row){row={kind,id,revision:0};rows.push(row);}
           if(req.method()==='PUT'){const body=req.postDataJSON();writes.push({kind,id,...body});Object.assign(row,{data:body.data,revision:row.revision+1});}
           data={ok:true,record:row};
         }
@@ -214,6 +216,7 @@ function fixtures(){return [
       await page.click('.gear-advice-dialog [type="submit"]');await page.waitForSelector('.gear-advice-dialog',{state:'detached'});
       const advice=await page.evaluate(()=>{const prefs=window.DMZGearAdvice.preferences();const rows=window.DMZAtlasGuideEngine.recommend([{id:'suit',name:'Personal wetsuit',category:'Exposure suit',configuration:'Wetsuit',condition:'Ready',thickness:'7'}],[{id:'s1',name:'Rig',type:'Single tank',itemIds:['suit']}],{...prefs,suits:{suit:prefs.suits['group-suit']}},{use:'Technical',temperatureC:24});return {range:prefs.suits['group-suit'],setup:rows.ranked[0]?.setup.id,suit:rows.ranked[0]?.suit?.id};});
       assert.equal(advice.range.minC,15);assert.equal(advice.setup,'s1');assert.equal(advice.suit,'suit','personal comfort range and explicit setup use reach the actual app gear engine');
+      assert.equal(rows.find(row=>row.kind==='preferences'&&row.id==='gear-advice').data.value.suits['group-suit'].minC,15,'form saves comfort ranges to the account, not only browser storage');
       await page.click('.account-nav-menu [data-account-view="logbook"]');
       await page.waitForSelector('[data-select="d1"]',{state:'attached'});
       if(width<760 && await page.locator('[data-select="d1"]').isVisible())await page.click('[data-select="d1"]');
@@ -235,7 +238,7 @@ function fixtures(){return [
     atlasPage.on('pageerror',(error)=>atlasErrors.push(error.message));
     await atlasPage.addInitScript(()=>sessionStorage.setItem('dmzCustomerAccessToken','atlas-parity-test'));
     await atlasPage.route('https://**/*',(route)=>route.abort());
-    await atlasPage.route('**/api/**',async(route)=>{const url=new URL(route.request().url());const data=url.pathname==='/api/account'?{ok:true,profile:{userId:'atlas-owner'}}:{ok:true,records:fixtures().filter((row)=>(url.searchParams.get('include')||'').split(',').includes(row.kind)),next:null};await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});});
+    await atlasPage.route('**/api/**',async(route)=>{const url=new URL(route.request().url());if(url.pathname==='/api/account/sync/preferences/gear-advice'){await route.fulfill({status:404,contentType:'application/json',body:'{}'});return;}const data=url.pathname==='/api/account'?{ok:true,profile:{userId:'atlas-owner'}}:{ok:true,records:fixtures().filter((row)=>(url.searchParams.get('include')||'').split(',').includes(row.kind)),next:null};await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});});
     await atlasPage.goto(`http://127.0.0.1:${server.address().port}/pages/travel/`);
     await atlasPage.locator('#oceanAtlasFrame').scrollIntoViewIfNeeded();
     await atlasPage.waitForFunction(()=>document.getElementById('oceanAtlasFrame').contentWindow.DMZTravelAtlas?.setGearRecords);

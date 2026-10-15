@@ -37,8 +37,8 @@
     try { return JSON.parse(localStorage.getItem(adviceKey) || '{}') || {}; }
     catch { return {}; }
   }
-  function updateAdvicePreferences(value) {
-    if(window.DMZGearAdvice){window.DMZGearAdvice.store(value);atlas()?.DMZTravelAtlas?.setAdvicePreferences(value);return;}
+  async function updateAdvicePreferences(value) {
+    if(window.DMZGearAdvice){await window.DMZGearAdvice.store(value);atlas()?.DMZTravelAtlas?.setAdvicePreferences(value);return;}
     try { localStorage.setItem(adviceKey, JSON.stringify(value)); } catch (_) { /* optional */ }
     atlas()?.DMZTravelAtlas?.setAdvicePreferences(value);
   }
@@ -81,11 +81,11 @@
     return token;
   }
 
-  async function accountGet(path, retry = true) {
-    const response = await fetch(path, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  async function accountGet(path, options = {}, retry = true) {
+    const response = await fetch(path, { ...options, headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type':'application/json' },
       credentials: 'same-origin' });
-    if (response.status === 401 && retry && await refreshToken()) return accountGet(path, false);
-    if (!response.ok) throw new Error(`Account data unavailable (${response.status}).`);
+    if (response.status === 401 && retry && await refreshToken()) return accountGet(path, options, false);
+    if (!response.ok) {const error=new Error(`Account data unavailable (${response.status}).`);error.status=response.status;throw error;}
     return response.json();
   }
 
@@ -128,7 +128,7 @@
     token = sessionStorage.getItem(tokenKey) || '';
     if (!token && localStorage.getItem(signedInKey) === '1') token = await refreshToken();
     if (!token) {window.DMZGearAdvice?.connect('');atlas()?.DMZTravelAtlas?.setGearRecords([],[]);return { items: [], setups: [], signedIn: false };}
-    const account=await accountGet('/api/account');window.DMZGearAdvice?.connect(account.profile?.userId);
+    const account=await accountGet('/api/account');await window.DMZGearAdvice?.connect(account.profile?.userId,accountGet);await window.DMZGearAdvice?.refresh();
     const items = [], setups = [];
     for (const row of await loadAccountRecords(['gear', 'setup']))
       (row.kind === 'gear' ? items : setups).push({ ...row.data, id: row.id });
@@ -169,7 +169,7 @@
         <p>${escapeHtml(result?.advice?.temperatureBasis || '')}</p>
         ${explanation.map((reason) => `<p>${escapeHtml(reason)}</p>`).join('')}</div>
       <details class="atlas-gear-preferences"><summary>Your comfort preferences</summary>
-        <p>These browser preferences stay on this device. The app’s separate preferences do not sync to your account yet.</p>
+        <p>Signed-in preferences sync with your account and updated app. Guest preferences stay in this browser.</p>
         <p><a href="/pages/account/#gear">Manage personal exposure ranges, combinations, and setup uses in Gear Locker.</a></p>
         <label>How you feel in the water<select data-gear-field="tendency">${[['cold', 'I run cold'], ['typical', 'Typical'], ['warm', 'I run warm']]
           .map(([value, label]) => `<option value="${value}" ${(preferences.thermalTendency || 'typical') === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
@@ -192,7 +192,7 @@
         ${data?.signedIn && gearPlan.use && !invalid && result?.exclusions?.length ? `<p class="atlas-gear-warning">${result.exclusions.length} item(s) were excluded due to condition or service status. Check your Gear Locker before packing.</p>` : ''}
       </div>
       <p class="atlas-gear-note">Planning aid only. Confirm training, current conditions, gas planning, redundancy, and equipment compatibility. Nothing here changes your saved setups.</p>`;
-    gearContent.querySelectorAll('[data-gear-field]').forEach((field) => field.addEventListener('change', () => {
+    gearContent.querySelectorAll('[data-gear-field]').forEach((field) => field.addEventListener('change', async () => {
       const name = field.dataset.gearField;
       field.setCustomValidity('');
       if (name === 'tendency' || name === 'threshold') {
@@ -203,7 +203,8 @@
           if (!Number.isFinite(number) || number < 32 || number > 86) { field.setCustomValidity('Enter 32–86°F.'); field.reportValidity(); return; }
           next.drysuitBelowC = (number - 32) * 5 / 9;
         }
-        try{updateAdvicePreferences(next);}catch(error){field.setCustomValidity(error.message);field.reportValidity();return;}
+        field.disabled=true;
+        try{await updateAdvicePreferences(next);}catch(error){field.setCustomValidity(error.message);field.reportValidity();return;}finally{field.disabled=false;}
       } else gearPlan[name] = name === 'longDive' ? field.checked : field.value;
       renderGearPlan();
     }));

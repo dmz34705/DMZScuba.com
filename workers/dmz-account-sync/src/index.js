@@ -74,7 +74,9 @@ export async function handle(request, env) {
   if (!kind && request.method === 'GET') {
     const after = url.searchParams.get('after') || '';
     const rows = await env.DB.prepare(`SELECT kind,id,revision,deleted,updated_at FROM sync_records
-      WHERE user_id = ? AND (kind || '/' || id) > ? ORDER BY kind,id LIMIT 501`).bind(owner, after).all();
+      WHERE user_id = ? AND (kind || '/' || id) > ?
+      AND (? = 1 OR kind != 'preferences' OR id != 'gear-advice')
+      ORDER BY kind,id LIMIT 501`).bind(owner, after, url.searchParams.get('advice') === '1' ? 1 : 0).all();
     const page = rows.results.slice(0, 500);
     return json({ ok: true, protocol: 1, records: page.map((r) => ({ kind: r.kind, id: r.id, revision: r.revision, deleted: !!r.deleted, updatedAt: r.updated_at })),
       next: rows.results.length > 500 ? `${page.at(-1).kind}/${page.at(-1).id}` : null });
@@ -106,6 +108,12 @@ export async function handle(request, env) {
     return json({ ok: false, error: 'Invalid record or revision.' }, 400);
   }
   const now = new Date().toISOString();
+  // Older/downgraded apps can mistake an unsupported preference for a local deletion.
+  // Reset comfort preferences by saving an empty value, never a tombstone.
+  if (kind === 'preferences' && id === 'gear-advice' && body.deleted) {
+    const saved = await load();
+    return json({ ok: false, code: 'SYNC_CONFLICT', error: 'Update the app before changing comfort preferences.', record: record(saved) }, saved ? 409 : 400);
+  }
   // A compare-and-swap in one SQL statement prevents concurrent clients from overwriting each other.
   let result;
   if (body.baseRevision === 0) {
