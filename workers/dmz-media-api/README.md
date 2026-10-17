@@ -11,6 +11,7 @@ This service handles:
 - Cloudflare Images upload/delete helpers
 - Destination v2 read/write/delete APIs
 - Customer signup, verified-email login, profiles, certifications, and linked reservations
+- Dive Lens and smart itinerary inference through Gemini or the private DMZ Ollama origin
 
 Source of truth: `src/index.js`.
 
@@ -168,6 +169,12 @@ Customer authentication also provides role-based management access while the leg
   - `dmzscuba.com` domains
   - `ALLOWED_ORIGINS` env var fallback
 
+## AI diagnostics
+
+Dive Lens and itinerary requests carry an `X-DMZ-Request-ID` from the app through the Worker to the private inference host. Cloudflare and host logs record only that ID, the feature name, response status, elapsed time, queue time, and model timing/token counts. They must never record prompts, photos, booking text, authorization headers, secrets, model responses, or customer identity.
+
+Use `npx wrangler tail dmz-media-api` while reproducing a problem, then match its request ID to the JSON lines in the Windows `inference.stdout.log`. The Windows project also includes `DIAGNOSE-DMZ-AI.bat` for a sanitized health report.
+
 ## D1 Schema
 
 Run `schema.sql` only when initializing a new D1 database. Apply numbered migrations to an existing database.
@@ -223,6 +230,12 @@ Legacy compatibility tables also exist in schema:
 - `SUPABASE_JWT_AUDIENCE` (defaults to `authenticated`)
 - `TURNSTILE_SITE_KEY` (required to enable customer signup, login, and recovery)
 - `FUNNEL_RETENTION_DAYS` (defaults to `400` and is constrained to 30–730 days)
+- `AI_PROVIDER` (`local` routes text and PDF smart import to the private DMZ origin; omitted uses Gemini)
+- `LENS_AI_PROVIDER` (Dive Lens only; omitted or `gemini` uses Gemini and requires `GEMINI_API_KEY`; `local` uses the private origin's Fishial specialist before Ollama)
+- `LENS_GEMINI_MODEL` (Dive Lens Gemini model; defaults to `gemini-3.6-flash`)
+- `GEMINI_API_KEY` (existing Cloudflare Worker secret; never place it in app code, repository files, or logs)
+- `LOCAL_AI_ORIGIN_URL` (the private adapter hostname published through Cloudflare Tunnel)
+- `LOCAL_AI_SHARED_SECRET` (required with the local provider; configure as a Worker secret, never in `wrangler.toml`)
 - `CF_IMAGES_ACCOUNT_ID` (falls back to `CF_ACCOUNT_ID`)
 - `RESEND_TEMPLATE_GENERAL_INQUIRY`
 - `RESEND_TEMPLATE_QUIZ_RESULTS` (falls back to `a2b38bfb-89a1-41e4-99f9-9a95063a3cf1` if unset)
@@ -263,3 +276,6 @@ This runs `npx wrangler deploy` in `workers/dmz-media-api`.
 
 The dev and live site repositories currently use the same Worker name and D1 database ID. Apply the migration and deploy the Worker once, even when the matching source change is committed to both repositories.
 
+### Dive Lens Gemini routing checks
+
+Run `node tests/gemini-lens.cjs` from this Worker directory. It verifies signed-in access is required, Gemini routing remains independent of the local itinerary/PDF provider, provider failures return friendly responses, multipart structured results are handled, and diagnostics exclude provider responses and credentials. The Gemini key is sent only in the `x-goog-api-key` header. No raw Gemini response or exception text is written to Dive Lens diagnostics.
